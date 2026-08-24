@@ -80,3 +80,53 @@ PR #5 `test: establish Stage 03 corpus contract` doğrulanmış head üzerinden 
 Merge commit: `fb2d0982efeab8f78bc78dc82a7a8deb688190f8`.
 
 Sonuç: AŞAMA 03 `DONE`. Sonraki aşama AŞAMA 04; aynı kullanıcı turunda başlanmadı.
+
+---
+
+## 2026-08-24 — AŞAMA 04 — DONE
+
+Başlangıç main: `a18480f55c76658027ba44ade33d1b88c9d4d6d8`.
+
+Yapılanlar:
+
+- `MobilDwg.sln` oluşturuldu.
+- Tam olarak dört production proje kuruldu: `MobilDwg.Core`, `MobilDwg.Cad`, `MobilDwg.Rendering`, `MobilDwg.App`.
+- Tam olarak üç test proje kuruldu: `MobilDwg.Core.Tests`, `MobilDwg.Rendering.Tests`, `MobilDwg.Architecture.Tests`.
+- Core BCL-only tutuldu; ProjectReference/PackageReference, MAUI, SkiaSharp ve ACadSharp dependency yok.
+- Dependency yönü otomatik testle sabitlendi: Cad -> Core, Rendering -> Core, App -> Core/Cad/Rendering.
+- `ICadDocumentReader`, session owner (`CadDocumentSession` + `ICadDocumentHandle`), diagnostics/compatibility, `IRenderSceneBuilder`, `ICadRenderer`, render surface/viewport kontratları tanımlandı.
+- Session parser-specific handle'ı idempotent `IAsyncDisposable` ile tam bir kez dispose eder.
+- Cancellation capability `None/BeforeStartOnly/Cooperative`; progress capability `None/StagesOnly/Fractional` olarak modellenerek sahte cooperative cancellation veya sahte yüzde engellendi.
+- `Directory.Build.props`, `docs/ARCHITECTURE.md`, `scripts/stage04-test.sh` ve `.github/workflows/stage04-architecture.yml` eklendi.
+- Architecture harness tam 4 production/3 test proje sayısını, exact ProjectReference grafını, production PackageReference yokluğunu ve Core/App forbidden dependency terimlerini denetler.
+
+İlk CI bulgusu:
+
+- Stage 04 Architecture run `32755135364` / #1 `FAILURE`.
+- Hata solution kodundan önce `global.json` workload set `10.0.400` temiz runner'da kurulu olmadığı için `MSB4242` idi.
+- Workflow önce `dotnet workload install maui-android` çalıştırıp exact workload setini doğrulayacak şekilde düzeltildi; production projelerine MAUI dependency eklenmedi.
+
+Final Stage 04 CI:
+
+- Workflow `Stage 04 Architecture` run `32755230695` / #2 `SUCCESS`.
+- Final head `00fc7d5e04e521b421a9e4646bff9e6a7c82d6d1`.
+- Exact .NET SDK/workload set `10.0.400`: PASS.
+- Solution restore: PASS.
+- Release build: PASS, `0 Warning(s)`, `0 Error(s)`.
+- `STAGE04_CORE_CONTRACT_TESTS_PASS`.
+- `STAGE04_RENDER_CONTRACT_TESTS_PASS`.
+- `STAGE04_ARCHITECTURE_TESTS_PASS`.
+- `STAGE04_T0_PASS`.
+
+Aynı head regresyonları:
+
+- Stage 02 Dependency Audit run `32755230688` / #17 `SUCCESS`; artifact `9530581424`, digest `sha256:58da9bfdb4ad4c59672b368673d0f27cfbd2e7b3a7b8157c003618e9671d4593`.
+- Stage 01 Toolchain Smoke run `32755230683` / #36 `SUCCESS`; Debug/Release/manifest/artifact PASS; artifact `9530813909`, digest `sha256:bf31fd5a4aa2268e768137f5fe19dfe8b37f13fb206eb4a616e07b77b1d2382e`.
+
+PR #6 `feat: establish Stage 04 minimal architecture` doğrulanmış head üzerinden `main`e merge edildi.
+
+Merge commit: `c01311ccb5c82b7bac023b24ae6a8000ae4655af`.
+
+AŞAMA 01 fiziksel Android install/launch ve iOS erişim envanteri `DEFERRED_EXTERNAL_GATE` olarak açık kalır.
+
+Sonuç: AŞAMA 04 `DONE`. Sonraki aşama AŞAMA 05; aynı kullanıcı turunda başlanmadı.
