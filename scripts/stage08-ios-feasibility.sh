@@ -5,7 +5,7 @@ OUT_DIR="${1:-$RUNNER_TEMP/stage08-ios}"
 mkdir -p "$OUT_DIR"
 
 PROJECT="spikes/Stage08.iOS/Stage08.iOS.csproj"
-TFM="net10.0-ios26.0"
+TFM="net10.0-ios26.5"
 BUNDLE_ID="com.smitelagwar.mobildwg.stage08"
 BUILD_LOG="$OUT_DIR/ios-release-build.log"
 SIM_LOG="$OUT_DIR/ios-simulator.log"
