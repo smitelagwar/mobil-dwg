@@ -57,7 +57,7 @@ Aynı implementation head regresyonları:
 
 - `Stage 04 Architecture` run `32759095988` / #11: `SUCCESS`
 - `Stage 02 Dependency Audit` run `32759095944` / #25: `SUCCESS`
-- `Stage 01 Toolchain Smoke` run `32759095888` / #44: bu evidence metni ilk oluşturulduğu anda henüz çalışıyordu; merge kapısında final sonucu ayrıca doğrulanacaktır. Bu CI fiziksel cihaz gate'i değildir.
+- `Stage 01 Toolchain Smoke` run `32759095888` / #44: `SUCCESS`. Bu CI clean MAUI/toolchain regresyonudur; fiziksel Android cihaz install/launch veya iOS erişim kanıtı değildir.
 
 ## Corpus ölçüm özeti
 
