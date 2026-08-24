@@ -7,6 +7,8 @@ on:
     paths:
       - global.json
       - .github/workflows/stage01-toolchain-smoke.yml
+      - scripts/stage01-device-gate.sh
+      - scripts/stage01-device-gate.ps1
   pull_request:
     branches: [main]
 
@@ -21,6 +23,13 @@ jobs:
     steps:
       - name: Checkout
         uses: actions/checkout@v5
+
+      - name: Validate physical-device gate scripts
+        shell: bash
+        run: |
+          set -euxo pipefail
+          bash -n scripts/stage01-device-gate.sh
+          pwsh -NoProfile -NonInteractive -Command '$null = [scriptblock]::Create((Get-Content -Raw "scripts/stage01-device-gate.ps1"))'
 
       - name: Set up .NET 10.0.400
         uses: actions/setup-dotnet@v5
