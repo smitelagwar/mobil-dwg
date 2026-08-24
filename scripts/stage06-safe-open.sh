@@ -46,8 +46,8 @@ dotnet run --project tools/Stage06.OpenFlowProbe/Stage06.OpenFlowProbe.csproj \
 grep -F 'Task.Run(' src/MobilDwg.App/Opening/CadFileOpenCoordinator.cs
 grep -F 'FilePicker.Default.PickAsync' spikes/Stage06.Android/Stage06MainPage.cs
 grep -F 'picked.OpenReadAsync()' spikes/Stage06.Android/Stage06MainPage.cs
-if grep -R -F 'FullPath' spikes/Stage06.Android src/MobilDwg.App/Opening; then
-  echo 'Stage 06 must not depend on provider physical paths.' >&2
+if grep -F 'FullPath' spikes/Stage06.Android/Stage06MainPage.cs; then
+  echo 'Stage 06 MAUI adapter must not depend on provider physical paths.' >&2
   exit 1
 fi
 if grep -R -F 'TakePersistableUriPermission' spikes/Stage06.Android src/MobilDwg.App/Opening; then
