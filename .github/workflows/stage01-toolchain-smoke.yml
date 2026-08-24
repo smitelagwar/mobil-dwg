@@ -27,11 +27,18 @@ jobs:
         with:
           dotnet-version: 10.0.400
 
-      - name: Set up Microsoft OpenJDK 21.0.12
-        uses: actions/setup-java@v5
-        with:
-          distribution: microsoft
-          java-version: 21.0.12
+      - name: Install exact Microsoft OpenJDK 21.0.12
+        shell: bash
+        run: |
+          set -euxo pipefail
+          cd "$RUNNER_TEMP"
+          curl -fsSLO https://aka.ms/download-jdk/microsoft-jdk-21.0.12-linux-x64.tar.gz
+          curl -fsSLO https://aka.ms/download-jdk/microsoft-jdk-21.0.12-linux-x64.tar.gz.sha256sum.txt
+          sha256sum -c microsoft-jdk-21.0.12-linux-x64.tar.gz.sha256sum.txt
+          mkdir -p "$RUNNER_TEMP/msopenjdk-21.0.12"
+          tar -xzf microsoft-jdk-21.0.12-linux-x64.tar.gz -C "$RUNNER_TEMP/msopenjdk-21.0.12" --strip-components=1
+          echo "JAVA_HOME=$RUNNER_TEMP/msopenjdk-21.0.12" >> "$GITHUB_ENV"
+          echo "$RUNNER_TEMP/msopenjdk-21.0.12/bin" >> "$GITHUB_PATH"
 
       - name: Set up Android SDK
         uses: android-actions/setup-android@v3
