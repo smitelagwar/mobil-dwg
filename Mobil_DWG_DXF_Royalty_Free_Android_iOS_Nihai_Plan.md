@@ -15,14 +15,14 @@
 Bu blok ve aşağıdaki aşama kutuları her çalışma turunun sonunda güncellenir.
 
 ```text
-CURRENT_STAGE: AŞAMA 00
-CURRENT_SUBSTEP: 00.5
-STATUS: DONE
-LAST_VERIFIED_REVISION: d161b5c4f9ba238f0d2a2e4c92f773535f379487 — AŞAMA 00 öncesi main; bu checkpoint commit'i sonrasında HEAD yeniden doğrulanmalı
-LAST_SUCCESSFUL_COMMAND: GitHub repository/content inventory + local toolchain inventory
-EVIDENCE: Repo ve mevcut belgeler doğrulandı; .gitignore korundu; docs/EXECUTION_LOG.md, karar/evidence şablonları ve gecmis.md eklendi; README handoff yönlendirmesi güncellendi
-BLOCKERS: Yok
-NEXT_ACTION: AŞAMA 01 — resmi kaynaklardan güncel .NET 10 SDK/MAUI/Android toolchain sürümlerini LIVE-VERIFY et ve geliştirme ortamını kur
+CURRENT_STAGE: AŞAMA 01
+CURRENT_SUBSTEP: 01.5
+STATUS: BLOCKED
+LAST_VERIFIED_REVISION: 83379b24e4ba87f04299f612ae2951ae8d8aec13 — Stage 01 CI workflow main merge; handoff/evidence/log aynı gerçek durumla güncellendi
+LAST_SUCCESSFUL_COMMAND: GitHub Actions Stage 01 Toolchain Smoke run 32737334339 — exact toolchain + API 24 pin + Debug/Release + manifest 24/36 + APK artifact SUCCESS
+EVIDENCE: docs/evidence/STAGE_01.md; docs/EXECUTION_LOG.md; GitHub Actions run 32737334339; artifact 9523977201 / SHA-256 3fd12ffe750352e9ace5532eaffa8f1cd6619da449bddeb05efb5acfc91dcd41
+BLOCKERS: Bu oturumda kullanıcının gerçek geliştirme makinesine ve fiziksel Android telefona USB/ADB erişimi yok; Mac/Xcode/iPhone/Apple Developer erişimi de doğrulanmadı
+NEXT_ACTION: Gerçek geliştirme makinesinde pinli toolchain'i doğrula; fiziksel Android cihazı adb devices ile device olarak doğrula; smoke app'i install/launch et; iOS erişim envanterini kapat
 LAST_UPDATE: 2026-08-24
 ```
 
@@ -360,7 +360,7 @@ Kurallar:
 ### Aşama indeksi
 
 - [x] AŞAMA 00 — Çalışma alanı ve yürütme zemini
-- [ ] AŞAMA 01 — .NET/MAUI/Android toolchain ve gerçek telefon
+- [ ] AŞAMA 01 — .NET/MAUI/Android toolchain ve gerçek telefon — `BLOCKED`
 - [ ] AŞAMA 02 — Canlı dependency/lisans kanıtı ve kilitler
 - [ ] AŞAMA 03 — Test corpus’u, golden sözleşmesi ve cihaz matrisi
 - [ ] AŞAMA 04 — Minimal solution ve mimari sınırlar
@@ -409,14 +409,14 @@ Test: Git status ve ignore dry-run.
 
 İşler:
 
-- [ ] `[LIVE-VERIFY]` Desteklenen güncel .NET 10 SDK patch’i resmi kaynaktan kurulur ve `global.json` ile pinlenir.
-- [ ] MAUI/Android workload, JDK 21, Android SDK/platform-tools resmi yönergeye göre kurulur; exact sürümler kaydedilir.
-- [ ] Minimum Android API, target/compile SDK release politikasına göre kayıt edilir; geçici değer gizlenmez.
-- [ ] Temiz MAUI smoke app Debug ve Release derlenir.
+- [x] `[LIVE-VERIFY]` Desteklenen güncel .NET 10 SDK patch’i resmi kaynaktan doğrulandı ve `global.json` ile pinlendi: SDK/workload set `10.0.400`.
+- [x] MAUI/Android workload, Microsoft OpenJDK 21.0.12, Android SDK API 36 / Build-Tools 36.0.0 / stable Platform-Tools 37.0.1 exact hattı GitHub Actions temiz runner üzerinde kuruldu ve kaydedildi.
+- [x] Minimum Android API `24`, target/compile SDK `36` olarak kaydedildi; temiz MAUI 10 template varsayılan min API 21 olduğundan `SupportedOSPlatformVersion=24.0` açıkça pinlendi.
+- [x] Temiz MAUI smoke app `net10.0-android` Debug ve Release derlendi; final CI run `32737334339` her iki build'i de 0 warning / 0 error ile geçti ve manifest `minSdk=24 / targetSdk=36` doğrulandı.
 - [ ] `adb` ile kullanıcının gerçek telefonuna yüklenir ve açılır.
 - [ ] iOS için Mac/Xcode/iPhone/Apple hesap erişimi yalnız envanterlenir; henüz kurulum yapılmaz.
 
-Test: `dotnet --info`, workload list, Android build/install/launch.  
+Test: `dotnet --info`, workload list, Android Debug/Release build ve manifest/API baseline CI üzerinde PASS. Fiziksel Android build/install/launch kapısı bekliyor.  
 Çıkış: Gerçek telefonda boş MAUI uygulaması çalışır; exact toolchain kanıtı vardır. Telefon erişimi yoksa aşama `BLOCKED` kalır.
 
 ### AŞAMA 02 — Canlı dependency/lisans kanıtı ve kilitler
