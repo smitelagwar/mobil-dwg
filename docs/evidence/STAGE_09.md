@@ -11,7 +11,8 @@ AŞAMA 09 henüz `DONE` değildir. Uygulama kodu ve hedefli testler yazılmışt
 - Base `main`: `b7926cb1df2b2ff1f32c67033dba73aed1c01523`.
 - Branch: `stage09-render-scene-camera`.
 - Scene/camera implementation code head: `5b3f590dca123c3855e8aac7d48f781ba2cdfdb3`.
-- Güncel test/PR head: `6215f9fbd77028273262bc5b95fd3eece19191d3`.
+- Son source/test-changing head: `6215f9fbd77028273262bc5b95fd3eece19191d3`.
+- Sonraki commitler yalnız evidence ve geçici runner-probe housekeeping içindir; source/test içeriğini değiştirmez.
 - PR: `#12` — `stage09: add render scene, camera, and diagnostics foundation`.
 - ADR 0002 ProCad exact pinned candidate için `NO-GO` verdiğinden tek production scene yolu **compact özel immutable RenderScene** olarak seçildi.
 - ProCad package/source production graph'a eklenmedi; paralel ikinci scene graph oluşturulmadı.
@@ -76,22 +77,32 @@ Stage 04 örneği, head `5b3f590dca123c3855e8aac7d48f781ba2cdfdb3`:
 - `steps=[]`, `runner_id=0`, empty runner name;
 - `conclusion=failure`.
 
-### macOS fallback
+### macOS hosted fallback
 
 Stage 09 workflow yalnız platformdan bağımsız `net10.0` Core/Rendering testlerini çalıştırmak üzere `macos-26-arm64` hosted runner'a taşındı.
 
-Güncel validation request:
+Güncel source/test validation request:
 
 - Run `32783883913` / #7.
 - Job `97611597376`.
-- Head: `6215f9fbd77028273262bc5b95fd3eece19191d3`.
+- Source/test head: `6215f9fbd77028273262bc5b95fd3eece19191d3`.
 - Son gözlem: `queued`, henüz runner/adım yok.
 
 Bu run gerçek T0/T1 sonucu üretmeden AŞAMA 09 kapatılmayacaktır.
 
+### Configured self-hosted runner probe
+
+Repo içinde daha önce tanımlanmış `[self-hosted, windows, android-test, mobil-dwg]` etiketli runner için geçici Stage 09 probe çalıştırıldı.
+
+- PR run `32784140351` / #3.
+- Job `97612382891`.
+- Son gözlem: `queued`, `steps=null`; uygun çevrimiçi runner atanmadı.
+- Probe workflow PR'dan tekrar silindi; production veya kalıcı CI yüzeyine eklenmedi.
+- Bu probe PASS değildir ve fiziksel Android cihaz kanıtı değildir.
+
 ### Container fallback
 
-Mevcut execution container'ında `dotnet` kurulu değildir. Exact repo pin'i `.NET SDK 10.0.400` dışarıdan kurulmaya çalışıldığında execution container network/DNS erişimi olmadığından indirme yapılamadı. Bu nedenle farklı SDK ile sahte yerel PASS üretilmedi.
+Mevcut execution container'ında `dotnet` kurulu değildir. Exact repo pin'i `.NET SDK 10.0.400` için resmi Microsoft download hattı doğrulandı; ancak container'ın dış indirme/network kısıtı nedeniyle SDK payload'ı alınamadı. Bu nedenle farklı SDK ile sahte yerel PASS üretilmedi.
 
 ## Beklenen T0/T1 marker'ları
 
