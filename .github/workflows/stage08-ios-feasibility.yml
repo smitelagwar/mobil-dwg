@@ -79,7 +79,7 @@ jobs:
           xcodebuild -version
           xcrun simctl list runtimes
 
-      - name: Run iOS Release and simulator feasibility gate
+      - name: Run iOS Release, trimming, and NativeAOT feasibility gate
         shell: bash
         run: bash scripts/stage08-ios-feasibility.sh "$RUNNER_TEMP/stage08-ios"
 
@@ -94,9 +94,14 @@ jobs:
             ${{ runner.temp }}/stage08-ios/workloads.txt
             ${{ runner.temp }}/stage08-ios/restore.log
             ${{ runner.temp }}/stage08-ios/package-graph.txt
-            ${{ runner.temp }}/stage08-ios/ios-release-build.log
+            ${{ runner.temp }}/stage08-ios/ios-release-baseline-build.log
+            ${{ runner.temp }}/stage08-ios/ios-simulator-baseline.log
+            ${{ runner.temp }}/stage08-ios/ios-release-trim-build.log
+            ${{ runner.temp }}/stage08-ios/ios-simulator-trimmed.log
+            ${{ runner.temp }}/stage08-ios/ios-nativeaot-publish.log
+            ${{ runner.temp }}/stage08-ios/ios-simulator-nativeaot.log
             ${{ runner.temp }}/stage08-ios/app-executable-file.txt
             ${{ runner.temp }}/stage08-ios/trimmer-warnings.txt
             ${{ runner.temp }}/stage08-ios/reflection-warnings.txt
             ${{ runner.temp }}/stage08-ios/font-warnings.txt
-            ${{ runner.temp }}/stage08-ios/ios-simulator.log
+            ${{ runner.temp }}/stage08-ios/aot-warnings.txt
