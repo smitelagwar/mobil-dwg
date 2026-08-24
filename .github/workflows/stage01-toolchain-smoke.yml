@@ -42,12 +42,14 @@ jobs:
 
       - name: Set up Android SDK
         uses: android-actions/setup-android@v3
+        with:
+          cmdline-tools-version: 15859902
 
       - name: Install pinned Android SDK packages
         shell: bash
         run: |
           yes | sdkmanager --licenses >/dev/null || true
-          sdkmanager "platforms;android-36" "build-tools;36.0.0" "platform-tools"
+          sdkmanager --channel=0 "platforms;android-36" "build-tools;36.0.0" "platform-tools"
 
       - name: Verify host toolchain
         shell: bash
@@ -58,7 +60,7 @@ jobs:
           java -version 2>&1 | tee /tmp/java-version.txt
           grep -F '21.0.12' /tmp/java-version.txt
           adb version | tee /tmp/adb-version.txt
-          grep -F 'Version 37.0.0' /tmp/adb-version.txt
+          grep -F 'Version 37.0.1' /tmp/adb-version.txt
           test -f "$ANDROID_SDK_ROOT/platforms/android-36/android.jar"
           test -d "$ANDROID_SDK_ROOT/build-tools/36.0.0"
 
