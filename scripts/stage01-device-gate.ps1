@@ -27,6 +27,9 @@ $Workloads = (& dotnet workload list | Out-String)
 if ($LASTEXITCODE -ne 0 -or $Workloads -notmatch '(?m)^maui-android\s') {
     Fail 'maui-android workload is not installed'
 }
+if ($Workloads -notmatch '10\.0\.400') {
+    Fail 'maui-android is not resolved from workload set 10.0.400'
+}
 
 $JavaVersion = (& java -version 2>&1 | Out-String)
 if ($LASTEXITCODE -ne 0 -or $JavaVersion -notmatch '21\.0\.12') {
@@ -150,6 +153,7 @@ try {
     Write-Host ''
     Write-Host 'STAGE01_DEVICE_GATE_PASS'
     Write-Host "dotnet=$DotnetVersion"
+    Write-Host 'workload_set=10.0.400'
     Write-Host 'java=21.0.12'
     Write-Host 'adb=37.0.1'
     Write-Host 'android_sdk=36'
