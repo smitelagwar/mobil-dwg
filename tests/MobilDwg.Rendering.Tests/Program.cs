@@ -76,10 +76,23 @@ Assert(!sceneA.Diagnostics.HasErrors, "synthetic scene should have no error diag
 Assert(snapshotA.Contains("diagnostic=Unsupported|UNSUPPORTED_PROXY|E-002", StringComparison.Ordinal), "unsupported diagnostic snapshot");
 Assert(snapshotA.Contains("diagnostic=Substituted|STYLE_FALLBACK|E-001", StringComparison.Ordinal), "substitution diagnostic snapshot");
 
+var diagnosticBuilder = new RenderSceneAssembler();
+diagnosticBuilder.AddDiagnostic(new SceneDiagnostic(SceneDiagnosticKind.Unsupported, "U", "unsupported"));
+diagnosticBuilder.AddDiagnostic(new SceneDiagnostic(SceneDiagnosticKind.Substituted, "S", "substituted"));
+diagnosticBuilder.AddDiagnostic(new SceneDiagnostic(SceneDiagnosticKind.Dropped, "D", "dropped"));
+diagnosticBuilder.AddDiagnostic(new SceneDiagnostic(SceneDiagnosticKind.Error, "E", "error"));
+var diagnosticScene = diagnosticBuilder.Build();
+Assert(diagnosticScene.Diagnostics.Count(SceneDiagnosticKind.Unsupported) == 1, "unsupported taxonomy");
+Assert(diagnosticScene.Diagnostics.Count(SceneDiagnosticKind.Substituted) == 1, "substituted taxonomy");
+Assert(diagnosticScene.Diagnostics.Count(SceneDiagnosticKind.Dropped) == 1, "dropped taxonomy");
+Assert(diagnosticScene.Diagnostics.Count(SceneDiagnosticKind.Error) == 1, "error taxonomy");
+Assert(diagnosticScene.Diagnostics.HasErrors, "error diagnostic must set HasErrors");
+
 var duplicateBuilder = new RenderSceneAssembler();
 duplicateBuilder.AddEntity(CreateEntity("DUP", 0, 0, 1, 1));
 AssertThrows<InvalidOperationException>(() => duplicateBuilder.AddEntity(CreateEntity("DUP", 1, 1, 2, 2)), "duplicate stable ID must fail");
 
+Console.WriteLine("STAGE04_RENDER_CONTRACT_TESTS_PASS");
 Console.WriteLine("STAGE09_RENDER_SCENE_TESTS_PASS");
 Console.WriteLine(snapshotA);
 
