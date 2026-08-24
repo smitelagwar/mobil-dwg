@@ -15,17 +15,8 @@ public static class Application
 [Register("AppDelegate")]
 public sealed class AppDelegate : UIApplicationDelegate
 {
-    private UIWindow? _window;
-
     public override bool FinishedLaunching(UIApplication application, NSDictionary? launchOptions)
     {
-        _window = new UIWindow(UIScreen.MainScreen.Bounds)
-        {
-            RootViewController = new UIViewController(),
-        };
-        _window.RootViewController.View!.BackgroundColor = UIColor.SystemBackground;
-        _window.MakeKeyAndVisible();
-
         _ = Task.Run(RunProbe);
         return true;
     }
