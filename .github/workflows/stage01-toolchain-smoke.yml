@@ -7,6 +7,8 @@ on:
     paths:
       - global.json
       - .github/workflows/stage01-toolchain-smoke.yml
+  pull_request:
+    branches: [main]
 
 permissions:
   contents: read
