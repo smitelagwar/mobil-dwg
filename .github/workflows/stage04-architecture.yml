@@ -30,7 +30,7 @@ permissions:
 jobs:
   architecture:
     runs-on: ubuntu-latest
-    timeout-minutes: 10
+    timeout-minutes: 15
 
     steps:
       - name: Checkout
@@ -40,6 +40,16 @@ jobs:
         uses: actions/setup-dotnet@v5
         with:
           dotnet-version: 10.0.400
+
+      - name: Install pinned workload set required by global.json
+        shell: bash
+        run: |
+          set -euxo pipefail
+          test "$(dotnet --version)" = "10.0.400"
+          dotnet workload install maui-android
+          dotnet workload list | tee /tmp/stage04-workloads.txt
+          grep -F '10.0.400' /tmp/stage04-workloads.txt
+          grep -F 'maui-android' /tmp/stage04-workloads.txt
 
       - name: Validate Stage 04 test script
         shell: bash
