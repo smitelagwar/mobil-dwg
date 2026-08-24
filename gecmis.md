@@ -9,7 +9,7 @@ Sıra değişmez:
 1. `gecmis.md` — nerede kaldık, ne yapıldı, neden yapıldı.
 2. `Mobil_DWG_DXF_Royalty_Free_Android_iOS_Nihai_Plan.md` — tek yetkili uygulama/yürütme planı ve checkpoint.
 3. `docs/EXECUTION_LOG.md` — komut, test, revision ve teknik kanıt geçmişi.
-4. `docs/TOOLCHAIN.md` — pinlenmiş .NET/MAUI/Android geliştirme zinciri.
+4. `docs/TOOLCHAIN.md` — pinlenmiş .NET/MAUI/Android geliştirme zinciri ve cihaz gate runbook'u.
 5. `docs/evidence/` — aşama bazlı gerçek kanıt ve blocker kayıtları.
 6. Gerekirse `docs/ADR/` — mimari/teknoloji kararlarının gerekçeleri.
 7. Diğer `*_oneriler.md`, `Master_Plan.md` ve benzeri dosyalar yalnız araştırma/önceki görüş kaynağıdır; nihai planla çelişirse nihai plan geçerlidir.
@@ -29,9 +29,9 @@ Sıra değişmez:
 CURRENT_STAGE: AŞAMA 01
 STATUS: BLOCKED
 NEXT_STAGE: AŞAMA 01 içinde devam
-NEXT_ACTION: Gerçek geliştirme makinesinde pinlenmiş toolchain'i doğrula; fiziksel Android cihazı bağla; adb devices=device kanıtını al; smoke uygulamasını install edip launch et; iOS erişim envanterini tamamla.
+NEXT_ACTION: Gerçek geliştirme makinesinde repo kökünden scripts/stage01-device-gate.ps1 veya scripts/stage01-device-gate.sh çalıştır; STAGE01_DEVICE_GATE_PASS kanıtını al; ardından Mac/Xcode/iPhone/Apple Developer erişim envanterini tamamla.
 BLOCKERS: Bu sohbet oturumunda gerçek geliştirme makinesi ve fiziksel Android telefona USB/ADB erişimi yok; Mac/Xcode/iPhone/Apple Developer erişimi de doğrulanmadı.
-LAST_VERIFIED_CI: GitHub Actions run 32737334339 SUCCESS; merge 83379b24e4ba87f04299f612ae2951ae8d8aec13
+LAST_VERIFIED_CI: GitHub Actions run 32739952628 SUCCESS; artifact 9524964656 sha256:cfd2221a9a31193c76b4347f633ec062d54abca5117edea887bc46a0926f6d0f; PR #2 merge 9b375af9931a3db23f82e9b983257f29030a7376
 LAST_UPDATE: 2026-08-24
 ```
 
@@ -126,7 +126,7 @@ Eski plan içindeki 24.08.2026 “yerel ortam fotoğrafı” ile bu konteyner ar
 
 ## 2026-08-24 — AŞAMA 01’de ne yapıldı?
 
-AŞAMA 01'in canlı doğrulama, repo pinleme ve fiziksel cihazdan bağımsız CI build kısmı tamamlandı. Nihai gerçek telefon çıkış kapısı tamamlanamadı.
+AŞAMA 01'in canlı doğrulama, repo pinleme, fiziksel cihazdan bağımsız CI build ve gerçek cihaz gate otomasyonu tamamlandı. Nihai gerçek telefon çıkış kapısı tamamlanamadı.
 
 ### Canlı doğrulanan baseline
 
@@ -147,10 +147,12 @@ AŞAMA 01'in canlı doğrulama, repo pinleme ve fiziksel cihazdan bağımsız CI
 ### Repo değişiklikleri
 
 - `global.json`: exact `.NET SDK 10.0.400` + workload set `10.0.400`, `rollForward=disable`, prerelease kapalı.
-- `docs/TOOLCHAIN.md`: exact toolchain, Android policy seçimi, doğrulama komutları ve cihaz kapısı.
+- `docs/TOOLCHAIN.md`: exact toolchain, Android policy seçimi, doğrulama komutları ve fiziksel cihaz gate runbook'u.
 - `docs/evidence/STAGE_01.md`: tamamlanan doğrulamalar ile eksik gerçek cihaz kanıtlarının ayrımı.
 - `docs/EXECUTION_LOG.md`: AŞAMA 01 teknik logu.
-- `.github/workflows/stage01-toolchain-smoke.yml`: temiz runner üzerinde exact toolchain + Debug/Release + manifest/API gate.
+- `.github/workflows/stage01-toolchain-smoke.yml`: temiz runner üzerinde exact toolchain + Debug/Release + manifest/API/package gate ve device-script syntax kontrolü.
+- `scripts/stage01-device-gate.sh`: Bash gerçek fiziksel cihaz gate'i.
+- `scripts/stage01-device-gate.ps1`: Windows/PowerShell gerçek fiziksel cihaz gate'i.
 
 ### AŞAMA 01 ana commitleri
 
@@ -163,10 +165,14 @@ AŞAMA 01'in canlı doğrulama, repo pinleme ve fiziksel cihazdan bağımsız CI
 - `4430542558f7f3751cd62f224497e400c1e80415` — Android minimum API 24 pin.
 - `49c3e3f2f855c1f7f1cf945049cc5d93805e7003` — exact JDK indirme retry hardening.
 - `83379b24e4ba87f04299f612ae2951ae8d8aec13` — PR #1 final CI workflow merge commit.
+- `c89dd380df75dffdc2857e52d36dc7cd416e813f` / `11dd1cbcb063b50d377ecf512556847c71a8b354` — ilk Bash/PowerShell physical-device gate scriptleri.
+- `449f1c4a1cd0dc3e44ede5dd271b6b4a1f1df61f` — CI'da device-gate syntax kontrolü + pinned smoke ApplicationId.
+- `9e2c0f71153ca0db936c19a10d2f53dc38cca7ec` — PR #2 final head; device gate exact workload-set kontrolü.
+- `9b375af9931a3db23f82e9b983257f29030a7376` — PR #2 physical-device gate automation merge commit.
 
 ### GitHub Actions kanıtı
 
-Final başarılı koşu:
+İlk final başarılı build koşusu:
 
 - Workflow: `Stage 01 Toolchain Smoke`
 - Run: `32737334339` / #9
@@ -175,14 +181,44 @@ Final başarılı koşu:
 - Microsoft OpenJDK `21.0.12`; resmi artifact SHA-256 doğrulaması PASS.
 - Android API 36 + Build-Tools `36.0.0` + Platform-Tools/ADB `37.0.1-15733141` PASS.
 - `maui-android` workload version `10.0.400` PASS.
-- MAUI workload manifest `10.0.20/10.0.100`; Microsoft.NET.Sdk.Android manifest `36.1.69`.
 - Smoke project Android `SupportedOSPlatformVersion=24.0`.
 - Debug build: 0 warning, 0 error.
 - Release build: 0 warning, 0 error.
 - Generated manifest: `minSdkVersion=24`, `targetSdkVersion=36`.
 - APK artifact ID `9523977201`; size `57,601,187` bytes; ZIP SHA-256 `3fd12ffe750352e9ace5532eaffa8f1cd6619da449bddeb05efb5acfc91dcd41`.
 
+Güncel device-gate dahil final CI koşusu:
+
+- Workflow: `Stage 01 Toolchain Smoke`.
+- Run: `32739952628` / #17.
+- Sonuç: `SUCCESS`.
+- Bash + PowerShell gate parse kontrolü PASS.
+- .NET SDK `10.0.400`, JDK `21.0.12`, Platform-Tools `37.0.1`, Android API 36, Build-Tools `36.0.0`, `maui-android` workload PASS.
+- Smoke `ApplicationId`: `com.smitelagwar.mobildwg.stage01smoke`.
+- Debug build PASS.
+- Release build PASS.
+- Manifest API/package gate PASS.
+- Artifact ID `9524964656`; size `57,817,776` bytes; SHA-256 `cfd2221a9a31193c76b4347f633ec062d54abca5117edea887bc46a0926f6d0f`.
+
 Önemli bulgu: temiz .NET MAUI 10 şablonu Android minimumunu API 21 üretir. Projenin API 24 kararı bu nedenle `.csproj` seviyesinde açıkça pinlenmelidir; yalnız template varsayımına güvenilmez.
+
+### Fiziksel cihaz gate'i nasıl kapanacak?
+
+Gerçek geliştirme makinesinde repo kökünden işletim sistemine uygun script çalıştırılır:
+
+```powershell
+.\scripts\stage01-device-gate.ps1
+```
+
+veya:
+
+```bash
+bash scripts/stage01-device-gate.sh
+```
+
+Script exact SDK/workload/JDK/ADB/Android SDK baseline'ını, fiziksel `state=device` hedefini, emülatör dışlamasını, temiz MAUI Debug+Release build'i, manifest 24/36'yı, APK install ve launcher `Status: ok` sonucunu doğrular. Birden çok cihaz varsa `ANDROID_SERIAL` zorunlu açık seçimdir. Kanıt özetinde tam ADB seri numarası yazılmaz.
+
+AŞAMA 01 Android device kapısı ancak çıktı `STAGE01_DEVICE_GATE_PASS` içerirse kapanabilir. CI script parse/build entegrasyonu bu gerçek cihaz sonucunun yerine geçmez.
 
 ### Bu sohbet konteynerindeki eski yerel deneme
 
@@ -190,14 +226,12 @@ ChatGPT çalışma konteynerinde `dotnet` ve `adb` yoktu; Java `21.0.11` vardı.
 
 ### AŞAMA 01 neden hâlâ BLOCKED?
 
-Nihai plan AŞAMA 01 çıkışı için gerçek telefonda boş MAUI uygulamasının çalışmasını ister. CI fiziksel cihazı ikame etmez. Bu sohbet oturumunda kullanıcının gerçek geliştirme bilgisayarına veya fiziksel Android telefona USB/ADB erişimi yoktur.
+Nihai plan AŞAMA 01 çıkışı için gerçek telefonda boş MAUI uygulamasının çalışmasını ister. CI ve cihaz-gate otomasyonu fiziksel cihazı ikame etmez. Bu sohbet oturumunda kullanıcının gerçek geliştirme bilgisayarına veya fiziksel Android telefona USB/ADB erişimi yoktur.
 
 Hâlâ eksik kanıtlar:
 
-- Kullanıcının gerçek geliştirme makinesinde pinlenmiş toolchain'in yerel doğrulaması.
-- `adb devices` fiziksel cihaz `device` kaydı.
-- Fiziksel cihaz install.
-- Fiziksel cihaz launch.
+- Kullanıcının gerçek geliştirme makinesinde `STAGE01_DEVICE_GATE_PASS`.
+- Fiziksel Android cihaz `device` kaydı, install ve launch — gate PASS çıktısının parçası.
 - Mac/Xcode/iPhone/Apple Developer erişim envanteri.
 
 Bu kanıtlar olmadan AŞAMA 01 `DONE` yazılmaz ve AŞAMA 02 başlatılmaz.
@@ -234,4 +268,4 @@ Bir sonraki ajan veya sohbet şu şekilde devam etmelidir:
 
 ## Bir sonraki tur
 
-AŞAMA 01'de devam edilecek. CI/toolchain/build/API kapısı artık PASS'tir. Gerçek geliştirme makinesinde exact baseline yerel olarak doğrulanmalı; fiziksel Android cihaz `adb devices` ile `device` görünmeli; smoke app install/launch edilmelidir. iOS erişimi yalnız envanterlenmelidir. Bu dış erişim sağlanmadan AŞAMA 01 tamamlanmış sayılmaz.
+AŞAMA 01'de devam edilecek. CI/toolchain/build/API/device-script kapısı PASS'tir; fiziksel telefon kapısı değildir. Gerçek geliştirme makinesinde platforma uygun `scripts/stage01-device-gate.*` çalıştırılıp `STAGE01_DEVICE_GATE_PASS` kaydedilmelidir. Ardından iOS erişimi yalnız envanterlenmelidir. Bu dış erişim sağlanmadan AŞAMA 01 tamamlanmış sayılmaz.
