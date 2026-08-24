@@ -29,8 +29,9 @@ Sıra değişmez:
 CURRENT_STAGE: AŞAMA 01
 STATUS: BLOCKED
 NEXT_STAGE: AŞAMA 01 içinde devam
-NEXT_ACTION: Gerçek geliştirme makinesinde pinlenmiş .NET/MAUI/JDK/Android toolchain'i kur; boş MAUI uygulamasını Debug+Release build et; fiziksel Android cihazda adb install/launch kanıtını kaydet.
-BLOCKERS: Bu sohbet oturumunda gerçek geliştirme makinesi ve fiziksel Android telefona USB/ADB erişimi yok; Mac/Xcode/iPhone/Apple hesap erişimi de doğrulanmadı.
+NEXT_ACTION: Gerçek geliştirme makinesinde pinlenmiş toolchain'i doğrula; fiziksel Android cihazı bağla; adb devices=device kanıtını al; smoke uygulamasını install edip launch et; iOS erişim envanterini tamamla.
+BLOCKERS: Bu sohbet oturumunda gerçek geliştirme makinesi ve fiziksel Android telefona USB/ADB erişimi yok; Mac/Xcode/iPhone/Apple Developer erişimi de doğrulanmadı.
+LAST_VERIFIED_CI: GitHub Actions run 32737334339 SUCCESS; merge 83379b24e4ba87f04299f612ae2951ae8d8aec13
 LAST_UPDATE: 2026-08-24
 ```
 
@@ -125,7 +126,7 @@ Eski plan içindeki 24.08.2026 “yerel ortam fotoğrafı” ile bu konteyner ar
 
 ## 2026-08-24 — AŞAMA 01’de ne yapıldı?
 
-AŞAMA 01'in canlı doğrulama ve repo pinleme kısmı tamamlandı; gerçek geliştirme makinesi/fiziksel cihaz gerektiren çıkış kapısı tamamlanamadı.
+AŞAMA 01'in canlı doğrulama, repo pinleme ve fiziksel cihazdan bağımsız CI build kısmı tamamlandı. Nihai gerçek telefon çıkış kapısı tamamlanamadı.
 
 ### Canlı doğrulanan baseline
 
@@ -135,12 +136,11 @@ AŞAMA 01'in canlı doğrulama ve repo pinleme kısmı tamamlandı; gerçek geli
 - Workload set: `10.0.400`.
 - Android-first MAUI workload: `maui-android`.
 - JDK: Microsoft Build of OpenJDK `21.0.12` LTS.
-- Android minimum: API `24`.
+- Android minimum: API `24` — proje explicit pin; temiz MAUI 10 template varsayılanı API 21.
 - Android compile/target: API `36`.
 - Android SDK Platform 36: revision `1`.
 - Android Build-Tools: `36.0.0`.
-- Android Platform-Tools: `37.0.0` stable.
-- Platform-Tools `37.0.1` yalnız Canary olduğundan production baseline'a alınmadı.
+- Android Platform-Tools: `37.0.1` stable.
 - Android command-line tools stable bootstrap build ID: `15859902`.
 - Google Play yeni app/update target API 36 zorunluluğu: `2026-08-31`.
 
@@ -150,30 +150,55 @@ AŞAMA 01'in canlı doğrulama ve repo pinleme kısmı tamamlandı; gerçek geli
 - `docs/TOOLCHAIN.md`: exact toolchain, Android policy seçimi, doğrulama komutları ve cihaz kapısı.
 - `docs/evidence/STAGE_01.md`: tamamlanan doğrulamalar ile eksik gerçek cihaz kanıtlarının ayrımı.
 - `docs/EXECUTION_LOG.md`: AŞAMA 01 teknik logu.
+- `.github/workflows/stage01-toolchain-smoke.yml`: temiz runner üzerinde exact toolchain + Debug/Release + manifest/API gate.
 
-### AŞAMA 01 commitleri
+### AŞAMA 01 ana commitleri
 
 - `15d69e6b5b9e0c20f5ef7b0a742ac25ce5cc9071` — `build: pin .NET 10.0.400 toolchain`
 - `467a2fe69366bfc640400d4b2ccbd97309b09189` — `docs: record stage 01 toolchain baseline`
 - `658345321d1a76f7f3a9f6e6958e62a6868415a0` — `docs: add stage 01 evidence and blocker`
 - `a99ba8d26047598a1b593f864e14769da0980dda` — `docs: log stage 01 toolchain verification`
+- `549254b751c87155af5bf5e40cd609d3fe57b710` — Platform-Tools stable baseline düzeltmesi.
+- `075ce5268f3cc3272be0f349f67e6f0237a261a3` — deterministik manifest doğrulaması.
+- `4430542558f7f3751cd62f224497e400c1e80415` — Android minimum API 24 pin.
+- `49c3e3f2f855c1f7f1cf945049cc5d93805e7003` — exact JDK indirme retry hardening.
+- `83379b24e4ba87f04299f612ae2951ae8d8aec13` — PR #1 final CI workflow merge commit.
 
-### Bu oturumdaki kurulum denemesi
+### GitHub Actions kanıtı
 
-ChatGPT çalışma konteynerinde `dotnet` ve `adb` yoktu; Java `21.0.11` vardı. Resmi .NET 10.0.400 Linux x64 binary URL'si web üzerinden doğrulandı ve indirme/kurulum denenmek istendi. Konteyner dış DNS erişimi kapalı olduğu için işlem `Could not resolve host: builds.dotnet.microsoft.com` ile başarısız oldu. Bu ürün veya .NET uyumsuzluğu sayılmaz; konteyner ağ kısıtıdır.
+Final başarılı koşu:
 
-### AŞAMA 01 neden BLOCKED?
+- Workflow: `Stage 01 Toolchain Smoke`
+- Run: `32737334339` / #9
+- Sonuç: `SUCCESS`
+- .NET SDK `10.0.400`, runtime `10.0.11`.
+- Microsoft OpenJDK `21.0.12`; resmi artifact SHA-256 doğrulaması PASS.
+- Android API 36 + Build-Tools `36.0.0` + Platform-Tools/ADB `37.0.1-15733141` PASS.
+- `maui-android` workload version `10.0.400` PASS.
+- MAUI workload manifest `10.0.20/10.0.100`; Microsoft.NET.Sdk.Android manifest `36.1.69`.
+- Smoke project Android `SupportedOSPlatformVersion=24.0`.
+- Debug build: 0 warning, 0 error.
+- Release build: 0 warning, 0 error.
+- Generated manifest: `minSdkVersion=24`, `targetSdkVersion=36`.
+- APK artifact ID `9523977201`; size `57,601,187` bytes; ZIP SHA-256 `3fd12ffe750352e9ace5532eaffa8f1cd6619da449bddeb05efb5acfc91dcd41`.
 
-Nihai plan AŞAMA 01 çıkışı için gerçek telefonda boş MAUI uygulamasının çalışmasını ister. Bu sohbet oturumunda kullanıcının gerçek geliştirme bilgisayarına veya fiziksel Android telefona USB/ADB erişimi yoktur. Şu kanıtlar eksiktir:
+Önemli bulgu: temiz .NET MAUI 10 şablonu Android minimumunu API 21 üretir. Projenin API 24 kararı bu nedenle `.csproj` seviyesinde açıkça pinlenmelidir; yalnız template varsayımına güvenilmez.
 
-- .NET 10.0.400 gerçek host kurulumu ve `dotnet --info`.
-- `maui-android` workload `10.0.400` kurulumu.
-- Microsoft OpenJDK 21.0.12 + `JAVA_HOME`.
-- Android API 36 + Build-Tools 36.0.0 + Platform-Tools 37.0.0.
-- Temiz MAUI Debug ve Release build.
+### Bu sohbet konteynerindeki eski yerel deneme
+
+ChatGPT çalışma konteynerinde `dotnet` ve `adb` yoktu; Java `21.0.11` vardı. Resmi .NET 10.0.400 Linux x64 binary indirme denemesi konteyner dış DNS erişimi kapalı olduğu için `Could not resolve host: builds.dotnet.microsoft.com` ile başarısız olmuştu. Bu ürün/toolchain uyumsuzluğu değildir ve GitHub Actions PASS kanıtını geçersiz kılmaz.
+
+### AŞAMA 01 neden hâlâ BLOCKED?
+
+Nihai plan AŞAMA 01 çıkışı için gerçek telefonda boş MAUI uygulamasının çalışmasını ister. CI fiziksel cihazı ikame etmez. Bu sohbet oturumunda kullanıcının gerçek geliştirme bilgisayarına veya fiziksel Android telefona USB/ADB erişimi yoktur.
+
+Hâlâ eksik kanıtlar:
+
+- Kullanıcının gerçek geliştirme makinesinde pinlenmiş toolchain'in yerel doğrulaması.
 - `adb devices` fiziksel cihaz `device` kaydı.
-- Fiziksel cihaz install/launch.
-- Mac/Xcode/iPhone/Apple hesap erişimi envanteri.
+- Fiziksel cihaz install.
+- Fiziksel cihaz launch.
+- Mac/Xcode/iPhone/Apple Developer erişim envanteri.
 
 Bu kanıtlar olmadan AŞAMA 01 `DONE` yazılmaz ve AŞAMA 02 başlatılmaz.
 
@@ -209,4 +234,4 @@ Bir sonraki ajan veya sohbet şu şekilde devam etmelidir:
 
 ## Bir sonraki tur
 
-AŞAMA 01'de devam edilecek. `docs/TOOLCHAIN.md` içindeki exact baseline gerçek geliştirme makinesinde kurulmalı; ardından temiz MAUI smoke app Debug/Release build ve fiziksel Android cihaz `adb` install/launch kanıtı alınmalıdır. Bu dış erişim sağlanmadan AŞAMA 01 tamamlanmış sayılmaz.
+AŞAMA 01'de devam edilecek. CI/toolchain/build/API kapısı artık PASS'tir. Gerçek geliştirme makinesinde exact baseline yerel olarak doğrulanmalı; fiziksel Android cihaz `adb devices` ile `device` görünmeli; smoke app install/launch edilmelidir. iOS erişimi yalnız envanterlenmelidir. Bu dış erişim sağlanmadan AŞAMA 01 tamamlanmış sayılmaz.
