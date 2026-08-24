@@ -39,7 +39,10 @@ SDK_ROOT="${ANDROID_SDK_ROOT:-${ANDROID_HOME:-}}"
 
 adb start-server >/dev/null
 
-mapfile -t DEVICE_SERIALS < <(adb devices | awk 'NR > 1 && $2 == "device" { print $1 }')
+DEVICE_SERIALS=()
+while IFS= read -r candidate; do
+  [[ -n "$candidate" ]] && DEVICE_SERIALS[${#DEVICE_SERIALS[@]}]="$candidate"
+done < <(adb devices | awk 'NR > 1 && $2 == "device" { print $1 }')
 
 if [[ -n "${ANDROID_SERIAL:-}" ]]; then
   SERIAL="$ANDROID_SERIAL"
