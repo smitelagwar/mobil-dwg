@@ -4,5 +4,6 @@
   </PropertyGroup>
   <ItemGroup>
     <ProjectReference Include="../MobilDwg.Core/MobilDwg.Core.csproj" />
+    <PackageReference Include="ACadSharp" />
   </ItemGroup>
 </Project>
