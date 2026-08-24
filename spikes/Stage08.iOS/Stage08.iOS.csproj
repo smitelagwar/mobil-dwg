@@ -9,8 +9,6 @@
     <ApplicationDisplayVersion>1.0</ApplicationDisplayVersion>
     <ApplicationVersion>1</ApplicationVersion>
     <SupportedOSPlatformVersion>18.2</SupportedOSPlatformVersion>
-    <PublishTrimmed>true</PublishTrimmed>
-    <TrimMode>partial</TrimMode>
   </PropertyGroup>
 
   <ItemGroup>
