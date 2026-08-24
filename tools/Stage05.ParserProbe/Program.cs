@@ -86,43 +86,60 @@ foreach (var derived in root.GetProperty("negative_derivations").EnumerateArray(
     var path = Path.Combine(cacheRoot, "derived-negative", $"{id}.dwg");
     var expectedResult = derived.GetProperty("expected").GetProperty("open_result").GetString() ?? string.Empty;
 
+    CadDocumentSession? session = null;
+    Exception? parseException = null;
     try
     {
         await using var stream = File.Open(path, FileMode.Open, FileAccess.Read, FileShare.Read);
-        await using var session = await reader.OpenAsync(new CadOpenRequest(stream, Path.GetFileName(path), stream.Length, LeaveOpen: true));
-        var categories = GetCategories(session);
-        var hasWarning = session.Diagnostics.Any(d => d.Severity is DiagnosticSeverity.Warning or DiagnosticSeverity.Error)
-            || session.CompatibilityIssues.Count > 0;
-
-        if (expectedResult == "controlled-failure")
-        {
-            throw new InvalidOperationException($"{id}: parser unexpectedly succeeded; controlled failure required");
-        }
-
-        Assert(expectedResult == "controlled-failure-or-warning",
-            $"{id}: unsupported expected result {expectedResult}");
-        Assert(hasWarning,
-            $"{id}: parser succeeded without any warning/compatibility signal on corrupted input");
-
-        derivedEvidence.Add(new
-        {
-            id,
-            status = "controlled-warning",
-            diagnosticSummary = session.Diagnostics.GroupBy(d => d.Severity.ToString()).ToDictionary(g => g.Key, g => g.Count()),
-            categories = categories.Order().ToArray(),
-        });
-        Console.WriteLine($"STAGE05_NEGATIVE_PASS id={id} outcome=warning");
-    }
-    catch (Exception ex) when (ex is not InvalidOperationException || !ex.Message.Contains("unexpectedly succeeded", StringComparison.Ordinal))
-    {
-        derivedEvidence.Add(new { id, status = "controlled-failure", exception = ex.GetType().FullName, message = ex.Message });
-        Console.WriteLine($"STAGE05_NEGATIVE_PASS id={id} outcome=failure type={ex.GetType().Name}");
+        session = await reader.OpenAsync(new CadOpenRequest(stream, Path.GetFileName(path), stream.Length, LeaveOpen: true));
     }
     catch (Exception ex)
     {
-        failures.Add($"{id}: {ex.GetType().Name}: {ex.Message}");
-        derivedEvidence.Add(new { id, status = "failure", exception = ex.GetType().FullName, message = ex.Message });
-        Console.Error.WriteLine($"STAGE05_NEGATIVE_FAIL id={id} type={ex.GetType().Name} message={ex.Message}");
+        parseException = ex;
+    }
+
+    if (parseException is not null)
+    {
+        derivedEvidence.Add(new { id, status = "controlled-failure", exception = parseException.GetType().FullName, message = parseException.Message });
+        Console.WriteLine($"STAGE05_NEGATIVE_PASS id={id} outcome=failure type={parseException.GetType().Name}");
+        continue;
+    }
+
+    if (session is null)
+    {
+        failures.Add($"{id}: parser returned neither session nor exception");
+        derivedEvidence.Add(new { id, status = "failure", message = "parser returned neither session nor exception" });
+        continue;
+    }
+
+    await using (session)
+    {
+        try
+        {
+            var categories = GetCategories(session);
+            var hasWarning = session.Diagnostics.Any(d => d.Severity is DiagnosticSeverity.Warning or DiagnosticSeverity.Error)
+                || session.CompatibilityIssues.Count > 0;
+
+            Assert(expectedResult == "controlled-failure-or-warning",
+                $"{id}: parser unexpectedly succeeded; expected {expectedResult}");
+            Assert(hasWarning,
+                $"{id}: parser succeeded without any warning/compatibility signal on corrupted input");
+
+            derivedEvidence.Add(new
+            {
+                id,
+                status = "controlled-warning",
+                diagnosticSummary = session.Diagnostics.GroupBy(d => d.Severity.ToString()).ToDictionary(g => g.Key, g => g.Count()),
+                categories = categories.Order().ToArray(),
+            });
+            Console.WriteLine($"STAGE05_NEGATIVE_PASS id={id} outcome=warning");
+        }
+        catch (Exception ex)
+        {
+            failures.Add($"{id}: {ex.GetType().Name}: {ex.Message}");
+            derivedEvidence.Add(new { id, status = "failure", exception = ex.GetType().FullName, message = ex.Message });
+            Console.Error.WriteLine($"STAGE05_NEGATIVE_FAIL id={id} type={ex.GetType().Name} message={ex.Message}");
+        }
     }
 }
 
