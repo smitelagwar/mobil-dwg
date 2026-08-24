@@ -213,16 +213,45 @@ Doğrulama PR'ı:
 
 Bu CI koşusu fiziksel telefon testini ikame etmez. Scriptlerin parse/build entegrasyonu kanıtlanmıştır; `STAGE01_DEVICE_GATE_PASS` hâlâ gerçek geliştirme makinesi ve fiziksel Android cihaz üzerinde alınmalıdır.
 
+### iOS erişim envanteri standardizasyonu
+
+AŞAMA 01'in iOS maddesi kurulum değil yalnız erişim envanteridir. Sohbetten Mac/Xcode/iPhone/Apple Developer erişimi tahmin edilmemesi için repo içine standart kayıt ve helper eklendi:
+
+- `docs/STAGE_01_IOS_ACCESS_INVENTORY.md`
+- `scripts/stage01-ios-inventory.sh`
+
+Helper yalnız secretsiz özet üretir: macOS/Xcode erişimi, Xcode sürümü, fiziksel iPhone sayısı, code-signing identity sayısı ve kullanıcının manuel Apple Developer `yes/no` teyidi. Apple ID/e-posta, Team ID, UDID/seri, provisioning profile, certificate private key veya token yazmaz. İncelemede `xcode-select -p` developer path çıktısı da kullanıcı yolu içerebilme ihtimali nedeniyle kaldırıldı.
+
+Aynı turda `docs/TOOLCHAIN.md` içindeki eski `dotnet workload install maui-android --version 10.0.400` komutu düzeltildi. Exact workload set'i `global.json` içindeki `workloadVersion: 10.0.400` seçer; CI'da kanıtlanan kurulum komutu `dotnet workload install maui-android`dır.
+
+Doğrulama:
+
+- PR #3: `docs: standardize stage 01 iOS access inventory`.
+- Final head: `3f859b537afcfb7bc792931754bd9714467d84bc`.
+- GitHub Actions run #20 / `32742123997`: `SUCCESS`.
+- Üç Stage 01 helper script syntax gate: `SUCCESS`.
+- Exact Android toolchain/workload regresyonu: `SUCCESS`.
+- Debug build: `SUCCESS`.
+- Release build: `SUCCESS`.
+- Manifest/API/package gate: `SUCCESS`.
+- Artifact upload: `SUCCESS`.
+- Artifact ID: `9525825066`.
+- Artifact size: `57,817,944` bytes.
+- Artifact SHA-256: `bf66fd4c3e7a4b1f6a40ed7c2fd868f298f7087a95f9c29cdfbb8aa82e7f1115`.
+- PR #3 merge commit: `9a397065a55c5844993e6ef909438f44ad5aa1f6`.
+
+Gerçek iOS erişim alanları hâlâ `UNKNOWN`; helper'ın varlığı erişimin var olduğu anlamına gelmez.
+
 ### Eksik zorunlu AŞAMA 01 kanıtları
 
 - Kullanıcının gerçek geliştirme makinesinde pinli toolchain'in yerel doğrulanması.
 - Fiziksel Android cihazın `adb devices` çıktısında `device` olması.
 - Smoke app'in fiziksel telefona install edilmesi.
 - Smoke app'in fiziksel telefonda launch edilmesi.
-- iOS Mac/Xcode/iPhone/Apple Developer erişim envanteri.
+- `docs/STAGE_01_IOS_ACCESS_INVENTORY.md` içindeki Mac/Xcode/iPhone/Apple Developer alanlarının gerçek `YES/NO/N/A` değerleriyle tamamlanması.
 
 Blocker:
 
-- Bu oturumda kullanıcının gerçek geliştirme makinesine ve fiziksel Android cihazına USB/ADB erişimi yok. Nihai plan fiziksel cihaz çalıştırmasını zorunlu tuttuğundan AŞAMA 01 `DONE` sayılamaz ve AŞAMA 02 başlatılamaz.
+- Bu oturumda kullanıcının gerçek geliştirme makinesine ve fiziksel Android cihazına USB/ADB erişimi yok. Gerçek Mac/Xcode/iPhone/Apple Developer erişimi de bilinmiyor. Nihai plan fiziksel Android cihaz çalıştırmasını zorunlu tuttuğundan AŞAMA 01 `DONE` sayılamaz ve AŞAMA 02 başlatılamaz.
 
-Sonraki eylem: Gerçek geliştirme makinesinde repo kökünden `scripts/stage01-device-gate.ps1` veya `scripts/stage01-device-gate.sh` çalıştır; `STAGE01_DEVICE_GATE_PASS` çıktısını kaydet; ardından iOS Mac/Xcode/iPhone/Apple Developer erişim envanterini tamamla ve AŞAMA 01 evidence/checkpoint'i kapat.
+Sonraki eylem: Gerçek geliştirme makinesinde repo kökünden `scripts/stage01-device-gate.ps1` veya `scripts/stage01-device-gate.sh` çalıştır ve `STAGE01_DEVICE_GATE_PASS` çıktısını kaydet. Ardından `docs/STAGE_01_IOS_ACCESS_INVENTORY.md` içindeki erişim alanlarını gerçek bilgiyle kapat; erişilebilir Mac varsa `scripts/stage01-ios-inventory.sh` kullanılabilir. Bu dış kanıtlar tamamlanmadan AŞAMA 02'ye geçme.
