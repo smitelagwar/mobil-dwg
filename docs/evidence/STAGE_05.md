@@ -7,7 +7,10 @@
 - Repo: `smitelagwar/mobil-dwg`
 - Branch: `stage05-acadsharp-parser-spike`
 - Başlangıç main: `27f036d5d240c4ca47dd2fcb94c1e72604ed0f8f`
-- Doğrulanmış implementation head: `09e26172aa8de9e8c79ae64853a493dab1d0e5b9`
+- İlk parser implementation doğrulaması: `09e26172aa8de9e8c79ae64853a493dab1d0e5b9`
+- Doğrulanmış final PR head: `80cdaf49d3ad4298f3b1d56fe1dbac89b352ec7f`
+- PR: `#7` — `stage05: validate ACadSharp headless parser`
+- Main merge commit: `bbe5b62224ae6e7fdaebd1c1c6ace87418f09b9f`
 - Parser: ACadSharp `3.7.1`
 - Ortam: GitHub hosted Ubuntu 24.04, .NET SDK/workload set `10.0.400`
 
@@ -45,19 +48,21 @@
 
 ## Final Stage 05 CI kanıtı
 
-Implementation head `09e26172aa8de9e8c79ae64853a493dab1d0e5b9` üzerinde:
+Final PR head `80cdaf49d3ad4298f3b1d56fe1dbac89b352ec7f` üzerinde:
 
 - Workflow: `Stage 05 Parser Spike`
-- Run: `32759096003` / #8
+- Run: `32760139261` / #15
 - Sonuç: `SUCCESS`
-- Evidence artifact: `9532001644`
-- Artifact digest: `sha256:2750ba88141c5724306bb5811173d958c60836806021f2ff1a5b36b011631097`
+- Evidence artifact: `9532379884`
+- Artifact digest: `sha256:f3b31c937186d874a0ed23c045951d465ace5da8fff2f9acc32006c4352e2f60`
 
-Aynı implementation head regresyonları:
+Aynı final PR head regresyonları:
 
-- `Stage 04 Architecture` run `32759095988` / #11: `SUCCESS`
-- `Stage 02 Dependency Audit` run `32759095944` / #25: `SUCCESS`
-- `Stage 01 Toolchain Smoke` run `32759095888` / #44: `SUCCESS`. Bu CI clean MAUI/toolchain regresyonudur; fiziksel Android cihaz install/launch veya iOS erişim kanıtı değildir.
+- `Stage 04 Architecture` run `32760139230` / #18: `SUCCESS`
+- `Stage 02 Dependency Audit` run `32760139219` / #32: `SUCCESS`
+- `Stage 01 Toolchain Smoke` run `32760139285` / #51: `SUCCESS`. Bu CI clean MAUI/toolchain regresyonudur; fiziksel Android cihaz install/launch veya iOS erişim kanıtı değildir.
+
+PR #7 bu doğrulanmış head üzerinden `main`e merge edildi. Merge commit: `bbe5b62224ae6e7fdaebd1c1c6ace87418f09b9f`.
 
 ## Corpus ölçüm özeti
 
@@ -75,17 +80,17 @@ Upstream ana setin DWG/DXF karşılıklarında gerekli semantic dağılım korun
 
 Layer sayısı AC1015/AC1018 için `21`, AC1024/AC1032 için `19` olarak parse edildi; aynı version familyasının DWG/DXF karşılıkları eşleşiyor.
 
-Tek GitHub hosted runner koşusundaki parse timing tanısaldır, performans garantisi değildir:
+Final PR-head GitHub hosted runner koşusundaki parse timing tanısaldır, performans garantisi değildir:
 
 | Fixture | Parse ms |
 |---|---:|
-| AC1015 DWG | 518.4 |
-| AC1018 DWG | 111.0 |
-| AC1024 DWG | 87.5 |
-| AC1032 DWG | 76.8 |
-| AC1015 ASCII DXF | 532.5 |
-| AC1032 ASCII DXF | 441.8 |
-| Synthetic Turkish/basic DXF | 6.2 |
+| AC1015 DWG | 554.8 |
+| AC1018 DWG | 113.7 |
+| AC1024 DWG | 92.0 |
+| AC1032 DWG | 80.7 |
+| AC1015 ASCII DXF | 554.3 |
+| AC1032 ASCII DXF | 407.7 |
+| Synthetic Turkish/basic DXF | 7.2 |
 
 ## Diagnostics / compatibility bulguları
 
@@ -127,4 +132,4 @@ Kritik corpus parse kaybı görülmediği için bu aşamada ACadSharp sürüm A/
 
 ## Sonraki eylem
 
-AŞAMA 05 PR doğrulanmış head üzerinden `main`e merge edilip canonical checkpoint/gecmis güncellenecek. Bundan sonra ilk bağımsız çalışma aşaması AŞAMA 06'dır; aynı kullanıcı turunda AŞAMA 06 başlatılmaz.
+AŞAMA 05 `DONE` ve PR #7 `main`e merge edilmiştir. İlk bağımsız çalışma aşaması AŞAMA 06 — Android güvenli dosya alma ve parse spike — olacaktır. Bu AŞAMA 05 kapanış turunda AŞAMA 06 başlatılmaz.
