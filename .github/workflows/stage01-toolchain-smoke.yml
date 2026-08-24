@@ -27,20 +27,29 @@ jobs:
         with:
           dotnet-version: 10.0.400
 
-      - name: Set up Microsoft OpenJDK 21.0.12
-        uses: actions/setup-java@v5
-        with:
-          distribution: microsoft
-          java-version: 21.0.12
+      - name: Install exact Microsoft OpenJDK 21.0.12
+        shell: bash
+        run: |
+          set -euxo pipefail
+          cd "$RUNNER_TEMP"
+          curl -fL --retry 5 --retry-all-errors --retry-delay 2 -o microsoft-jdk-21.0.12-linux-x64.tar.gz https://aka.ms/download-jdk/microsoft-jdk-21.0.12-linux-x64.tar.gz
+          curl -fL --retry 5 --retry-all-errors --retry-delay 2 -o microsoft-jdk-21.0.12-linux-x64.tar.gz.sha256sum.txt https://aka.ms/download-jdk/microsoft-jdk-21.0.12-linux-x64.tar.gz.sha256sum.txt
+          sha256sum -c microsoft-jdk-21.0.12-linux-x64.tar.gz.sha256sum.txt
+          mkdir -p "$RUNNER_TEMP/msopenjdk-21.0.12"
+          tar -xzf microsoft-jdk-21.0.12-linux-x64.tar.gz -C "$RUNNER_TEMP/msopenjdk-21.0.12" --strip-components=1
+          echo "JAVA_HOME=$RUNNER_TEMP/msopenjdk-21.0.12" >> "$GITHUB_ENV"
+          echo "$RUNNER_TEMP/msopenjdk-21.0.12/bin" >> "$GITHUB_PATH"
 
       - name: Set up Android SDK
         uses: android-actions/setup-android@v3
+        with:
+          cmdline-tools-version: 15859902
 
       - name: Install pinned Android SDK packages
         shell: bash
         run: |
           yes | sdkmanager --licenses >/dev/null || true
-          sdkmanager "platforms;android-36" "build-tools;36.0.0" "platform-tools"
+          sdkmanager --channel=0 "platforms;android-36" "build-tools;36.0.0" "platform-tools"
 
       - name: Verify host toolchain
         shell: bash
@@ -51,21 +60,24 @@ jobs:
           java -version 2>&1 | tee /tmp/java-version.txt
           grep -F '21.0.12' /tmp/java-version.txt
           adb version | tee /tmp/adb-version.txt
-          grep -F 'Version 37.0.0' /tmp/adb-version.txt
+          grep -F 'Version 37.0.1' /tmp/adb-version.txt
           test -f "$ANDROID_SDK_ROOT/platforms/android-36/android.jar"
           test -d "$ANDROID_SDK_ROOT/build-tools/36.0.0"
 
       - name: Install pinned MAUI Android workload
         shell: bash
         run: |
-          dotnet workload install maui-android --version 10.0.400
+          dotnet workload install maui-android
           dotnet workload list
 
-      - name: Create clean MAUI smoke app
+      - name: Create clean MAUI smoke app and pin API baseline
         shell: bash
         run: |
+          set -euxo pipefail
           rm -rf .smoke
           dotnet new maui -n Stage01Smoke -o .smoke/Stage01Smoke
+          sed -i 's/>21.0<\/SupportedOSPlatformVersion>/>24.0<\/SupportedOSPlatformVersion>/' .smoke/Stage01Smoke/Stage01Smoke.csproj
+          grep -F '>24.0</SupportedOSPlatformVersion>' .smoke/Stage01Smoke/Stage01Smoke.csproj
 
       - name: Build Debug Android smoke
         shell: bash
@@ -81,8 +93,8 @@ jobs:
         shell: bash
         run: |
           set -euxo pipefail
-          manifest=$(find .smoke/Stage01Smoke/obj -path '*net10.0-android*' -name AndroidManifest.xml | head -n 1)
-          test -n "$manifest"
+          manifest=.smoke/Stage01Smoke/obj/Debug/net10.0-android/android/manifest/AndroidManifest.xml
+          test -f "$manifest"
           cat "$manifest"
           grep -E 'minSdkVersion="24"|minSdkVersion="24.0"' "$manifest"
           grep -E 'targetSdkVersion="36"|targetSdkVersion="36.0"' "$manifest"
