@@ -2,17 +2,19 @@
 
 Android ve iOS için tamamen local/offline çalışan, kullanıcıya ücretsiz sunulması hedeflenen 2D DWG/DXF görüntüleyici projesi.
 
-Proje şu anda yürütme aşamasındadır. Uygulama kodu henüz oluşturulmamıştır; AŞAMA 00 tamamlanmıştır ve sıradaki çalışma AŞAMA 01 toolchain doğrulamasıdır.
+Proje yürütme aşamasındadır. AŞAMA 00 tamamlandı. AŞAMA 01'in canlı toolchain doğrulaması ve repo pinleri tamamlandı; gerçek geliştirme makinesi + fiziksel Android cihaz build/install/launch kapısı olmadığı için AŞAMA 01 şu anda `BLOCKED` durumundadır. AŞAMA 02 henüz başlamadı.
 
 ## Yeni sohbet / yeni AI başlangıcı
 
 Projeyi devralan kişi veya ajan önce şu dosyaları bu sırayla okumalıdır:
 
-1. [gecmis.md](gecmis.md) — güncel aşama, geçmiş işler, commitler ve sonraki eylem.
-2. [Mobil_DWG_DXF_Royalty_Free_Android_iOS_Nihai_Plan.md](Mobil_DWG_DXF_Royalty_Free_Android_iOS_Nihai_Plan.md) — tek yetkili plan ve checkpoint.
+1. [gecmis.md](gecmis.md) — güncel çalışma checkpoint'i, geçmiş işler, commitler, blocker ve sonraki eylem.
+2. [Mobil_DWG_DXF_Royalty_Free_Android_iOS_Nihai_Plan.md](Mobil_DWG_DXF_Royalty_Free_Android_iOS_Nihai_Plan.md) — tek yetkili yürütme planı ve aşama çıkış kriterleri.
 3. [docs/EXECUTION_LOG.md](docs/EXECUTION_LOG.md) — teknik komut/test/evidence geçmişi.
+4. [docs/TOOLCHAIN.md](docs/TOOLCHAIN.md) — pinlenmiş .NET/MAUI/JDK/Android geliştirme zinciri.
+5. [docs/evidence/STAGE_01.md](docs/evidence/STAGE_01.md) — aktif aşamanın tamamlanan ve eksik kanıtları.
 
-Sohbet veya model hafızası süreklilik kaynağı değildir; repo kayıtları esas alınır.
+Sohbet veya model hafızası süreklilik kaynağı değildir; repo kayıtları esas alınır. Planın checkpoint bloğu ile gerçek repo durumu geçici olarak çelişirse planın kendi protokolü gereği gerçek repo ve `gecmis.md` çalışma durumu esas alınır; checkpoint ilk güvenli tam-dosya güncellemesinde yeniden senkronize edilir.
 
 ## Yetkili plan
 
@@ -20,7 +22,7 @@ Uygulama aşağıdaki aşamalı plana göre geliştirilecektir:
 
 - [Mobil_DWG_DXF_Royalty_Free_Android_iOS_Nihai_Plan.md](Mobil_DWG_DXF_Royalty_Free_Android_iOS_Nihai_Plan.md)
 
-Diğer Markdown dosyaları araştırma, eleştiri ve önceki plan kayıtlarıdır. Bir çelişki halinde nihai plan esas alınır.
+Diğer Markdown dosyaları araştırma, eleştiri ve önceki plan kayıtlarıdır. Ürün kapsamı/çıkış kriterleri konusunda nihai plan geçerlidir; anlık çalışma durumu için `gecmis.md` ve evidence dosyaları kullanılır.
 
 ## Temel ürün ilkeleri
 
@@ -34,9 +36,9 @@ Diğer Markdown dosyaları araştırma, eleştiri ve önceki plan kayıtlarıdı
 
 ## Yürütme
 
-Her `devam` komutunda nihai plandaki aktif aşama yürütülür. Aşama bitmezse sonraki turda aynı yerden sürer; biterse bir sonraki aşama ancak sonraki turda başlar.
+Her `devam` komutunda aktif aşama yürütülür. `BLOCKED` veya `IN_PROGRESS` aşama varsa sonraki aşamaya geçilmez. Bir kullanıcı turunda en fazla bir aşama tamamlanır.
 
-Her turun sonunda `Mobil_DWG_DXF_Royalty_Free_Android_iOS_Nihai_Plan.md`, `gecmis.md` ve gerektiğinde `docs/EXECUTION_LOG.md` güncellenir.
+Her turun sonunda `gecmis.md`, `docs/EXECUTION_LOG.md`, aktif `docs/evidence/` kaydı ve mümkün olduğunda nihai plan checkpoint'i güncellenir.
 
 ## Güvenlik ve özel dosyalar
 
