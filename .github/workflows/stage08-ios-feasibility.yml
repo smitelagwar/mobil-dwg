@@ -1,0 +1,115 @@
+name: Stage 08 iOS Feasibility
+
+on:
+  workflow_dispatch:
+  pull_request:
+    branches: [main]
+    paths:
+      - spikes/Stage08.iOS/**
+      - scripts/stage08-ios-feasibility.sh
+      - .github/workflows/stage08-ios-feasibility.yml
+      - src/MobilDwg.Core/**
+      - src/MobilDwg.Cad/**
+      - Directory.Packages.props
+      - global.json
+  push:
+    branches: [main]
+    paths:
+      - spikes/Stage08.iOS/**
+      - scripts/stage08-ios-feasibility.sh
+      - .github/workflows/stage08-ios-feasibility.yml
+      - src/MobilDwg.Core/**
+      - src/MobilDwg.Cad/**
+      - Directory.Packages.props
+      - global.json
+
+permissions:
+  contents: read
+
+jobs:
+  ios-feasibility:
+    runs-on: macos-15
+    timeout-minutes: 60
+
+    steps:
+      - name: Checkout
+        uses: actions/checkout@v5
+
+      - name: Validate Stage 08 script syntax
+        shell: bash
+        run: bash -n scripts/stage08-ios-feasibility.sh
+
+      - name: Set up exact .NET SDK
+        uses: actions/setup-dotnet@v5
+        with:
+          dotnet-version: 10.0.400
+
+      - name: Install pinned iOS workload set
+        shell: bash
+        run: |
+          set -euo pipefail
+          dotnet --version
+          dotnet workload install ios
+          dotnet workload list
+
+      - name: Select Xcode required by pinned .NET iOS SDK
+        shell: bash
+        run: |
+          set -euo pipefail
+          echo "Available Xcode installations:"
+          ls -1d /Applications/Xcode*.app || true
+
+          IOS_PACK="$(find "$DOTNET_ROOT/packs" -maxdepth 1 -type d -name 'Microsoft.iOS.Sdk.net10.0_*' -print | head -n 1)"
+          if [[ -z "$IOS_PACK" ]]; then
+            echo "STAGE08_IOS_SDK_PACK_NOT_FOUND" >&2
+            exit 20
+          fi
+
+          REQUIRED_XCODE="${IOS_PACK##*_}"
+          XCODE_APP="$(python3 - "$REQUIRED_XCODE" <<'PY'
+import glob, os, re, sys
+required = sys.argv[1]
+candidates = glob.glob('/Applications/Xcode_*.app')
+matching = []
+for path in candidates:
+    name = os.path.basename(path)
+    m = re.match(r'Xcode_([0-9]+(?:\.[0-9]+)*)', name)
+    if m and (m.group(1) == required or m.group(1).startswith(required + '.')):
+        parts = tuple(int(x) for x in m.group(1).split('.'))
+        matching.append((parts, path))
+if matching:
+    print(max(matching)[1])
+PY
+)"
+
+          if [[ -z "$XCODE_APP" ]]; then
+            echo "STAGE08_REQUIRED_XCODE_NOT_FOUND required=$REQUIRED_XCODE" >&2
+            exit 21
+          fi
+
+          sudo xcode-select -s "$XCODE_APP/Contents/Developer"
+          echo "STAGE08_XCODE_SELECTED required=$REQUIRED_XCODE app=$XCODE_APP"
+          xcodebuild -version
+          xcrun simctl list runtimes
+
+      - name: Run iOS Release and simulator feasibility gate
+        shell: bash
+        run: bash scripts/stage08-ios-feasibility.sh "$RUNNER_TEMP/stage08-ios"
+
+      - name: Upload Stage 08 evidence
+        if: always()
+        uses: actions/upload-artifact@v4
+        with:
+          name: stage08-ios-feasibility-evidence
+          if-no-files-found: warn
+          path: |
+            ${{ runner.temp }}/stage08-ios/stage08-evidence.json
+            ${{ runner.temp }}/stage08-ios/workloads.txt
+            ${{ runner.temp }}/stage08-ios/restore.log
+            ${{ runner.temp }}/stage08-ios/package-graph.txt
+            ${{ runner.temp }}/stage08-ios/ios-release-build.log
+            ${{ runner.temp }}/stage08-ios/app-executable-file.txt
+            ${{ runner.temp }}/stage08-ios/trimmer-warnings.txt
+            ${{ runner.temp }}/stage08-ios/reflection-warnings.txt
+            ${{ runner.temp }}/stage08-ios/font-warnings.txt
+            ${{ runner.temp }}/stage08-ios/ios-simulator.log
