@@ -1,0 +1,54 @@
+name: Stage 08 Metadata Fix
+
+on:
+  push:
+    branches:
+      - stage08-ios-feasibility-closure
+    paths:
+      - .github/workflows/stage08-metadata-fix.yml
+
+permissions:
+  contents: write
+
+jobs:
+  fix:
+    runs-on: ubuntu-latest
+    steps:
+      - uses: actions/checkout@v5
+        with:
+          ref: stage08-ios-feasibility-closure
+          fetch-depth: 0
+      - name: Normalize final Stage 08 metadata
+        shell: bash
+        run: |
+          set -euo pipefail
+          python3 <<'PY'
+          from pathlib import Path
+
+          final_code_head = '4987fa3e5fadfb113aa3b27ac443da9776864ad5'
+
+          p = Path('docs/evidence/STAGE_08.md')
+          t = p.read_text(encoding='utf-8')
+          t = t.replace('- Run: `32781026946` / `#17` — `SUCCESS`.', '- Run: `32781026946` / `#18` — `SUCCESS`.')
+          t = t.replace('- Job: `97587720958` — `SUCCESS`.', '- Job: `97602910534` — `SUCCESS`.')
+          t = t.replace('10,588 bytes', '10,548 bytes')
+          t = t.replace('Run #17:\n\n- GitHub-hosted image:', 'Run #18:\n\n- GitHub-hosted image:')
+          p.write_text(t, encoding='utf-8')
+
+          p = Path('Mobil_DWG_DXF_Royalty_Free_Android_iOS_Nihai_Plan.md')
+          t = p.read_text(encoding='utf-8')
+          t = t.replace('LAST_VERIFIED_REVISION: 1d7ce7ddc738ba615ad86f19742e3af9f2c78e18 — exact ACadSharp 3.7.1 + SkiaSharp 4.151.1 iOS hattı macOS CI üzerinde karakterize edildi; runtime/device feasibility hosted toolchain ve dış cihaz kapıları nedeniyle kanıtlanmadı', f'LAST_VERIFIED_REVISION: {final_code_head} — current-main tabanında exact ACadSharp 3.7.1 + SkiaSharp 4.151.1 iOS characterization yeniden doğrulandı; runtime/device feasibility hosted toolchain ve dış cihaz kapıları nedeniyle kanıtlanmadı')
+          p.write_text(t, encoding='utf-8')
+
+          for name in ['gecmis.md', 'DEVAM.md']:
+              p = Path(name)
+              t = p.read_text(encoding='utf-8')
+              t = t.replace('STAGE08_DECISION_HEAD: 1d7ce7ddc738ba615ad86f19742e3af9f2c78e18', f'STAGE08_DECISION_HEAD: {final_code_head}')
+              p.write_text(t, encoding='utf-8')
+          PY
+          rm .github/workflows/stage08-metadata-fix.yml
+          git config user.name "github-actions[bot]"
+          git config user.email "41898282+github-actions[bot]@users.noreply.github.com"
+          git add docs/evidence/STAGE_08.md Mobil_DWG_DXF_Royalty_Free_Android_iOS_Nihai_Plan.md gecmis.md DEVAM.md .github/workflows/stage08-metadata-fix.yml
+          git commit -m "docs(stage08): normalize final verification metadata"
+          git push origin HEAD:stage08-ios-feasibility-closure
