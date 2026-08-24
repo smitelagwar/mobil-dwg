@@ -2,7 +2,17 @@
 
 Android ve iOS için tamamen local/offline çalışan, kullanıcıya ücretsiz sunulması hedeflenen 2D DWG/DXF görüntüleyici projesi.
 
-Proje şu anda planlama ve teknik doğrulama başlangıcındadır. Uygulama kodu henüz oluşturulmamıştır.
+Proje şu anda yürütme aşamasındadır. Uygulama kodu henüz oluşturulmamıştır; AŞAMA 00 tamamlanmıştır ve sıradaki çalışma AŞAMA 01 toolchain doğrulamasıdır.
+
+## Yeni sohbet / yeni AI başlangıcı
+
+Projeyi devralan kişi veya ajan önce şu dosyaları bu sırayla okumalıdır:
+
+1. [gecmis.md](gecmis.md) — güncel aşama, geçmiş işler, commitler ve sonraki eylem.
+2. [Mobil_DWG_DXF_Royalty_Free_Android_iOS_Nihai_Plan.md](Mobil_DWG_DXF_Royalty_Free_Android_iOS_Nihai_Plan.md) — tek yetkili plan ve checkpoint.
+3. [docs/EXECUTION_LOG.md](docs/EXECUTION_LOG.md) — teknik komut/test/evidence geçmişi.
+
+Sohbet veya model hafızası süreklilik kaynağı değildir; repo kayıtları esas alınır.
 
 ## Yetkili plan
 
@@ -25,6 +35,8 @@ Diğer Markdown dosyaları araştırma, eleştiri ve önceki plan kayıtlarıdı
 ## Yürütme
 
 Her `devam` komutunda nihai plandaki aktif aşama yürütülür. Aşama bitmezse sonraki turda aynı yerden sürer; biterse bir sonraki aşama ancak sonraki turda başlar.
+
+Her turun sonunda `Mobil_DWG_DXF_Royalty_Free_Android_iOS_Nihai_Plan.md`, `gecmis.md` ve gerektiğinde `docs/EXECUTION_LOG.md` güncellenir.
 
 ## Güvenlik ve özel dosyalar
 
