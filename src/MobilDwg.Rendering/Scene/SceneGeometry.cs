@@ -41,6 +41,12 @@ public readonly record struct WorldBounds2
         if (!double.IsFinite(maxY)) throw new ArgumentOutOfRangeException(nameof(maxY));
         if (maxX < minX) throw new ArgumentOutOfRangeException(nameof(maxX));
         if (maxY < minY) throw new ArgumentOutOfRangeException(nameof(maxY));
+
+        var width = maxX - minX;
+        var height = maxY - minY;
+        if (!double.IsFinite(width)) throw new ArgumentOutOfRangeException(nameof(maxX), "Bounds width must remain finite.");
+        if (!double.IsFinite(height)) throw new ArgumentOutOfRangeException(nameof(maxY), "Bounds height must remain finite.");
+
         MinX = minX;
         MinY = minY;
         MaxX = maxX;
@@ -53,7 +59,9 @@ public readonly record struct WorldBounds2
     public double MaxY { get; }
     public double Width => MaxX - MinX;
     public double Height => MaxY - MinY;
-    public WorldPoint2 Center => new((MinX + MaxX) / 2d, (MinY + MaxY) / 2d);
+
+    // Half-before-add avoids overflow when two large same-sign finite coordinates are averaged.
+    public WorldPoint2 Center => new((MinX / 2d) + (MaxX / 2d), (MinY / 2d) + (MaxY / 2d));
 
     public WorldBounds2 Union(WorldBounds2 other) => new(
         Math.Min(MinX, other.MinX),
@@ -103,6 +111,9 @@ public sealed record RenderSourceReference
     public RenderSourceReference(string entityType, string? handle = null, int? sourceIndex = null)
     {
         if (string.IsNullOrWhiteSpace(entityType)) throw new ArgumentException("Entity type is required.", nameof(entityType));
+        if (handle is not null && string.IsNullOrWhiteSpace(handle)) throw new ArgumentException("Handle cannot be blank when supplied.", nameof(handle));
+        if (sourceIndex is < 0) throw new ArgumentOutOfRangeException(nameof(sourceIndex));
+
         EntityType = entityType;
         Handle = handle;
         SourceIndex = sourceIndex;
@@ -113,9 +124,32 @@ public sealed record RenderSourceReference
     public int? SourceIndex { get; }
 }
 
-public sealed record RenderSceneEntity(
-    RenderEntityId Id,
-    WorldBounds2 Bounds,
-    RenderLayerToken Layer,
-    RenderStyleToken Style,
-    RenderSourceReference Source);
+public sealed record RenderSceneEntity
+{
+    public RenderSceneEntity(
+        RenderEntityId id,
+        WorldBounds2 bounds,
+        RenderLayerToken layer,
+        RenderStyleToken style,
+        RenderSourceReference source)
+    {
+        // record structs can be default-constructed without invoking their validating constructors.
+        // Enforce the invariant again at the immutable scene boundary.
+        if (string.IsNullOrWhiteSpace(id.Value)) throw new ArgumentException("Stable entity ID is required.", nameof(id));
+        if (string.IsNullOrWhiteSpace(layer.Value)) throw new ArgumentException("Layer token is required.", nameof(layer));
+        if (string.IsNullOrWhiteSpace(style.Value)) throw new ArgumentException("Style token is required.", nameof(style));
+        ArgumentNullException.ThrowIfNull(source);
+
+        Id = id;
+        Bounds = bounds;
+        Layer = layer;
+        Style = style;
+        Source = source;
+    }
+
+    public RenderEntityId Id { get; }
+    public WorldBounds2 Bounds { get; }
+    public RenderLayerToken Layer { get; }
+    public RenderStyleToken Style { get; }
+    public RenderSourceReference Source { get; }
+}
