@@ -24,11 +24,13 @@ Kurulum doğrulama komutları:
 ```bash
 dotnet --version
 dotnet --info
-dotnet workload install maui-android --version 10.0.400
+dotnet workload install maui-android
 dotnet workload list
 ```
 
-Not: Workload kurulumu gerçek geliştirme makinesinde henüz kanıtlanmadı; CI smoke kurulumu host/ci kanıtıdır, fiziksel cihaz kapısını karşılamaz.
+Önemli: `global.json` içindeki `workloadVersion: 10.0.400` exact workload set'i seçer. Bu repo hattında `dotnet workload install maui-android --version 10.0.400` kullanılmaz; AŞAMA 01 CI sırasında bu ek `--version` biçiminin yanlış olduğu görülmüş ve başarılı hat `dotnet workload install maui-android` olarak doğrulanmıştır.
+
+Not: Workload kurulumu gerçek geliştirme makinesinde henüz kanıtlanmadı; CI smoke kurulumu host/CI kanıtıdır, fiziksel cihaz kapısını karşılamaz.
 
 ## Java hattı
 
@@ -131,15 +133,31 @@ $env:ANDROID_SERIAL = '<adb-serial>'
 ANDROID_SERIAL='<adb-serial>' bash scripts/stage01-device-gate.sh
 ```
 
-Scriptler aşağıdaki durumlarda FAIL verir: exact .NET/JDK/ADB sürümü uyuşmazlığı, eksik API 36/Build-Tools 36.0.0, eksik `maui-android`, `unauthorized/offline` cihaz, emülatör, birden çok belirsiz cihaz, Debug/Release build hatası, manifest 24/36 uyuşmazlığı, APK install veya launcher hatası.
+Scriptler aşağıdaki durumlarda FAIL verir: exact .NET/JDK/ADB sürümü uyuşmazlığı, eksik API 36/Build-Tools 36.0.0, eksik `maui-android` veya yanlış workload set, `unauthorized/offline` cihaz, emülatör, birden çok belirsiz cihaz, Debug/Release build hatası, manifest 24/36 uyuşmazlığı, APK install veya launcher hatası.
 
 PASS halinde temiz MAUI smoke uygulaması `com.smitelagwar.mobildwg.stage01smoke` kimliğiyle üretilir; Android minimum API 24 açıkça pinlenir; Debug ve Release build edilir; Debug APK fiziksel cihaza kurulur ve launcher `Status: ok` ile açılır. Kanıt çıktısı tam ADB seri numarasını yazmaz.
 
 Bu scriptlerin sözdizimi CI'da doğrulanır; fakat `STAGE01_DEVICE_GATE_PASS` yalnız gerçek fiziksel cihazda çalıştırıldığında AŞAMA 01 kanıtı sayılır.
 
-## iOS envanteri
+## iOS erişim envanteri
 
-AŞAMA 01'de yalnız erişim durumu kaydedilir. iOS kurulum/gerçek cihaz işi AŞAMA 08 ve AŞAMA 23'te yapılacaktır. Bu turda Mac/Xcode/iPhone/Apple Developer erişimi kanıtlanmamıştır.
+AŞAMA 01'de yalnız erişim durumu kaydedilir. iOS kurulum/build/signing/gerçek cihaz smoke AŞAMA 08 ve AŞAMA 23 kapsamındadır.
+
+Standart kayıt dosyası:
+
+- `docs/STAGE_01_IOS_ACCESS_INVENTORY.md`
+
+Erişilebilir bir Mac üzerinde secretsiz yardımcı envanter:
+
+```bash
+APPLE_DEVELOPER_ACCESS=yes bash scripts/stage01-ios-inventory.sh
+```
+
+Apple Developer erişimi yoksa `APPLE_DEVELOPER_ACCESS=no` kullanılır. Bu değer yalnız kullanıcının manuel `yes/no` teyididir; script Apple hesabına login olmaz ve herhangi bir credential istemez.
+
+Script macOS/Xcode erişimini, fiziksel iPhone sayısını ve code-signing identity sayısını yalnız hassas olmayan özet olarak verir. Apple ID/e-posta, Team ID, UDID/seri numarası, certificate private key, provisioning profile veya token kaydetmez.
+
+Bu sohbet oturumunda gerçek Mac/Xcode/iPhone/Apple Developer erişimi hâlâ doğrulanmamıştır; `docs/STAGE_01_IOS_ACCESS_INVENTORY.md` içindeki dört erişim alanı `UNKNOWN` kaldıkça bu alt madde tamamlanmış sayılmaz.
 
 ## Resmi kaynaklar — 2026-08-24 snapshot
 
