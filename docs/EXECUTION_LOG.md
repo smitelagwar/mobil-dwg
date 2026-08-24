@@ -94,46 +94,90 @@ Canlı doğrulanan toolchain baseline:
 - .NET SDK `10.0.400` / runtime servicing `10.0.11` — 2026-08-11 release.
 - Workload set `10.0.400`; Android-first workload `maui-android`.
 - Microsoft Build of OpenJDK `21.0.12` LTS.
-- Android minimum API `24`.
+- Android minimum API `24` — proje tarafından açıkça pinlenir; temiz MAUI 10 şablonunun varsayılanı API 21'dir.
 - Android compile/target API `36`.
 - Android SDK Platform 36 revision `1`.
 - Android SDK Build-Tools `36.0.0`.
-- Android SDK Platform-Tools `37.0.0` stable; `37.0.1` Canary olduğu için baseline dışında.
+- Android SDK Platform-Tools `37.0.1` stable.
 - Android command-line tools stable download build ID `15859902`.
 - Google Play: 2026-08-31 itibarıyla yeni uygulama ve güncellemeler target API 36 veya üzeri olmak zorunda.
 
 Repo değişiklikleri:
 
-- `global.json` oluşturuldu; SDK `10.0.400`, workload set `10.0.400`, prerelease kapalı ve `rollForward=disable`.
-- `docs/TOOLCHAIN.md` oluşturuldu; exact toolchain, resmi kaynak snapshot'ı ve fiziksel cihaz kapısı kaydedildi.
-- `docs/evidence/STAGE_01.md` oluşturuldu; tamamlanan doğrulamalar ve eksik gerçek cihaz kanıtları ayrıldı.
+- `global.json`: SDK `10.0.400`, workload set `10.0.400`, prerelease kapalı, `rollForward=disable`.
+- `docs/TOOLCHAIN.md`: exact toolchain, resmi kaynak snapshot'ı ve fiziksel cihaz kapısı.
+- `docs/evidence/STAGE_01.md`: toolchain/build kanıtları ile eksik gerçek cihaz kanıtlarının ayrımı.
+- `.github/workflows/stage01-toolchain-smoke.yml`: temiz hosted-runner üzerinde exact toolchain + MAUI Android Debug/Release smoke kapısı.
 
-Commitler:
+İlk stage commitleri:
 
 - `15d69e6b5b9e0c20f5ef7b0a742ac25ce5cc9071` — `build: pin .NET 10.0.400 toolchain`
 - `467a2fe69366bfc640400d4b2ccbd97309b09189` — `docs: record stage 01 toolchain baseline`
 - `658345321d1a76f7f3a9f6e6958e62a6868415a0` — `docs: add stage 01 evidence and blocker`
+- `a99ba8d26047598a1b593f864e14769da0980dda` — `docs: log stage 01 toolchain verification`
+- `549254b751c87155af5bf5e40cd609d3fe57b710` — `docs: correct Platform-Tools stable baseline`
 
-Çalışma konteyneri gözlemi:
+ChatGPT konteyneri gözlemi:
 
 - Linux x86_64.
 - Java `21.0.11` mevcut.
 - `dotnet` ve `adb` PATH üzerinde yok.
-- .NET 10.0.400 resmi direct-download URL'si doğrulandı; ancak konteyner dış DNS erişimi kapalı olduğundan indirme denemesi `Could not resolve host: builds.dotnet.microsoft.com` ile başarısız oldu.
+- .NET 10.0.400 resmi direct-download URL'si doğrulandı; konteyner dış DNS erişimi kapalı olduğundan doğrudan indirme denemesi `Could not resolve host: builds.dotnet.microsoft.com` ile başarısız oldu.
 - Bu hata toolchain uyumsuzluğu değildir; ChatGPT çalışma konteynerinin network kısıtıdır.
 
-Eksik zorunlu AŞAMA 01 kanıtları:
+### GitHub Actions CI smoke doğrulaması
 
-- Gerçek geliştirme makinesinde .NET 10.0.400 ve MAUI Android workload kurulumu.
-- Microsoft OpenJDK 21.0.12 + `JAVA_HOME` doğrulaması.
-- Android API 36 / Build-Tools 36.0.0 / Platform-Tools 37.0.0 kurulumu.
-- Temiz MAUI smoke app Debug ve Release build.
+AŞAMA 01'in fiziksel cihazdan bağımsız build/toolchain kısmı GitHub Actions üzerinde temiz Ubuntu runner ile gerçek olarak çalıştırıldı.
+
+CI geliştirme commitleri:
+
+- `075ce5268f3cc3272be0f349f67e6f0237a261a3` — manifest doğrulamasını deterministik yola çevirdi.
+- `4430542558f7f3751cd62f224497e400c1e80415` — Android minimum API 24'ü smoke csproj'de açıkça pinledi.
+- `49c3e3f2f855c1f7f1cf945049cc5d93805e7003` — exact Microsoft JDK artifact indirmesine retry ekledi, checksum doğrulamasını korudu.
+- PR #1 final olarak `83379b24e4ba87f04299f612ae2951ae8d8aec13` merge commit'i ile `main`e alındı.
+
+Ara koşular ve bulgular:
+
+- Run #6 / `32735646108`: .NET/JDK/Android SDK/workload/template/Debug/Release PASS. Manifest adımı `find | head` + `pipefail` nedeniyle script-level `Broken pipe` ile düştü.
+- Run #7 / `32736408762`: toolchain + Debug/Release PASS; gerçek üretilen manifest temiz MAUI şablonunun `minSdk=21`, `targetSdk=36` kullandığını gösterdi. Proje policy'si gereği minimum API 24 explicit pinlendi.
+- Run #8 / `32737204387`: Microsoft JDK tar indirmesi geçici ağ kesintisiyle `curl (18)` verdi. Resmi exact artifact + SHA256 doğrulaması korunarak retry eklendi.
+- Run #9 / `32737334339`: bütün adımlar `SUCCESS`.
+
+Final run #9 ölçülen değerler:
+
+- Runner: Ubuntu 24.04 x64.
+- .NET SDK: `10.0.400`.
+- Runtime: `10.0.11`.
+- JDK: Microsoft OpenJDK `21.0.12`; resmi checksum kontrolü `OK`.
+- Platform-Tools/ADB: `37.0.1-15733141`.
+- Android SDK Platform: API `36`.
+- Android Build-Tools: `36.0.0`.
+- `maui-android` workload installation: `SUCCESS`; workload version `10.0.400`.
+- MAUI workload manifest: `10.0.20/10.0.100`.
+- Microsoft.NET.Sdk.Android workload manifest: `36.1.69`.
+- Smoke csproj Android `SupportedOSPlatformVersion`: `24.0`.
+- Debug build: `Build succeeded`, 0 warning, 0 error.
+- Release build: `Build succeeded`, 0 warning, 0 error.
+- Generated manifest: `<uses-sdk android:minSdkVersion="24" android:targetSdkVersion="36" />`.
+- APK artifact upload: `SUCCESS`.
+- Artifact ID: `9523977201`.
+- Artifact size: `57,601,187` bytes.
+- Artifact ZIP SHA-256: `3fd12ffe750352e9ace5532eaffa8f1cd6619da449bddeb05efb5acfc91dcd41`.
+
+CI sonucu: exact toolchain + workload + Debug + Release + API baseline + APK üretimi PASS.
+
+### Eksik zorunlu AŞAMA 01 kanıtları
+
+CI fiziksel telefon kapısını ikame etmez. Şunlar hâlâ eksiktir:
+
+- Kullanıcının gerçek geliştirme makinesinde pinli toolchain'in yerel doğrulanması.
 - Fiziksel Android cihazın `adb devices` çıktısında `device` olması.
-- Smoke app install/launch gerçek telefon kanıtı.
-- iOS Mac/Xcode/iPhone/Apple hesap erişim envanteri.
+- Smoke app'in fiziksel telefona install edilmesi.
+- Smoke app'in fiziksel telefonda launch edilmesi.
+- iOS Mac/Xcode/iPhone/Apple Developer erişim envanteri.
 
 Blocker:
 
-- Bu oturumda kullanıcının gerçek geliştirme makinesine ve fiziksel Android cihazına USB/ADB erişimi yok. Nihai plan fiziksel cihaz çalıştırmasını zorunlu tuttuğundan AŞAMA 01 `DONE` sayılamaz.
+- Bu oturumda kullanıcının gerçek geliştirme makinesine ve fiziksel Android cihazına USB/ADB erişimi yok. Nihai plan fiziksel cihaz çalıştırmasını zorunlu tuttuğundan AŞAMA 01 `DONE` sayılamaz ve AŞAMA 02 başlatılamaz.
 
-Sonraki eylem: Gerçek geliştirme ortamında `docs/TOOLCHAIN.md` baseline'ına göre toolchain'i kurup boş MAUI uygulamasını Debug/Release build etmek ve fiziksel Android cihazda `adb` install/launch kanıtını kaydetmek.
+Sonraki eylem: Gerçek geliştirme makinesinde `docs/TOOLCHAIN.md` baseline'ını doğrula; fiziksel Android cihazı bağla; `adb devices` ile `device` durumunu kaydet; smoke app'i install/launch et; iOS erişim envanterini tamamla; ardından AŞAMA 01 evidence/checkpoint'i kapat.
