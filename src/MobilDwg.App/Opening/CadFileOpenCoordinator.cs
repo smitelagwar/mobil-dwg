@@ -96,7 +96,7 @@ public sealed class CadFileOpenCoordinator : IAsyncDisposable
                 new CadFileOpenProgress(
                     generation,
                     CadFileOpenPhase.Parsing,
-                    Message: "Parsing on a worker thread; cancellation cannot cooperatively stop ACadSharp after parsing begins."));
+                    Message: "Parsing on a worker thread; the configured parser may not support cooperative cancellation after parsing begins."));
 
             var readerProgress = progress is null
                 ? null
