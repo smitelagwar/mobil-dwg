@@ -90,8 +90,8 @@ jobs:
         shell: bash
         run: |
           set -euxo pipefail
-          manifest=$(find .smoke/Stage01Smoke/obj -path '*net10.0-android*' -name AndroidManifest.xml | head -n 1)
-          test -n "$manifest"
+          manifest=.smoke/Stage01Smoke/obj/Debug/net10.0-android/android/manifest/AndroidManifest.xml
+          test -f "$manifest"
           cat "$manifest"
           grep -E 'minSdkVersion="24"|minSdkVersion="24.0"' "$manifest"
           grep -E 'targetSdkVersion="36"|targetSdkVersion="36.0"' "$manifest"
