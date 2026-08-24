@@ -1,0 +1,9 @@
+{
+  "sdk": {
+    "version": "10.0.400",
+    "rollForward": "disable",
+    "allowPrerelease": false,
+    "workloadVersion": "10.0.400",
+    "errorMessage": "mobil-dwg requires the exact .NET SDK/workload set pinned in global.json. Install .NET SDK 10.0.400 and the pinned MAUI Android workload before building."
+  }
+}
