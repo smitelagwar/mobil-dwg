@@ -35,14 +35,15 @@ NEXT_WORK_STATUS: NOT_STARTED
 USER_CONSTRAINT: Kullanıcı şu an fiziksel Android cihaz/gerçek geliştirme makinesi ve Mac/Xcode/iPhone/Apple Developer erişim kanıtlarını sağlayamıyor; temel etkileşimi "devam" demek.
 USER_APPROVAL: Dış erişim kapıları sahte PASS/DONE yapılmadan ertelensin; bağımsız aşamalara devam edilsin.
 DEFERRED_EXTERNAL_GATES: STAGE01_DEVICE_GATE_PASS; local Android install/launch; iOS erişim envanteri YES/NO/N/A
-LAST_VERIFIED_STAGE05_CI: Stage 05 Parser Spike run 32759096003 / #8 SUCCESS; locked restore; Release build 0 warning / 0 error; STAGE05_DEPENDENCY_BOUNDARY_PASS; STAGE05_MINI_CORPUS_PASS fixtures=9 derived_negatives=2; STAGE05_T3_PASS; artifact 9532001644; sha256:2750ba88141c5724306bb5811173d958c60836806021f2ff1a5b36b011631097
-LAST_VERIFIED_STAGE04_REGRESSION_CI: Stage 04 Architecture run 32759095988 / #11 SUCCESS
-LAST_VERIFIED_STAGE02_REGRESSION_CI: Stage 02 Dependency Audit run 32759095944 / #25 SUCCESS
-LAST_VERIFIED_STAGE01_REGRESSION_CI: Stage 01 Toolchain Smoke run 32755230683 / #36 SUCCESS; physical device evidence değildir. Run 32759095888 / #44 implementation head üzerinde merge öncesi tekrar çalıştırıldı; final sonucu merge kapısında doğrulanacak.
+LAST_VERIFIED_STAGE05_CI: Stage 05 Parser Spike run 32760139261 / #15 SUCCESS; locked restore; Release build 0 warning / 0 error; STAGE05_DEPENDENCY_BOUNDARY_PASS; STAGE05_MINI_CORPUS_PASS fixtures=9 derived_negatives=2; STAGE05_T3_PASS; artifact 9532379884; sha256:f3b31c937186d874a0ed23c045951d465ace5da8fff2f9acc32006c4352e2f60
+LAST_VERIFIED_STAGE04_REGRESSION_CI: Stage 04 Architecture run 32760139230 / #18 SUCCESS
+LAST_VERIFIED_STAGE02_REGRESSION_CI: Stage 02 Dependency Audit run 32760139219 / #32 SUCCESS
+LAST_VERIFIED_STAGE01_REGRESSION_CI: Stage 01 Toolchain Smoke run 32760139285 / #51 SUCCESS; physical device evidence değildir.
 STAGE05_IMPLEMENTATION_HEAD: 09e26172aa8de9e8c79ae64853a493dab1d0e5b9
+STAGE05_FINAL_PR_HEAD: 80cdaf49d3ad4298f3b1d56fe1dbac89b352ec7f
 STAGE05_PR: #7 — stage05: validate ACadSharp headless parser
-LAST_STAGE_MERGE: PR #6 -> main; merge commit c01311ccb5c82b7bac023b24ae6a8000ae4655af
-STAGE05_MERGE: PENDING — PR #7 doğrulanmış head üzerinden merge edilecek
+LAST_STAGE_MERGE: PR #7 -> main; merge commit bbe5b62224ae6e7fdaebd1c1c6ace87418f09b9f
+STAGE05_MERGE: bbe5b62224ae6e7fdaebd1c1c6ace87418f09b9f
 EXECUTION_OVERRIDE: docs/USER_APPROVED_EXECUTION_OVERRIDE.md
 NEXT_ACTION: AŞAMA 06 — Android güvenli dosya alma ve parse spike. Bu AŞAMA 05 kapanış turunda AŞAMA 06 başlatılmaz.
 LAST_UPDATE: 2026-08-24
@@ -91,7 +92,7 @@ Repo ve `.gitignore` doğrulandı; kullanıcı belgeleri korundu. `docs/EXECUTIO
 
 ### AŞAMA 01 — bağımsız kısım tamamlandı, dış kapılar ertelendi
 
-Pinli hat: .NET SDK/workload set `10.0.400`, Microsoft OpenJDK `21.0.12`, Android min API `24`, target/compile API `36`, Build-Tools `36.0.0`, Platform-Tools `37.0.1`, `maui-android`. CI temiz MAUI Debug/Release ve manifest 24/36 kapılarını geçti. Fiziksel cihaz gate scriptleri ve iOS inventory helper eklendi. Gerçek telefon install/launch ve gerçek iOS erişim envanteri hâlâ açık dış kapıdır.
+Pinli hat: .NET SDK/workload set `10.0.400`, Microsoft OpenJDK `21.0.12`, Android min API `24`, target/compile API `36`, Build-Tools `36.0.0`, Platform-Tools `37.0.1`, `maui-android`. CI temiz MAUI Debug/Release ve manifest 24/36 kapılarını geçti. Fiziksel cihaz gate scriptleri ve iOS inventory helper eklendi. Gerçek telefon install/launch ve gerçek iOS erişim envanteri hâlâ açık dış kapıdır. AŞAMA 05 final PR head regresyonu `Stage 01 Toolchain Smoke` run `32760139285` / #51 `SUCCESS`; bu CI fiziksel cihaz kanıtı değildir.
 
 ### AŞAMA 02 — DONE
 
@@ -128,7 +129,7 @@ Minimal derlenebilir mimari iskelet kuruldu:
 - Cancellation desteği `None/BeforeStartOnly/Cooperative`, progress desteği `None/StagesOnly/Fractional` olarak açık capability modeliyle tanımlandı; bilinmeyen yüzde `null` kalır.
 - Architecture harness tam 4 production/3 test proje sayısını, exact ProjectReference yönlerini ve dependency sınırlarını otomatik test eder.
 - Final `Stage 04 Architecture` run `32755230695` / #2 SUCCESS: solution restore, Release build `0 Warning(s) / 0 Error(s)`, `STAGE04_CORE_CONTRACT_TESTS_PASS`, `STAGE04_RENDER_CONTRACT_TESTS_PASS`, `STAGE04_ARCHITECTURE_TESTS_PASS`, `STAGE04_T0_PASS`.
-- Aynı final head Stage 02 run `32755230688` / #17 ve Stage 01 run `32755230683` / #36 SUCCESS.
+- AŞAMA 05 final PR head regresyonu `Stage 04 Architecture` run `32760139230` / #18 `SUCCESS`.
 - PR #6 merge commit `c01311ccb5c82b7bac023b24ae6a8000ae4655af`.
 
 Ayrıntı: `docs/evidence/STAGE_04.md` ve `docs/ARCHITECTURE.md`.
@@ -148,9 +149,9 @@ Pinned ACadSharp ile headless parser baseline gerçek corpus üzerinde doğrulan
 - Truncated AC1015 DWG kontrollü `EndOfStreamException`; corrupt AC1018 DWG controlled warning üretti.
 - ASCII DXF notification/`unsupported-object` kayıtları known limitation olarak tutuldu; fixed warning-count eşiği kullanılmadı.
 - `docs/ADR/0001-acadsharp-3.7.1-parser-baseline.md`: read-only parser baseline `GO`; render fidelity onayı değildir.
-- Final implementation CI `Stage 05 Parser Spike` run `32759096003` / #8 SUCCESS; artifact `9532001644`, digest `sha256:2750ba88141c5724306bb5811173d958c60836806021f2ff1a5b36b011631097`.
-- Aynı implementation head Stage 04 run #11 ve Stage 02 run #25 SUCCESS.
-- PR #7 merge işlemi bu kapanış kaydı hazırlanırken pending; main merge SHA merge sonrasında bu dosyada gerçek değerle güncellenecek.
+- Final PR head `80cdaf49d3ad4298f3b1d56fe1dbac89b352ec7f` üzerinde `Stage 05 Parser Spike` run `32760139261` / #15 `SUCCESS`; artifact `9532379884`, digest `sha256:f3b31c937186d874a0ed23c045951d465ace5da8fff2f9acc32006c4352e2f60`.
+- Aynı final PR head Stage 04 run #18, Stage 02 run #32 ve Stage 01 run #51 `SUCCESS`.
+- PR #7 doğrulanmış final head üzerinden `main`e merge edildi. Merge commit: `bbe5b62224ae6e7fdaebd1c1c6ace87418f09b9f`.
 
 Ayrıntı: `docs/evidence/STAGE_05.md` ve `docs/ADR/0001-acadsharp-3.7.1-parser-baseline.md`.
 
@@ -173,7 +174,7 @@ Ayrıntı: `docs/evidence/STAGE_05.md` ve `docs/ADR/0001-acadsharp-3.7.1-parser-
 1. Bu dosyayı ve execution override'ı oku.
 2. Gerçek `main` durumunu doğrula.
 3. Kullanıcı değişikliklerini koru; destructive Git işlemi yapma.
-4. Kullanıcı yalnız `devam` diyorsa `NEXT_WORK_STAGE` üzerinden ilerle. AŞAMA 05 merge tamamlandıktan sonra bu AŞAMA 06'dır.
+4. Kullanıcı yalnız `devam` diyorsa `NEXT_WORK_STAGE` üzerinden ilerle. Şu anda bu AŞAMA 06'dır.
 5. AŞAMA 01 dış erişim kapılarını sahte PASS/DONE yapma.
 6. Bir turda en fazla bir aşama tamamla.
 7. `[LIVE-VERIFY]` noktalarında resmi/güncel kaynak kullan.
@@ -181,4 +182,4 @@ Ayrıntı: `docs/evidence/STAGE_05.md` ve `docs/ADR/0001-acadsharp-3.7.1-parser-
 
 ## Bir sonraki tur
 
-AŞAMA 05 PR #7 `main`e merge edilip merge SHA checkpoint'e işlendiğinde kullanıcı `devam` derse yalnız AŞAMA 06 — Android güvenli dosya alma ve parse spike — başlatılır. Aynı turda AŞAMA 07'ye geçilmez.
+Kullanıcı `devam` dediğinde yalnız AŞAMA 06 — Android güvenli dosya alma ve parse spike — başlatılır. Aynı turda AŞAMA 07'ye geçilmez.
