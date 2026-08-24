@@ -1,0 +1,52 @@
+name: Stage 04 Architecture
+
+on:
+  workflow_dispatch:
+  pull_request:
+    branches: [main]
+    paths:
+      - MobilDwg.sln
+      - Directory.Build.props
+      - src/**
+      - tests/**
+      - scripts/stage04-test.sh
+      - docs/ARCHITECTURE.md
+      - docs/evidence/STAGE_04.md
+      - .github/workflows/stage04-architecture.yml
+  push:
+    branches: [main]
+    paths:
+      - MobilDwg.sln
+      - Directory.Build.props
+      - src/**
+      - tests/**
+      - scripts/stage04-test.sh
+      - docs/ARCHITECTURE.md
+      - .github/workflows/stage04-architecture.yml
+
+permissions:
+  contents: read
+
+jobs:
+  architecture:
+    runs-on: ubuntu-latest
+    timeout-minutes: 10
+
+    steps:
+      - name: Checkout
+        uses: actions/checkout@v5
+
+      - name: Set up .NET 10.0.400
+        uses: actions/setup-dotnet@v5
+        with:
+          dotnet-version: 10.0.400
+
+      - name: Validate Stage 04 test script
+        shell: bash
+        run: |
+          set -euxo pipefail
+          bash -n scripts/stage04-test.sh
+
+      - name: Restore, build and run T0/contract/architecture tests
+        shell: bash
+        run: bash scripts/stage04-test.sh
