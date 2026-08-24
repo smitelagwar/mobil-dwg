@@ -29,11 +29,13 @@ jobs:
         with:
           dotnet-version: 10.0.400
 
-      - name: Validate audit script
+      - name: Validate audit script and committed evidence
         shell: bash
         run: |
           set -euxo pipefail
           python3 -m py_compile scripts/stage02-audit-packages.py
+          test -f compliance/Stage02.DependencyProbe/packages.lock.json
+          test -f compliance/stage02-package-manifest.json
 
       - name: Install pinned Android workload set
         shell: bash
@@ -45,19 +47,12 @@ jobs:
           grep -F '10.0.400' /tmp/workloads.txt
           grep -F 'maui-android' /tmp/workloads.txt
 
-      - name: Generate exact restore lock
-        shell: bash
-        run: |
-          set -euxo pipefail
-          dotnet restore compliance/Stage02.DependencyProbe/Stage02.DependencyProbe.csproj --use-lock-file
-          test -f compliance/Stage02.DependencyProbe/packages.lock.json
-          cat compliance/Stage02.DependencyProbe/packages.lock.json
-
-      - name: Verify locked restore
+      - name: Verify committed locked restore
         shell: bash
         run: |
           set -euxo pipefail
           dotnet restore compliance/Stage02.DependencyProbe/Stage02.DependencyProbe.csproj --locked-mode
+          git diff --exit-code -- compliance/Stage02.DependencyProbe/packages.lock.json
 
       - name: Record resolved graph
         shell: bash
@@ -72,6 +67,7 @@ jobs:
           set -euxo pipefail
           python3 scripts/stage02-audit-packages.py
           grep -F '"result": "PASS"' compliance/stage02-package-manifest.json
+          git diff --exit-code -- compliance/stage02-package-manifest.json
 
       - name: Vulnerability report
         shell: bash
