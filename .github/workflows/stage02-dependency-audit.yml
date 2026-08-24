@@ -138,19 +138,13 @@ jobs:
             exit 20
           fi
           REQUIRED_XCODE="${IOS_PACK##*_}"
-          XCODE_APP="$(python3 - "$REQUIRED_XCODE" <<'PY'
-import glob, os, re, sys
-required = sys.argv[1]
-matching = []
-for path in glob.glob('/Applications/Xcode_*.app'):
-    name = os.path.basename(path)
-    m = re.match(r'Xcode_([0-9]+(?:\.[0-9]+)*)', name)
-    if m and (m.group(1) == required or m.group(1).startswith(required + '.')):
-        matching.append((tuple(int(x) for x in m.group(1).split('.')), path))
-if matching:
-    print(max(matching)[1])
-PY
-)"
+          XCODE_APP=""
+          for candidate in /Applications/Xcode_"$REQUIRED_XCODE"*.app; do
+            if [[ -d "$candidate" ]]; then
+              XCODE_APP="$candidate"
+              break
+            fi
+          done
           if [[ -z "$XCODE_APP" ]]; then
             echo "STAGE08_REQUIRED_XCODE_NOT_FOUND required=$REQUIRED_XCODE" >&2
             exit 21
