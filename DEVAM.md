@@ -1,17 +1,15 @@
 # mobil-dwg — Yeni Sohbet İçin Tek Dosyalık Handoff
 
-Bu dosya, yeni bir ChatGPT/AI oturumunda projeye kaldığı yerden devam etmek için tek giriş noktasıdır. Repo kayıtları sohbet/model belleğinden üstündür.
+Bu dosya yeni bir ChatGPT/AI oturumunda projeye kaldığı yerden devam etmek için tek giriş noktasıdır. Repo kayıtları sohbet/model belleğinden üstündür.
 
 ## Yeni AI için doğrudan talimat
 
-1. `@GitHub` üzerinden `smitelagwar/mobil-dwg` reposunu ve gerçek `main` HEAD'i doğrula.
-2. `Mobil_DWG_DXF_Royalty_Free_Android_iOS_Nihai_Plan.md`, `gecmis.md` ve `docs/USER_APPROVED_EXECUTION_OVERRIDE.md` dosyalarını oku.
-3. AŞAMA 08 için `docs/evidence/STAGE_08.md` ve `docs/LOCAL_DEVICE_REVALIDATION.md`; AŞAMA 07 için `docs/evidence/STAGE_07.md` ve `docs/ADR/0002-procad-pinned-source-no-go.md` dosyalarını oku.
-4. Kullanıcı yalnız `devam` diyorsa `NEXT_WORK_STAGE` üzerinden ilerle.
-5. Bir kullanıcı turunda en fazla bir aşama tamamla; aynı turda sonraki aşamayı başlatma.
-6. Fiziksel cihaz/Mac/Apple hesabı gibi kullanıcının sağlayamadığı dış kapıları sahte PASS/DONE yapma; `DEFERRED_EXTERNAL_GATE` bırak.
-7. Her aşama sonunda canonical checkpoint, `gecmis.md` ve `docs/evidence/STAGE_XX.md` kaydını gerçek CI/commit/artifact kanıtıyla güncelle.
-8. Production dependency'yi evidence olmadan yükseltme veya ProCad'ı tekrar graph'a sokma.
+1. `@GitHub` üzerinden `smitelagwar/mobil-dwg` reposunu, gerçek `main` HEAD'i ve açık PR'ları doğrula.
+2. `Mobil_DWG_DXF_Royalty_Free_Android_iOS_Nihai_Plan.md`, `gecmis.md`, `docs/USER_APPROVED_EXECUTION_OVERRIDE.md` ve aktif aşama evidence dosyasını oku.
+3. Açık `IN_PROGRESS` aşama varsa yeni aşama başlatmadan yalnız onu sürdür.
+4. Bir kullanıcı turunda en fazla bir aşama tamamla.
+5. Fiziksel cihaz/Mac/Apple hesabı gibi dış kapıları sahte PASS/DONE yapma.
+6. Production dependency'yi evidence olmadan yükseltme veya ProCad'ı tekrar graph'a sokma.
 
 ## Repo / ürün
 
@@ -23,52 +21,53 @@ Bu dosya, yeni bir ChatGPT/AI oturumunda projeye kaldığı yerden devam etmek i
 
 ```text
 LAST_COMPLETED_STAGE: AŞAMA 08 — CHARACTERIZATION / RISK_ACCEPTED_FOR_CONTINUATION; iOS PASS NOT CLAIMED
+CURRENT_STAGE: AŞAMA 09
+CURRENT_STAGE_STATUS: IN_PROGRESS — IMPLEMENTATION_READY / T0_T1_VALIDATION_PENDING_RUNNER
 DEFERRED_STAGES: AŞAMA 01; AŞAMA 06; AŞAMA 08 local Mac/ios-arm64/physical iPhone gates
 AŞAMA_01: BLOCKED / DEFERRED_EXTERNAL_GATE — gerçek Android install/launch + iOS erişim envanteri
 AŞAMA_06: BLOCKED / DEFERRED_EXTERNAL_GATE — safe-open CI PASS; gerçek telefon FilePicker/SAF+lifecycle/cache gate açık
-AŞAMA_07: DONE / NO-GO — exact unpatched ProCad candidate systematic precision blocker nedeniyle production reuse için reddedildi
+AŞAMA_07: DONE / NO-GO — exact unpatched ProCad candidate precision blocker nedeniyle production reuse için reddedildi
 AŞAMA_08: DONE / CHARACTERIZATION — evidence BLOCKED_PARTIAL_EVIDENCE; iOS runtime/device PASS yok
-STAGE08_CI: run 32781026946 / #18 SUCCESS characterization; artifact 9540018558; sha256:1414e3bf5a9800e150019c48f620c64efcd3d5282ac7322ef9a5e5746ab746f7
-STAGE08_HOST_BLOCKER: Xcode 26.6 hosted runner install_name_tool/clang lookup
-STAGE08_TRIM_RISK: ACadSharp ILLink/reflection warnings
-STAGE08_NATIVEAOT: iossimulator-arm64 NETSDK1203; ios-arm64 future real-device gate
-STAGE08_PHYSICAL_IPHONE: NOT_RUN_DEFERRED_EXTERNAL_GATE
-LOCAL_REVALIDATION: docs/LOCAL_DEVICE_REVALIDATION.md
-NEXT_WORK_STAGE: AŞAMA 09
-NEXT_WORK_STATUS: WAITING_EXPLICIT_USER_GO
-STAGE09_GO_BARRIER: custom renderer effort/maintenance risk HIGH; AŞAMA 09 implementation öncesinde kullanıcı açık GO gerekir
-NEXT_ACTION: generic `devam` ile AŞAMA 09 başlatma; `AŞAMA 09 GO` gibi explicit karar bekle.
+AŞAMA_09_BRANCH: stage09-render-scene-camera
+AŞAMA_09_PR: #12
+AŞAMA_09_SOURCE_TEST_HEAD: 6215f9fbd77028273262bc5b95fd3eece19191d3
+AŞAMA_09_WORKFLOW_FIX_HEAD: b6e3b5c825810c70e4ada750f576672ebe25d99d
+AŞAMA_09_IMPLEMENTED: compact immutable RenderScene; stable entity/layer/style/source metadata; double camera pipeline; large-origin precision regression; OCS/WCS; diagnostics; fit/zoom/color context; deterministic semantic snapshot
+AŞAMA_09_VALIDATION: NOT_RUN — hosted jobs reach no steps; runner_id=0
+AŞAMA_09_FINAL_HOSTED_RUN: 32786600644 / #14; macos-26; attempts 1 and 2 both pre-step failure
+AŞAMA_09_FINAL_HOSTED_JOBS: 97619697255; 97619957457
+AŞAMA_09_SELF_HOSTED_PROBE: 32784140351 / #3; suitable online runner not assigned; temporary workflow removed
+AŞAMA_09_EVIDENCE: docs/evidence/STAGE_09.md
+NEXT_ACTION: obtain any real exact .NET 10.0.400 execution environment; run Stage 09 T0 restore/build + T1 deterministic tests; fix compiler/test defects if any; only then close/merge PR #12
+AŞAMA_10_STATUS: NOT_STARTED
 ```
 
-## Tamamlanan / açık aşamalar
+## AŞAMA 09 özeti
 
-- AŞAMA 00 — DONE
-- AŞAMA 01 — BLOCKED / DEFERRED_EXTERNAL_GATE
-- AŞAMA 02 — DONE
-- AŞAMA 03 — DONE
-- AŞAMA 04 — DONE
-- AŞAMA 05 — DONE; ACadSharp 3.7.1 read-only parser baseline GO
-- AŞAMA 06 — BLOCKED / DEFERRED_EXTERNAL_GATE; cihazdan bağımsız safe-open/Android build CI PASS
-- AŞAMA 07 — DONE / NO-GO; ProCad production reuse rejected
-- AŞAMA 08 — DONE / CHARACTERIZATION; iOS PASS NOT CLAIMED
+Kullanıcı özel renderer efor/bakım riskini kabul ederek AŞAMA 09'un başlamasını açıkça onayladı. ADR 0002 sonrası tek production scene yolu compact özel immutable scene olarak seçildi; ProCad production graph'a eklenmedi.
 
-## AŞAMA 07 özeti
+Uygulanan foundation:
 
-Exact candidate:
+- Stable entity ID, bounds, layer/style token ve parser source reference.
+- World/document coordinates ve world→view→screen hattında `double` precision.
+- Survey origin `5,000,000` çevresinde `0.001` detay regression testi.
+- OCS/WCS arbitrary-axis transform ve oblique round-trip testi.
+- NaN/Infinity/extents guards.
+- Unsupported/Substituted/Dropped/Error scene diagnostics.
+- Camera fit, zoom clamps ve dark/light color context.
+- Stable-ID sıralı immutable scene ve deterministic `render-scene/v1` semantic snapshot.
+- Eski `STAGE04_RENDER_CONTRACT_TESTS_PASS` marker'ı test harness'ta korunur.
 
-- ProCad `f8a862b3e7634e27664fee02ff5d68774b102985`
-- ACadSharp submodule `0ed79df48de0806af3c3028d0e2826447cbc1d36`
-- ProEdit `64759b79289a024d08463ed1a9094fdcd9a270df`
+Validation henüz PASS değildir. Ubuntu hosted koşuları pre-step `runner_id=0`; ilk macOS fallback'ta yanlış `macos-26-arm64` label'ı fark edilip repoda AŞAMA 08'de kullanılan doğru `macos-26` label'ına düzeltildi. Buna rağmen doğru label ile run `32786600644`/#14 attempt 1 ve explicit rerun attempt 2 de `steps=[]`, `runner_id=0`, empty runner name ile kesildi. Root cause'un billing/quota/capacity olduğu kanıtlanmadığından tahmin edilmez. Configured self-hosted Windows runner probe'u da uygun online runner bulamadı ve geçici workflow silindi.
 
-Lineage official upstream'de çözüldü ancak approved ACadSharp 3.7.1 source baseline 592 commit ileride. Pinned source Android build başarılı (`82 warning / 0 error`); clean MAUI Release smoke başarılı (`0 warning / 0 error`). Published ProCadSharp 0.1.1 restore graph ACadSharp 1.0.0 ve Skia 4.147.0-preview.2.1 çözüyor; source graph ile eşdeğer değil.
+Bu nedenle PR #12 merge edilmedi ve AŞAMA 10 başlatılmadı.
 
-Hard blocker: ProCad scene boundary'sinde CAD world point doğrudan float Vector2'ye daralıyor. Origin 100 + 1 mm detay korunurken origin 5,000,000 + 1 mm detay float'ta aynı değere düşüyor; observed delta 0.0. Bu systematic P0 fidelity loss. Exact unpatched candidate `NO-GO`; production graph'a eklenmez.
+## Önceki kritik kararlar
 
-Özel renderer garantili fallback değildir. ADR 0002, AŞAMA 09–16 renderer/fidelity kapsamını ve sonraki performance/full-corpus gate'lerini HIGH effort/maintenance risk olarak kaydeder. AŞAMA 09 implementation'dan önce kullanıcı GO gerekir.
-
-## AŞAMA 08 özeti
-
-Exact ACadSharp 3.7.1 + SkiaSharp 4.151.1 iOS hattı GitHub-hosted macOS üzerinde karakterize edildi. Run `32781026946`/#17 characterization SUCCESS; bu iOS PASS değildir. Hosted Xcode 26.6 `install_name_tool`/`clang` lookup final baseline/simulator runtime'ı engelledi. ACadSharp trimming/reflection ILLink riskleri görünür bırakıldı. `iossimulator-arm64` NativeAOT `NETSDK1203` ile desteklenmedi; gerçek AOT `ios-arm64`/physical iPhone'da tekrar gerekir. Fiziksel iPhone ve local Mac kapıları deferred. Ayrıntı `docs/evidence/STAGE_08.md`; gelecekteki ikinci-pass kontrol listesi `docs/LOCAL_DEVICE_REVALIDATION.md`. AŞAMA 09 custom renderer implementation ancak explicit kullanıcı GO ile başlayabilir.
+- ACadSharp `3.7.1` read-only parser baseline: GO.
+- Exact unpatched ProCad source candidate: NO-GO; large-survey-origin mm detail direct double→float scene boundary'sinde çöker.
+- AŞAMA 08 iOS characterization: risk kaydı tamamlandı fakat iOS runtime/device PASS kanıtlanmadı.
+- AŞAMA 01/AŞAMA 06 gerçek Android ve AŞAMA 08 local iOS gates deferred olarak açık kalır.
 
 ## Değiştirilemez ilkeler
 
@@ -76,5 +75,5 @@ Exact ACadSharp 3.7.1 + SkiaSharp 4.151.1 iOS hattı GitHub-hosted macOS üzerin
 - Unsupported/proxy/font/XREF/raster sessiz kayıp olarak gizlenmez.
 - UI parser entity'lerine doğrudan bağlanmaz.
 - Runtime license allowlist varsayılanı MIT/Apache/BSD/ISC/0BSD; policy-RED/unknown release blocker.
-- Gerçek cihaz kanıtı yoksa cihaz PASS yazılmaz.
+- Gerçek cihaz veya test yürütme kanıtı yoksa PASS yazılmaz.
 - Bir turda en fazla bir aşama tamamlanır.
