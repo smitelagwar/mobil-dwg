@@ -28,7 +28,7 @@ dotnet workload install maui-android --version 10.0.400
 dotnet workload list
 ```
 
-Not: Workload kurulumu gerçek geliştirme makinesinde henüz kanıtlanmadı; bu belge hedef/pin kaydıdır, kurulum PASS kanıtı değildir.
+Not: Workload kurulumu gerçek geliştirme makinesinde henüz kanıtlanmadı; CI smoke kurulumu host/ci kanıtıdır, fiziksel cihaz kapısını karşılamaz.
 
 ## Java hattı
 
@@ -46,6 +46,8 @@ java -version
 javac -version
 ```
 
+CI notu: 2026-08-24 tarihinde `actions/setup-java@v5` Microsoft kataloğu 21.0.12'yi henüz listelemiyordu. Resmi Microsoft OpenJDK indirme sayfası ise 21.0.12 Linux x64 artifact'ini yayınlıyordu. CI bu nedenle resmi `aka.ms` artifact'ini ve resmi SHA-256 dosyasını kullanarak exact JDK'yı kurar; katalog gecikmesi sürümün var olmadığı anlamına gelmez.
+
 ## Android SDK hattı
 
 Ürün Android-first ve Google Play'e yeni uygulama olarak çıkacağı için release çizgisi API 36'ya sabitlenmiştir.
@@ -55,13 +57,13 @@ javac -version
 - Target SDK: API `36`
 - Android SDK Platform 36: revision `1`
 - Android SDK Build-Tools: `36.0.0`
-- Android SDK Platform-Tools: `37.0.0` stable
-- `37.0.1`: Canary; production baseline'a alınmaz
+- Android SDK Platform-Tools: `37.0.1` stable
 
 Politika gerekçesi:
 
 - .NET 10 API 21–23'ü Mono ile desteklemeye devam etse de .NET 10 proje şablonları desugaring kaynaklı runtime risklerini azaltmak için API 24'ü önerir.
 - Google Play, 31 Ağustos 2026'dan itibaren yeni uygulama ve güncellemelerin Android 16 / API 36 veya üzerini target etmesini ister. Proje bu tarihten yalnız yedi gün önce başlatıldığı için API 35'e geçici olarak bağlanmak yerine doğrudan API 36 hedeflenir.
+- Android Developers Platform-Tools release notes, `37.0.1` sürümünü Temmuz 2026 stable release olarak listeler. 2026-08-24 CI'da `sdkmanager --channel=0 "platform-tools"` da aynı sürümü çözdü. Bu gerçek kanıt nedeniyle önceki `37.0.0 stable / 37.0.1 Canary` kaydı düzeltilmiştir.
 
 Önerilen Android SDK paketleri:
 
@@ -71,7 +73,7 @@ build-tools;36.0.0
 platform-tools
 ```
 
-`platform-tools` paket kurulumundan sonra `adb version` ile `37.0.0` doğrulanmalıdır. Gelecekte SDK Manager daha yeni stable sürüm sunarsa sessiz yükseltme yapılmaz; baseline revizyonu açılır.
+`platform-tools` paket kurulumundan sonra `adb version` ile `37.0.1` doğrulanmalıdır. Gelecekte SDK Manager daha yeni stable sürüm sunarsa sessiz yükseltme yapılmaz; baseline revizyonu açılır.
 
 ## Android command-line tools bootstrap
 
@@ -113,5 +115,6 @@ AŞAMA 01'de yalnız erişim durumu kaydedilir. iOS kurulum/gerçek cihaz işi A
 - Android 16 SDK setup: `https://developer.android.com/about/versions/16/setup-sdk`
 - Android SDK Platform releases: `https://developer.android.com/tools/releases/platforms`
 - Android Platform-Tools releases: `https://developer.android.com/tools/releases/platform-tools`
+- Android SDK Manager stable-channel behavior: `https://developer.android.com/tools/sdkmanager`
 - Android Studio / command-line tools downloads: `https://developer.android.com/studio/`
 - Google Play target API requirements: `https://support.google.com/googleplay/android-developer/answer/11926878`
