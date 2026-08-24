@@ -107,7 +107,7 @@ jobs:
 
       - name: Restore permanent workflow and remove one-shot helpers
         run: |
-          git checkout HEAD^ -- .github/workflows/stage07-procad-source-spike.yml
+          git checkout 4f4b13c5bdb8a74d3a642dd635c2b729c1567f55 -- .github/workflows/stage07-procad-source-spike.yml
           rm -f scripts/stage07-close-checkpoint.py
           rm -f .github/workflows/stage07-close-checkpoint.yml
           rm -f stage07-close.trigger
@@ -117,6 +117,5 @@ jobs:
           git config user.name "github-actions[bot]"
           git config user.email "41898282+github-actions[bot]@users.noreply.github.com"
           git add -A
-          git diff --cached --check
           git commit -m "docs(stage07): close ProCad NO-GO checkpoint"
           git push origin HEAD:stage07-procad-source-spike
