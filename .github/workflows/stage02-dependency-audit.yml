@@ -1,0 +1,105 @@
+name: Stage 02 Dependency Audit
+
+on:
+  workflow_dispatch:
+  push:
+    branches: [main]
+    paths:
+      - Directory.Packages.props
+      - compliance/**
+      - scripts/stage02-audit-packages.py
+      - .github/workflows/stage02-dependency-audit.yml
+  pull_request:
+    branches: [main]
+
+permissions:
+  contents: read
+
+jobs:
+  dependency-audit:
+    runs-on: ubuntu-latest
+    timeout-minutes: 30
+
+    steps:
+      - name: Checkout
+        uses: actions/checkout@v5
+
+      - name: Set up .NET 10.0.400
+        uses: actions/setup-dotnet@v5
+        with:
+          dotnet-version: 10.0.400
+
+      - name: Validate audit script
+        shell: bash
+        run: |
+          set -euxo pipefail
+          python3 -m py_compile scripts/stage02-audit-packages.py
+
+      - name: Install pinned Android workload set
+        shell: bash
+        run: |
+          set -euxo pipefail
+          test "$(dotnet --version)" = "10.0.400"
+          dotnet workload install maui-android
+          dotnet workload list | tee /tmp/workloads.txt
+          grep -F '10.0.400' /tmp/workloads.txt
+          grep -F 'maui-android' /tmp/workloads.txt
+
+      - name: Generate exact restore lock
+        shell: bash
+        run: |
+          set -euxo pipefail
+          dotnet restore compliance/Stage02.DependencyProbe/Stage02.DependencyProbe.csproj --use-lock-file
+          test -f compliance/Stage02.DependencyProbe/packages.lock.json
+          cat compliance/Stage02.DependencyProbe/packages.lock.json
+
+      - name: Verify locked restore
+        shell: bash
+        run: |
+          set -euxo pipefail
+          dotnet restore compliance/Stage02.DependencyProbe/Stage02.DependencyProbe.csproj --locked-mode
+
+      - name: Record resolved graph
+        shell: bash
+        run: |
+          set -euxo pipefail
+          dotnet list compliance/Stage02.DependencyProbe/Stage02.DependencyProbe.csproj package --include-transitive --format json > compliance/stage02-resolved-packages.json
+          cat compliance/stage02-resolved-packages.json
+
+      - name: Audit package licenses and exact nupkg hashes
+        shell: bash
+        run: |
+          set -euxo pipefail
+          python3 scripts/stage02-audit-packages.py
+          grep -F '"result": "PASS"' compliance/stage02-package-manifest.json
+
+      - name: Vulnerability report
+        shell: bash
+        run: |
+          set -euxo pipefail
+          dotnet list compliance/Stage02.DependencyProbe/Stage02.DependencyProbe.csproj package --vulnerable --include-transitive | tee compliance/stage02-vulnerabilities.txt
+          if grep -Fq 'has the following vulnerable packages' compliance/stage02-vulnerabilities.txt; then
+            echo 'Vulnerable package detected' >&2
+            exit 1
+          fi
+
+      - name: Evidence checksums
+        shell: bash
+        run: |
+          set -euxo pipefail
+          sha256sum \
+            compliance/Stage02.DependencyProbe/packages.lock.json \
+            compliance/stage02-package-manifest.json \
+            compliance/stage02-resolved-packages.json \
+            compliance/stage02-vulnerabilities.txt
+
+      - name: Upload Stage 02 evidence
+        uses: actions/upload-artifact@v4
+        with:
+          name: stage02-dependency-evidence
+          if-no-files-found: error
+          path: |
+            compliance/Stage02.DependencyProbe/packages.lock.json
+            compliance/stage02-package-manifest.json
+            compliance/stage02-resolved-packages.json
+            compliance/stage02-vulnerabilities.txt
