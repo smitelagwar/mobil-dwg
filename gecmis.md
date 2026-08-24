@@ -7,9 +7,9 @@ Bu dosya yeni sohbet veya yeni bir yapay zeka oturumu başladığında projenin 
 1. `gecmis.md`
 2. `docs/USER_APPROVED_EXECUTION_OVERRIDE.md`
 3. `Mobil_DWG_DXF_Royalty_Free_Android_iOS_Nihai_Plan.md`
-4. `docs/evidence/STAGE_06.md`
-5. `docs/evidence/STAGE_05.md`
-6. `docs/ADR/0001-acadsharp-3.7.1-parser-baseline.md`
+4. `docs/evidence/STAGE_07.md` ve `docs/ADR/0002-procad-pinned-source-no-go.md`
+5. `docs/evidence/STAGE_06.md`
+6. `docs/evidence/STAGE_05.md` ve `docs/ADR/0001-acadsharp-3.7.1-parser-baseline.md`
 7. `docs/ARCHITECTURE.md` ve `MobilDwg.sln`
 8. `docs/evidence/STAGE_04.md`
 9. `docs/evidence/STAGE_03.md`, `fixtures/manifest/stage03-mini.json`, `fixtures/manifest/stage03-source-integrity.json`, `docs/GOLDEN_CONTRACT.md`, `docs/DEVICE_MATRIX.md`
@@ -28,30 +28,28 @@ Bu dosya yeni sohbet veya yeni bir yapay zeka oturumu başladığında projenin 
 ## Aktif checkpoint
 
 ```text
-LAST_COMPLETED_STAGE: AŞAMA 05
+LAST_COMPLETED_STAGE: AŞAMA 07
 DEFERRED_STAGES: AŞAMA 01; AŞAMA 06
 STAGE01_STATUS: BLOCKED / DEFERRED_EXTERNAL_GATE — fiziksel Android install/launch ve iOS erişim envanteri açık, DONE değil
 STAGE06_STATUS: BLOCKED / DEFERRED_EXTERNAL_GATE — safe-open implementation/CI PASS, fiziksel Android FilePicker/SAF+lifecycle/cache gate açık, DONE değil
-NEXT_WORK_STAGE: AŞAMA 07
+STAGE07_STATUS: DONE / NO-GO — exact unpatched ProCad source candidate deterministic precision blocker nedeniyle production reuse için reddedildi
+NEXT_WORK_STAGE: AŞAMA 08
 NEXT_WORK_STATUS: NOT_STARTED
 USER_CONSTRAINT: Kullanıcı şu an fiziksel Android cihaz/gerçek geliştirme makinesi ve Mac/Xcode/iPhone/Apple Developer erişim kanıtlarını sağlayamıyor; temel etkileşimi "devam" demek.
 USER_APPROVAL: Dış erişim kapıları sahte PASS/DONE yapılmadan ertelensin; bağımsız aşamalara devam edilsin.
 DEFERRED_EXTERNAL_GATES: STAGE01_DEVICE_GATE_PASS; local Android install/launch; iOS erişim envanteri YES/NO/N/A; STAGE06_PHYSICAL_ANDROID_FILEPICKER_DWG_DXF; cancel/rotate/background/close/cache-cleanup
-LAST_VERIFIED_STAGE05_CI: Stage 05 Parser Spike run 32760139261 / #15 SUCCESS; locked restore; Release build 0 warning / 0 error; STAGE05_DEPENDENCY_BOUNDARY_PASS; STAGE05_MINI_CORPUS_PASS fixtures=9 derived_negatives=2; STAGE05_T3_PASS; artifact 9532379884; sha256:f3b31c937186d874a0ed23c045951d465ace5da8fff2f9acc32006c4352e2f60
-LAST_VERIFIED_STAGE06_CI: Stage 06 Safe Open run 32762879583 / #3 SUCCESS; actual DWG+DXF safe-open; quota/disk/cleanup; last-request-wins; cancel semantics; Android Debug+Release; artifact 9533538573; sha256:18c7c395e24b6e3d686edef03d3d0ad686c21fad82686704ef38e7e098a25ea3
-LAST_VERIFIED_STAGE04_REGRESSION_CI: Stage 04 Architecture run 32762879643 / #22 SUCCESS
-LAST_VERIFIED_STAGE02_REGRESSION_CI: Stage 02 Dependency Audit run 32762879581 / #35 SUCCESS
-LAST_VERIFIED_STAGE01_REGRESSION_CI: Stage 01 Toolchain Smoke run 32762879589 / #54 SUCCESS; physical device evidence değildir.
-STAGE05_IMPLEMENTATION_HEAD: 09e26172aa8de9e8c79ae64853a493dab1d0e5b9
-STAGE05_FINAL_PR_HEAD: 80cdaf49d3ad4298f3b1d56fe1dbac89b352ec7f
-STAGE05_PR: #7 — stage05: validate ACadSharp headless parser
-LAST_STAGE_MERGE: PR #7 -> main; merge commit bbe5b62224ae6e7fdaebd1c1c6ace87418f09b9f
-STAGE05_MERGE: bbe5b62224ae6e7fdaebd1c1c6ace87418f09b9f
-STAGE06_IMPLEMENTATION_HEAD: 56de020fb1297b8642c4f84c24522bbd723272f8
-STAGE06_PR: #8 — stage06: validate Android safe file open flow
-STAGE06_MERGE: PENDING — doğrulanmış branch merge edilecek; fiziksel cihaz gate bu merge ile DONE olmaz
+STAGE06_MERGE: PR #8 -> main; merge commit e3a9c36e04be6c51827926ca17bb1a386c6b1142; bu merge fiziksel Stage 06 gate'ini DONE yapmaz
+STAGE07_DECISION_HEAD: 3f88bec383de895e309e218c08d13e9784562a97
+STAGE07_PR: #9 — stage07: evaluate pinned ProCad Android reuse
+STAGE07_DECISION: NO-GO
+STAGE07_HARD_BLOCKER: survey-origin 5,000,000 + 1 mm detail direct double-to-float RenderScene boundary'sinde observed delta 0.0
+LAST_VERIFIED_STAGE07_CI: Stage 07 ProCad Source Spike run 32766501837 / #5 SUCCESS; source Android build exit=0; clean MAUI Release smoke exit=0; STAGE07_FLOAT_PRECISION_BLOCKER_REPRODUCED; STAGE07_DECISION_NO_GO_PASS; artifact 9534797361; sha256:9cae376fd0cbf2861f006af347483f9de26a6cd49f30b201438a3afdb591e555
+LAST_VERIFIED_STAGE06_REGRESSION_CI: Stage 06 Safe Open run 32766501815 / #13 SUCCESS
+LAST_VERIFIED_STAGE02_REGRESSION_CI: Stage 02 Dependency Audit run 32766501809 / #44 SUCCESS
+LAST_VERIFIED_STAGE01_REGRESSION_CI: Stage 01 Toolchain Smoke run 32766501846 / #63 SUCCESS; physical device evidence değildir.
+STAGE09_GO_BARRIER: ADR 0002 custom renderer efor/bakım riskini HIGH olarak kaydeder; AŞAMA 09 implementation öncesinde kullanıcı GO kararı gerekir.
 EXECUTION_OVERRIDE: docs/USER_APPROVED_EXECUTION_OVERRIDE.md
-NEXT_ACTION: AŞAMA 07 — ProCad source-pinned Android spike ve GO/NO-GO. AŞAMA 06 fiziksel Android gate açık kalır; aynı AŞAMA 06 kapanış turunda AŞAMA 07 başlatılmaz.
+NEXT_ACTION: AŞAMA 08 — erken iOS AOT/native fizibilite smoke. AŞAMA 07 kapanış turunda AŞAMA 08 başlatılmaz.
 LAST_UPDATE: 2026-08-24
 ```
 
@@ -68,8 +66,8 @@ AŞAMA 01'in gerçek Android/iOS dış erişim kapıları kullanıcı tarafında
 - [x] AŞAMA 04 — Minimal solution ve mimari sınırlar — `DONE`
 - [x] AŞAMA 05 — ACadSharp headless parser spike — `DONE`
 - [ ] AŞAMA 06 — Android güvenli dosya alma ve parse spike — `BLOCKED / DEFERRED_EXTERNAL_GATE`
-- [ ] AŞAMA 07 — ProCad source-pinned Android spike ve GO/NO-GO — `NEXT`
-- [ ] AŞAMA 08 — Erken iOS AOT/native fizibilite smoke
+- [x] AŞAMA 07 — ProCad source-pinned Android spike ve GO/NO-GO — `DONE / NO-GO`
+- [ ] AŞAMA 08 — Erken iOS AOT/native fizibilite smoke — `NEXT`
 - [ ] AŞAMA 09 — RenderScene, kamera ve diagnostics temeli
 - [ ] AŞAMA 10 — P0 temel geometri renderer’ı
 - [ ] AŞAMA 11 — Mobil viewport ve gesture’lar
@@ -208,3 +206,8 @@ Ayrıntı: `docs/evidence/STAGE_06.md`.
 ## Bir sonraki tur
 
 AŞAMA 06 PR #8 main'e merge edilip merge SHA checkpoint'e işlendiğinde kullanıcı `devam` derse yalnız AŞAMA 07 — ProCad source-pinned Android spike ve GO/NO-GO — başlatılır. AŞAMA 06 fiziksel Android gate açık kalır.
+
+
+### AŞAMA 07 — DONE / NO-GO
+
+Exact ProCad source candidate `f8a862b3e7634e27664fee02ff5d68774b102985` production graph'a eklenmeden izole Android spike ile değerlendirildi. ACadSharp submodule lineage official upstream'de çözüldü fakat mobil-dwg approved 3.7.1 source baseline'dan 592 commit geride. Published ProCadSharp 0.1.1 restore graph'ı `NU1603` ile ACadSharp 1.0.0 çözüyor ve Skia 4.147.0-preview.2.1 bandına çıkıyor. Pinned Android source build `82 warning / 0 error`, clean MAUI Release smoke `0 warning / 0 error` ile geçti. Buna rağmen origin 5,000,000 üzerindeki 1 mm detail direct double-to-float RenderScene boundary'sinde observed delta `0.0` olarak çöktü; deterministic P0 fidelity blocker. Physical Android T3 bu hard blocker sonrasında `NOT_RUN_AFTER_DETERMINISTIC_BLOCKER` ve PASS değildir. ADR `docs/ADR/0002-procad-pinned-source-no-go.md`; evidence `docs/evidence/STAGE_07.md`; final decision CI run `32766501837` / #5 SUCCESS, artifact `9534797361`, digest `sha256:9cae376fd0cbf2861f006af347483f9de26a6cd49f30b201438a3afdb591e555`. Özel renderer garantili fallback değildir; AŞAMA 09 implementation öncesinde HIGH efor/bakım riski için kullanıcı GO gerekir.
