@@ -82,9 +82,11 @@ jobs:
             ${{ runner.temp }}/stage07-procad-evidence.json
             ${{ runner.temp }}/mobil-dwg-stage07/precision.json
             ${{ runner.temp }}/mobil-dwg-stage07/nuget-availability.json
+            ${{ runner.temp }}/mobil-dwg-stage07/nuget-resolved-summary.json
             ${{ runner.temp }}/mobil-dwg-stage07/nuget-restore.log
             ${{ runner.temp }}/mobil-dwg-stage07/nuget-restore-graph.txt
             ${{ runner.temp }}/mobil-dwg-stage07/source-package-graph.txt
             ${{ runner.temp }}/mobil-dwg-stage07/procad-android-build.log
             ${{ runner.temp }}/mobil-dwg-stage07/procad-maui-smoke.log
+            ${{ runner.temp }}/mobil-dwg-stage07/ProCad.Controls.Maui.csproj.original
             ${{ runner.temp }}/mobil-dwg-stage07/Stage07ProCadAndroidSmoke/bin/Release/net10.0-android/**/*.apk
