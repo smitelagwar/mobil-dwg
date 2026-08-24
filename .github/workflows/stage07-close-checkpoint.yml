@@ -7,6 +7,7 @@ on:
     paths:
       - scripts/stage07-close-checkpoint.py
       - .github/workflows/stage07-close-checkpoint.yml
+      - stage07-close.trigger
 
 permissions:
   contents: write
@@ -28,6 +29,7 @@ jobs:
         run: |
           rm scripts/stage07-close-checkpoint.py
           rm .github/workflows/stage07-close-checkpoint.yml
+          rm -f stage07-close.trigger
 
       - name: Commit synchronized checkpoint
         run: |
