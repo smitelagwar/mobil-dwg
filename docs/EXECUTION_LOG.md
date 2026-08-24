@@ -197,3 +197,36 @@ PR #7 `stage05: validate ACadSharp headless parser` doğrulanmış head üzerind
 AŞAMA 01 fiziksel Android install/launch ve iOS erişim envanteri `DEFERRED_EXTERNAL_GATE` olarak açık kalır.
 
 Sonuç: AŞAMA 05 teknik gate'leri `DONE`. Sonraki aşama AŞAMA 06; aynı kullanıcı turunda başlanmaz.
+
+
+---
+
+## 2026-08-24 — AŞAMA 06 — BLOCKED / DEFERRED_EXTERNAL_GATE
+
+Başlangıç main: `b0262877b0273c5854e671c95e0c11601dfcd170`.
+
+Yapılanlar:
+
+- `MobilDwg.App` içinde stream-factory tabanlı safe-open kontratları, actual-byte quota, disk reserve, sanitized filename, atomic unique app-private cache copy ve deterministic cleanup eklendi.
+- Parse worker thread'e taşındı; parser cooperative cancel desteklemiyorsa hard-stop iddiası yapılmıyor.
+- Generation ID / `last request wins` ile stale parser sonuçları dispose edilip commit edilmiyor.
+- Gerçek pinned AC1015 DWG + committed sentetik DXF safe-open probe'u geçti; original hash'ler değişmedi.
+- Quota, provider declared-size yalanı, disk reserve, source disposal, temp leak, last-request-wins ve cancel-result-discard testleri geçti.
+- MAUI Android FilePicker/OpenReadAsync spike'ı generated temiz uygulamada Debug+Release derlendi; minSdk 24, targetSdk 36; broad storage permission yok.
+
+CI sırasında yakalanan gerçek sorunlar:
+
+1. App kullanıcı mesajında parser vendor adı geçtiği için architecture source-boundary guard fail verdi; App parser-agnostic hale getirildi.
+2. Static provider-path guard app-private cache normalizationındaki `Path.GetFullPath` çağrısını yanlış pozitif saydı; guard yalnız MAUI provider adapter source'una daraltıldı.
+
+Final implementation CI head `56de020fb1297b8642c4f84c24522bbd723272f8`:
+
+- Stage 06 Safe Open run `32762879583` / #3 `SUCCESS`.
+- Stage 04 Architecture run `32762879643` / #22 `SUCCESS`.
+- Stage 02 Dependency Audit run `32762879581` / #35 `SUCCESS`.
+- Stage 01 Toolchain Smoke run `32762879589` / #54 `SUCCESS`; fiziksel cihaz kanıtı değildir.
+- Evidence artifact `9533538573`, digest `sha256:18c7c395e24b6e3d686edef03d3d0ad686c21fad82686704ef38e7e098a25ea3`.
+
+Açık dış kapı: gerçek fiziksel Android telefonda FilePicker/SAF DWG+DXF, metadata/diagnostics, cancel, hızlı ikinci seçim, rotate, background/foreground, close/reopen ve cache leak smoke. Bu nedenle AŞAMA 06 `DONE` değildir; `BLOCKED / DEFERRED_EXTERNAL_GATE` kalır.
+
+Kullanıcı onaylı `docs/USER_APPROVED_EXECUTION_OVERRIDE.md` gereği AŞAMA 06 PR #8 merge edildikten sonra sonraki bağımsız çalışma AŞAMA 07 olabilir; AŞAMA 06 fiziksel gate release/beta/final kapılarında yeniden zorunludur.
