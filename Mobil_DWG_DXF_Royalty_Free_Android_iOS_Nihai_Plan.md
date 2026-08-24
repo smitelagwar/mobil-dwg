@@ -15,14 +15,14 @@
 Bu blok ve aşağıdaki aşama kutuları her çalışma turunun sonunda güncellenir.
 
 ```text
-CURRENT_STAGE: AŞAMA 01
-CURRENT_SUBSTEP: 01.5
-STATUS: BLOCKED
-LAST_VERIFIED_REVISION: 9b375af9931a3db23f82e9b983257f29030a7376 — Stage 01 physical-device gate automation PR #2 main merge; evidence/log/handoff güncellendi
-LAST_SUCCESSFUL_COMMAND: GitHub Actions Stage 01 Toolchain Smoke run 32739952628 — device-gate script syntax + exact toolchain/workload + pinned ApplicationId + Debug/Release + manifest/API/package + APK artifact SUCCESS
-EVIDENCE: docs/evidence/STAGE_01.md; docs/EXECUTION_LOG.md; docs/TOOLCHAIN.md; scripts/stage01-device-gate.sh; scripts/stage01-device-gate.ps1; GitHub Actions run 32739952628; artifact 9524964656 / SHA-256 cfd2221a9a31193c76b4347f633ec062d54abca5117edea887bc46a0926f6d0f
-BLOCKERS: Bu oturumda kullanıcının gerçek geliştirme makinesine ve fiziksel Android telefona USB/ADB erişimi yok; Mac/Xcode/iPhone/Apple Developer erişimi de doğrulanmadı
-NEXT_ACTION: Gerçek geliştirme makinesinde scripts/stage01-device-gate.ps1 veya scripts/stage01-device-gate.sh çalıştır ve STAGE01_DEVICE_GATE_PASS kanıtını al; ardından iOS erişim envanterini kapat
+CURRENT_STAGE: AŞAMA 02
+CURRENT_SUBSTEP: 02.6
+STATUS: DONE
+LAST_VERIFIED_REVISION: e970a7937ac7360420e7195f4e611a1d516972ea — AŞAMA 02 PR #4 merge ve kapanış evidence/handoff/README/EXECUTION_LOG güncellemeleri main üzerinde doğrulandı
+LAST_SUCCESSFUL_COMMAND: GitHub Actions Stage 02 Dependency Audit run 32747785867 / #9 SUCCESS + aynı head Stage 01 Toolchain Smoke run 32747785948 / #29 SUCCESS
+EVIDENCE: docs/evidence/STAGE_02.md; compliance/DEPENDENCY_EVIDENCE.md; docs/EXECUTION_LOG.md; compliance/Stage02.DependencyProbe/packages.lock.json; compliance/stage02-package-manifest.json; PR #4 merge f0a43db6cc3aee9103f42798fa124da4d1ff39d1; Stage 02 artifact 9527769476 / SHA-256 90d41760e306e13b9977586b9996c1aafdf27f615c2b730bb41d74507b4684f3
+BLOCKERS: AŞAMA 02 için yok. AŞAMA 01 fiziksel Android install/launch ve iOS erişim envanteri docs/USER_APPROVED_EXECUTION_OVERRIDE.md gereği DEFERRED_EXTERNAL_GATE olarak açık kalır.
+NEXT_ACTION: AŞAMA 03 — test corpus'u, golden sözleşmesi ve cihaz matrisi. AŞAMA 01 dış kapılarını sahte PASS/DONE yapma; aynı turda AŞAMA 04'e geçme.
 LAST_UPDATE: 2026-08-24
 ```
 
@@ -49,6 +49,10 @@ Kullanıcı `devam` dediğinde veya projeyi sürdürmeyi istediğinde ajan şu k
 10. Dependency kendiliğinden yükseltilmez. Her yükseltme ayrı doğruluk, lisans ve artifact kontrolü gerektirir.
 11. Kullanıcıya ait değişiklikler korunur; destructive Git veya dosya işlemi yapılmaz.
 12. Her turun sonunda yalnız kısa sonuç, çalıştırılan testler, kalan risk ve sonraki eylem raporlanır.
+
+### Aktif yürütme istisnası — dış erişim kapıları
+
+2026-08-24 kullanıcı onayıyla `docs/USER_APPROVED_EXECUTION_OVERRIDE.md` yürürlüktedir. AŞAMA 01'in gerçek Android cihaz install/launch ve iOS erişim envanteri kapıları `DEFERRED_EXTERNAL_GATE` olarak açık kalır; bunlar sahte PASS/DONE yapılmaz. Buna rağmen fiziksel cihaz/hesap erişimine bağımlı olmayan sonraki aşamalar `gecmis.md` içindeki `NEXT_WORK_STAGE` sırasıyla yürütülebilir. Bir turda en fazla bir aşama tamamlama kuralı değişmez. Release/beta/final cihaz kapılarında ertelenen dış kanıtlar yeniden zorunlu olarak açılır.
 
 ### Token ve test bütçesi
 
@@ -360,9 +364,9 @@ Kurallar:
 ### Aşama indeksi
 
 - [x] AŞAMA 00 — Çalışma alanı ve yürütme zemini
-- [ ] AŞAMA 01 — .NET/MAUI/Android toolchain ve gerçek telefon — `BLOCKED`
-- [ ] AŞAMA 02 — Canlı dependency/lisans kanıtı ve kilitler
-- [ ] AŞAMA 03 — Test corpus’u, golden sözleşmesi ve cihaz matrisi
+- [ ] AŞAMA 01 — .NET/MAUI/Android toolchain ve gerçek telefon — `BLOCKED / DEFERRED_EXTERNAL_GATE`
+- [x] AŞAMA 02 — Canlı dependency/lisans kanıtı ve kilitler — `DONE`
+- [ ] AŞAMA 03 — Test corpus’u, golden sözleşmesi ve cihaz matrisi — `NEXT`
 - [ ] AŞAMA 04 — Minimal solution ve mimari sınırlar
 - [ ] AŞAMA 05 — ACadSharp headless parser spike
 - [ ] AŞAMA 06 — Android güvenli dosya alma ve parse spike
@@ -417,8 +421,8 @@ Test: Git status ve ignore dry-run.
 - [ ] `adb` ile kullanıcının gerçek telefonuna yüklenir ve açılır; gerçek geliştirme makinesinde `STAGE01_DEVICE_GATE_PASS` alınır.
 - [ ] iOS için Mac/Xcode/iPhone/Apple Developer erişimi yalnız envanterlenir; henüz kurulum yapılmaz.
 
-Test: `dotnet --info`, workload list, Android Debug/Release build, manifest/API/package baseline ve device-gate script syntax kontrolü CI run `32739952628` üzerinde PASS. Fiziksel Android install/launch ancak gerçek cihazdaki `STAGE01_DEVICE_GATE_PASS` ile kapanır.  
-Çıkış: Gerçek telefonda boş MAUI uygulaması çalışır; exact toolchain kanıtı vardır. Telefon erişimi yoksa aşama `BLOCKED` kalır.
+Test: `dotnet --info`, workload list, Android Debug/Release build, manifest/API/package baseline ve device-gate script syntax kontrolü en güncel regresyon run `32747785948` / #29 üzerinde PASS. Root Central Package Management etkisinden kaçınmak için temiz MAUI smoke projesi `$RUNNER_TEMP` altında izole edildi. Fiziksel Android install/launch ancak gerçek cihazdaki `STAGE01_DEVICE_GATE_PASS` ile kapanır.  
+Çıkış: Gerçek telefonda boş MAUI uygulaması çalışır; exact toolchain kanıtı vardır. Telefon/iOS erişimi olmadığından aşama `BLOCKED / DEFERRED_EXTERNAL_GATE` kalır; `docs/USER_APPROVED_EXECUTION_OVERRIDE.md` bağımsız sonraki aşamaların ilerlemesine izin verir.
 
 ### AŞAMA 02 — Canlı dependency/lisans kanıtı ve kilitler
 
@@ -426,15 +430,15 @@ Test: `dotnet --info`, workload list, Android Debug/Release build, manifest/API/
 
 İşler:
 
-- [ ] ACadSharp’ın güncel release/issue/license/dependency/native/submodule durumu resmi kaynaklardan kaydedilir.
-- [ ] SkiaSharp + MAUI paket/native graph’ı ve lisansları incelenir.
-- [ ] ProCad repo, tag/commit, ACadSharp fork SHA/diff, ProEdit submodule ve yayımlanmış NuGet graph’ı kanıtlanır.
-- [ ] IxMilia.Dxf/Dwg/Shx yalnız fallback/test adayı olarak raporlanır.
-- [ ] `LICENSE_POLICY`, `DEPENDENCY_EVIDENCE`, initial risk register hazırlanır.
-- [ ] Central Package Management, exact versions, lockfile ve locked restore politikası kurulur.
+- [x] ACadSharp `3.7.1` current stable release, source/license/dependency/submodule hattı resmi kaynaklardan kaydedildi; dependency/lisans sınıfı `GREEN`, fidelity kararı AŞAMA 05'e bırakıldı.
+- [x] SkiaSharp `4.151.1` ve Android native asset graph’ı incelendi; exact `.nupkg` hash/native-entry kanıtı kaydedildi; final native third-party inventory nedeniyle `REVIEW`.
+- [x] ProCad source snapshot `f8a862b3e7634e27664fee02ff5d68774b102985`, ACadSharp fork submodule `0ed79df48de0806af3c3028d0e2826447cbc1d36` ve ProEdit `64759b79289a024d08463ed1a9094fdcd9a270df` kaydedildi; production default `NO-GO`, yalnız AŞAMA 07 source-pinned spike.
+- [x] IxMilia.Dxf `0.8.4` test/fallback scope'unda `GREEN`; IxMilia.Dwg/Shx source-only `REVIEW` olarak raporlandı.
+- [x] `compliance/LICENSE_POLICY.md`, `compliance/DEPENDENCY_EVIDENCE.md`, `compliance/RISK_REGISTER.md` ve `docs/evidence/STAGE_02.md` hazırlandı.
+- [x] Central Package Management, exact versions, committed `packages.lock.json`, `--locked-mode` restore, exact `.nupkg` SHA-256/license manifest'i ve CI vulnerability/reproducibility kapısı kuruldu.
 
-Test: Boş/minimal restore graph’ı; unknown license kontrolü.  
-Çıkış: Her aday `GREEN/REVIEW/RED`; hiçbir “latest” veya kanıtsız paket yok. ProCad production’a eklenmez.
+Test: GitHub Actions `Stage 02 Dependency Audit` run `32747785867` / #9 SUCCESS; committed locked restore, resolved graph, exact nupkg license/hash audit, manifest diff, vulnerability check ve evidence artifact PASS. Aynı final PR head üzerinde `Stage 01 Toolchain Smoke` run `32747785948` / #29 SUCCESS; root-CPM regresyonu kapandı.  
+Çıkış: Sağlandı. Her aday `GREEN/REVIEW/RED`; floating/latest production dependency yok; unknown/policy-RED resolved package yok; ProCad production graph’a eklenmedi. PR #4 merge commit `f0a43db6cc3aee9103f42798fa124da4d1ff39d1`.
 
 ### AŞAMA 03 — Test corpus’u, golden sözleşmesi ve cihaz matrisi
 
