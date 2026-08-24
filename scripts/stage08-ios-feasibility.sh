@@ -50,10 +50,12 @@ grep -F 'SkiaSharp' "$PACKAGE_GRAPH"
 grep -F 'SkiaSharp.NativeAssets.iOS' "$PACKAGE_GRAPH"
 echo "STAGE08_EXACT_GRAPH_RECORDED"
 
-# Baseline Release feasibility: no trimming/AOT. This must build and execute.
+# Baseline Release feasibility: disable assembly linking with the iOS-supported
+# MtouchLink switch. iOS requires PublishTrimmed=true at the SDK level even
+# when linking is intentionally disabled for this baseline comparison.
 set +e
 dotnet build "$PROJECT" -c Release -f "$TFM" -r "$RID" --no-restore \
-  -p:PublishTrimmed=false 2>&1 | tee "$BASELINE_BUILD_LOG"
+  -p:MtouchLink=None 2>&1 | tee "$BASELINE_BUILD_LOG"
 BASELINE_BUILD_EXIT=${PIPESTATUS[0]}
 set -e
 if [[ "$BASELINE_BUILD_EXIT" -ne 0 ]]; then
@@ -164,8 +166,8 @@ fi
 
 echo "STAGE08_WARNING_AUDIT trimmer=$TRIMMER_WARNING_COUNT reflection=$REFLECTION_WARNING_COUNT font=$FONT_WARNING_COUNT"
 
-# NativeAOT feasibility probe. .NET documents PublishAot + an iOS simulator RID
-# as an iOS-like NativeAOT target. The result is recorded independently.
+# NativeAOT feasibility probe. The result is recorded independently from the
+# baseline simulator feasibility and is never converted into a fake PASS.
 set +e
 dotnet publish "$PROJECT" -c Release -f "$TFM" -r "$RID" \
   -p:PublishAot=true \
