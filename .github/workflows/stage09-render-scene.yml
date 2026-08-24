@@ -1,0 +1,67 @@
+name: Stage 09 Render Scene Foundation
+
+on:
+  push:
+    branches:
+      - stage09-render-scene-camera
+    paths:
+      - 'src/MobilDwg.Core/Rendering/**'
+      - 'src/MobilDwg.Rendering/**'
+      - 'tests/MobilDwg.Rendering.Tests/**'
+      - '.github/workflows/stage09-render-scene.yml'
+  pull_request:
+    paths:
+      - 'src/MobilDwg.Core/Rendering/**'
+      - 'src/MobilDwg.Rendering/**'
+      - 'tests/MobilDwg.Rendering.Tests/**'
+      - '.github/workflows/stage09-render-scene.yml'
+
+permissions:
+  contents: read
+
+jobs:
+  render-scene-foundation:
+    runs-on: ubuntu-latest
+    steps:
+      - uses: actions/checkout@v5
+
+      - name: Set up exact .NET SDK
+        uses: actions/setup-dotnet@v5
+        with:
+          dotnet-version: '10.0.400'
+
+      - name: Verify SDK
+        shell: bash
+        run: |
+          set -euo pipefail
+          test "$(dotnet --version)" = "10.0.400"
+          echo "STAGE09_DOTNET_PIN_PASS"
+
+      - name: Restore render foundation tests
+        shell: bash
+        run: |
+          set -euo pipefail
+          dotnet restore tests/MobilDwg.Rendering.Tests/MobilDwg.Rendering.Tests.csproj --locked-mode
+
+      - name: Build render foundation
+        shell: bash
+        run: |
+          set -euo pipefail
+          dotnet build tests/MobilDwg.Rendering.Tests/MobilDwg.Rendering.Tests.csproj -c Release --no-restore
+          echo "STAGE09_T0_BUILD_PASS"
+
+      - name: Run deterministic scene and camera tests
+        shell: bash
+        run: |
+          set -euo pipefail
+          dotnet run --project tests/MobilDwg.Rendering.Tests/MobilDwg.Rendering.Tests.csproj -c Release --no-build | tee stage09-render-scene.log
+          grep -q '^STAGE09_RENDER_SCENE_TESTS_PASS$' stage09-render-scene.log
+          grep -q '^render-scene/v1$' stage09-render-scene.log
+          echo "STAGE09_T1_SCENE_PASS"
+
+      - name: Upload Stage 09 evidence
+        uses: actions/upload-artifact@v4
+        with:
+          name: stage09-render-scene-evidence
+          path: stage09-render-scene.log
+          if-no-files-found: error
