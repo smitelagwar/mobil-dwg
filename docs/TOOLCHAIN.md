@@ -101,6 +101,42 @@ AŞAMA 01 ancak aşağıdakilerin tamamı gerçek geliştirme makinesi + fizikse
 
 Bu sohbet çalışma konteynerinde fiziksel telefon yoktur; bu nedenle AŞAMA 01'in cihaz kapısı burada tamamlanamaz.
 
+### Otomatik cihaz-gate scriptleri
+
+Repo, gerçek geliştirme makinesindeki zorunlu kontrolleri aynı sırayla uygulayan iki script içerir:
+
+- Windows / PowerShell: `scripts/stage01-device-gate.ps1`
+- Bash: `scripts/stage01-device-gate.sh`
+
+Windows örneği:
+
+```powershell
+.\scripts\stage01-device-gate.ps1
+```
+
+Bash örneği:
+
+```bash
+bash scripts/stage01-device-gate.sh
+```
+
+Birden fazla yetkili ADB cihazı bağlıysa hedef açıkça seçilir:
+
+```powershell
+$env:ANDROID_SERIAL = '<adb-serial>'
+.\scripts\stage01-device-gate.ps1
+```
+
+```bash
+ANDROID_SERIAL='<adb-serial>' bash scripts/stage01-device-gate.sh
+```
+
+Scriptler aşağıdaki durumlarda FAIL verir: exact .NET/JDK/ADB sürümü uyuşmazlığı, eksik API 36/Build-Tools 36.0.0, eksik `maui-android`, `unauthorized/offline` cihaz, emülatör, birden çok belirsiz cihaz, Debug/Release build hatası, manifest 24/36 uyuşmazlığı, APK install veya launcher hatası.
+
+PASS halinde temiz MAUI smoke uygulaması `com.smitelagwar.mobildwg.stage01smoke` kimliğiyle üretilir; Android minimum API 24 açıkça pinlenir; Debug ve Release build edilir; Debug APK fiziksel cihaza kurulur ve launcher `Status: ok` ile açılır. Kanıt çıktısı tam ADB seri numarasını yazmaz.
+
+Bu scriptlerin sözdizimi CI'da doğrulanır; fakat `STAGE01_DEVICE_GATE_PASS` yalnız gerçek fiziksel cihazda çalıştırıldığında AŞAMA 01 kanıtı sayılır.
+
 ## iOS envanteri
 
 AŞAMA 01'de yalnız erişim durumu kaydedilir. iOS kurulum/gerçek cihaz işi AŞAMA 08 ve AŞAMA 23'te yapılacaktır. Bu turda Mac/Xcode/iPhone/Apple Developer erişimi kanıtlanmamıştır.

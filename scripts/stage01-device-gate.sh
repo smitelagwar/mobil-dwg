@@ -24,7 +24,9 @@ require_cmd find
 DOTNET_VERSION="$(dotnet --version)"
 [[ "$DOTNET_VERSION" == "10.0.400" ]] || fail "dotnet version is $DOTNET_VERSION; expected 10.0.400"
 
-dotnet workload list | grep -q 'maui-android' || fail "maui-android workload is not installed"
+WORKLOAD_LIST="$(dotnet workload list)"
+grep -q 'maui-android' <<<"$WORKLOAD_LIST" || fail "maui-android workload is not installed"
+grep -q '10\.0\.400' <<<"$WORKLOAD_LIST" || fail "maui-android is not resolved from workload set 10.0.400"
 
 JAVA_VERSION="$(java -version 2>&1)"
 grep -q '21\.0\.12' <<<"$JAVA_VERSION" || fail "Java 21.0.12 is required"
@@ -111,6 +113,7 @@ grep -q 'Status: ok' <<<"$LAUNCH_OUTPUT" || fail "Android activity launch did no
 
 printf '\nSTAGE01_DEVICE_GATE_PASS\n'
 printf 'dotnet=%s\n' "$DOTNET_VERSION"
+printf 'workload_set=10.0.400\n'
 printf 'java=21.0.12\n'
 printf 'adb=37.0.1\n'
 printf 'android_sdk=36\n'
