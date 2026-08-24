@@ -15,14 +15,14 @@
 Bu blok ve aşağıdaki aşama kutuları her çalışma turunun sonunda güncellenir.
 
 ```text
-CURRENT_STAGE: AŞAMA 05
-CURRENT_SUBSTEP: 05.6
-STATUS: DONE
-LAST_VERIFIED_REVISION: 09e26172aa8de9e8c79ae64853a493dab1d0e5b9 — AŞAMA 05 implementation head locked restore + mini corpus + regresyon kapılarında doğrulandı; PR #7 kapanış belgeleriyle main'e merge edilecek
-LAST_SUCCESSFUL_COMMAND: GitHub Actions Stage 05 Parser Spike run 32759096003 / #8 SUCCESS + aynı implementation head Stage 04 Architecture run 32759095988 / #11 SUCCESS + Stage 02 Dependency Audit run 32759095944 / #25 SUCCESS + Stage 01 Toolchain Smoke run 32759095888 / #44 SUCCESS
-EVIDENCE: docs/evidence/STAGE_05.md; docs/ADR/0001-acadsharp-3.7.1-parser-baseline.md; Stage 05 artifact 9532001644 sha256:2750ba88141c5724306bb5811173d958c60836806021f2ff1a5b36b011631097; STAGE05_DEPENDENCY_BOUNDARY_PASS; STAGE05_MINI_CORPUS_PASS fixtures=9 derived_negatives=2; STAGE05_T3_PASS
-BLOCKERS: AŞAMA 05 için yok. AŞAMA 01 fiziksel Android install/launch ve iOS erişim envanteri docs/USER_APPROVED_EXECUTION_OVERRIDE.md gereği DEFERRED_EXTERNAL_GATE olarak açık kalır; Stage 01 CI #44 bu dış kapıları PASS/DONE yapmaz.
-NEXT_ACTION: AŞAMA 06 — Android güvenli dosya alma ve parse spike. AŞAMA 01 dış kapılarını sahte PASS/DONE yapma; aynı turda AŞAMA 06'yı başlatma.
+CURRENT_STAGE: AŞAMA 06
+CURRENT_SUBSTEP: 06.7
+STATUS: BLOCKED
+LAST_VERIFIED_REVISION: 56de020fb1297b8642c4f84c24522bbd723272f8 — AŞAMA 06 cihazdan bağımsız safe-open + gerçek DWG/DXF probe + generated MAUI Android Debug/Release CI kapıları geçti; fiziksel Android kapısı DEFERRED_EXTERNAL_GATE
+LAST_SUCCESSFUL_COMMAND: GitHub Actions Stage 06 Safe Open run 32762879583 / #3 SUCCESS + aynı head Stage 04 Architecture run 32762879643 / #22 SUCCESS + Stage 02 Dependency Audit run 32762879581 / #35 SUCCESS + Stage 01 Toolchain Smoke run 32762879589 / #54 SUCCESS
+EVIDENCE: docs/evidence/STAGE_06.md; Stage 06 artifact 9533538573 sha256:18c7c395e24b6e3d686edef03d3d0ad686c21fad82686704ef38e7e098a25ea3; STAGE06_ACTUAL_DWG_DXF_PASS; STAGE06_SAFE_COPY_GUARDS_PASS; STAGE06_LAST_REQUEST_WINS_PASS; STAGE06_CANCEL_SEMANTICS_PASS; STAGE06_ANDROID_DEBUG_BUILD_PASS; STAGE06_ANDROID_RELEASE_BUILD_PASS; STAGE06_CI_GATE_PASS
+BLOCKERS: AŞAMA 06 gerçek Android telefonda FilePicker/SAF ile DWG+DXF açma, cancel/rotate/background/close ve app-private cache cleanup kanıtı olmadan DONE değildir. AŞAMA 01 fiziksel Android install/launch ve iOS erişim envanteri de DEFERRED_EXTERNAL_GATE olarak açık kalır.
+NEXT_ACTION: docs/USER_APPROVED_EXECUTION_OVERRIDE.md gereği AŞAMA 07 — ProCad source-pinned Android spike ve GO/NO-GO. AŞAMA 06 fiziksel Android kapısı açık kalır ve sahte PASS/DONE yapılmaz.
 LAST_UPDATE: 2026-08-24
 ```
 
@@ -369,8 +369,8 @@ Kurallar:
 - [x] AŞAMA 03 — Test corpus’u, golden sözleşmesi ve cihaz matrisi — `DONE`
 - [x] AŞAMA 04 — Minimal solution ve mimari sınırlar — `DONE`
 - [x] AŞAMA 05 — ACadSharp headless parser spike — `DONE`
-- [ ] AŞAMA 06 — Android güvenli dosya alma ve parse spike — `NEXT`
-- [ ] AŞAMA 07 — ProCad source-pinned Android spike ve GO/NO-GO
+- [ ] AŞAMA 06 — Android güvenli dosya alma ve parse spike — `BLOCKED / DEFERRED_EXTERNAL_GATE`
+- [ ] AŞAMA 07 — ProCad source-pinned Android spike ve GO/NO-GO — `NEXT`
 - [ ] AŞAMA 08 — Erken iOS AOT/native fizibilite smoke
 - [ ] AŞAMA 09 — RenderScene, kamera ve diagnostics temeli
 - [ ] AŞAMA 10 — P0 temel geometri renderer’ı
@@ -494,16 +494,16 @@ Test: GitHub Actions `Stage 05 Parser Spike` run `32759096003` / #8 SUCCESS; com
 
 İşler:
 
-- [ ] MAUI FilePicker/Android SAF content URI akışı uygulanır.
-- [ ] Provider filename sanitize, bildirilen boyuta güvenmeyen stream byte quota, boş disk kontrolü, progress, atomic unique cache file, stream disposal ve deterministic cleanup eklenir.
-- [ ] Persistable grant yalnız gerçekten gerekirse ve platform kurallarına uygun alınır.
-- [ ] Parse UI thread dışında çalışır; cooperative cancellation yoksa kullanıcıya yanlış “parser durdu” sözü verilmez.
-- [ ] Her açma isteği generation ID taşır; hızlı ikinci seçimde eski parse sonucu UI’a yazılmaz (`last request wins`).
-- [ ] Metadata/diagnostics ekranına kadar gerçek telefonda DWG ve DXF açılır.
-- [ ] Original dosya hiçbir koşulda yazılmaz.
+- [x] MAUI FilePicker/Android SAF content URI akışı source spike olarak uygulandı; `FilePicker.Default.PickAsync` + `FileResult.OpenReadAsync()` kullanılır, provider fiziksel path'ine güvenilmez.
+- [x] Provider filename sanitize, bildirilen boyuta güvenmeyen actual stream byte quota, boş disk reserve kontrolü, progress, atomic unique app-private cache file, stream disposal ve deterministic cleanup eklendi.
+- [x] Stage 06 immediate private-copy akışında persistable grant gerekmediği doğrulandı ve alınmadı; kalıcı recent-file erişimi AŞAMA 18 kapsamındadır.
+- [x] Parse UI thread dışında worker hattında çalışır; cooperative cancellation yoksa kullanıcıya yanlış “parser durdu” sözü verilmez ve geç sonuç terk edilir.
+- [x] Her açma isteği generation ID taşır; hızlı ikinci seçimde eski parse sonucu commit edilmez (`last request wins`).
+- [ ] Metadata/diagnostics ekranına kadar **gerçek fiziksel Android telefonda** DWG ve DXF açılır; cancel/rotate/background/close ve gerçek cihaz cache cleanup smoke yapılır. `DEFERRED_EXTERNAL_GATE`.
+- [x] Original dosya hiçbir koşulda write modunda açılmaz; probe öncesi/sonrası DWG/DXF hash'leri değişmedi.
 
-Test: Android Debug + Release; küçük DWG/DXF, cancel UI, rotate/background/close.  
-Çıkış: Gerçek telefon yerel dosyayı güvenle okur, parse sonucu/uyarısı gösterir, temp dosya sızıntısı yoktur.
+Test: CI'da gerçek pinned DWG + sentetik DXF safe-open T2 probe, quota/disk/cleanup/last-request-wins/cancel semantics ve generated MAUI Android Debug+Release build PASS; minSdk 24 / targetSdk 36, broad storage permission yok. Final implementation run `32762879583` / #3 `SUCCESS`, artifact `9533538573`, digest `sha256:18c7c395e24b6e3d686edef03d3d0ad686c21fad82686704ef38e7e098a25ea3`. Gerçek telefon FilePicker/SAF, cancel UI, rotate/background/close ve cache leak testi fiziksel cihaz erişimi olmadığı için `DEFERRED_EXTERNAL_GATE`.  
+Çıkış: **Henüz sağlanmadı.** Cihazdan bağımsız implementation/CI kısmı PASS; gerçek telefon exit gate'i açık olduğundan AŞAMA 06 `BLOCKED / DEFERRED_EXTERNAL_GATE`. Kullanıcı onaylı execution override bağımsız AŞAMA 07'nin ilerlemesine izin verir.
 
 ### AŞAMA 07 — ProCad source-pinned Android spike ve GO/NO-GO
 

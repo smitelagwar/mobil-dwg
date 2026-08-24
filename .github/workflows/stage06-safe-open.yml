@@ -1,0 +1,91 @@
+name: Stage 06 Safe Open
+
+on:
+  workflow_dispatch:
+  push:
+    branches: [main]
+    paths:
+      - src/MobilDwg.App/Opening/**
+      - spikes/Stage06.Android/**
+      - tools/Stage06.OpenFlowProbe/**
+      - scripts/stage06-safe-open.sh
+      - .github/workflows/stage06-safe-open.yml
+      - src/MobilDwg.Cad/**
+      - src/MobilDwg.Core/**
+      - fixtures/**
+  pull_request:
+    branches: [main]
+
+permissions:
+  contents: read
+
+jobs:
+  safe-open:
+    runs-on: ubuntu-latest
+    timeout-minutes: 55
+
+    steps:
+      - name: Checkout
+        uses: actions/checkout@v5
+
+      - name: Validate Stage 06 script syntax
+        shell: bash
+        run: bash -n scripts/stage06-safe-open.sh
+
+      - name: Set up .NET 10.0.400
+        uses: actions/setup-dotnet@v5
+        with:
+          dotnet-version: 10.0.400
+
+      - name: Install exact Microsoft OpenJDK 21.0.12
+        shell: bash
+        run: |
+          set -euxo pipefail
+          cd "$RUNNER_TEMP"
+          curl -fL --retry 5 --retry-all-errors --retry-delay 2 -o microsoft-jdk-21.0.12-linux-x64.tar.gz https://aka.ms/download-jdk/microsoft-jdk-21.0.12-linux-x64.tar.gz
+          curl -fL --retry 5 --retry-all-errors --retry-delay 2 -o microsoft-jdk-21.0.12-linux-x64.tar.gz.sha256sum.txt https://aka.ms/download-jdk/microsoft-jdk-21.0.12-linux-x64.tar.gz.sha256sum.txt
+          sha256sum -c microsoft-jdk-21.0.12-linux-x64.tar.gz.sha256sum.txt
+          mkdir -p "$RUNNER_TEMP/msopenjdk-21.0.12"
+          tar -xzf microsoft-jdk-21.0.12-linux-x64.tar.gz -C "$RUNNER_TEMP/msopenjdk-21.0.12" --strip-components=1
+          echo "JAVA_HOME=$RUNNER_TEMP/msopenjdk-21.0.12" >> "$GITHUB_ENV"
+          echo "$RUNNER_TEMP/msopenjdk-21.0.12/bin" >> "$GITHUB_PATH"
+
+      - name: Set up Android SDK
+        uses: android-actions/setup-android@v3
+        with:
+          cmdline-tools-version: 15859902
+
+      - name: Install pinned Android SDK packages
+        shell: bash
+        run: |
+          yes | sdkmanager --licenses >/dev/null || true
+          sdkmanager --channel=0 "platforms;android-36" "build-tools;36.0.0" "platform-tools"
+
+      - name: Install pinned MAUI Android workload
+        shell: bash
+        run: |
+          set -euxo pipefail
+          dotnet workload install maui-android
+          dotnet workload list | tee /tmp/stage06-workloads.txt
+          grep -F '10.0.400' /tmp/stage06-workloads.txt
+          grep -F 'maui-android' /tmp/stage06-workloads.txt
+
+      - name: Run Stage 06 safe-open gate
+        shell: bash
+        run: |
+          bash scripts/stage06-safe-open.sh \
+            "$RUNNER_TEMP/mobil-dwg-stage06" \
+            "$RUNNER_TEMP/stage06-safe-open-evidence.json"
+
+      - name: Upload Stage 06 evidence and APKs
+        if: always()
+        uses: actions/upload-artifact@v4
+        with:
+          name: stage06-safe-open-evidence
+          if-no-files-found: warn
+          path: |
+            ${{ runner.temp }}/stage06-safe-open-evidence.json
+            ${{ runner.temp }}/mobil-dwg-stage06/stage03-fixture-audit.json
+            ${{ runner.temp }}/mobil-dwg-stage06/android-smoke/Stage06AndroidSmoke/obj/Debug/net10.0-android/android/manifest/AndroidManifest.xml
+            ${{ runner.temp }}/mobil-dwg-stage06/android-smoke/Stage06AndroidSmoke/bin/Debug/net10.0-android/**/*.apk
+            ${{ runner.temp }}/mobil-dwg-stage06/android-smoke/Stage06AndroidSmoke/bin/Release/net10.0-android/**/*.apk
