@@ -15,15 +15,15 @@
 Bu blok ve aşağıdaki aşama kutuları her çalışma turunun sonunda güncellenir.
 
 ```text
-CURRENT_STAGE: AŞAMA 07
-CURRENT_SUBSTEP: 07.8
-STATUS: DONE
-LAST_VERIFIED_REVISION: 3f88bec383de895e309e218c08d13e9784562a97 — exact pinned ProCad source candidate için source/NuGet lineage, Android build ve deterministic precision gate tamamlandı; karar NO-GO
-LAST_SUCCESSFUL_COMMAND: GitHub Actions Stage 07 ProCad Source Spike run 32766501837 / #5 SUCCESS + aynı head Stage 06 Safe Open run 32766501815 / #13 SUCCESS + Stage 02 Dependency Audit run 32766501809 / #44 SUCCESS + Stage 01 Toolchain Smoke run 32766501846 / #63 SUCCESS
-EVIDENCE: docs/evidence/STAGE_07.md; docs/ADR/0002-procad-pinned-source-no-go.md; Stage 07 artifact 9534797361 sha256:9cae376fd0cbf2861f006af347483f9de26a6cd49f30b201438a3afdb591e555; STAGE07_SOURCE_PIN_PASS; STAGE07_ACAD_LINEAGE_PASS approved_ahead=592; STAGE07_NUGET_011_RESTORE_EXIT=0; STAGE07_FLOAT_PRECISION_BLOCKER_REPRODUCED; STAGE07_SOURCE_BUILD_EXIT=0; STAGE07_MAUI_SMOKE_BUILD_EXIT=0; STAGE07_DECISION_NO_GO_PASS
-BLOCKERS: Exact unpatched ProCad candidate survey-origin 1 mm detayı direct double-to-float RenderScene boundary'sinde kaybettiği için production renderer/control reuse NO-GO. Physical Android T3 bu deterministic blocker sonrasında NOT_RUN_AFTER_DETERMINISTIC_BLOCKER ve PASS değildir. AŞAMA 01 ve AŞAMA 06 gerçek cihaz kapıları DEFERRED_EXTERNAL_GATE olarak açık. AŞAMA 09 custom renderer implementation öncesinde ADR 0002 HIGH efor/bakım riski için kullanıcı GO gerekir.
-NEXT_ACTION: AŞAMA 08 — erken iOS AOT/native fizibilite smoke. AŞAMA 07 kapanış turunda AŞAMA 08 başlatılmaz.
-LAST_UPDATE: 2026-08-24
+CURRENT_STAGE: AŞAMA 08
+CURRENT_SUBSTEP: 08.6
+STATUS: DONE — CHARACTERIZATION / RISK_ACCEPTED_FOR_CONTINUATION; iOS PASS NOT CLAIMED
+LAST_VERIFIED_REVISION: 1d7ce7ddc738ba615ad86f19742e3af9f2c78e18 — exact ACadSharp 3.7.1 + SkiaSharp 4.151.1 iOS hattı macOS CI üzerinde karakterize edildi; runtime/device feasibility hosted toolchain ve dış cihaz kapıları nedeniyle kanıtlanmadı
+LAST_SUCCESSFUL_COMMAND: GitHub Actions Stage 08 iOS Feasibility run 32776201092 / #17 SUCCESS — characterization complete; workflow success probe PASS iddiası değildir
+EVIDENCE: docs/evidence/STAGE_08.md; docs/LOCAL_DEVICE_REVALIDATION.md; Stage 08 artifact 9538345504 sha256:527956939b41b04b91cc79af04d821238f111d6f8a5a121598809a3830746b72; STAGE08_HOST_PASS; STAGE08_IOS_WORKLOAD_PASS; STAGE08_EXACT_GRAPH_RECORDED; STAGE08_BASELINE_BUILD_BLOCKED_HOSTED_RUNNER_TOOLCHAIN; STAGE08_IOS_FEASIBILITY_CHARACTERIZATION_COMPLETE
+BLOCKERS: iOS runtime/device feasibility NOT PROVEN. GitHub-hosted macos-26/Xcode 26.6 tool lookup install_name_tool/clang problemi baseline/trim runtime sonucunu engelledi; ACadSharp 3.7.1 trimming hattında IL2026/IL2070/IL2072/IL2075/IL2087/IL2090 riskleri görüldü; iossimulator-arm64 NativeAOT NETSDK1203 nedeniyle gerçek AOT kanıtı değildir; fiziksel iPhone ve kullanıcı local Mac envanteri DEFERRED_EXTERNAL_GATE. AŞAMA 01 ve AŞAMA 06 gerçek cihaz kapıları da açık. AŞAMA 09 custom renderer implementation öncesinde ADR 0002 gereği açık kullanıcı GO gerekir.
+NEXT_ACTION: AŞAMA 09 için explicit kullanıcı GO beklenir. Bu AŞAMA 08 kapanış turunda AŞAMA 09 başlatılmaz.
+LAST_UPDATE: 2026-08-25
 ```
 
 Durum değerleri yalnızca şunlardır:
@@ -371,7 +371,7 @@ Kurallar:
 - [x] AŞAMA 05 — ACadSharp headless parser spike — `DONE`
 - [ ] AŞAMA 06 — Android güvenli dosya alma ve parse spike — `BLOCKED / DEFERRED_EXTERNAL_GATE`
 - [x] AŞAMA 07 — ProCad source-pinned Android spike ve GO/NO-GO — `DONE / NO-GO`
-- [ ] AŞAMA 08 — Erken iOS AOT/native fizibilite smoke — `NEXT`
+- [x] AŞAMA 08 — Erken iOS AOT/native fizibilite smoke — `DONE / CHARACTERIZATION; iOS PASS NOT CLAIMED`
 - [ ] AŞAMA 09 — RenderScene, kamera ve diagnostics temeli
 - [ ] AŞAMA 10 — P0 temel geometri renderer’ı
 - [ ] AŞAMA 11 — Mobil viewport ve gesture’lar
@@ -530,15 +530,16 @@ Test: Final CI `Stage 07 ProCad Source Spike` run `32766501837` / #5 `SUCCESS`; 
 
 İşler:
 
-- [ ] Aşama 01’de envanterlenen Mac/Xcode/iPhone erişimi yeniden doğrulanır.
-- [ ] Seçilen exact parser/renderer hattı Mac’te restore/build edilir; gevşek veya Android-only dependency kabul edilmez.
-- [ ] En küçük sentetik DWG/DXF veya deterministic scene iOS Release/AOT ile açılıp tek frame render edilir.
-- [ ] Trimming, reflection, native Skia loading ve font resource uyarıları kaydedilir.
-- [ ] Gerçek iPhone varsa smoke yapılır; yoksa simulator yalnız kısmi kanıt olarak yazılır.
-- [ ] Mac/iPhone yoksa kullanıcıya iki seçenek sunulur: aşamayı `BLOCKED` tutmak veya Android geliştirmesine açıkça belgelenmiş iOS riskiyle devam etmek. Risk kabulü iOS’u tamamlanmış saymaz.
+- [x] Aşama 01’deki Mac/Xcode/iPhone dış erişim kapısı yeniden değerlendirildi: kullanıcı local Mac/iPhone kanıtı sağlayamıyor; `DEFERRED_EXTERNAL_GATE` açık kaldı.
+- [x] Exact dependency hattı GitHub-hosted macOS üzerinde restore edildi: .NET `10.0.400`, iOS workload `26.5.10301`, `ACadSharp 3.7.1`, `SkiaSharp 4.151.1`, `SkiaSharp.NativeAssets.iOS 4.151.1`; production graph değiştirilmedi.
+- [ ] Sentetik fixture için final simulator parse + native Skia single-frame/PNG marker'ı elde edilemedi. Build managed assembly üretimine ilerledi ancak Xcode 26.6 hosted image `install_name_tool`/`clang` lookup problemiyle kesildi; bu candidate runtime FAIL veya PASS değildir.
+- [x] Trimming/reflection/font uyarıları kaydedildi: final karakterizasyonda 30 trimmer, 12 reflection-related, 0 font warning line. ACadSharp hattında `IL2026`, `IL2070`, `IL2072`, `IL2075`, `IL2087`, `IL2090` aileleri görüldü; warning suppress çözüm sayılmaz.
+- [x] NativeAOT simulator sınırı ayrıştırıldı: `iossimulator-arm64` + `PublishAot=true` `NETSDK1203` ile desteklenmiyor; bu ACadSharp NativeAOT failure değildir. Gerçek kanıt `ios-arm64`/physical-device üzerinde gerekir.
+- [ ] Fiziksel iPhone smoke `NOT_RUN_DEFERRED_EXTERNAL_GATE`; simulator hiçbir durumda gerçek iPhone PASS yerine geçmez.
+- [x] Planın dış blocker/risk seçeneği uygulandı: mevcut kullanıcı-approved execution override ile iOS riskleri açıkça kaydedilip bağımsız sonraki işlerin ilerlemesine izin verildi. Bu risk kabulü iOS'u tamamlanmış/PASS saymaz.
 
-Test: iOS Release/AOT build + mümkünse gerçek cihazda küçük open/render.  
-Çıkış: Seçilen mimarinin iOS’ta temel fizibilitesi kanıtlıdır veya dış blocker/risk kabulü açıkça kaydedilmiştir.
+Test: Yetkili karakterizasyon `Stage 08 iOS Feasibility` run `32776201092` / #17 `SUCCESS`; artifact `9538345504`, digest `sha256:527956939b41b04b91cc79af04d821238f111d6f8a5a121598809a3830746b72`. Evidence JSON `BLOCKED_PARTIAL_EVIDENCE`. Workflow success, üç probe'un PASS olduğu anlamına gelmez; gerçek blocker'ları deterministik kaydettiği anlamına gelir.  
+Çıkış: **Sağlandı — dış blocker/risk kabulü açıkça kaydedildi; iOS fizibilitesi kanıtlanmış değildir.** Complete local/managed Mac, `ios-arm64` AOT ve fiziksel iPhone kapıları `docs/LOCAL_DEVICE_REVALIDATION.md` ve AŞAMA 23/24 için açık kalır. AŞAMA 09 custom renderer implementation ADR 0002 gereği ayrıca açık kullanıcı GO ister.
 
 ### AŞAMA 09 — RenderScene, kamera ve diagnostics temeli
 

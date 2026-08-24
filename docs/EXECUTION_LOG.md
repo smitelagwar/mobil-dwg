@@ -244,3 +244,18 @@ Kullanıcı onaylı `docs/USER_APPROVED_EXECUTION_OVERRIDE.md` gereği AŞAMA 06
 - ADR 0002 exact unpatched candidate için `NO-GO`. Physical Android T3 `NOT_RUN_AFTER_DETERMINISTIC_BLOCKER`, PASS değildir.
 - ProCad production dependency graph'a eklenmedi. AŞAMA 01 ve 06 dış cihaz gate'leri açık.
 - Sonraki bağımsız aşama AŞAMA 08. AŞAMA 09 custom renderer implementation öncesinde kullanıcı GO kararı zorunlu.
+
+
+## 2026-08-25 — AŞAMA 08 — DONE / CHARACTERIZATION; iOS PASS NOT CLAIMED
+
+- İzole iOS spike production graph değiştirmeden ACadSharp `3.7.1` + SkiaSharp `4.151.1` + `SkiaSharp.NativeAssets.iOS 4.151.1` hattını test etti.
+- .NET SDK `10.0.400`, iOS workload `26.5.10301/10.0.100`, Xcode `26.6` exact host hattı doğrulandı.
+- Yetkili karakterizasyon: `Stage 08 iOS Feasibility` run `32776201092` / #17 `SUCCESS`; artifact `9538345504`, digest `sha256:527956939b41b04b91cc79af04d821238f111d6f8a5a121598809a3830746b72`.
+- Evidence classification `BLOCKED_PARTIAL_EVIDENCE`; workflow success tüm probe'ların PASS olduğu anlamına gelmez.
+- Baseline Release hosted Xcode 26.6 tool lookup'ta `install_name_tool` bulunamadığı için runtime'a ulaşmadı; hosted Xcode bundle yamalanmadı.
+- Trim probe ACadSharp hattında IL2026/IL2070/IL2072/IL2075/IL2087/IL2090 warning ailelerini kaydetti: 30 trimmer, 12 reflection-related, 0 font line.
+- Simulator `PublishAot=true` `NETSDK1203` ile unsupported; bu ACadSharp NativeAOT failure olarak sınıflandırılmadı. Gerçek `ios-arm64` AOT future Mac/iPhone gate'idir.
+- Fiziksel iPhone `NOT_RUN_DEFERRED_EXTERNAL_GATE`; local Mac inventory `PENDING_USER_EVIDENCE`.
+- Kullanıcının mevcut execution override'ı uyarınca dış blocker/risk açıkça kaydedilip bağımsız sonraki işe ilerleme kabul edildi; iOS PASS iddiası yok.
+- Future local/device acceptance listesi `docs/LOCAL_DEVICE_REVALIDATION.md` olarak eklendi.
+- AŞAMA 09 custom renderer implementation ADR 0002 nedeniyle explicit kullanıcı GO bekler.
