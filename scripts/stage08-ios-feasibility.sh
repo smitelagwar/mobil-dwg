@@ -6,7 +6,6 @@ mkdir -p "$OUT_DIR"
 
 PROJECT="spikes/Stage08.iOS/Stage08.iOS.csproj"
 TFM="net10.0-ios26.0"
-RID="iossimulator-x64"
 BUNDLE_ID="com.smitelagwar.mobildwg.stage08"
 BUILD_LOG="$OUT_DIR/ios-release-build.log"
 SIM_LOG="$OUT_DIR/ios-simulator.log"
@@ -18,6 +17,13 @@ if [[ "$(uname -s)" != "Darwin" ]]; then
   exit 10
 fi
 
+ARCH="$(uname -m)"
+case "$ARCH" in
+  arm64) RID="iossimulator-arm64" ;;
+  x86_64) RID="iossimulator-x64" ;;
+  *) echo "STAGE08_UNSUPPORTED_MAC_ARCH arch=$ARCH" >&2; exit 14 ;;
+esac
+
 DOTNET_VERSION="$(dotnet --version)"
 if [[ "$DOTNET_VERSION" != "10.0.400" ]]; then
   echo "STAGE08_DOTNET_MISMATCH expected=10.0.400 actual=$DOTNET_VERSION" >&2
@@ -26,9 +32,8 @@ fi
 
 XCODE_VERSION="$(xcodebuild -version | tr '\n' ' ' | sed 's/[[:space:]]*$//')"
 MACOS_VERSION="$(sw_vers -productVersion)"
-ARCH="$(uname -m)"
 
-echo "STAGE08_HOST_PASS macos=$MACOS_VERSION arch=$ARCH dotnet=$DOTNET_VERSION xcode=$XCODE_VERSION"
+echo "STAGE08_HOST_PASS macos=$MACOS_VERSION arch=$ARCH rid=$RID dotnet=$DOTNET_VERSION xcode=$XCODE_VERSION"
 
 dotnet workload list | tee "$OUT_DIR/workloads.txt"
 grep -Eq '(^|[[:space:]])ios([[:space:]]|$)' "$OUT_DIR/workloads.txt"
@@ -59,9 +64,10 @@ if [[ -z "$APP_PATH" ]]; then
   exit 12
 fi
 
-APP_EXECUTABLE="$APP_PATH/MobilDwg.Stage08.iOS"
-if [[ ! -f "$APP_EXECUTABLE" ]]; then
-  APP_EXECUTABLE="$(find "$APP_PATH" -maxdepth 1 -type f -perm +111 -print -quit)"
+APP_EXECUTABLE="$(find "$APP_PATH" -maxdepth 1 -type f -perm +111 -print -quit)"
+if [[ -z "$APP_EXECUTABLE" ]]; then
+  echo "STAGE08_APP_EXECUTABLE_NOT_FOUND" >&2
+  exit 15
 fi
 file "$APP_EXECUTABLE" | tee "$OUT_DIR/app-executable-file.txt"
 
@@ -106,12 +112,12 @@ grep -F 'STAGE08_IOS_SIMULATOR_SMOKE_PASS' "$SIM_LOG"
 echo "STAGE08_IOS_SIMULATOR_LAUNCH_EXIT=$SIM_EXIT"
 echo "STAGE08_IOS_NATIVE_SKIA_LOAD_PASS"
 
-python3 - "$EVIDENCE_JSON" "$MACOS_VERSION" "$ARCH" "$DOTNET_VERSION" "$XCODE_VERSION" "$BUILD_EXIT" "$SIM_EXIT" "$TRIMMER_WARNING_COUNT" "$REFLECTION_WARNING_COUNT" "$FONT_WARNING_COUNT" <<'PY'
+python3 - "$EVIDENCE_JSON" "$MACOS_VERSION" "$ARCH" "$RID" "$DOTNET_VERSION" "$XCODE_VERSION" "$BUILD_EXIT" "$SIM_EXIT" "$TRIMMER_WARNING_COUNT" "$REFLECTION_WARNING_COUNT" "$FONT_WARNING_COUNT" <<'PY'
 import json, sys
-(path, macos, arch, dotnet, xcode, build_exit, sim_exit, trim_count, reflection_count, font_count) = sys.argv[1:]
+(path, macos, arch, rid, dotnet, xcode, build_exit, sim_exit, trim_count, reflection_count, font_count) = sys.argv[1:]
 obj = {
     "stage": "08",
-    "host": {"macos": macos, "arch": arch, "dotnet": dotnet, "xcode": xcode},
+    "host": {"macos": macos, "arch": arch, "rid": rid, "dotnet": dotnet, "xcode": xcode},
     "dependency_line": {"ACadSharp": "3.7.1", "SkiaSharp": "4.151.1", "production_graph_modified": False},
     "ios_release_simulator_build_exit": int(build_exit),
     "simulator_launch_exit": int(sim_exit),
