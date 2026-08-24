@@ -32,8 +32,8 @@ jobs:
         run: |
           set -euxo pipefail
           cd "$RUNNER_TEMP"
-          curl -fsSLO https://aka.ms/download-jdk/microsoft-jdk-21.0.12-linux-x64.tar.gz
-          curl -fsSLO https://aka.ms/download-jdk/microsoft-jdk-21.0.12-linux-x64.tar.gz.sha256sum.txt
+          curl -fL --retry 5 --retry-all-errors --retry-delay 2 -o microsoft-jdk-21.0.12-linux-x64.tar.gz https://aka.ms/download-jdk/microsoft-jdk-21.0.12-linux-x64.tar.gz
+          curl -fL --retry 5 --retry-all-errors --retry-delay 2 -o microsoft-jdk-21.0.12-linux-x64.tar.gz.sha256sum.txt https://aka.ms/download-jdk/microsoft-jdk-21.0.12-linux-x64.tar.gz.sha256sum.txt
           sha256sum -c microsoft-jdk-21.0.12-linux-x64.tar.gz.sha256sum.txt
           mkdir -p "$RUNNER_TEMP/msopenjdk-21.0.12"
           tar -xzf microsoft-jdk-21.0.12-linux-x64.tar.gz -C "$RUNNER_TEMP/msopenjdk-21.0.12" --strip-components=1
