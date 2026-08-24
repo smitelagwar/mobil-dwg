@@ -7,12 +7,13 @@ Bu dosya yeni sohbet veya yeni bir yapay zeka oturumu başladığında projenin 
 1. `gecmis.md`
 2. `docs/USER_APPROVED_EXECUTION_OVERRIDE.md`
 3. `Mobil_DWG_DXF_Royalty_Free_Android_iOS_Nihai_Plan.md`
-4. `docs/evidence/STAGE_03.md`
-5. `fixtures/manifest/stage03-mini.json`, `fixtures/manifest/stage03-source-integrity.json`, `docs/GOLDEN_CONTRACT.md`, `docs/DEVICE_MATRIX.md`
-6. `docs/evidence/STAGE_02.md` ve `compliance/DEPENDENCY_EVIDENCE.md`
-7. `docs/EXECUTION_LOG.md`
-8. `docs/TOOLCHAIN.md`, `docs/evidence/STAGE_01.md`, `docs/STAGE_01_IOS_ACCESS_INVENTORY.md`
-9. Gerekirse `docs/ADR/`
+4. `docs/evidence/STAGE_04.md`
+5. `docs/ARCHITECTURE.md` ve `MobilDwg.sln`
+6. `docs/evidence/STAGE_03.md`, `fixtures/manifest/stage03-mini.json`, `fixtures/manifest/stage03-source-integrity.json`, `docs/GOLDEN_CONTRACT.md`, `docs/DEVICE_MATRIX.md`
+7. `docs/evidence/STAGE_02.md` ve `compliance/DEPENDENCY_EVIDENCE.md`
+8. `docs/EXECUTION_LOG.md`
+9. `docs/TOOLCHAIN.md`, `docs/evidence/STAGE_01.md`, `docs/STAGE_01_IOS_ACCESS_INVENTORY.md`
+10. Gerekirse `docs/ADR/`
 
 ## Repo kimliği
 
@@ -25,20 +26,20 @@ Bu dosya yeni sohbet veya yeni bir yapay zeka oturumu başladığında projenin 
 ## Aktif checkpoint
 
 ```text
-LAST_COMPLETED_STAGE: AŞAMA 03
+LAST_COMPLETED_STAGE: AŞAMA 04
 DEFERRED_STAGE: AŞAMA 01
 DEFERRED_STAGE_STATUS: BLOCKED / DEFERRED_EXTERNAL_GATE — dış erişim bekliyor, DONE değil
-NEXT_WORK_STAGE: AŞAMA 04
+NEXT_WORK_STAGE: AŞAMA 05
 NEXT_WORK_STATUS: NOT_STARTED
 USER_CONSTRAINT: Kullanıcı şu an fiziksel Android cihaz/gerçek geliştirme makinesi ve Mac/Xcode/iPhone/Apple Developer erişim kanıtlarını sağlayamıyor; temel etkileşimi "devam" demek.
 USER_APPROVAL: Dış erişim kapıları sahte PASS/DONE yapılmadan ertelensin; bağımsız aşamalara devam edilsin.
 DEFERRED_EXTERNAL_GATES: STAGE01_DEVICE_GATE_PASS; local Android install/launch; iOS erişim envanteri YES/NO/N/A
-LAST_VERIFIED_STAGE03_CI: Stage 03 Corpus Audit run 32752374980 / #4 SUCCESS; artifact 9529508675; sha256:fd3990d7a3271c015a2f7067a856d5a23434f1ec0449ecff7819b569938e02cf
-LAST_VERIFIED_STAGE02_REGRESSION_CI: Stage 02 Dependency Audit run 32752375058 / #15 SUCCESS; artifact 9529546355; sha256:c528be8af15d8089da3bdc60feccd2ede404d8dfa2015630a3218d1190e49642
-LAST_VERIFIED_STAGE01_REGRESSION_CI: Stage 01 Toolchain Smoke run 32752374956 / #34 SUCCESS; artifact 9529753917; sha256:6067ccf1cc6e696a100e110b164cfafb5da614779f8315cfce8670e6fdda9a3e
-LAST_STAGE_MERGE: PR #5 -> main; merge commit fb2d0982efeab8f78bc78dc82a7a8deb688190f8
+LAST_VERIFIED_STAGE04_CI: Stage 04 Architecture run 32755230695 / #2 SUCCESS; clean restore; Release build 0 warning / 0 error; STAGE04_CORE_CONTRACT_TESTS_PASS; STAGE04_RENDER_CONTRACT_TESTS_PASS; STAGE04_ARCHITECTURE_TESTS_PASS; STAGE04_T0_PASS
+LAST_VERIFIED_STAGE02_REGRESSION_CI: Stage 02 Dependency Audit run 32755230688 / #17 SUCCESS; artifact 9530581424; sha256:58da9bfdb4ad4c59672b368673d0f27cfbd2e7b3a7b8157c003618e9671d4593
+LAST_VERIFIED_STAGE01_REGRESSION_CI: Stage 01 Toolchain Smoke run 32755230683 / #36 SUCCESS; artifact 9530813909; sha256:bf31fd5a4aa2268e768137f5fe19dfe8b37f13fb206eb4a616e07b77b1d2382e
+LAST_STAGE_MERGE: PR #6 -> main; merge commit c01311ccb5c82b7bac023b24ae6a8000ae4655af
 EXECUTION_OVERRIDE: docs/USER_APPROVED_EXECUTION_OVERRIDE.md
-NEXT_ACTION: Kullanıcı "devam" dediğinde AŞAMA 04 — minimal solution ve mimari sınırlar — başlat; aynı turda AŞAMA 05'e geçme.
+NEXT_ACTION: Kullanıcı "devam" dediğinde AŞAMA 05 — pinned ACadSharp ile headless parser spike — başlat; aynı turda AŞAMA 06'ya geçme.
 LAST_UPDATE: 2026-08-24
 ```
 
@@ -52,8 +53,8 @@ AŞAMA 01'in gerçek Android/iOS dış erişim kapıları kullanıcı tarafında
 - [ ] AŞAMA 01 — .NET/MAUI/Android toolchain ve gerçek telefon — `BLOCKED / DEFERRED_EXTERNAL_GATE`
 - [x] AŞAMA 02 — Canlı dependency/lisans kanıtı ve kilitler — `DONE`
 - [x] AŞAMA 03 — Test corpus’u, golden sözleşmesi ve cihaz matrisi — `DONE`
-- [ ] AŞAMA 04 — Minimal solution ve mimari sınırlar — `NEXT`
-- [ ] AŞAMA 05 — ACadSharp headless parser spike
+- [x] AŞAMA 04 — Minimal solution ve mimari sınırlar — `DONE`
+- [ ] AŞAMA 05 — ACadSharp headless parser spike — `NEXT`
 - [ ] AŞAMA 06 — Android güvenli dosya alma ve parse spike
 - [ ] AŞAMA 07 — ProCad source-pinned Android spike ve GO/NO-GO
 - [ ] AŞAMA 08 — Erken iOS AOT/native fizibilite smoke
@@ -109,6 +110,25 @@ Tekrar üretilebilir corpus/golden sözleşmesi kuruldu:
 
 Ayrıntı: `docs/evidence/STAGE_03.md`.
 
+### AŞAMA 04 — DONE
+
+Minimal derlenebilir mimari iskelet kuruldu:
+
+- Dört production proje: `MobilDwg.Core`, `MobilDwg.Cad`, `MobilDwg.Rendering`, `MobilDwg.App`.
+- Üç test proje: `MobilDwg.Core.Tests`, `MobilDwg.Rendering.Tests`, `MobilDwg.Architecture.Tests`.
+- `MobilDwg.Core` BCL-only; ProjectReference ve PackageReference yok; MAUI/SkiaSharp/ACadSharp bağımlılığı yok.
+- `MobilDwg.Cad` ve `MobilDwg.Rendering` yalnız Core'a; `MobilDwg.App` Core/Cad/Rendering sınırlarına bağımlı.
+- `ICadDocumentReader`, `CadDocumentSession`, `ICadDocumentHandle`, diagnostics/compatibility, `IRenderSceneBuilder`, `ICadRenderer`, render surface/viewport kontratları eklendi.
+- Session concrete parser handle'ın tek sahibi olarak idempotent `IAsyncDisposable` yaşam döngüsü sağlar.
+- Cancellation desteği `None/BeforeStartOnly/Cooperative`, progress desteği `None/StagesOnly/Fractional` olarak açık capability modeliyle tanımlandı; bilinmeyen yüzde `null` kalır.
+- Architecture harness tam 4 production/3 test proje sayısını, exact ProjectReference yönlerini, Stage 04 production PackageReference yokluğunu ve Core/App forbidden dependency terimlerini otomatik test eder.
+- İlk Stage 04 run #1 `global.json` workload set `10.0.400` temiz runner'da kurulu olmadığı için MSB4242 ile düştü; workflow önce pinned `maui-android` workload setini kuracak şekilde düzeltildi. Bu düzeltme production projelerine MAUI dependency eklemedi.
+- Final `Stage 04 Architecture` run `32755230695` / #2 SUCCESS: solution restore, Release build `0 Warning(s) / 0 Error(s)`, `STAGE04_CORE_CONTRACT_TESTS_PASS`, `STAGE04_RENDER_CONTRACT_TESTS_PASS`, `STAGE04_ARCHITECTURE_TESTS_PASS`, `STAGE04_T0_PASS`.
+- Aynı final head Stage 02 run `32755230688` / #17 ve Stage 01 run `32755230683` / #36 SUCCESS.
+- PR #6 merge commit `c01311ccb5c82b7bac023b24ae6a8000ae4655af`.
+
+Ayrıntı: `docs/evidence/STAGE_04.md` ve `docs/ARCHITECTURE.md`.
+
 ## Değiştirilemez temel teknik kararlar
 
 - v1 yalnız 2D viewer; edit/write yok.
@@ -128,7 +148,7 @@ Ayrıntı: `docs/evidence/STAGE_03.md`.
 1. Bu dosyayı ve execution override'ı oku.
 2. Gerçek `main` durumunu doğrula.
 3. Kullanıcı değişikliklerini koru; destructive Git işlemi yapma.
-4. Kullanıcı yalnız `devam` diyorsa `NEXT_WORK_STAGE` üzerinden ilerle. Şu anda bu AŞAMA 04'tür.
+4. Kullanıcı yalnız `devam` diyorsa `NEXT_WORK_STAGE` üzerinden ilerle. Şu anda bu AŞAMA 05'tir.
 5. AŞAMA 01 dış erişim kapılarını sahte PASS/DONE yapma.
 6. Bir turda en fazla bir aşama tamamla.
 7. `[LIVE-VERIFY]` noktalarında resmi/güncel kaynak kullan.
@@ -136,4 +156,4 @@ Ayrıntı: `docs/evidence/STAGE_03.md`.
 
 ## Bir sonraki tur
 
-Kullanıcı `devam` dediğinde yalnız AŞAMA 04 — minimal solution ve mimari sınırlar — başlatılır. Aynı turda AŞAMA 05'e geçilmez.
+Kullanıcı `devam` dediğinde yalnız AŞAMA 05 — pinned ACadSharp ile headless parser spike — başlatılır. Aynı turda AŞAMA 06'ya geçilmez.
