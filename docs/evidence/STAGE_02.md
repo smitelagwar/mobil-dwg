@@ -24,6 +24,8 @@ AŞAMA 01 gerçek Android/iOS dış erişim kapıları `docs/USER_APPROVED_EXECU
 - [x] Unknown/policy-RED package kontrolü PASS.
 - [x] Vulnerability kontrolünde mevcut NuGet kaynaklarına göre vulnerable package bulunmadı.
 - [x] Stage 01 root-CPM regresyonu yakalandı ve smoke projesi repo dışı temp dizine izole edildi.
+- [x] Stage 01 regresyon workflow'u aynı final PR head üzerinde yeniden PASS oldu.
+- [x] PR #4 doğrulanmış head üzerinden `main`e merge edildi.
 
 ## Aday sınıflandırması
 
@@ -56,32 +58,57 @@ Committed lockfile:
 - `SkiaSharp.NativeAssets.Android 4.151.1` `.nupkg` SHA-256: `0857f22d4de9f87899675a30312c52801c6ff85e7ca25dc9483a969c43612803`; license MIT; arm/arm64/x64/x86 `libSkiaSharp.so` içerir.
 - Committed package manifest SHA-256: `04350e4ea477131ad19f5b06ae28deb0d4c0c1effd107d66178ee7d3d64fb02c`.
 
-## CI kanıtı
+## Final Stage 02 CI kanıtı
 
 Workflow: `Stage 02 Dependency Audit`
 
-Güçlendirilmiş teknik final run:
+Final PR-head run:
 
-- Run ID: `32746969262` / #5
-- Head: `b46fea68415504cb67d625260d8872b5f438503f`
+- Run ID: `32747785867` / #9
+- Head: `7daa5d7dc326915700f60396bdf50604bf0601e7`
 - Sonuç: `SUCCESS`
 - Exact .NET/workload: PASS
 - Committed `--locked-mode` restore: PASS
 - Lockfile diff: PASS
 - Resolved graph: PASS
-- Package audit token: `STAGE02_PACKAGE_AUDIT_PASS`
+- Exact package license/hash audit: PASS
 - Committed package manifest reproducibility diff: PASS
 - Vulnerability check: PASS; mevcut kaynaklara göre vulnerable package yok
-- Evidence artifact: `9527480232`
-- Artifact digest: `sha256:e9975e231efefb3a97d6baf945dd7006723f61cdc43765a33d0691df711e504b`
+- Evidence artifact: `9527769476`
+- Artifact digest: `sha256:90d41760e306e13b9977586b9996c1aafdf27f615c2b730bb41d74507b4684f3`
 
-İlk exact package-hash üretim run'ı `32746443518` de `SUCCESS` idi. #5 committed lock/manifest modeline geçilmiş daha güçlü final teknik kapıdır.
+Önceki run `32746969262` / #5 committed lock/manifest modelinin ilk güçlendirilmiş PASS kanıtıydı. #9 final PR head üzerindeki kapanış kapısıdır.
 
-## Yakalanan regresyon
+## Stage 01 regresyon kapısı
 
-Kök `Directory.Packages.props` eklendiğinde Stage 01 CI smoke app'i başlangıçta repo altında üretildiği için CPM'yi miras aldı ve `NU1008` verdi. Bu, CAD package uyumsuzluğu değil izolasyon hatasıydı.
+Kök `Directory.Packages.props` eklendiğinde Stage 01 CI smoke app'i başlangıçta repo altında üretildiği için CPM'yi miras aldı ve `NU1008` verdi. Bu, CAD package uyumsuzluğu değil test izolasyonu hatasıydı.
 
-Düzeltme: Stage 01 GitHub Actions smoke projesi `$RUNNER_TEMP` altında repo ağacı dışında üretilir. Fiziksel Android gate scriptleri zaten OS temp dizini kullanır. Bu düzeltme Stage 01 regresyon workflow'unda tekrar doğrulanır.
+Düzeltme: Stage 01 GitHub Actions smoke projesi `$RUNNER_TEMP` altında repo ağacı dışında üretilir. İlk düzeltmede workflow-level `${{ runner.temp }}` bağlamının workflow parse/trigger seviyesinde geçersiz olduğu görüldü; path kullanımı step-level `$RUNNER_TEMP` / `${{ runner.temp }}` alanlarına taşındı. Fiziksel Android gate scriptleri zaten OS temp dizini kullanır.
+
+Final aynı-head regresyon koşusu:
+
+- Workflow: `Stage 01 Toolchain Smoke`
+- Run ID: `32747785948` / #29
+- Head: `7daa5d7dc326915700f60396bdf50604bf0601e7`
+- Sonuç: `SUCCESS`
+- Isolated clean MAUI project creation: PASS
+- Debug build: PASS
+- Release build: PASS
+- Manifest/API baseline: PASS
+- Artifact upload: PASS
+- Artifact ID: `9528014030`
+- Artifact digest: `sha256:57f01ed14600684a5a9434b9ca2db2b6e32b4a9fac95bee90d455a4595e8421e`
+
+Bu CI fiziksel Android telefon kanıtı değildir. AŞAMA 01 `BLOCKED / DEFERRED_EXTERNAL_GATE` olarak kalır.
+
+## Merge
+
+PR #4: `compliance: establish stage 02 dependency audit`
+
+- Doğrulanmış head: `7daa5d7dc326915700f60396bdf50604bf0601e7`
+- Base: `main`
+- Merge sonucu: başarılı
+- Merge commit: `f0a43db6cc3aee9103f42798fa124da4d1ff39d1`
 
 ## Çıkış değerlendirmesi
 
@@ -93,5 +120,6 @@ AŞAMA 02 çıkış kriterleri sağlandı:
 - Exact lockfile ve locked restore var.
 - NuGet artifact hash/license kontrolü var.
 - Unknown/policy-RED resolved package yok.
+- Stage 01 root-CPM regresyonu final PR head üzerinde kapatıldı.
 
-AŞAMA 02 `DONE` sayılır. Sonraki bağımsız çalışma aşaması AŞAMA 03'tür; aynı kullanıcı turunda AŞAMA 03 başlatılmaz.
+AŞAMA 02 `DONE`. Sonraki bağımsız çalışma aşaması AŞAMA 03'tür; aynı kullanıcı turunda AŞAMA 03 başlatılmaz.
