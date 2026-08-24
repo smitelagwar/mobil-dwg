@@ -19,8 +19,11 @@ public sealed record SceneDiagnostic
         string message,
         RenderEntityId? entityId = null)
     {
+        if (!Enum.IsDefined(kind)) throw new ArgumentOutOfRangeException(nameof(kind));
         if (string.IsNullOrWhiteSpace(code)) throw new ArgumentException("Diagnostic code is required.", nameof(code));
         if (string.IsNullOrWhiteSpace(message)) throw new ArgumentException("Diagnostic message is required.", nameof(message));
+        if (entityId is { } id && string.IsNullOrWhiteSpace(id.Value)) throw new ArgumentException("Diagnostic entity ID cannot be an invalid default value.", nameof(entityId));
+
         Kind = kind;
         Code = code;
         Message = message;
@@ -39,7 +42,13 @@ public sealed class SceneDiagnostics
 
     public SceneDiagnostics(IEnumerable<SceneDiagnostic>? items = null)
     {
-        _items = Array.AsReadOnly(items?.ToArray() ?? Array.Empty<SceneDiagnostic>());
+        var array = items?.ToArray() ?? Array.Empty<SceneDiagnostic>();
+        foreach (var item in array)
+        {
+            ArgumentNullException.ThrowIfNull(item);
+        }
+
+        _items = Array.AsReadOnly(array);
     }
 
     public IReadOnlyList<SceneDiagnostic> Items => _items;
