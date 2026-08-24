@@ -12,7 +12,7 @@ on:
     branches: [main]
 
 permissions:
-  contents: write
+  contents: read
 
 jobs:
   procad-source-spike:
@@ -90,30 +90,3 @@ jobs:
             ${{ runner.temp }}/mobil-dwg-stage07/procad-maui-smoke.log
             ${{ runner.temp }}/mobil-dwg-stage07/ProCad.Controls.Maui.csproj.original
             ${{ runner.temp }}/mobil-dwg-stage07/Stage07ProCadAndroidSmoke/bin/Release/net10.0-android/**/*.apk
-
-  sync-checkpoint:
-    if: github.event_name == 'pull_request' && github.head_ref == 'stage07-procad-source-spike'
-    needs: procad-source-spike
-    runs-on: ubuntu-24.04
-    steps:
-      - name: Checkout source branch
-        uses: actions/checkout@v5
-        with:
-          ref: stage07-procad-source-spike
-          fetch-depth: 0
-
-      - name: Patch Stage 07 closure records
-        run: python3 scripts/stage07-close-checkpoint.py
-
-      - name: Remove non-workflow one-shot helpers
-        run: |
-          rm -f scripts/stage07-close-checkpoint.py
-          rm -f stage07-close.trigger
-
-      - name: Commit synchronized checkpoint
-        run: |
-          git config user.name "github-actions[bot]"
-          git config user.email "41898282+github-actions[bot]@users.noreply.github.com"
-          git add -A
-          git commit -m "docs(stage07): close ProCad NO-GO checkpoint"
-          git push origin HEAD:stage07-procad-source-spike
