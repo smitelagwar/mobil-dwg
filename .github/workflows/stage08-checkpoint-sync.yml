@@ -1,0 +1,146 @@
+name: Stage 08 Checkpoint Sync
+
+on:
+  push:
+    branches:
+      - stage08-ios-feasibility-closure
+    paths:
+      - .github/workflows/stage08-checkpoint-sync.yml
+
+permissions:
+  contents: write
+
+jobs:
+  sync:
+    runs-on: ubuntu-latest
+    steps:
+      - uses: actions/checkout@v5
+        with:
+          ref: stage08-ios-feasibility-closure
+          fetch-depth: 0
+
+      - name: Update canonical Stage 08 checkpoints
+        shell: bash
+        run: |
+          set -euo pipefail
+          python3 <<'PY'
+          from pathlib import Path
+          import re
+
+          plan = Path('Mobil_DWG_DXF_Royalty_Free_Android_iOS_Nihai_Plan.md')
+          text = plan.read_text(encoding='utf-8')
+          checkpoint = '''```text
+          CURRENT_STAGE: AŞAMA 08
+          CURRENT_SUBSTEP: 08.6
+          STATUS: DONE — CHARACTERIZATION / RISK_ACCEPTED_FOR_CONTINUATION; iOS PASS NOT CLAIMED
+          LAST_VERIFIED_REVISION: 1d7ce7ddc738ba615ad86f19742e3af9f2c78e18 — exact ACadSharp 3.7.1 + SkiaSharp 4.151.1 iOS hattı macOS CI üzerinde karakterize edildi; runtime/device feasibility hosted toolchain ve dış cihaz kapıları nedeniyle kanıtlanmadı
+          LAST_SUCCESSFUL_COMMAND: GitHub Actions Stage 08 iOS Feasibility run 32776201092 / #17 SUCCESS — characterization complete; workflow success probe PASS iddiası değildir
+          EVIDENCE: docs/evidence/STAGE_08.md; docs/LOCAL_DEVICE_REVALIDATION.md; Stage 08 artifact 9538345504 sha256:527956939b41b04b91cc79af04d821238f111d6f8a5a121598809a3830746b72; STAGE08_HOST_PASS; STAGE08_IOS_WORKLOAD_PASS; STAGE08_EXACT_GRAPH_RECORDED; STAGE08_BASELINE_BUILD_BLOCKED_HOSTED_RUNNER_TOOLCHAIN; STAGE08_IOS_FEASIBILITY_CHARACTERIZATION_COMPLETE
+          BLOCKERS: iOS runtime/device feasibility NOT PROVEN. GitHub-hosted macos-26/Xcode 26.6 tool lookup install_name_tool/clang problemi baseline/trim runtime sonucunu engelledi; ACadSharp 3.7.1 trimming hattında IL2026/IL2070/IL2072/IL2075/IL2087/IL2090 riskleri görüldü; iossimulator-arm64 NativeAOT NETSDK1203 nedeniyle gerçek AOT kanıtı değildir; fiziksel iPhone ve kullanıcı local Mac envanteri DEFERRED_EXTERNAL_GATE. AŞAMA 01 ve AŞAMA 06 gerçek cihaz kapıları da açık. AŞAMA 09 custom renderer implementation öncesinde ADR 0002 gereği açık kullanıcı GO gerekir.
+          NEXT_ACTION: AŞAMA 09 için explicit kullanıcı GO beklenir. Bu AŞAMA 08 kapanış turunda AŞAMA 09 başlatılmaz.
+          LAST_UPDATE: 2026-08-25
+          ```'''
+          text, n = re.subn(r'```text\nCURRENT_STAGE:.*?\n```', checkpoint, text, count=1, flags=re.S)
+          if n != 1:
+              raise SystemExit('canonical checkpoint block not found')
+          text = text.replace('- [ ] AŞAMA 08 — Erken iOS AOT/native fizibilite smoke — `NEXT`', '- [x] AŞAMA 08 — Erken iOS AOT/native fizibilite smoke — `DONE / CHARACTERIZATION; iOS PASS NOT CLAIMED`')
+          a08 = '''### AŞAMA 08 — Erken iOS AOT/native fizibilite smoke
+
+          **Amaç:** Android’e aylarca yatırım yapmadan seçilen dependency hattının iOS Release/AOT’ta temel olarak çalışabildiğini kanıtlamak.
+
+          İşler:
+
+          - [x] Aşama 01’deki Mac/Xcode/iPhone dış erişim kapısı yeniden değerlendirildi: kullanıcı local Mac/iPhone kanıtı sağlayamıyor; `DEFERRED_EXTERNAL_GATE` açık kaldı.
+          - [x] Exact dependency hattı GitHub-hosted macOS üzerinde restore edildi: .NET `10.0.400`, iOS workload `26.5.10301`, `ACadSharp 3.7.1`, `SkiaSharp 4.151.1`, `SkiaSharp.NativeAssets.iOS 4.151.1`; production graph değiştirilmedi.
+          - [ ] Sentetik fixture için final simulator parse + native Skia single-frame/PNG marker'ı elde edilemedi. Build managed assembly üretimine ilerledi ancak Xcode 26.6 hosted image `install_name_tool`/`clang` lookup problemiyle kesildi; bu candidate runtime FAIL veya PASS değildir.
+          - [x] Trimming/reflection/font uyarıları kaydedildi: final karakterizasyonda 30 trimmer, 12 reflection-related, 0 font warning line. ACadSharp hattında `IL2026`, `IL2070`, `IL2072`, `IL2075`, `IL2087`, `IL2090` aileleri görüldü; warning suppress çözüm sayılmaz.
+          - [x] NativeAOT simulator sınırı ayrıştırıldı: `iossimulator-arm64` + `PublishAot=true` `NETSDK1203` ile desteklenmiyor; bu ACadSharp NativeAOT failure değildir. Gerçek kanıt `ios-arm64`/physical-device üzerinde gerekir.
+          - [ ] Fiziksel iPhone smoke `NOT_RUN_DEFERRED_EXTERNAL_GATE`; simulator hiçbir durumda gerçek iPhone PASS yerine geçmez.
+          - [x] Planın dış blocker/risk seçeneği uygulandı: mevcut kullanıcı-approved execution override ile iOS riskleri açıkça kaydedilip bağımsız sonraki işlerin ilerlemesine izin verildi. Bu risk kabulü iOS'u tamamlanmış/PASS saymaz.
+
+          Test: Yetkili karakterizasyon `Stage 08 iOS Feasibility` run `32776201092` / #17 `SUCCESS`; artifact `9538345504`, digest `sha256:527956939b41b04b91cc79af04d821238f111d6f8a5a121598809a3830746b72`. Evidence JSON `BLOCKED_PARTIAL_EVIDENCE`. Workflow success, üç probe'un PASS olduğu anlamına gelmez; gerçek blocker'ları deterministik kaydettiği anlamına gelir.  
+          Çıkış: **Sağlandı — dış blocker/risk kabulü açıkça kaydedildi; iOS fizibilitesi kanıtlanmış değildir.** Complete local/managed Mac, `ios-arm64` AOT ve fiziksel iPhone kapıları `docs/LOCAL_DEVICE_REVALIDATION.md` ve AŞAMA 23/24 için açık kalır. AŞAMA 09 custom renderer implementation ADR 0002 gereği ayrıca açık kullanıcı GO ister.
+
+          '''
+          text, n = re.subn(r'### AŞAMA 08 — Erken iOS AOT/native fizibilite smoke\n.*?(?=### AŞAMA 09 —)', a08, text, count=1, flags=re.S)
+          if n != 1:
+              raise SystemExit('A08 section not found')
+          plan.write_text(text, encoding='utf-8')
+
+          gecmis = Path('gecmis.md')
+          text = gecmis.read_text(encoding='utf-8')
+          gcp = '''```text
+          LAST_COMPLETED_STAGE: AŞAMA 08 — CHARACTERIZATION / RISK_ACCEPTED_FOR_CONTINUATION; iOS PASS NOT CLAIMED
+          DEFERRED_STAGES: AŞAMA 01; AŞAMA 06; AŞAMA 08 iOS local/device gates
+          STAGE01_STATUS: BLOCKED / DEFERRED_EXTERNAL_GATE — fiziksel Android install/launch ve iOS erişim envanteri açık, DONE değil
+          STAGE06_STATUS: BLOCKED / DEFERRED_EXTERNAL_GATE — safe-open implementation/CI PASS, fiziksel Android FilePicker/SAF+lifecycle/cache gate açık, DONE değil
+          STAGE07_STATUS: DONE / NO-GO — exact unpatched ProCad source candidate deterministic precision blocker nedeniyle production reuse için reddedildi
+          STAGE08_STATUS: DONE — CHARACTERIZATION / BLOCKED_PARTIAL_EVIDENCE / RISK_ACCEPTED_FOR_CONTINUATION; iOS runtime/device feasibility NOT PROVEN
+          STAGE08_DECISION_HEAD: 1d7ce7ddc738ba615ad86f19742e3af9f2c78e18
+          STAGE08_CI: run 32776201092 / #17 SUCCESS characterization; artifact 9538345504; sha256:527956939b41b04b91cc79af04d821238f111d6f8a5a121598809a3830746b72
+          STAGE08_HOST_BLOCKER: GitHub-hosted macos-26/Xcode 26.6 install_name_tool/clang lookup; baseline/simulator runtime PASS yok
+          STAGE08_TRIM_RISK: ACadSharp 3.7.1 ILLink reflection/trimming warnings; 30 trimmer / 12 reflection-related / 0 font lines
+          STAGE08_NATIVEAOT: iossimulator-arm64 PublishAot NETSDK1203 — dependency failure sayılmaz; ios-arm64/physical device future gate
+          STAGE08_PHYSICAL_IPHONE: NOT_RUN_DEFERRED_EXTERNAL_GATE
+          LOCAL_REVALIDATION: docs/LOCAL_DEVICE_REVALIDATION.md
+          NEXT_WORK_STAGE: AŞAMA 09
+          NEXT_WORK_STATUS: WAITING_EXPLICIT_USER_GO
+          STAGE09_GO_BARRIER: ADR 0002 custom renderer efor/bakım riskini HIGH olarak kaydeder; AŞAMA 09 implementation öncesinde kullanıcı açık GO kararı gerekir.
+          EXECUTION_OVERRIDE: docs/USER_APPROVED_EXECUTION_OVERRIDE.md
+          NEXT_ACTION: Kullanıcıdan explicit `AŞAMA 09 GO` bekle; generic devam ile custom renderer implementation başlatma.
+          LAST_UPDATE: 2026-08-25
+          ```'''
+          text, n = re.subn(r'```text\nLAST_COMPLETED_STAGE:.*?\n```', gcp, text, count=1, flags=re.S)
+          if n != 1:
+              raise SystemExit('gecmis checkpoint not found')
+          text = text.replace('- [ ] AŞAMA 08 — Erken iOS AOT/native fizibilite smoke — `NEXT`', '- [x] AŞAMA 08 — Erken iOS AOT/native fizibilite smoke — `DONE / CHARACTERIZATION; iOS PASS NOT CLAIMED`')
+          summary = '''\n### AŞAMA 08 — DONE / CHARACTERIZATION; iOS PASS NOT CLAIMED\n\nExact ACadSharp 3.7.1 + SkiaSharp 4.151.1 hattı izole macOS/iOS spike ile karakterize edildi. Yetkili CI run `32776201092` / #17 SUCCESS, artifact `9538345504`, digest `sha256:527956939b41b04b91cc79af04d821238f111d6f8a5a121598809a3830746b72`. Evidence JSON `BLOCKED_PARTIAL_EVIDENCE`: exact restore/workload/Xcode hattı kanıtlandı; hosted Xcode 26.6 tool lookup baseline/simulator runtime'ı engelledi; ACadSharp trimming/reflection riskleri kaydedildi; simulator NativeAOT `NETSDK1203` platform sınırı olarak ayrıştırıldı. Fiziksel iPhone ve local Mac kanıtı `DEFERRED_EXTERNAL_GATE`. Kullanıcı-approved execution override uyarınca risk açık kaydedilerek independent continuation kabul edildi; iOS PASS iddiası yok. Gelecek ikinci tur: `docs/LOCAL_DEVICE_REVALIDATION.md`. AŞAMA 09 custom renderer için explicit kullanıcı GO gerekir.\n'''
+          if '### AŞAMA 08 — DONE / CHARACTERIZATION' not in text:
+              text += summary
+          gecmis.write_text(text, encoding='utf-8')
+
+          devam = Path('DEVAM.md')
+          text = devam.read_text(encoding='utf-8')
+          dcp = '''```text
+          LAST_COMPLETED_STAGE: AŞAMA 08 — CHARACTERIZATION / RISK_ACCEPTED_FOR_CONTINUATION; iOS PASS NOT CLAIMED
+          DEFERRED_STAGES: AŞAMA 01; AŞAMA 06; AŞAMA 08 local Mac/ios-arm64/physical iPhone gates
+          AŞAMA_01: BLOCKED / DEFERRED_EXTERNAL_GATE — gerçek Android install/launch + iOS erişim envanteri
+          AŞAMA_06: BLOCKED / DEFERRED_EXTERNAL_GATE — safe-open CI PASS; gerçek telefon FilePicker/SAF+lifecycle/cache gate açık
+          AŞAMA_07: DONE / NO-GO — exact unpatched ProCad candidate systematic precision blocker nedeniyle production reuse için reddedildi
+          AŞAMA_08: DONE / CHARACTERIZATION — evidence BLOCKED_PARTIAL_EVIDENCE; iOS runtime/device PASS yok
+          STAGE08_CI: run 32776201092 / #17 SUCCESS characterization; artifact 9538345504; sha256:527956939b41b04b91cc79af04d821238f111d6f8a5a121598809a3830746b72
+          STAGE08_HOST_BLOCKER: Xcode 26.6 hosted runner install_name_tool/clang lookup
+          STAGE08_TRIM_RISK: ACadSharp ILLink/reflection warnings
+          STAGE08_NATIVEAOT: iossimulator-arm64 NETSDK1203; ios-arm64 future real-device gate
+          STAGE08_PHYSICAL_IPHONE: NOT_RUN_DEFERRED_EXTERNAL_GATE
+          LOCAL_REVALIDATION: docs/LOCAL_DEVICE_REVALIDATION.md
+          NEXT_WORK_STAGE: AŞAMA 09
+          NEXT_WORK_STATUS: WAITING_EXPLICIT_USER_GO
+          STAGE09_GO_BARRIER: custom renderer effort/maintenance risk HIGH; AŞAMA 09 implementation öncesinde kullanıcı açık GO gerekir
+          NEXT_ACTION: generic `devam` ile AŞAMA 09 başlatma; `AŞAMA 09 GO` gibi explicit karar bekle.
+          ```'''
+          text, n = re.subn(r'```text\nLAST_COMPLETED_STAGE:.*?\n```', dcp, text, count=1, flags=re.S)
+          if n != 1:
+              raise SystemExit('DEVAM checkpoint not found')
+          text = text.replace('- AŞAMA 08 — NEXT', '- AŞAMA 08 — DONE / CHARACTERIZATION; iOS PASS NOT CLAIMED')
+          text = text.replace('3. AŞAMA 07 için `docs/evidence/STAGE_07.md` ve `docs/ADR/0002-procad-pinned-source-no-go.md` dosyalarını oku.', '3. AŞAMA 08 için `docs/evidence/STAGE_08.md` ve `docs/LOCAL_DEVICE_REVALIDATION.md`; AŞAMA 07 için `docs/evidence/STAGE_07.md` ve `docs/ADR/0002-procad-pinned-source-no-go.md` dosyalarını oku.')
+          dsum = '''\n## AŞAMA 08 özeti\n\nExact ACadSharp 3.7.1 + SkiaSharp 4.151.1 iOS hattı GitHub-hosted macOS üzerinde karakterize edildi. Run `32776201092`/#17 characterization SUCCESS; bu iOS PASS değildir. Hosted Xcode 26.6 `install_name_tool`/`clang` lookup final baseline/simulator runtime'ı engelledi. ACadSharp trimming/reflection ILLink riskleri görünür bırakıldı. `iossimulator-arm64` NativeAOT `NETSDK1203` ile desteklenmedi; gerçek AOT `ios-arm64`/physical iPhone'da tekrar gerekir. Fiziksel iPhone ve local Mac kapıları deferred. Ayrıntı `docs/evidence/STAGE_08.md`; gelecekteki ikinci-pass kontrol listesi `docs/LOCAL_DEVICE_REVALIDATION.md`. AŞAMA 09 custom renderer implementation ancak explicit kullanıcı GO ile başlayabilir.\n'''
+          if '## AŞAMA 08 özeti' not in text:
+              marker = '\n## Değiştirilemez ilkeler\n'
+              text = text.replace(marker, dsum + marker) if marker in text else text + dsum
+          devam.write_text(text, encoding='utf-8')
+
+          log = Path('docs/EXECUTION_LOG.md')
+          text = log.read_text(encoding='utf-8')
+          entry = '''\n\n## 2026-08-25 — AŞAMA 08 — DONE / CHARACTERIZATION; iOS PASS NOT CLAIMED\n\n- İzole iOS spike production graph değiştirmeden ACadSharp `3.7.1` + SkiaSharp `4.151.1` + `SkiaSharp.NativeAssets.iOS 4.151.1` hattını test etti.\n- .NET SDK `10.0.400`, iOS workload `26.5.10301/10.0.100`, Xcode `26.6` exact host hattı doğrulandı.\n- Yetkili karakterizasyon: `Stage 08 iOS Feasibility` run `32776201092` / #17 `SUCCESS`; artifact `9538345504`, digest `sha256:527956939b41b04b91cc79af04d821238f111d6f8a5a121598809a3830746b72`.\n- Evidence classification `BLOCKED_PARTIAL_EVIDENCE`; workflow success tüm probe'ların PASS olduğu anlamına gelmez.\n- Baseline Release hosted Xcode 26.6 tool lookup'ta `install_name_tool` bulunamadığı için runtime'a ulaşmadı; hosted Xcode bundle yamalanmadı.\n- Trim probe ACadSharp hattında IL2026/IL2070/IL2072/IL2075/IL2087/IL2090 warning ailelerini kaydetti: 30 trimmer, 12 reflection-related, 0 font line.\n- Simulator `PublishAot=true` `NETSDK1203` ile unsupported; bu ACadSharp NativeAOT failure olarak sınıflandırılmadı. Gerçek `ios-arm64` AOT future Mac/iPhone gate'idir.\n- Fiziksel iPhone `NOT_RUN_DEFERRED_EXTERNAL_GATE`; local Mac inventory `PENDING_USER_EVIDENCE`.\n- Kullanıcının mevcut execution override'ı uyarınca dış blocker/risk açıkça kaydedilip bağımsız sonraki işe ilerleme kabul edildi; iOS PASS iddiası yok.\n- Future local/device acceptance listesi `docs/LOCAL_DEVICE_REVALIDATION.md` olarak eklendi.\n- AŞAMA 09 custom renderer implementation ADR 0002 nedeniyle explicit kullanıcı GO bekler.\n'''
+          if '## 2026-08-25 — AŞAMA 08' not in text:
+              text += entry
+          log.write_text(text, encoding='utf-8')
+          PY
+
+          rm .github/workflows/stage08-checkpoint-sync.yml
+          git config user.name "github-actions[bot]"
+          git config user.email "41898282+github-actions[bot]@users.noreply.github.com"
+          git add Mobil_DWG_DXF_Royalty_Free_Android_iOS_Nihai_Plan.md gecmis.md DEVAM.md docs/EXECUTION_LOG.md .github/workflows/stage08-checkpoint-sync.yml
+          git commit -m "docs(stage08): close characterization checkpoint"
+          git push origin HEAD:stage08-ios-feasibility-closure
