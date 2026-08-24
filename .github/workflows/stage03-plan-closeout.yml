@@ -1,0 +1,44 @@
+name: Stage 03 Canonical Plan Closeout
+
+on:
+  push:
+    branches: [main]
+    paths:
+      - .github/workflows/stage03-plan-closeout.yml
+  workflow_dispatch:
+
+permissions:
+  contents: write
+
+jobs:
+  closeout:
+    runs-on: ubuntu-latest
+    timeout-minutes: 5
+    steps:
+      - name: Checkout main
+        uses: actions/checkout@v5
+        with:
+          ref: main
+          fetch-depth: 1
+
+      - name: Apply guarded Stage 03 canonical update
+        run: python scripts/stage03-finalize-canonical.py
+
+      - name: Verify expected checkpoint
+        run: |
+          grep -F 'CURRENT_STAGE: AŞAMA 03' Mobil_DWG_DXF_Royalty_Free_Android_iOS_Nihai_Plan.md
+          grep -F 'STATUS: DONE' Mobil_DWG_DXF_Royalty_Free_Android_iOS_Nihai_Plan.md
+          grep -F 'AŞAMA 03 — Test corpus’u, golden sözleşmesi ve cihaz matrisi — `DONE`' Mobil_DWG_DXF_Royalty_Free_Android_iOS_Nihai_Plan.md
+          grep -F 'NEXT_ACTION: AŞAMA 04 — minimal solution ve mimari sınırlar.' Mobil_DWG_DXF_Royalty_Free_Android_iOS_Nihai_Plan.md
+
+      - name: Commit canonical plan closeout
+        run: |
+          if git diff --quiet -- Mobil_DWG_DXF_Royalty_Free_Android_iOS_Nihai_Plan.md; then
+            echo 'No canonical plan changes required.'
+            exit 0
+          fi
+          git config user.name 'github-actions[bot]'
+          git config user.email '41898282+github-actions[bot]@users.noreply.github.com'
+          git add Mobil_DWG_DXF_Royalty_Free_Android_iOS_Nihai_Plan.md
+          git commit -m 'docs: mark stage 03 complete in canonical plan'
+          git push origin HEAD:main
