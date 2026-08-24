@@ -5,14 +5,22 @@ test "$(dotnet --version)" = "10.0.400"
 
 CACHE_ROOT="${1:?cache root required}"
 EVIDENCE_PATH="${2:?evidence path required}"
+LOCK_MODE="${STAGE05_LOCK_MODE:-locked}"
 
 python scripts/stage03-validate-fixtures.py \
   --manifest fixtures/manifest/stage03-mini.json \
   --cache "$CACHE_ROOT" \
   --evidence "${CACHE_ROOT}/stage03-fixture-audit.json"
 
-# The production parser adapter has its own committed exact lock file.
-dotnet restore src/MobilDwg.Cad/MobilDwg.Cad.csproj --locked-mode
+if [[ "$LOCK_MODE" == "generate" ]]; then
+  dotnet restore src/MobilDwg.Cad/MobilDwg.Cad.csproj --force-evaluate
+  cp src/MobilDwg.Cad/packages.lock.json "${CACHE_ROOT}/generated-MobilDwg.Cad.packages.lock.json"
+elif [[ "$LOCK_MODE" == "locked" ]]; then
+  dotnet restore src/MobilDwg.Cad/MobilDwg.Cad.csproj --locked-mode
+else
+  echo "Unsupported STAGE05_LOCK_MODE: $LOCK_MODE" >&2
+  exit 2
+fi
 
 dotnet restore MobilDwg.sln
 
