@@ -1,0 +1,70 @@
+name: Stage 03 Corpus Audit
+
+on:
+  workflow_dispatch:
+  pull_request:
+    branches: [main]
+    paths:
+      - fixtures/**
+      - docs/GOLDEN_CONTRACT.md
+      - docs/DEVICE_MATRIX.md
+      - docs/evidence/STAGE_03.md
+      - scripts/stage03-validate-fixtures.py
+      - scripts/stage03-verify-integrity.py
+      - .github/workflows/stage03-corpus-audit.yml
+      - .gitignore
+  push:
+    branches: [main]
+    paths:
+      - fixtures/**
+      - docs/GOLDEN_CONTRACT.md
+      - docs/DEVICE_MATRIX.md
+      - scripts/stage03-validate-fixtures.py
+      - scripts/stage03-verify-integrity.py
+      - .github/workflows/stage03-corpus-audit.yml
+      - .gitignore
+
+permissions:
+  contents: read
+
+jobs:
+  corpus-audit:
+    runs-on: ubuntu-latest
+    timeout-minutes: 15
+
+    steps:
+      - name: Checkout
+        uses: actions/checkout@v5
+
+      - name: Set up Python
+        uses: actions/setup-python@v6
+        with:
+          python-version: '3.13'
+
+      - name: Validate manifest JSON and script syntax
+        run: |
+          python -m json.tool fixtures/manifest/schema.json >/dev/null
+          python -m json.tool fixtures/manifest/stage03-mini.json >/dev/null
+          python -m json.tool fixtures/manifest/stage03-source-integrity.json >/dev/null
+          python -m py_compile scripts/stage03-validate-fixtures.py
+          python -m py_compile scripts/stage03-verify-integrity.py
+
+      - name: Validate corpus access, hashes and provenance
+        run: |
+          python scripts/stage03-validate-fixtures.py \
+            --manifest fixtures/manifest/stage03-mini.json \
+            --cache "$RUNNER_TEMP/mobil-dwg-stage03" \
+            --evidence "$RUNNER_TEMP/stage03-fixture-audit.json"
+
+      - name: Verify immutable source dual hashes
+        run: |
+          python scripts/stage03-verify-integrity.py \
+            --audit "$RUNNER_TEMP/stage03-fixture-audit.json" \
+            --integrity fixtures/manifest/stage03-source-integrity.json
+
+      - name: Upload Stage 03 evidence
+        uses: actions/upload-artifact@v4
+        with:
+          name: stage03-corpus-evidence
+          path: ${{ runner.temp }}/stage03-fixture-audit.json
+          if-no-files-found: error

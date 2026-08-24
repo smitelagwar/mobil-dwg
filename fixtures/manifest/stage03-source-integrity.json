@@ -1,0 +1,30 @@
+{
+  "schema_version": 1,
+  "source_revision": "592d70a7bf0eaffbd932d23900f289b4e6305832",
+  "fixtures": {
+    "acadsharp-ac1015-dwg": {
+      "git_blob_sha1": "24768ce675970ab1cf9ae4f3b84f6bf12b999c2e",
+      "sha256": "8ffbdc713f5838cbbb1596a8422e2b607e5c9e79921e852cbb5abee4af76ea4e"
+    },
+    "acadsharp-ac1018-dwg": {
+      "git_blob_sha1": "7ccac9ce2ccc49a9de05ea22b849b91f1d25fb4b",
+      "sha256": "7d26f908516ec5fb89cc8054af33aff233b68a7b63208bbc5b7f9f4d9bff9866"
+    },
+    "acadsharp-ac1024-dwg": {
+      "git_blob_sha1": "3346e2b2063215eb475a6a4ab918c939472e38d0",
+      "sha256": "53ecc28e54ff0bbfb022989c47fd1cb16eb07a98825309b66cdf316d900fe4ce"
+    },
+    "acadsharp-ac1032-dwg": {
+      "git_blob_sha1": "4cfa790d6719acf3aad9818bacbd693ac3ab71b8",
+      "sha256": "0e8faaca949c9429c92240082d9ea4d3524aca5baf7c7815ec439245c321b528"
+    },
+    "acadsharp-ac1015-ascii-dxf": {
+      "git_blob_sha1": "47e909dec754db6fbd3f990af30672e7166a3c40",
+      "sha256": "4f7d7f0d3957d4d32c6c43e4c600eea8e90fc0fcb1b36b11256095a9789a923f"
+    },
+    "acadsharp-ac1032-ascii-dxf": {
+      "git_blob_sha1": "e4401ec6d62d940c11c9346a39a84887344797c9",
+      "sha256": "c2934f616ecd7097e773b85e5d6e0548d21ccc635abcc8e7276f7d4a585a7ae2"
+    }
+  }
+}
