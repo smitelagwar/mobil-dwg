@@ -77,3 +77,63 @@ Doğrulama özeti:
 - Repo sürekliliği için kalıcı log/handoff dosyaları eklendi.
 
 Sonraki eylem: AŞAMA 01’de resmi kaynaklardan .NET 10/MAUI/Android exact toolchain sürümlerini canlı doğrulamak ve gerçek geliştirme ortamında kurulum/build/device smoke hattını başlatmak.
+
+---
+
+## 2026-08-24 — AŞAMA 01: .NET/MAUI/Android toolchain ve gerçek telefon
+
+Durum: `BLOCKED`
+
+Başlangıç revision:
+
+- `fe3c8c043e6d373e6313d2e1201cc24992b493a9`
+- AŞAMA 00 tamamlanmış, uygulama kodu henüz yoktu.
+
+Canlı doğrulanan toolchain baseline:
+
+- .NET SDK `10.0.400` / runtime servicing `10.0.11` — 2026-08-11 release.
+- Workload set `10.0.400`; Android-first workload `maui-android`.
+- Microsoft Build of OpenJDK `21.0.12` LTS.
+- Android minimum API `24`.
+- Android compile/target API `36`.
+- Android SDK Platform 36 revision `1`.
+- Android SDK Build-Tools `36.0.0`.
+- Android SDK Platform-Tools `37.0.0` stable; `37.0.1` Canary olduğu için baseline dışında.
+- Android command-line tools stable download build ID `15859902`.
+- Google Play: 2026-08-31 itibarıyla yeni uygulama ve güncellemeler target API 36 veya üzeri olmak zorunda.
+
+Repo değişiklikleri:
+
+- `global.json` oluşturuldu; SDK `10.0.400`, workload set `10.0.400`, prerelease kapalı ve `rollForward=disable`.
+- `docs/TOOLCHAIN.md` oluşturuldu; exact toolchain, resmi kaynak snapshot'ı ve fiziksel cihaz kapısı kaydedildi.
+- `docs/evidence/STAGE_01.md` oluşturuldu; tamamlanan doğrulamalar ve eksik gerçek cihaz kanıtları ayrıldı.
+
+Commitler:
+
+- `15d69e6b5b9e0c20f5ef7b0a742ac25ce5cc9071` — `build: pin .NET 10.0.400 toolchain`
+- `467a2fe69366bfc640400d4b2ccbd97309b09189` — `docs: record stage 01 toolchain baseline`
+- `658345321d1a76f7f3a9f6e6958e62a6868415a0` — `docs: add stage 01 evidence and blocker`
+
+Çalışma konteyneri gözlemi:
+
+- Linux x86_64.
+- Java `21.0.11` mevcut.
+- `dotnet` ve `adb` PATH üzerinde yok.
+- .NET 10.0.400 resmi direct-download URL'si doğrulandı; ancak konteyner dış DNS erişimi kapalı olduğundan indirme denemesi `Could not resolve host: builds.dotnet.microsoft.com` ile başarısız oldu.
+- Bu hata toolchain uyumsuzluğu değildir; ChatGPT çalışma konteynerinin network kısıtıdır.
+
+Eksik zorunlu AŞAMA 01 kanıtları:
+
+- Gerçek geliştirme makinesinde .NET 10.0.400 ve MAUI Android workload kurulumu.
+- Microsoft OpenJDK 21.0.12 + `JAVA_HOME` doğrulaması.
+- Android API 36 / Build-Tools 36.0.0 / Platform-Tools 37.0.0 kurulumu.
+- Temiz MAUI smoke app Debug ve Release build.
+- Fiziksel Android cihazın `adb devices` çıktısında `device` olması.
+- Smoke app install/launch gerçek telefon kanıtı.
+- iOS Mac/Xcode/iPhone/Apple hesap erişim envanteri.
+
+Blocker:
+
+- Bu oturumda kullanıcının gerçek geliştirme makinesine ve fiziksel Android cihazına USB/ADB erişimi yok. Nihai plan fiziksel cihaz çalıştırmasını zorunlu tuttuğundan AŞAMA 01 `DONE` sayılamaz.
+
+Sonraki eylem: Gerçek geliştirme ortamında `docs/TOOLCHAIN.md` baseline'ına göre toolchain'i kurup boş MAUI uygulamasını Debug/Release build etmek ve fiziksel Android cihazda `adb` install/launch kanıtını kaydetmek.
