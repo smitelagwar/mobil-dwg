@@ -105,11 +105,9 @@ jobs:
       - name: Patch Stage 07 closure records
         run: python3 scripts/stage07-close-checkpoint.py
 
-      - name: Restore permanent workflow and remove one-shot helpers
+      - name: Remove non-workflow one-shot helpers
         run: |
-          git checkout 4f4b13c5bdb8a74d3a642dd635c2b729c1567f55 -- .github/workflows/stage07-procad-source-spike.yml
           rm -f scripts/stage07-close-checkpoint.py
-          rm -f .github/workflows/stage07-close-checkpoint.yml
           rm -f stage07-close.trigger
 
       - name: Commit synchronized checkpoint
