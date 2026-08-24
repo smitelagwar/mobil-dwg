@@ -24,19 +24,23 @@ AssertProjectReferences("src/MobilDwg.App/MobilDwg.App.csproj",
         "src/MobilDwg.Rendering/MobilDwg.Rendering.csproj",
     ]);
 
-AssertNoPackageReferences("src/MobilDwg.Core/MobilDwg.Core.csproj");
-AssertNoPackageReferences("src/MobilDwg.Cad/MobilDwg.Cad.csproj");
-AssertNoPackageReferences("src/MobilDwg.Rendering/MobilDwg.Rendering.csproj");
-AssertNoPackageReferences("src/MobilDwg.App/MobilDwg.App.csproj");
+AssertPackageReferences("src/MobilDwg.Core/MobilDwg.Core.csproj", []);
+AssertPackageReferences("src/MobilDwg.Cad/MobilDwg.Cad.csproj", ["ACadSharp"]);
+AssertPackageReferences("src/MobilDwg.Rendering/MobilDwg.Rendering.csproj", []);
+AssertPackageReferences("src/MobilDwg.App/MobilDwg.App.csproj", []);
 
 AssertForbiddenSourceTerms(
     "src/MobilDwg.Core",
     ["Microsoft.Maui", "SkiaSharp", "ACadSharp"]);
 AssertForbiddenSourceTerms(
+    "src/MobilDwg.Rendering",
+    ["ACadSharp"]);
+AssertForbiddenSourceTerms(
     "src/MobilDwg.App",
     ["SkiaSharp", "ACadSharp"]);
 
 Console.WriteLine("STAGE04_ARCHITECTURE_TESTS_PASS");
+Console.WriteLine("STAGE05_DEPENDENCY_BOUNDARY_PASS");
 
 void AssertProjectReferences(string projectPath, IReadOnlyCollection<string> expected)
 {
@@ -56,11 +60,19 @@ void AssertProjectReferences(string projectPath, IReadOnlyCollection<string> exp
         $"{projectPath} references [{string.Join(", ", actual)}], expected [{string.Join(", ", expectedOrdered)}]");
 }
 
-void AssertNoPackageReferences(string projectPath)
+void AssertPackageReferences(string projectPath, IReadOnlyCollection<string> expected)
 {
     var document = XDocument.Load(Path.Combine(repoRoot, projectPath));
-    Assert(!document.Descendants("PackageReference").Any(),
-        $"{projectPath} must not add package references in Stage 04");
+    var actual = document
+        .Descendants("PackageReference")
+        .Select(element => element.Attribute("Include")?.Value)
+        .Where(value => !string.IsNullOrWhiteSpace(value))
+        .Order(StringComparer.Ordinal)
+        .ToArray();
+    var expectedOrdered = expected.Order(StringComparer.Ordinal).ToArray();
+
+    Assert(actual.SequenceEqual(expectedOrdered, StringComparer.Ordinal),
+        $"{projectPath} package references [{string.Join(", ", actual)}], expected [{string.Join(", ", expectedOrdered)}]");
 }
 
 void AssertForbiddenSourceTerms(string relativeDirectory, IReadOnlyCollection<string> forbiddenTerms)

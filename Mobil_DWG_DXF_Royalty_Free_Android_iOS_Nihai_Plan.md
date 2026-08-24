@@ -15,14 +15,14 @@
 Bu blok ve aşağıdaki aşama kutuları her çalışma turunun sonunda güncellenir.
 
 ```text
-CURRENT_STAGE: AŞAMA 04
-CURRENT_SUBSTEP: 04.5
+CURRENT_STAGE: AŞAMA 05
+CURRENT_SUBSTEP: 05.6
 STATUS: DONE
-LAST_VERIFIED_REVISION: c01311ccb5c82b7bac023b24ae6a8000ae4655af — AŞAMA 04 PR #6 doğrulanmış head üzerinden main'e merge edildi
-LAST_SUCCESSFUL_COMMAND: GitHub Actions Stage 04 Architecture run 32755230695 / #2 SUCCESS + aynı head Stage 02 Dependency Audit run 32755230688 / #17 SUCCESS + Stage 01 Toolchain Smoke run 32755230683 / #36 SUCCESS
-EVIDENCE: docs/evidence/STAGE_04.md; docs/ARCHITECTURE.md; MobilDwg.sln; PR #6 merge c01311ccb5c82b7bac023b24ae6a8000ae4655af; STAGE04_CORE_CONTRACT_TESTS_PASS; STAGE04_RENDER_CONTRACT_TESTS_PASS; STAGE04_ARCHITECTURE_TESTS_PASS; STAGE04_T0_PASS
-BLOCKERS: AŞAMA 04 için yok. AŞAMA 01 fiziksel Android install/launch ve iOS erişim envanteri docs/USER_APPROVED_EXECUTION_OVERRIDE.md gereği DEFERRED_EXTERNAL_GATE olarak açık kalır.
-NEXT_ACTION: AŞAMA 05 — pinned ACadSharp ile headless parser spike. AŞAMA 01 dış kapılarını sahte PASS/DONE yapma; aynı turda AŞAMA 06'ya geçme.
+LAST_VERIFIED_REVISION: 09e26172aa8de9e8c79ae64853a493dab1d0e5b9 — AŞAMA 05 implementation head locked restore + mini corpus + regresyon kapılarında doğrulandı; PR #7 kapanış belgeleriyle main'e merge edilecek
+LAST_SUCCESSFUL_COMMAND: GitHub Actions Stage 05 Parser Spike run 32759096003 / #8 SUCCESS + aynı implementation head Stage 04 Architecture run 32759095988 / #11 SUCCESS + Stage 02 Dependency Audit run 32759095944 / #25 SUCCESS + Stage 01 Toolchain Smoke run 32759095888 / #44 SUCCESS
+EVIDENCE: docs/evidence/STAGE_05.md; docs/ADR/0001-acadsharp-3.7.1-parser-baseline.md; Stage 05 artifact 9532001644 sha256:2750ba88141c5724306bb5811173d958c60836806021f2ff1a5b36b011631097; STAGE05_DEPENDENCY_BOUNDARY_PASS; STAGE05_MINI_CORPUS_PASS fixtures=9 derived_negatives=2; STAGE05_T3_PASS
+BLOCKERS: AŞAMA 05 için yok. AŞAMA 01 fiziksel Android install/launch ve iOS erişim envanteri docs/USER_APPROVED_EXECUTION_OVERRIDE.md gereği DEFERRED_EXTERNAL_GATE olarak açık kalır; Stage 01 CI #44 bu dış kapıları PASS/DONE yapmaz.
+NEXT_ACTION: AŞAMA 06 — Android güvenli dosya alma ve parse spike. AŞAMA 01 dış kapılarını sahte PASS/DONE yapma; aynı turda AŞAMA 06'yı başlatma.
 LAST_UPDATE: 2026-08-24
 ```
 
@@ -137,7 +137,7 @@ v1 dışı:
 | Bileşen | 24.08.2026 doğrulaması | Başlangıç kararı |
 |---|---|---|
 | .NET 10 / .NET MAUI | .NET 10 LTS; MAUI Android+iOS’u destekliyor, exact SDK/workload pinlenmeli | Ana mobil teknoloji adayı |
-| ACadSharp | Resmi repo ve NuGet MIT; güncel aday 3.7.1. 3.6.29 “critical bugs” nedeniyle deprecated | Ana parser adayı; ancak corpus geçmeden approved değil |
+| ACadSharp | Resmi repo ve NuGet MIT; exact production baseline 3.7.1. AŞAMA 05 locked mini-corpus gate'i 4 DWG familyası + 5 DXF fixture ve 2 derived negative üzerinde geçti | Read-only parser baseline `GO`; render/engineering fidelity henüz ayrıca kanıtlanmalı |
 | ProCad | Resmi repo mevcut ve MIT; 0.1.x, genç ve düşük saha kullanımlı | Yalnız izole source-pinned spike |
 | ProCad NuGet hattı | Rendering paketi gevşek/yanlış ACadSharp alt sınırı çözebiliyor; kaynak repo kendi ACadSharp fork/submodule’una bağlı; MAUI kontrol hattında prerelease Skia view dependency bulunuyor | Mevcut haliyle production için varsayılan NO-GO |
 | SkiaSharp | MIT .NET 2D renderer; native dağıtım zinciri ayrıca denetlenmeli | Ana renderer adayı |
@@ -368,8 +368,8 @@ Kurallar:
 - [x] AŞAMA 02 — Canlı dependency/lisans kanıtı ve kilitler — `DONE`
 - [x] AŞAMA 03 — Test corpus’u, golden sözleşmesi ve cihaz matrisi — `DONE`
 - [x] AŞAMA 04 — Minimal solution ve mimari sınırlar — `DONE`
-- [ ] AŞAMA 05 — ACadSharp headless parser spike — `NEXT`
-- [ ] AŞAMA 06 — Android güvenli dosya alma ve parse spike
+- [x] AŞAMA 05 — ACadSharp headless parser spike — `DONE`
+- [ ] AŞAMA 06 — Android güvenli dosya alma ve parse spike — `NEXT`
 - [ ] AŞAMA 07 — ProCad source-pinned Android spike ve GO/NO-GO
 - [ ] AŞAMA 08 — Erken iOS AOT/native fizibilite smoke
 - [ ] AŞAMA 09 — RenderScene, kamera ve diagnostics temeli
@@ -421,7 +421,7 @@ Test: Git status ve ignore dry-run.
 - [ ] `adb` ile kullanıcının gerçek telefonuna yüklenir ve açılır; gerçek geliştirme makinesinde `STAGE01_DEVICE_GATE_PASS` alınır.
 - [ ] iOS için Mac/Xcode/iPhone/Apple Developer erişimi yalnız envanterlenir; henüz kurulum yapılmaz.
 
-Test: `dotnet --info`, workload list, Android Debug/Release build, manifest/API/package baseline ve device-gate script syntax kontrolü en güncel regresyon run `32747785948` / #29 üzerinde PASS. Root Central Package Management etkisinden kaçınmak için temiz MAUI smoke projesi `$RUNNER_TEMP` altında izole edildi. Fiziksel Android install/launch ancak gerçek cihazdaki `STAGE01_DEVICE_GATE_PASS` ile kapanır.  
+Test: `dotnet --info`, workload list, Android Debug/Release build, manifest/API/package baseline ve device-gate script syntax kontrolü en güncel AŞAMA 05 implementation-head regresyonu `Stage 01 Toolchain Smoke` run `32759095888` / #44 üzerinde PASS. Root Central Package Management etkisinden kaçınmak için temiz MAUI smoke projesi `$RUNNER_TEMP` altında izole edildi. Fiziksel Android install/launch ancak gerçek cihazdaki `STAGE01_DEVICE_GATE_PASS` ile kapanır.  
 Çıkış: Gerçek telefonda boş MAUI uygulaması çalışır; exact toolchain kanıtı vardır. Telefon/iOS erişimi olmadığından aşama `BLOCKED / DEFERRED_EXTERNAL_GATE` kalır; `docs/USER_APPROVED_EXECUTION_OVERRIDE.md` bağımsız sonraki aşamaların ilerlemesine izin verir.
 
 ### AŞAMA 02 — Canlı dependency/lisans kanıtı ve kilitler
@@ -467,9 +467,9 @@ Test: GitHub Actions `Stage 03 Corpus Audit` run `32752374980` / #4 SUCCESS; `ST
 - [x] `ICadDocumentReader`, session owner (`CadDocumentSession` + `ICadDocumentHandle`), `IRenderSceneBuilder`, `ICadRenderer`, diagnostics ve compatibility kontratları tanımlandı.
 - [x] Core katmanı BCL-only tutuldu; MAUI/SkiaSharp/ACadSharp referansı ve ProjectReference/PackageReference yok.
 - [x] Cancellation/progress API’si `None/BeforeStartOnly/Cooperative` ve `None/StagesOnly/Fractional` capability seviyeleriyle gerçek destek düzeyini yanlış temsil etmeyecek şekilde modellendi; bilinmeyen fraction `null` kalır.
-- [x] Architecture dependency tests eklendi; tam proje sayısı, exact ProjectReference yönleri, Stage 04 production PackageReference yokluğu ve forbidden Core/App dependency terimleri otomatik denetlenir.
+- [x] Architecture dependency tests eklendi; tam proje sayısı ve exact ProjectReference yönleri korunur. Stage 04 baseline'ında production PackageReference yoktu; AŞAMA 05 sonrasında test kuralı yalnız `MobilDwg.Cad` içinde exact `ACadSharp` PackageReference'ını kabul eder ve Core/Rendering/App katmanlarında ACadSharp sızıntısını reddeder.
 
-Test: GitHub Actions `Stage 04 Architecture` run `32755230695` / #2 SUCCESS; exact .NET/workload set, clean solution restore, Release build `0 Warning(s) / 0 Error(s)`, `STAGE04_CORE_CONTRACT_TESTS_PASS`, `STAGE04_RENDER_CONTRACT_TESTS_PASS`, `STAGE04_ARCHITECTURE_TESTS_PASS`, `STAGE04_T0_PASS`. Aynı final head Stage 02 run #17 ve Stage 01 run #36 SUCCESS.  
+Test: GitHub Actions `Stage 04 Architecture` run `32755230695` / #2 SUCCESS; exact .NET/workload set, clean solution restore, Release build `0 Warning(s) / 0 Error(s)`, `STAGE04_CORE_CONTRACT_TESTS_PASS`, `STAGE04_RENDER_CONTRACT_TESTS_PASS`, `STAGE04_ARCHITECTURE_TESTS_PASS`, `STAGE04_T0_PASS`. AŞAMA 05 implementation head regresyonu run `32759095988` / #11 de SUCCESS.  
 Çıkış: Sağlandı. Solution temiz restore/build/test geçer; dependency yönleri otomatik test edilir. PR #6 merge commit `c01311ccb5c82b7bac023b24ae6a8000ae4655af`.
 
 ### AŞAMA 05 — ACadSharp headless parser spike
@@ -478,15 +478,15 @@ Test: GitHub Actions `Stage 04 Architecture` run `32755230695` / #2 SUCCESS; exa
 
 İşler:
 
-- [ ] Exact candidate paket adapter projesine eklenir; writer/API’leri kullanılmaz.
-- [ ] Format magic/version preflight, reader notifications, exceptions ve timing rapora bağlanır.
-- [ ] Mini corpus headless açılır; layer/block/layout/entity type dağılımı manifest ile karşılaştırılır.
-- [ ] Unsupported/proxy ve notification severity sınıflandırılır; sabit “uyarı sayısı eşiği” kullanılmaz.
-- [ ] Aynı document’tan türetilen iki count’ın kaybı kanıtlamadığı kabul edilir; golden beklentiyle kıyaslanır.
-- [ ] Approved sürüm ADR’si ve known-failure listesi yazılır.
+- [x] Exact ACadSharp `3.7.1` yalnız `MobilDwg.Cad` adapter projesine eklendi; writer/save API’leri kullanılmadı. NuGet-generated project-aware lockfile commit edilerek final restore `--locked-mode` çalıştırıldı.
+- [x] DWG `AC####` magic ve DXF signature/header preflight, reader notifications, controlled exceptions ve parse timing Core diagnostics/metadata hattına bağlandı.
+- [x] Mini corpus headless açıldı; AC1015/AC1018/AC1024/AC1032 DWG, AC1015/AC1032 ASCII DXF ve üç sentetik DXF manifest count/warning beklentileriyle karşılaştırıldı. Ana upstream setinde model-space `163`, total block entity `341`, block-reference/INSERT `14`, DIMENSION `11`, HATCH `8`, LINE `98`, CIRCLE `13` semantiği doğrulandı.
+- [x] Unsupported/proxy/notification ve missing-resource sinyalleri diagnostics/compatibility olarak sınıflandırıldı; sabit “uyarı sayısı eşiği” kullanılmadı. ASCII DXF `unsupported-object` ve yüksek notification hacmi known limitation olarak kaydedildi.
+- [x] Aynı document’tan türetilen iki count başarı kanıtı sayılmadı; Stage 03 manifestin bağımsız beklenen semantic counts/warnings sözleşmesi kullanıldı. Derived truncated AC1015 DWG controlled `EndOfStreamException`, corrupt AC1018 DWG controlled warning üretti.
+- [x] `docs/ADR/0001-acadsharp-3.7.1-parser-baseline.md` ve `docs/evidence/STAGE_05.md` yazıldı. ACadSharp `3.7.1` read-only parser baseline `GO`; bu karar render/engineering fidelity garantisi değildir.
 
-Test: T3 mini corpus headless regression.  
-Çıkış: DWG/DXF parse yolu, diagnostics ve sürüm kararı kanıtlıdır. Kritik corpus kaybında önce ACadSharp sürüm karşılaştırılır; IxMilia yalnız DXF için koşullu spike olur.
+Test: GitHub Actions `Stage 05 Parser Spike` run `32759096003` / #8 SUCCESS; committed locked restore, Release build `0 Warning(s) / 0 Error(s)`, Core/Rendering/Architecture regresyonları, `STAGE05_DEPENDENCY_BOUNDARY_PASS`, `STAGE05_MINI_CORPUS_PASS fixtures=9 derived_negatives=2`, package graph `ACadSharp 3.7.1` ve `STAGE05_T3_PASS`. Evidence artifact `9532001644`, digest `sha256:2750ba88141c5724306bb5811173d958c60836806021f2ff1a5b36b011631097`. Aynı implementation head Stage 04 run #11, Stage 02 run #25 ve Stage 01 toolchain run #44 SUCCESS. Fiziksel Android cihaz kapısı AŞAMA 01 `DEFERRED_EXTERNAL_GATE` olarak açık kalır ve bu headless aşamayla sahte PASS yapılmaz.  
+Çıkış: Sağlandı. DWG/DXF parse yolu, diagnostics ve exact ACadSharp `3.7.1` sürüm kararı kanıtlıdır. Kritik corpus parse kaybı görülmediğinden sürüm A/B veya IxMilia.Dxf fallback spike başlatılmadı. Parser başladıktan sonra cooperative cancellation kanıtı yoktur; capability `BeforeStartOnly` kalır. Render fidelity sonraki scene/render aşamalarında ayrıca kanıtlanacaktır.
 
 ### AŞAMA 06 — Android güvenli dosya alma ve parse spike
 
