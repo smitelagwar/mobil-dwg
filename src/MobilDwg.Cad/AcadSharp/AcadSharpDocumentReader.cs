@@ -351,7 +351,7 @@ public static class AcadSharpDocumentInspection
             {
                 total++;
                 Increment(counts, entity.ObjectName);
-                if (entity.GetType().Name.Equals("BlockReference", StringComparison.Ordinal))
+                if (string.Equals(entity.ObjectName, "INSERT", StringComparison.OrdinalIgnoreCase))
                 {
                     Increment(counts, "BLOCK_REFERENCE");
                 }
