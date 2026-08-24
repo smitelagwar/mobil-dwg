@@ -101,6 +101,7 @@ cat > "$NUGET_PROBE/Nuget011Probe.csproj" <<'XML'
     <UseMaui>true</UseMaui>
   </PropertyGroup>
   <ItemGroup>
+    <PackageReference Include="Microsoft.Maui.Controls" Version="10.0.20" />
     <PackageReference Include="ProCadSharp.Controls.Maui" Version="0.1.1" />
   </ItemGroup>
 </Project>
@@ -116,6 +117,20 @@ if [ "$NUGET_RESTORE_EXIT" -eq 0 ]; then
 else
   : > "$NUGET_RESTORE_GRAPH"
 fi
+NUGET_RESOLVED_JSON="$WORK_ROOT/nuget-resolved-summary.json"
+python - "$NUGET_RESTORE_GRAPH" "$NUGET_RESOLVED_JSON" <<'PY'
+import json, re, sys
+text = open(sys.argv[1], encoding='utf-8', errors='replace').read()
+packages = {}
+for name in [
+    'ACadSharp', 'SkiaSharp', 'SkiaSharp.NativeAssets.Android',
+    'SkiaSharp.Views.Maui.Controls', 'ProCadSharp.Rendering'
+]:
+    m = re.search(r'^\s*>\s+' + re.escape(name) + r'\s+([^\s]+)', text, re.M)
+    packages[name] = m.group(1) if m else None
+warning = re.search(r'NU1603:.*', text)
+json.dump({'packages': packages, 'nu1603': warning.group(0) if warning else None}, open(sys.argv[2], 'w', encoding='utf-8'), indent=2, sort_keys=True)
+PY
 echo "STAGE07_NUGET_011_RESTORE_EXIT=$NUGET_RESTORE_EXIT"
 echo 'STAGE07_NUGET_SOURCE_GRAPH_RECORDED'
 
@@ -160,13 +175,29 @@ else
   echo 'STAGE07_PINCH_REUSE_GAP_RECORDED'
 fi
 
-# Candidate build. Use normal MSBuild graph restore; do not globally override
-# TargetFramework on referenced net10.0 projects (the first harness version did
-# so and produced a harness-only NETSDK1005 that is deliberately not evidence).
+# Candidate Android build. The pinned MAUI project is multi-targeted; on Linux
+# a normal restore asks for iOS packs even when -f android is supplied. Narrow
+# only the temporary checkout's TargetFrameworks list to Android, preserving all
+# production source and dependencies, so this measures the Android candidate.
+MAUI_CSPROJ="$PROCAD_DIR/ProCad.Controls.Maui/ProCad.Controls.Maui.csproj"
+cp "$MAUI_CSPROJ" "$WORK_ROOT/ProCad.Controls.Maui.csproj.original"
+python - "$MAUI_CSPROJ" <<'PY'
+from pathlib import Path
+import sys
+p = Path(sys.argv[1])
+s = p.read_text(encoding='utf-8')
+old = '<TargetFrameworks>net10.0-android;net10.0-ios;net10.0-maccatalyst</TargetFrameworks>'
+new = '<TargetFrameworks>net10.0-android</TargetFrameworks>'
+if old not in s:
+    raise SystemExit('unexpected pinned TargetFrameworks value')
+p.write_text(s.replace(old, new, 1), encoding='utf-8')
+PY
+grep -F '<TargetFrameworks>net10.0-android</TargetFrameworks>' "$MAUI_CSPROJ"
+
 BUILD_LOG="$WORK_ROOT/procad-android-build.log"
 SMOKE_LOG="$WORK_ROOT/procad-maui-smoke.log"
 set +e
-dotnet build "$PROCAD_DIR/ProCad.Controls.Maui/ProCad.Controls.Maui.csproj" -f net10.0-android -c Release >"$BUILD_LOG" 2>&1
+dotnet build "$MAUI_CSPROJ" -f net10.0-android -c Release >"$BUILD_LOG" 2>&1
 SOURCE_BUILD_EXIT=$?
 set -e
 
@@ -178,7 +209,7 @@ if [ "$SOURCE_BUILD_EXIT" -eq 0 ]; then
   SMOKE_CSPROJ="$SMOKE_DIR/Stage07ProCadAndroidSmoke.csproj"
   sed -i 's/>21.0<\/SupportedOSPlatformVersion>/>24.0<\/SupportedOSPlatformVersion>/' "$SMOKE_CSPROJ"
   sed -i 's#<ApplicationId>com.companyname.stage07procadandroidsmoke</ApplicationId>#<ApplicationId>com.smitelagwar.mobildwg.stage07procadsmoke</ApplicationId>#' "$SMOKE_CSPROJ"
-  dotnet add "$SMOKE_CSPROJ" reference "$PROCAD_DIR/ProCad.Controls.Maui/ProCad.Controls.Maui.csproj" >>"$SMOKE_LOG" 2>&1
+  dotnet add "$SMOKE_CSPROJ" reference "$MAUI_CSPROJ" >>"$SMOKE_LOG" 2>&1
   cat > "$SMOKE_DIR/Stage07CompileProbe.cs" <<'CS'
 using ProCad.Controls.Maui;
 namespace Stage07ProCadAndroidSmoke;
@@ -198,19 +229,21 @@ fi
 
 PACKAGE_GRAPH="$WORK_ROOT/source-package-graph.txt"
 if [ "$SOURCE_BUILD_EXIT" -eq 0 ]; then
-  dotnet list "$PROCAD_DIR/ProCad.Controls.Maui/ProCad.Controls.Maui.csproj" package --include-transitive > "$PACKAGE_GRAPH" 2>&1 || true
+  dotnet list "$MAUI_CSPROJ" package --include-transitive > "$PACKAGE_GRAPH" 2>&1 || true
 else
   : > "$PACKAGE_GRAPH"
 fi
 
 # Exact pinned candidate is NO-GO once the deterministic survey/mm precision
 # blocker is reproduced. Build/pinch/version-band data are supporting evidence.
-python - "$EVIDENCE_PATH" "$PIN_FILE" "$NUGET_JSON" "$PRECISION_JSON" "$PROCAD_COMMIT" "$ACAD_COMMIT" "$ACAD_APPROVED" "$ACAD_AHEAD" "$PROEDIT_COMMIT" "$SOURCE_BUILD_EXIT" "$SMOKE_BUILD_EXIT" "$PINCH_PRESENT" "$SMOKE_APK" "$NUGET_RESTORE_EXIT" <<'PY'
+python - "$EVIDENCE_PATH" "$PIN_FILE" "$NUGET_JSON" "$NUGET_RESOLVED_JSON" "$PRECISION_JSON" "$PROCAD_COMMIT" "$ACAD_COMMIT" "$ACAD_APPROVED" "$ACAD_AHEAD" "$PROEDIT_COMMIT" "$SOURCE_BUILD_EXIT" "$SMOKE_BUILD_EXIT" "$PINCH_PRESENT" "$SMOKE_APK" "$NUGET_RESTORE_EXIT" <<'PY'
 import json, sys
-(evidence_path, pin_path, nuget_path, precision_path, procad, acad, approved,
- ahead, proedit, source_build, smoke_build, pinch, apk, nuget_restore) = sys.argv[1:]
+(evidence_path, pin_path, nuget_path, nuget_resolved_path, precision_path,
+ procad, acad, approved, ahead, proedit, source_build, smoke_build, pinch,
+ apk, nuget_restore) = sys.argv[1:]
 pins = json.load(open(pin_path, encoding='utf-8'))
 nuget = json.load(open(nuget_path, encoding='utf-8'))
+nuget_resolved = json.load(open(nuget_resolved_path, encoding='utf-8'))
 precision = json.load(open(precision_path, encoding='utf-8'))
 result = {
   'stage': '07',
@@ -226,7 +259,9 @@ result = {
   'source_package_versions': pins['pinned_source_packages'],
   'nuget_package_availability': nuget,
   'nuget_0_1_1_restore_exit': int(nuget_restore),
+  'nuget_resolved_summary': nuget_resolved,
   'source_android_build_exit': int(source_build),
+  'source_build_target_narrowing': 'temporary checkout only: net10.0-android',
   'maui_release_smoke_build_exit': int(smoke_build),
   'maui_release_apk': apk or None,
   'maui_pinch_path_present': pinch.lower() == 'true',
@@ -236,6 +271,8 @@ result = {
   ],
   'additional_risks': [
     'pinned ACadSharp baseline is 592 official commits behind the mobil-dwg approved 3.7.1 source baseline',
+    'published ProCadSharp.Rendering 0.1.1 declares ACadSharp >= 0.1.1 and resolves ACadSharp 1.0.0 because 0.1.1 is absent',
+    'published ProCadSharp.Controls.Maui 0.1.1 resolves the SkiaSharp 4.147.0-preview.2.1 band',
     'pinned MAUI CadViewer has one-pointer pan but no pinch implementation in its MAUI source',
     'pinned source mixes SkiaSharp 3.119.4 with SkiaSharp.Views.Maui.Controls 4.147.0-preview.2.1'
   ],
