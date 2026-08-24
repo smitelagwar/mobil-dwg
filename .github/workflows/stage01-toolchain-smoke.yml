@@ -70,11 +70,14 @@ jobs:
           dotnet workload install maui-android
           dotnet workload list
 
-      - name: Create clean MAUI smoke app
+      - name: Create clean MAUI smoke app and pin API baseline
         shell: bash
         run: |
+          set -euxo pipefail
           rm -rf .smoke
           dotnet new maui -n Stage01Smoke -o .smoke/Stage01Smoke
+          sed -i 's/>21.0<\/SupportedOSPlatformVersion>/>24.0<\/SupportedOSPlatformVersion>/' .smoke/Stage01Smoke/Stage01Smoke.csproj
+          grep -F '>24.0</SupportedOSPlatformVersion>' .smoke/Stage01Smoke/Stage01Smoke.csproj
 
       - name: Build Debug Android smoke
         shell: bash
