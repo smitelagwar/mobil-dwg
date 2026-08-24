@@ -10,6 +10,7 @@ on:
       - docs/DEVICE_MATRIX.md
       - docs/evidence/STAGE_03.md
       - scripts/stage03-validate-fixtures.py
+      - scripts/stage03-verify-integrity.py
       - .github/workflows/stage03-corpus-audit.yml
       - .gitignore
   push:
@@ -19,6 +20,7 @@ on:
       - docs/GOLDEN_CONTRACT.md
       - docs/DEVICE_MATRIX.md
       - scripts/stage03-validate-fixtures.py
+      - scripts/stage03-verify-integrity.py
       - .github/workflows/stage03-corpus-audit.yml
       - .gitignore
 
@@ -43,7 +45,9 @@ jobs:
         run: |
           python -m json.tool fixtures/manifest/schema.json >/dev/null
           python -m json.tool fixtures/manifest/stage03-mini.json >/dev/null
+          python -m json.tool fixtures/manifest/stage03-source-integrity.json >/dev/null
           python -m py_compile scripts/stage03-validate-fixtures.py
+          python -m py_compile scripts/stage03-verify-integrity.py
 
       - name: Validate corpus access, hashes and provenance
         run: |
@@ -51,6 +55,12 @@ jobs:
             --manifest fixtures/manifest/stage03-mini.json \
             --cache "$RUNNER_TEMP/mobil-dwg-stage03" \
             --evidence "$RUNNER_TEMP/stage03-fixture-audit.json"
+
+      - name: Verify immutable source dual hashes
+        run: |
+          python scripts/stage03-verify-integrity.py \
+            --audit "$RUNNER_TEMP/stage03-fixture-audit.json" \
+            --integrity fixtures/manifest/stage03-source-integrity.json
 
       - name: Upload Stage 03 evidence
         uses: actions/upload-artifact@v4
