@@ -1,0 +1,43 @@
+name: Android Emulator Automated Test Gate
+
+# Bu workflow normal push islemlerinde calismaz.
+# Yalnizca manual (workflow_dispatch) veya ozel tetikleme ile tetiklenir.
+on:
+  workflow_dispatch:
+    inputs:
+      configuration:
+        description: 'Build Configuration (Debug / Release)'
+        required: true
+        default: 'Debug'
+        type: choice
+        options:
+          - Debug
+          - Release
+
+jobs:
+  emulator-test:
+    name: Run MAUI Android Tests on Self-Hosted Emulator
+    runs-on: [self-hosted, windows, android-test, mobil-dwg]
+    timeout-minutes: 25
+
+    steps:
+      - name: Checkout Repository
+        uses: actions/checkout@v4
+
+      - name: Doctor Environment Health Check
+        shell: powershell
+        run: |
+          & .\scripts\doctor-local-environment.ps1
+
+      - name: Run Emulator Automation Test Suite
+        shell: powershell
+        run: |
+          & .\scripts\run-emulator-tests.ps1 -Configuration ${{ inputs.configuration }} -ArtifactsDir "artifacts"
+
+      - name: Upload Test Artifacts (Screenshots & Logs)
+        uses: actions/upload-artifact@v4
+        if: always()
+        with:
+          name: android-emulator-test-artifacts-${{ inputs.configuration }}
+          path: artifacts/
+          retention-days: 14
