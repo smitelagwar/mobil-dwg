@@ -9,8 +9,10 @@ Sıra değişmez:
 1. `gecmis.md` — nerede kaldık, ne yapıldı, neden yapıldı.
 2. `Mobil_DWG_DXF_Royalty_Free_Android_iOS_Nihai_Plan.md` — tek yetkili uygulama/yürütme planı ve checkpoint.
 3. `docs/EXECUTION_LOG.md` — komut, test, revision ve teknik kanıt geçmişi.
-4. Gerekirse `docs/ADR/` — mimari/teknoloji kararlarının gerekçeleri.
-5. Diğer `*_oneriler.md`, `Master_Plan.md` ve benzeri dosyalar yalnız araştırma/önceki görüş kaynağıdır; nihai planla çelişirse nihai plan geçerlidir.
+4. `docs/TOOLCHAIN.md` — pinlenmiş .NET/MAUI/Android geliştirme zinciri.
+5. `docs/evidence/` — aşama bazlı gerçek kanıt ve blocker kayıtları.
+6. Gerekirse `docs/ADR/` — mimari/teknoloji kararlarının gerekçeleri.
+7. Diğer `*_oneriler.md`, `Master_Plan.md` ve benzeri dosyalar yalnız araştırma/önceki görüş kaynağıdır; nihai planla çelişirse nihai plan geçerlidir.
 
 ## Repo kimliği
 
@@ -24,20 +26,20 @@ Sıra değişmez:
 ## Aktif checkpoint
 
 ```text
-CURRENT_STAGE: AŞAMA 00
-STATUS: DONE
-NEXT_STAGE: AŞAMA 01
-NEXT_ACTION: Resmi kaynaklardan güncel .NET 10 SDK/MAUI/Android toolchain sürümlerini LIVE-VERIFY et; exact sürümleri belirle ve gerçek geliştirme ortamında kurulum/build/device smoke hattını başlat.
-BLOCKERS: Yok
+CURRENT_STAGE: AŞAMA 01
+STATUS: BLOCKED
+NEXT_STAGE: AŞAMA 01 içinde devam
+NEXT_ACTION: Gerçek geliştirme makinesinde pinlenmiş .NET/MAUI/JDK/Android toolchain'i kur; boş MAUI uygulamasını Debug+Release build et; fiziksel Android cihazda adb install/launch kanıtını kaydet.
+BLOCKERS: Bu sohbet oturumunda gerçek geliştirme makinesi ve fiziksel Android telefona USB/ADB erişimi yok; Mac/Xcode/iPhone/Apple hesap erişimi de doğrulanmadı.
 LAST_UPDATE: 2026-08-24
 ```
 
-Önemli yürütme kuralı: Bir kullanıcı turunda en fazla bir aşama tamamlanır. AŞAMA 00 bittiği için sonraki `devam` isteğinde AŞAMA 01 başlanır; aynı turda AŞAMA 02’ye geçilmez.
+Önemli yürütme kuralı: Bir kullanıcı turunda en fazla bir aşama tamamlanır. AŞAMA 01 `BLOCKED` olduğundan sonraki `devam` isteğinde AŞAMA 02'ye geçilmez; yalnız AŞAMA 01'in eksik gerçek ortam/cihaz kanıtları tamamlanır.
 
 ## Aşama durumu
 
 - [x] AŞAMA 00 — Çalışma alanı ve yürütme zemini
-- [ ] AŞAMA 01 — .NET/MAUI/Android toolchain ve gerçek telefon
+- [ ] AŞAMA 01 — .NET/MAUI/Android toolchain ve gerçek telefon — `BLOCKED`
 - [ ] AŞAMA 02 — Canlı dependency/lisans kanıtı ve kilitler
 - [ ] AŞAMA 03 — Test corpus’u, golden sözleşmesi ve cihaz matrisi
 - [ ] AŞAMA 04 — Minimal solution ve mimari sınırlar
@@ -94,11 +96,11 @@ Yapılanlar:
 - GitHub repo, `main` branch ve başlangıç commit’i doğrulandı.
 - Mevcut kaynak/araştırma MD belgeleri korundu.
 - `.gitignore` tek tek incelendi. Build/IDE çıktıları, secret/signing materyali, private CAD corpus/cache, lisansı ayrıca onaylanmamış font ve CAD asset’lerini ignore ettiği görüldü. Yeterli olduğu için sırf değişiklik üretmek amacıyla düzenlenmedi.
-- `docs/EXECUTION_LOG.md` oluşturuldu; bundan sonra teknik komut/test/evidence geçmişi burada tutulacak.
-- `docs/ADR/0000-template.md` oluşturuldu; önemli teknoloji/mimari kararları kanıtlarıyla kaydetmek için kullanılacak.
-- `docs/EVIDENCE_TEMPLATE.md` oluşturuldu; aşama çıkış kriterleri ve test kanıtları standart formatta tutulacak.
-- Bu `gecmis.md` oluşturuldu; yeni sohbet/yeni AI için kalıcı handoff/checkpoint kaydı olacak.
-- README ve nihai plan checkpoint’i bu devir mekanizmasını gösterecek şekilde güncellenecek/güncellendi.
+- `docs/EXECUTION_LOG.md` oluşturuldu.
+- `docs/ADR/0000-template.md` oluşturuldu.
+- `docs/EVIDENCE_TEMPLATE.md` oluşturuldu.
+- Bu `gecmis.md` oluşturuldu.
+- README ve nihai plan checkpoint’i devir mekanizmasını gösterecek şekilde güncellendi.
 
 ### AŞAMA 00 ortam envanteri
 
@@ -110,15 +112,70 @@ Bu değerler ChatGPT’nin 24 Ağustos 2026 tarihli çalışma konteynerine aitt
 - Java: OpenJDK `21.0.11`.
 - `adb`: PATH üzerinde yok.
 
-Eski plan içindeki 24.08.2026 “yerel ortam fotoğrafı” ile bu konteyner arasında fark vardır. Gerçek durum esas alınmıştır. AŞAMA 01’de kullanılacak fiziksel geliştirme ortamı yeniden ölçülmeden bu konteyner değerleri kurulum kanıtı sayılmaz.
+Eski plan içindeki 24.08.2026 “yerel ortam fotoğrafı” ile bu konteyner arasında fark vardır. Gerçek durum esas alınmıştır. Fiziksel geliştirme ortamı ayrıca ölçülmeden bu konteyner değerleri kurulum kanıtı sayılmaz.
 
 ### AŞAMA 00 commit geçmişi
 
 - `1619f043af3c0087794f171b1a0baeb53124685a` — `docs: add stage 00 execution log`
 - `a055ab145e5614180b3c28cd307d7563628a515b` — `docs: add ADR template`
 - `52a575e50c17dfdd96e91710f27450c870f74a70` — `docs: add evidence template`
+- `9d4974c23aa481eaf4b06cb0157069779d84fd88` — `docs: add durable project handoff history`
+- `854de13a592331c48c7ce6ac7f03eb248916b0f6` — `docs: link project handoff and stage status`
+- `fe3c8c043e6d373e6313d2e1201cc24992b493a9` — `docs: mark stage 00 complete in canonical plan`
 
-Bu dosyanın ve sonraki checkpoint güncellemelerinin commit SHA’ları yeni kayıtlarla birlikte `docs/EXECUTION_LOG.md` veya bu kronolojiye eklenmelidir.
+## 2026-08-24 — AŞAMA 01’de ne yapıldı?
+
+AŞAMA 01'in canlı doğrulama ve repo pinleme kısmı tamamlandı; gerçek geliştirme makinesi/fiziksel cihaz gerektiren çıkış kapısı tamamlanamadı.
+
+### Canlı doğrulanan baseline
+
+- .NET SDK: `10.0.400`.
+- .NET runtime servicing: `10.0.11`.
+- .NET release tarihi: `2026-08-11`.
+- Workload set: `10.0.400`.
+- Android-first MAUI workload: `maui-android`.
+- JDK: Microsoft Build of OpenJDK `21.0.12` LTS.
+- Android minimum: API `24`.
+- Android compile/target: API `36`.
+- Android SDK Platform 36: revision `1`.
+- Android Build-Tools: `36.0.0`.
+- Android Platform-Tools: `37.0.0` stable.
+- Platform-Tools `37.0.1` yalnız Canary olduğundan production baseline'a alınmadı.
+- Android command-line tools stable bootstrap build ID: `15859902`.
+- Google Play yeni app/update target API 36 zorunluluğu: `2026-08-31`.
+
+### Repo değişiklikleri
+
+- `global.json`: exact `.NET SDK 10.0.400` + workload set `10.0.400`, `rollForward=disable`, prerelease kapalı.
+- `docs/TOOLCHAIN.md`: exact toolchain, Android policy seçimi, doğrulama komutları ve cihaz kapısı.
+- `docs/evidence/STAGE_01.md`: tamamlanan doğrulamalar ile eksik gerçek cihaz kanıtlarının ayrımı.
+- `docs/EXECUTION_LOG.md`: AŞAMA 01 teknik logu.
+
+### AŞAMA 01 commitleri
+
+- `15d69e6b5b9e0c20f5ef7b0a742ac25ce5cc9071` — `build: pin .NET 10.0.400 toolchain`
+- `467a2fe69366bfc640400d4b2ccbd97309b09189` — `docs: record stage 01 toolchain baseline`
+- `658345321d1a76f7f3a9f6e6958e62a6868415a0` — `docs: add stage 01 evidence and blocker`
+- `a99ba8d26047598a1b593f864e14769da0980dda` — `docs: log stage 01 toolchain verification`
+
+### Bu oturumdaki kurulum denemesi
+
+ChatGPT çalışma konteynerinde `dotnet` ve `adb` yoktu; Java `21.0.11` vardı. Resmi .NET 10.0.400 Linux x64 binary URL'si web üzerinden doğrulandı ve indirme/kurulum denenmek istendi. Konteyner dış DNS erişimi kapalı olduğu için işlem `Could not resolve host: builds.dotnet.microsoft.com` ile başarısız oldu. Bu ürün veya .NET uyumsuzluğu sayılmaz; konteyner ağ kısıtıdır.
+
+### AŞAMA 01 neden BLOCKED?
+
+Nihai plan AŞAMA 01 çıkışı için gerçek telefonda boş MAUI uygulamasının çalışmasını ister. Bu sohbet oturumunda kullanıcının gerçek geliştirme bilgisayarına veya fiziksel Android telefona USB/ADB erişimi yoktur. Şu kanıtlar eksiktir:
+
+- .NET 10.0.400 gerçek host kurulumu ve `dotnet --info`.
+- `maui-android` workload `10.0.400` kurulumu.
+- Microsoft OpenJDK 21.0.12 + `JAVA_HOME`.
+- Android API 36 + Build-Tools 36.0.0 + Platform-Tools 37.0.0.
+- Temiz MAUI Debug ve Release build.
+- `adb devices` fiziksel cihaz `device` kaydı.
+- Fiziksel cihaz install/launch.
+- Mac/Xcode/iPhone/Apple hesap erişimi envanteri.
+
+Bu kanıtlar olmadan AŞAMA 01 `DONE` yazılmaz ve AŞAMA 02 başlatılmaz.
 
 ## Değiştirilemez temel teknik kararlar
 
@@ -140,16 +197,16 @@ Nihai plan değiştirilmedikçe yeni ajan şunları varsaymalıdır:
 
 Bir sonraki ajan veya sohbet şu şekilde devam etmelidir:
 
-1. `gecmis.md`, nihai plan checkpoint’i ve `docs/EXECUTION_LOG.md` okunur.
+1. `gecmis.md`, nihai plan checkpoint’i, `docs/EXECUTION_LOG.md`, `docs/TOOLCHAIN.md` ve aktif stage evidence dosyası okunur.
 2. GitHub `main` gerçek durumu ve son commit’ler tekrar doğrulanır; bu dosyadaki eski SHA körlemesine kullanılmaz.
 3. Kullanıcı değişiklikleri varsa korunur; destructive Git işlemi yapılmaz.
-4. `IN_PROGRESS` aşama varsa yalnız oradan devam edilir. Mevcut durumda AŞAMA 00 `DONE`, bu yüzden AŞAMA 01 başlanmalıdır.
+4. `BLOCKED` veya `IN_PROGRESS` aşama varsa yalnız oradan devam edilir. Mevcut durumda AŞAMA 01 `BLOCKED`; AŞAMA 02'ye geçilmez.
 5. Bir turda en fazla bir aşama tamamlanır.
 6. Her biten alt adım kanıtla işaretlenir; sahte PASS/DONE yazılmaz.
-7. Dependency sürümü kendiliğinden yükseltilmez; `[LIVE-VERIFY]` noktaları güncel resmi kaynakla yeniden doğrulanır.
-8. Her turun sonunda nihai plan checkpoint’i, `gecmis.md` ve gerekirse `docs/EXECUTION_LOG.md` güncellenir.
+7. Dependency/toolchain sürümü kendiliğinden yükseltilmez; `[LIVE-VERIFY]` noktaları güncel resmi kaynakla yeniden doğrulanır.
+8. Her turun sonunda nihai plan checkpoint’i, `gecmis.md`, `docs/EXECUTION_LOG.md` ve aktif evidence güncellenir.
 9. Uzun sohbet belleğine veya modelin kişisel hafızasına güvenilmez; repo kayıtları esas alınır.
 
 ## Bir sonraki tur
 
-AŞAMA 01 başlanacak. İlk alt iş, resmi Microsoft/.NET/MAUI/Android belgelerinden 24 Ağustos 2026 itibarıyla desteklenen exact .NET 10 SDK patch’i, MAUI workload hattı, JDK 21 ve Android SDK/platform-tools gereksinimlerini canlı doğrulamaktır. Ardından gerçek geliştirme ortamında `global.json`, workload kurulumu, boş MAUI Debug/Release build ve fiziksel Android cihaz `adb` install/launch kanıtı gerekir. Fiziksel cihaz erişimi olmadan AŞAMA 01 `DONE` sayılamaz.
+AŞAMA 01'de devam edilecek. `docs/TOOLCHAIN.md` içindeki exact baseline gerçek geliştirme makinesinde kurulmalı; ardından temiz MAUI smoke app Debug/Release build ve fiziksel Android cihaz `adb` install/launch kanıtı alınmalıdır. Bu dış erişim sağlanmadan AŞAMA 01 tamamlanmış sayılmaz.
