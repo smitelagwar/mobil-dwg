@@ -51,6 +51,11 @@ public sealed class AcadSharpDocumentReader : ICadDocumentReader
             }
 
             stopwatch.Stop();
+            if (prepared.OwnsBuffer)
+            {
+                prepared.Stream.Dispose();
+            }
+
             progress?.Report(new CadReadProgress(CadReadStage.Normalizing, message: "Collecting parser diagnostics and document metadata."));
 
             CollectCompatibility(document, compatibility);
