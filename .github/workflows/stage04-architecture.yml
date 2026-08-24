@@ -7,17 +7,25 @@ on:
     paths:
       - MobilDwg.sln
       - Directory.Build.props
+      - Directory.Packages.props
       - src/**
       - tests/**
+      - tools/Stage05.ParserProbe/**
       - scripts/stage04-test.sh
+      - scripts/stage05-parser-spike.sh
+      - scripts/stage03-validate-fixtures.py
+      - fixtures/manifest/stage03-mini.json
+      - fixtures/public/synthetic/**
       - docs/ARCHITECTURE.md
       - docs/evidence/STAGE_04.md
+      - docs/evidence/STAGE_05.md
       - .github/workflows/stage04-architecture.yml
   push:
     branches: [main]
     paths:
       - MobilDwg.sln
       - Directory.Build.props
+      - Directory.Packages.props
       - src/**
       - tests/**
       - scripts/stage04-test.sh
@@ -60,3 +68,44 @@ jobs:
       - name: Restore, build and run T0/contract/architecture tests
         shell: bash
         run: bash scripts/stage04-test.sh
+
+  stage05-parser-regression:
+    runs-on: ubuntu-latest
+    timeout-minutes: 25
+
+    steps:
+      - name: Checkout
+        uses: actions/checkout@v5
+
+      - name: Set up .NET 10.0.400
+        uses: actions/setup-dotnet@v5
+        with:
+          dotnet-version: 10.0.400
+
+      - name: Install pinned workload set required by global.json
+        shell: bash
+        run: |
+          set -euxo pipefail
+          test "$(dotnet --version)" = "10.0.400"
+          dotnet workload install maui-android
+
+      - name: Validate Stage 05 runner syntax
+        shell: bash
+        run: bash -n scripts/stage05-parser-spike.sh
+
+      - name: Run ACadSharp mini-corpus parser regression
+        shell: bash
+        run: |
+          bash scripts/stage05-parser-spike.sh \
+            "$RUNNER_TEMP/mobil-dwg-stage05" \
+            "$RUNNER_TEMP/stage05-parser-evidence.json"
+
+      - name: Upload Stage 05 parser evidence
+        uses: actions/upload-artifact@v4
+        with:
+          name: stage05-parser-pr-evidence
+          path: |
+            ${{ runner.temp }}/stage05-parser-evidence.json
+            ${{ runner.temp }}/mobil-dwg-stage05/stage03-fixture-audit.json
+            ${{ runner.temp }}/mobil-dwg-stage05/stage05-package-graph.txt
+          if-no-files-found: error
