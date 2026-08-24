@@ -6,7 +6,7 @@ Bu dosya, yeni bir ChatGPT/AI oturumunda projeye kaldığı yerden devam etmek i
 
 1. `@GitHub` üzerinden `smitelagwar/mobil-dwg` reposunu ve gerçek `main` HEAD'i doğrula.
 2. `Mobil_DWG_DXF_Royalty_Free_Android_iOS_Nihai_Plan.md`, `gecmis.md` ve `docs/USER_APPROVED_EXECUTION_OVERRIDE.md` dosyalarını oku.
-3. AŞAMA 07 için `docs/evidence/STAGE_07.md` ve `docs/ADR/0002-procad-pinned-source-no-go.md` dosyalarını oku.
+3. AŞAMA 08 için `docs/evidence/STAGE_08.md` ve `docs/LOCAL_DEVICE_REVALIDATION.md`; AŞAMA 07 için `docs/evidence/STAGE_07.md` ve `docs/ADR/0002-procad-pinned-source-no-go.md` dosyalarını oku.
 4. Kullanıcı yalnız `devam` diyorsa `NEXT_WORK_STAGE` üzerinden ilerle.
 5. Bir kullanıcı turunda en fazla bir aşama tamamla; aynı turda sonraki aşamayı başlatma.
 6. Fiziksel cihaz/Mac/Apple hesabı gibi kullanıcının sağlayamadığı dış kapıları sahte PASS/DONE yapma; `DEFERRED_EXTERNAL_GATE` bırak.
@@ -22,21 +22,22 @@ Bu dosya, yeni bir ChatGPT/AI oturumunda projeye kaldığı yerden devam etmek i
 ## Güncel checkpoint
 
 ```text
-LAST_COMPLETED_STAGE: AŞAMA 07
-DEFERRED_STAGES: AŞAMA 01; AŞAMA 06
+LAST_COMPLETED_STAGE: AŞAMA 08 — CHARACTERIZATION / RISK_ACCEPTED_FOR_CONTINUATION; iOS PASS NOT CLAIMED
+DEFERRED_STAGES: AŞAMA 01; AŞAMA 06; AŞAMA 08 local Mac/ios-arm64/physical iPhone gates
 AŞAMA_01: BLOCKED / DEFERRED_EXTERNAL_GATE — gerçek Android install/launch + iOS erişim envanteri
 AŞAMA_06: BLOCKED / DEFERRED_EXTERNAL_GATE — safe-open CI PASS; gerçek telefon FilePicker/SAF+lifecycle/cache gate açık
 AŞAMA_07: DONE / NO-GO — exact unpatched ProCad candidate systematic precision blocker nedeniyle production reuse için reddedildi
-NEXT_WORK_STAGE: AŞAMA 08
-NEXT_WORK_STATUS: NOT_STARTED
-STAGE06_MERGE: PR #8 -> main `e3a9c36e04be6c51827926ca17bb1a386c6b1142`
-STAGE07_DECISION_HEAD: `3f88bec383de895e309e218c08d13e9784562a97`
-STAGE07_PR: #9
-STAGE07_CI: run `32766501837` / #5 SUCCESS; artifact `9534797361`; `sha256:9cae376fd0cbf2861f006af347483f9de26a6cd49f30b201438a3afdb591e555`
-STAGE07_HARD_BLOCKER: origin 5,000,000 + 1 mm detail double->float RenderScene boundary'sinde delta 0.0
-STAGE07_PHYSICAL_ANDROID_T3: NOT_RUN_AFTER_DETERMINISTIC_BLOCKER — PASS değil
-STAGE09_GO_BARRIER: custom renderer effort/maintenance risk HIGH; AŞAMA 09 implementation öncesinde kullanıcı GO gerekir
-NEXT_ACTION: AŞAMA 08 — erken iOS AOT/native fizibilite smoke.
+AŞAMA_08: DONE / CHARACTERIZATION — evidence BLOCKED_PARTIAL_EVIDENCE; iOS runtime/device PASS yok
+STAGE08_CI: run 32781026946 / #18 SUCCESS characterization; artifact 9540018558; sha256:1414e3bf5a9800e150019c48f620c64efcd3d5282ac7322ef9a5e5746ab746f7
+STAGE08_HOST_BLOCKER: Xcode 26.6 hosted runner install_name_tool/clang lookup
+STAGE08_TRIM_RISK: ACadSharp ILLink/reflection warnings
+STAGE08_NATIVEAOT: iossimulator-arm64 NETSDK1203; ios-arm64 future real-device gate
+STAGE08_PHYSICAL_IPHONE: NOT_RUN_DEFERRED_EXTERNAL_GATE
+LOCAL_REVALIDATION: docs/LOCAL_DEVICE_REVALIDATION.md
+NEXT_WORK_STAGE: AŞAMA 09
+NEXT_WORK_STATUS: WAITING_EXPLICIT_USER_GO
+STAGE09_GO_BARRIER: custom renderer effort/maintenance risk HIGH; AŞAMA 09 implementation öncesinde kullanıcı açık GO gerekir
+NEXT_ACTION: generic `devam` ile AŞAMA 09 başlatma; `AŞAMA 09 GO` gibi explicit karar bekle.
 ```
 
 ## Tamamlanan / açık aşamalar
@@ -49,7 +50,7 @@ NEXT_ACTION: AŞAMA 08 — erken iOS AOT/native fizibilite smoke.
 - AŞAMA 05 — DONE; ACadSharp 3.7.1 read-only parser baseline GO
 - AŞAMA 06 — BLOCKED / DEFERRED_EXTERNAL_GATE; cihazdan bağımsız safe-open/Android build CI PASS
 - AŞAMA 07 — DONE / NO-GO; ProCad production reuse rejected
-- AŞAMA 08 — NEXT
+- AŞAMA 08 — DONE / CHARACTERIZATION; iOS PASS NOT CLAIMED
 
 ## AŞAMA 07 özeti
 
@@ -64,6 +65,10 @@ Lineage official upstream'de çözüldü ancak approved ACadSharp 3.7.1 source b
 Hard blocker: ProCad scene boundary'sinde CAD world point doğrudan float Vector2'ye daralıyor. Origin 100 + 1 mm detay korunurken origin 5,000,000 + 1 mm detay float'ta aynı değere düşüyor; observed delta 0.0. Bu systematic P0 fidelity loss. Exact unpatched candidate `NO-GO`; production graph'a eklenmez.
 
 Özel renderer garantili fallback değildir. ADR 0002, AŞAMA 09–16 renderer/fidelity kapsamını ve sonraki performance/full-corpus gate'lerini HIGH effort/maintenance risk olarak kaydeder. AŞAMA 09 implementation'dan önce kullanıcı GO gerekir.
+
+## AŞAMA 08 özeti
+
+Exact ACadSharp 3.7.1 + SkiaSharp 4.151.1 iOS hattı GitHub-hosted macOS üzerinde karakterize edildi. Run `32781026946`/#17 characterization SUCCESS; bu iOS PASS değildir. Hosted Xcode 26.6 `install_name_tool`/`clang` lookup final baseline/simulator runtime'ı engelledi. ACadSharp trimming/reflection ILLink riskleri görünür bırakıldı. `iossimulator-arm64` NativeAOT `NETSDK1203` ile desteklenmedi; gerçek AOT `ios-arm64`/physical iPhone'da tekrar gerekir. Fiziksel iPhone ve local Mac kapıları deferred. Ayrıntı `docs/evidence/STAGE_08.md`; gelecekteki ikinci-pass kontrol listesi `docs/LOCAL_DEVICE_REVALIDATION.md`. AŞAMA 09 custom renderer implementation ancak explicit kullanıcı GO ile başlayabilir.
 
 ## Değiştirilemez ilkeler
 
