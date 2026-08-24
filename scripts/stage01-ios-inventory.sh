@@ -29,15 +29,12 @@ printf 'mac_arch=%s\n' "$(uname -m)"
 
 XCODE_ACCESS=NO
 XCODE_VERSION=NOT_AVAILABLE
-DEVELOPER_DIR=NOT_AVAILABLE
 if command -v xcode-select >/dev/null 2>&1 && xcode-select -p >/dev/null 2>&1 && command -v xcodebuild >/dev/null 2>&1; then
   XCODE_ACCESS=YES
-  DEVELOPER_DIR="$(xcode-select -p)"
   XCODE_VERSION="$(xcodebuild -version 2>/dev/null | paste -sd ';' - || printf 'unknown')"
 fi
 printf 'xcode_access=%s\n' "$XCODE_ACCESS"
 printf 'xcode_version=%s\n' "$XCODE_VERSION"
-printf 'developer_dir=%s\n' "$DEVELOPER_DIR"
 
 IPHONE_COUNT=0
 if [[ "$XCODE_ACCESS" == "YES" ]] && command -v xcrun >/dev/null 2>&1; then
