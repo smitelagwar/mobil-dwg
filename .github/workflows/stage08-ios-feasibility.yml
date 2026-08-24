@@ -59,28 +59,23 @@ jobs:
           echo "Available Xcode installations:"
           ls -1d /Applications/Xcode*.app || true
 
-          IOS_PACK="$(find "$DOTNET_ROOT/packs" -maxdepth 1 -type d -name 'Microsoft.iOS.Sdk.net10.0_*' -print | head -n 1)"
+          IOS_PACK="$(find "$DOTNET_ROOT/packs" -maxdepth 1 -type d -name 'Microsoft.iOS.Sdk.net10.0_26.5' -print -quit)"
           if [[ -z "$IOS_PACK" ]]; then
-            echo "STAGE08_IOS_SDK_PACK_NOT_FOUND" >&2
+            echo "STAGE08_IOS_SDK_PACK_NOT_FOUND expected=Microsoft.iOS.Sdk.net10.0_26.5" >&2
             exit 20
           fi
 
-          REQUIRED_XCODE="${IOS_PACK##*_}"
-          XCODE_APP=""
-          for candidate in /Applications/Xcode_"$REQUIRED_XCODE"*.app; do
-            if [[ -d "$candidate" ]]; then
-              XCODE_APP="$candidate"
-              break
-            fi
-          done
-
-          if [[ -z "$XCODE_APP" ]]; then
-            echo "STAGE08_REQUIRED_XCODE_NOT_FOUND required=$REQUIRED_XCODE" >&2
+          XCODE_APP="/Applications/Xcode_26.6.0.app"
+          if [[ ! -d "$XCODE_APP" ]]; then
+            XCODE_APP="/Applications/Xcode_26.6.app"
+          fi
+          if [[ ! -d "$XCODE_APP" ]]; then
+            echo "STAGE08_REQUIRED_XCODE_NOT_FOUND required=26.6" >&2
             exit 21
           fi
 
           sudo xcode-select -s "$XCODE_APP/Contents/Developer"
-          echo "STAGE08_XCODE_SELECTED required=$REQUIRED_XCODE app=$XCODE_APP"
+          echo "STAGE08_XCODE_SELECTED sdk=26.5.10301 required=26.6 app=$XCODE_APP"
           xcodebuild -version
           xcrun simctl list runtimes
 
