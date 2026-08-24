@@ -12,7 +12,7 @@ AŞAMA 09 henüz `DONE` değildir. Uygulama kodu ve hedefli testler yazılmışt
 - Branch: `stage09-render-scene-camera`.
 - Scene/camera implementation code head: `5b3f590dca123c3855e8aac7d48f781ba2cdfdb3`.
 - Son source/test-changing head: `6215f9fbd77028273262bc5b95fd3eece19191d3`.
-- Sonraki commitler yalnız evidence ve geçici runner-probe housekeeping içindir; source/test içeriğini değiştirmez.
+- Workflow runner-label fix head: `b6e3b5c825810c70e4ada750f576672ebe25d99d`.
 - PR: `#12` — `stage09: add render scene, camera, and diagnostics foundation`.
 - ADR 0002 ProCad exact pinned candidate için `NO-GO` verdiğinden tek production scene yolu **compact özel immutable RenderScene** olarak seçildi.
 - ProCad package/source production graph'a eklenmedi; paralel ikinci scene graph oluşturulmadı.
@@ -56,9 +56,9 @@ Hedefli regression testi survey origin `5,000,000` çevresinde `0.001` world-uni
 
 ## T0/T1 doğrulama durumu
 
-### İlk hosted Ubuntu denemesi
+### Hosted Ubuntu denemeleri
 
-Stage 09 run `32783063933` / #2, job `97609094989`:
+İlk Stage 09 Ubuntu koşusu `32783063933` / #2, job `97609094989`:
 
 - `conclusion=failure`;
 - job `steps=[]`;
@@ -66,29 +66,22 @@ Stage 09 run `32783063933` / #2, job `97609094989`:
 - `runner_name=""`;
 - label `ubuntu-latest`.
 
-Bu, checkout/restore/build/test başlamadan runner atanamadığını gösterir. Kod test failure kanıtı değildir.
+Checkout/restore/build/test başlamadan runner atanmadı. Aynı PR head ailesinde Stage 01/02/04/05/06/07 Ubuntu workflow'larında da aynı pre-step failure görüldü. Bu kayıt kod test failure kanıtı değildir.
 
-Aynı PR head ailesinde Stage 01/02/04/05/06/07 Ubuntu workflow'larının da adım başlamadan aynı şekilde hızlı failure vermesi ortak runner-allocation problemiyle uyumludur.
+### macOS runner label düzeltmesi ve final hosted deneme
 
-Stage 04 örneği, head `5b3f590dca123c3855e8aac7d48f781ba2cdfdb3`:
+İlk fallback workflow yanlışlıkla `macos-26-arm64` label'ını kullandı ve uygun runner bekledi. Repo'nun AŞAMA 08'de başarıyla kullandığı doğru hosted label `macos-26` olduğundan workflow head `b6e3b5c825810c70e4ada750f576672ebe25d99d` üzerinde düzeltildi.
 
-- run `32783276606` / #29;
-- job `97609756351`;
-- `steps=[]`, `runner_id=0`, empty runner name;
-- `conclusion=failure`.
+Doğru `macos-26` label'ı ile Stage 09 run `32786600644` / #14:
 
-### macOS hosted fallback
+- attempt 1 job `97619697255`;
+- attempt 2 job `97619957457` (explicit rerun);
+- iki attempt de `conclusion=failure`;
+- iki attempt de `steps=[]`, `runner_id=0`, `runner_name=""`;
+- label açıkça `macos-26`;
+- checkout/SDK/restore/build/test adımlarından hiçbiri başlamadı.
 
-Stage 09 workflow yalnız platformdan bağımsız `net10.0` Core/Rendering testlerini çalıştırmak üzere `macos-26-arm64` hosted runner'a taşındı.
-
-Güncel source/test validation request:
-
-- Run `32783883913` / #7.
-- Job `97611597376`.
-- Source/test head: `6215f9fbd77028273262bc5b95fd3eece19191d3`.
-- Son gözlem: `queued`, henüz runner/adım yok.
-
-Bu run gerçek T0/T1 sonucu üretmeden AŞAMA 09 kapatılmayacaktır.
+Bu nedenle `macos-26-arm64` yanlış label sorunu düzeltilmiş olsa da T0/T1 hâlâ yürütülememiştir. Repo kanıtı runner tahsisinin gerçekleşmediğini gösterir; billing/quota/capacity gibi daha özel bir root cause kanıtlanmadığı için tahmin edilmez.
 
 ### Configured self-hosted runner probe
 
@@ -96,13 +89,13 @@ Repo içinde daha önce tanımlanmış `[self-hosted, windows, android-test, mob
 
 - PR run `32784140351` / #3.
 - Job `97612382891`.
-- Son gözlem: `queued`, `steps=null`; uygun çevrimiçi runner atanmadı.
+- Uygun çevrimiçi runner atanmadı; job queued kaldı.
 - Probe workflow PR'dan tekrar silindi; production veya kalıcı CI yüzeyine eklenmedi.
 - Bu probe PASS değildir ve fiziksel Android cihaz kanıtı değildir.
 
 ### Container fallback
 
-Mevcut execution container'ında `dotnet` kurulu değildir. Exact repo pin'i `.NET SDK 10.0.400` için resmi Microsoft download hattı doğrulandı; ancak container'ın dış indirme/network kısıtı nedeniyle SDK payload'ı alınamadı. Bu nedenle farklı SDK ile sahte yerel PASS üretilmedi.
+Mevcut execution container'ında `dotnet` kurulu değildir. Exact repo pin'i `.NET SDK 10.0.400` resmi Microsoft download sayfasında doğrulandı; container dış DNS/network erişimi olmadığından SDK payload'ı indirilemedi. Farklı SDK ile sahte yerel PASS üretilmedi.
 
 ## Beklenen T0/T1 marker'ları
 
