@@ -11,19 +11,26 @@ public enum SceneDiagnosticKind
     Error = 3,
 }
 
-public sealed record SceneDiagnostic(
-    SceneDiagnosticKind Kind,
-    string Code,
-    string Message,
-    RenderEntityId? EntityId = null)
+public sealed record SceneDiagnostic
 {
-    public string Code { get; init; } = string.IsNullOrWhiteSpace(Code)
-        ? throw new ArgumentException("Diagnostic code is required.", nameof(Code))
-        : Code;
+    public SceneDiagnostic(
+        SceneDiagnosticKind kind,
+        string code,
+        string message,
+        RenderEntityId? entityId = null)
+    {
+        if (string.IsNullOrWhiteSpace(code)) throw new ArgumentException("Diagnostic code is required.", nameof(code));
+        if (string.IsNullOrWhiteSpace(message)) throw new ArgumentException("Diagnostic message is required.", nameof(message));
+        Kind = kind;
+        Code = code;
+        Message = message;
+        EntityId = entityId;
+    }
 
-    public string Message { get; init; } = string.IsNullOrWhiteSpace(Message)
-        ? throw new ArgumentException("Diagnostic message is required.", nameof(Message))
-        : Message;
+    public SceneDiagnosticKind Kind { get; }
+    public string Code { get; }
+    public string Message { get; }
+    public RenderEntityId? EntityId { get; }
 }
 
 public sealed class SceneDiagnostics

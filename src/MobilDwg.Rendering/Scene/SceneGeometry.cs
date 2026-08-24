@@ -98,14 +98,19 @@ public readonly record struct RenderStyleToken
     public override string ToString() => Value;
 }
 
-public sealed record RenderSourceReference(
-    string EntityType,
-    string? Handle = null,
-    int? SourceIndex = null)
+public sealed record RenderSourceReference
 {
-    public string EntityType { get; init; } = string.IsNullOrWhiteSpace(EntityType)
-        ? throw new ArgumentException("Entity type is required.", nameof(EntityType))
-        : EntityType;
+    public RenderSourceReference(string entityType, string? handle = null, int? sourceIndex = null)
+    {
+        if (string.IsNullOrWhiteSpace(entityType)) throw new ArgumentException("Entity type is required.", nameof(entityType));
+        EntityType = entityType;
+        Handle = handle;
+        SourceIndex = sourceIndex;
+    }
+
+    public string EntityType { get; }
+    public string? Handle { get; }
+    public int? SourceIndex { get; }
 }
 
 public sealed record RenderSceneEntity(

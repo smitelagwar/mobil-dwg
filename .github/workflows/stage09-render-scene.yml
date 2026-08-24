@@ -10,6 +10,7 @@ on:
       - 'tests/MobilDwg.Rendering.Tests/**'
       - '.github/workflows/stage09-render-scene.yml'
   pull_request:
+    branches: [main]
     paths:
       - 'src/MobilDwg.Core/Rendering/**'
       - 'src/MobilDwg.Rendering/**'
@@ -21,9 +22,11 @@ permissions:
 
 jobs:
   render-scene-foundation:
-    runs-on: ubuntu-latest
+    runs-on: macos-26-arm64
+    timeout-minutes: 15
     steps:
-      - uses: actions/checkout@v5
+      - name: Checkout
+        uses: actions/checkout@v5
 
       - name: Set up exact .NET SDK
         uses: actions/setup-dotnet@v5
@@ -41,13 +44,13 @@ jobs:
         shell: bash
         run: |
           set -euo pipefail
-          dotnet restore tests/MobilDwg.Rendering.Tests/MobilDwg.Rendering.Tests.csproj --locked-mode
+          dotnet restore tests/MobilDwg.Rendering.Tests/MobilDwg.Rendering.Tests.csproj
 
       - name: Build render foundation
         shell: bash
         run: |
           set -euo pipefail
-          dotnet build tests/MobilDwg.Rendering.Tests/MobilDwg.Rendering.Tests.csproj -c Release --no-restore
+          dotnet build tests/MobilDwg.Rendering.Tests/MobilDwg.Rendering.Tests.csproj -c Release --no-restore /warnaserror
           echo "STAGE09_T0_BUILD_PASS"
 
       - name: Run deterministic scene and camera tests
