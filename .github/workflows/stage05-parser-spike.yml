@@ -37,6 +37,8 @@ jobs:
   parser-spike:
     runs-on: ubuntu-latest
     timeout-minutes: 25
+    env:
+      STAGE05_LOCK_MODE: generate
 
     steps:
       - name: Checkout
@@ -61,14 +63,15 @@ jobs:
         shell: bash
         run: bash -n scripts/stage05-parser-spike.sh
 
-      - name: Run ACadSharp mini-corpus parser gate
+      - name: Run ACadSharp mini-corpus parser gate and generate lock candidate
         shell: bash
         run: |
           bash scripts/stage05-parser-spike.sh \
             "$RUNNER_TEMP/mobil-dwg-stage05" \
             "$RUNNER_TEMP/stage05-parser-evidence.json"
 
-      - name: Upload Stage 05 parser evidence
+      - name: Upload Stage 05 parser evidence and generated lock
+        if: always()
         uses: actions/upload-artifact@v4
         with:
           name: stage05-parser-evidence
@@ -76,4 +79,5 @@ jobs:
             ${{ runner.temp }}/stage05-parser-evidence.json
             ${{ runner.temp }}/mobil-dwg-stage05/stage03-fixture-audit.json
             ${{ runner.temp }}/mobil-dwg-stage05/stage05-package-graph.txt
-          if-no-files-found: error
+            ${{ runner.temp }}/mobil-dwg-stage05/generated-MobilDwg.Cad.packages.lock.json
+          if-no-files-found: warn
