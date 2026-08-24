@@ -76,8 +76,10 @@ dotnet new maui -n Stage01Smoke -o "$APP_DIR" >/dev/null
 
 CSPROJ="$APP_DIR/Stage01Smoke.csproj"
 sed -i.bak 's/>21\.0<\/SupportedOSPlatformVersion>/>24.0<\/SupportedOSPlatformVersion>/' "$CSPROJ"
-rm -f "$CSPROJ.bak"
+sed -i.bak2 's#<ApplicationId>com.companyname.stage01smoke</ApplicationId>#<ApplicationId>com.smitelagwar.mobildwg.stage01smoke</ApplicationId>#' "$CSPROJ"
+rm -f "$CSPROJ.bak" "$CSPROJ.bak2"
 grep -q '>24\.0</SupportedOSPlatformVersion>' "$CSPROJ" || fail "failed to pin Android minimum API to 24.0"
+grep -q '<ApplicationId>com.smitelagwar.mobildwg.stage01smoke</ApplicationId>' "$CSPROJ" || fail "failed to pin smoke application id"
 
 printf 'Building Debug...\n'
 dotnet build "$CSPROJ" -f net10.0-android -c Debug --no-restore
@@ -95,7 +97,7 @@ if [[ -z "$DEBUG_APK" ]]; then
 fi
 [[ -n "$DEBUG_APK" && -f "$DEBUG_APK" ]] || fail "Debug APK not found"
 
-PACKAGE_NAME="com.companyname.stage01smoke"
+PACKAGE_NAME="com.smitelagwar.mobildwg.stage01smoke"
 printf 'Installing Debug APK on physical device...\n'
 adb -s "$SERIAL" install -r "$DEBUG_APK"
 adb -s "$SERIAL" shell pm path "$PACKAGE_NAME" | grep -q '^package:' || fail "package install could not be verified"
