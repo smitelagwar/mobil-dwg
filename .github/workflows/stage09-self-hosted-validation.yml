@@ -6,6 +6,10 @@ on:
       - stage09-render-scene-camera
     paths:
       - '.github/workflows/stage09-self-hosted-validation.yml'
+  pull_request:
+    branches: [main]
+    paths:
+      - '.github/workflows/stage09-self-hosted-validation.yml'
 
 permissions:
   contents: read
