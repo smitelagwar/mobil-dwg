@@ -166,9 +166,54 @@ Final run #9 ölçülen değerler:
 
 CI sonucu: exact toolchain + workload + Debug + Release + API baseline + APK üretimi PASS.
 
-### Eksik zorunlu AŞAMA 01 kanıtları
+### Fiziksel cihaz gate otomasyonu
 
-CI fiziksel telefon kapısını ikame etmez. Şunlar hâlâ eksiktir:
+Gerçek telefon erişimi bu oturumda yok olduğundan sahte device PASS üretmek yerine, AŞAMA 01'in kalan Android kapısı repo içinde tekrar üretilebilir hale getirildi.
+
+Eklenen/sertleştirilen öğeler:
+
+- `scripts/stage01-device-gate.sh`
+- `scripts/stage01-device-gate.ps1`
+- `.github/workflows/stage01-toolchain-smoke.yml` içinde Bash + PowerShell parse/syntax kontrolü.
+- `docs/TOOLCHAIN.md` içinde Windows/Bash çalıştırma runbook'u.
+- Smoke app sabit kimliği: `com.smitelagwar.mobildwg.stage01smoke`.
+
+Gate scriptlerinin zorunlu doğrulamaları:
+
+- .NET SDK exact `10.0.400`.
+- `maui-android` mevcut ve workload set `10.0.400` ile çözülüyor.
+- Microsoft OpenJDK exact `21.0.12`.
+- ADB / Platform-Tools `37.0.1`.
+- Android API 36 ve Build-Tools `36.0.0`.
+- Yetkili ADB state tam olarak `device`; emulator kabul edilmez.
+- Birden çok cihaz varsa `ANDROID_SERIAL` ile açık hedef seçimi gerekir.
+- Temiz MAUI app oluşturulur; min API 24 ve sabit ApplicationId pinlenir.
+- Debug + Release build geçer.
+- Manifest minSdk 24 / targetSdk 36 doğrulanır.
+- Debug APK fiziksel telefona kurulur.
+- Launcher `adb shell am start -W` ile `Status: ok` üretir.
+- PASS özetinde tam ADB seri numarası yazılmaz.
+
+Doğrulama PR'ı:
+
+- PR #2: `ci: verify stage 01 physical device gate`.
+- Final head: `9e2c0f71153ca0db936c19a10d2f53dc38cca7ec`.
+- GitHub Actions run #17 / `32739952628`: `SUCCESS`.
+- Script parse gate: `SUCCESS`.
+- Exact toolchain/workload: `SUCCESS`.
+- Pinned smoke project creation: `SUCCESS`.
+- Debug build: `SUCCESS`.
+- Release build: `SUCCESS`.
+- Manifest/API/package gate: `SUCCESS`.
+- Artifact upload: `SUCCESS`.
+- Artifact ID: `9524964656`.
+- Artifact size: `57,817,776` bytes.
+- Artifact SHA-256: `cfd2221a9a31193c76b4347f633ec062d54abca5117edea887bc46a0926f6d0f`.
+- PR #2 merge commit: `9b375af9931a3db23f82e9b983257f29030a7376`.
+
+Bu CI koşusu fiziksel telefon testini ikame etmez. Scriptlerin parse/build entegrasyonu kanıtlanmıştır; `STAGE01_DEVICE_GATE_PASS` hâlâ gerçek geliştirme makinesi ve fiziksel Android cihaz üzerinde alınmalıdır.
+
+### Eksik zorunlu AŞAMA 01 kanıtları
 
 - Kullanıcının gerçek geliştirme makinesinde pinli toolchain'in yerel doğrulanması.
 - Fiziksel Android cihazın `adb devices` çıktısında `device` olması.
@@ -180,4 +225,4 @@ Blocker:
 
 - Bu oturumda kullanıcının gerçek geliştirme makinesine ve fiziksel Android cihazına USB/ADB erişimi yok. Nihai plan fiziksel cihaz çalıştırmasını zorunlu tuttuğundan AŞAMA 01 `DONE` sayılamaz ve AŞAMA 02 başlatılamaz.
 
-Sonraki eylem: Gerçek geliştirme makinesinde `docs/TOOLCHAIN.md` baseline'ını doğrula; fiziksel Android cihazı bağla; `adb devices` ile `device` durumunu kaydet; smoke app'i install/launch et; iOS erişim envanterini tamamla; ardından AŞAMA 01 evidence/checkpoint'i kapat.
+Sonraki eylem: Gerçek geliştirme makinesinde repo kökünden `scripts/stage01-device-gate.ps1` veya `scripts/stage01-device-gate.sh` çalıştır; `STAGE01_DEVICE_GATE_PASS` çıktısını kaydet; ardından iOS Mac/Xcode/iPhone/Apple Developer erişim envanterini tamamla ve AŞAMA 01 evidence/checkpoint'i kapat.
