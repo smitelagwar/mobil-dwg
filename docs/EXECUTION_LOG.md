@@ -39,7 +39,7 @@ Bu CI fiziksel telefon kanıtı değildir. Gerçek `STAGE01_DEVICE_GATE_PASS`, A
 - SkiaSharp 4.151.1 `REVIEW`, Android native graph kaydedildi.
 - ProCad exact source snapshot/fork/submodule zinciri `REVIEW`, production default `NO-GO`, yalnız AŞAMA 07 source-pinned spike.
 - IxMilia.Dxf 0.8.4 yalnız test/fallback; Dwg/Shx source-only `REVIEW`.
-- Central Package Management, committed lockfile, `--locked-mode`, exact `.nupkg` SHA-256/license/native-entry manifest'i ve vulnerability/reproducibility CI kapısı kuruldu.
+- Central Package Management, committed lockfile, `--locked-mode`, exact `.nupkg` SHA-256/license manifest'i ve vulnerability/reproducibility CI kapısı kuruldu.
 - Stage 01 root-CPM regresyonu yakalandı; smoke app `$RUNNER_TEMP` altında izole edildi.
 - PR #4 merge commit `f0a43db6cc3aee9103f42798fa124da4d1ff39d1`.
 - Final Stage 02 run `32747785867` / #9 `SUCCESS`; artifact `9527769476`, digest `sha256:90d41760e306e13b9977586b9996c1aafdf27f615c2b730bb41d74507b4684f3`.
@@ -98,7 +98,7 @@ Yapılanlar:
 - Session parser-specific handle'ı idempotent `IAsyncDisposable` ile tam bir kez dispose eder.
 - Cancellation capability `None/BeforeStartOnly/Cooperative`; progress capability `None/StagesOnly/Fractional` olarak modellenerek sahte cooperative cancellation veya sahte yüzde engellendi.
 - `Directory.Build.props`, `docs/ARCHITECTURE.md`, `scripts/stage04-test.sh` ve `.github/workflows/stage04-architecture.yml` eklendi.
-- Architecture harness tam 4 production/3 test proje sayısını, exact ProjectReference grafını, production PackageReference yokluğunu ve Core/App forbidden dependency terimlerini denetler.
+- Architecture harness tam 4 production/3 test proje sayısını, exact ProjectReference grafını, production dependency sınırlarını ve forbidden dependency terimlerini denetler.
 
 İlk CI bulgusu:
 
@@ -130,3 +130,70 @@ Merge commit: `c01311ccb5c82b7bac023b24ae6a8000ae4655af`.
 AŞAMA 01 fiziksel Android install/launch ve iOS erişim envanteri `DEFERRED_EXTERNAL_GATE` olarak açık kalır.
 
 Sonuç: AŞAMA 04 `DONE`. Sonraki aşama AŞAMA 05; aynı kullanıcı turunda başlanmadı.
+
+---
+
+## 2026-08-24 — AŞAMA 05 — DONE
+
+Başlangıç main: `27f036d5d240c4ca47dd2fcb94c1e72604ed0f8f`.
+
+Yapılanlar:
+
+- Exact ACadSharp `3.7.1` yalnız `src/MobilDwg.Cad` adapter katmanına eklendi.
+- NuGet-generated project-aware `src/MobilDwg.Cad/packages.lock.json` commit edildi; final gate `--locked-mode` restore kullanıyor.
+- `AcadSharpDocumentReader` DWG magic/DXF signature-header preflight, parser notification, exception, parse timing, missing-font ve missing-XREF compatibility kayıtlarını Core kontratlarına bağlıyor.
+- Parser-specific `CadDocument` yalnız `AcadSharpDocumentHandle` arkasında; Core/App/Rendering katmanlarında ACadSharp entity/type dependency'si yok.
+- Cancellation `BeforeStartOnly`, progress `StagesOnly`; parser başladıktan sonra cooperative abort veya uydurma yüzde yok.
+- `tools/Stage05.ParserProbe` manifest-driven headless corpus validator olarak eklendi.
+- Architecture test ACadSharp PackageReference'ını yalnız `MobilDwg.Cad` için allow edip diğer production katmanlarında forbidden dependency guard uyguluyor.
+- `.github/workflows/stage05-parser-spike.yml` T3 corpus gate ve evidence artifact üretiyor.
+
+CI sırasında yakalanan gerçek sorunlar:
+
+1. İlk Stage 05 koşusu committed lockfile'da `MobilDwg.Core` ProjectReference kaydı olmadığı için `NU1004` ile düştü. Elle lock formatı tahmin edilmedi; NuGet CI'da `--force-evaluate` ile gerçek lockfile üretti ve artifact'ten alınarak commit edildi.
+2. İkinci koşuda parser fixture'ları açtı fakat probe `BLOCK_REFERENCE` semantic alias'ını CLR type adı `BlockReference` varsayımıyla aradığı için 0 saydı. ACadSharp gerçek entity'si `INSERT`/`Insert` olduğu doğrulandı; probe `ObjectName == INSERT` üzerinden semantic alias üretecek şekilde düzeltildi. Bu parser veri kaybı değildi.
+
+Final implementation CI:
+
+- Head `09e26172aa8de9e8c79ae64853a493dab1d0e5b9`.
+- Workflow `Stage 05 Parser Spike` run `32759096003` / #8 `SUCCESS`.
+- Release build: `0 Warning(s)`, `0 Error(s)`.
+- `STAGE04_CORE_CONTRACT_TESTS_PASS`.
+- `STAGE04_RENDER_CONTRACT_TESTS_PASS`.
+- `STAGE04_ARCHITECTURE_TESTS_PASS`.
+- `STAGE05_DEPENDENCY_BOUNDARY_PASS`.
+- `STAGE05_MINI_CORPUS_PASS fixtures=9 derived_negatives=2`.
+- `STAGE05_T3_PASS`.
+- Evidence artifact `9532001644`, digest `sha256:2750ba88141c5724306bb5811173d958c60836806021f2ff1a5b36b011631097`.
+
+Corpus sonucu:
+
+- DWG: AC1015, AC1018, AC1024, AC1032 — PASS.
+- ASCII DXF: AC1015, AC1032 — PASS.
+- Sentetik Turkish/basic/nested INSERT DXF — exact semantic count PASS.
+- Missing-font DXF — `missing-font` compatibility PASS.
+- Missing-XREF DXF — `missing-xref` compatibility PASS.
+- Derived truncated AC1015 DWG — controlled `EndOfStreamException` PASS.
+- Derived corrupt AC1018 DWG — controlled warning PASS.
+- Ana upstream DWG/DXF karşılıklarında total block entity `341`; gerekli LINE/CIRCLE/BLOCK_REFERENCE/DIMENSION/HATCH semantiği geçti.
+
+Aynı implementation head regresyonları:
+
+- Stage 04 Architecture run `32759095988` / #11 `SUCCESS`.
+- Stage 02 Dependency Audit run `32759095944` / #25 `SUCCESS`.
+- Stage 01 Toolchain Smoke run `32759095888` / #44 merge kapısı hazırlanırken ayrıca çalıştırıldı; fiziksel cihaz gate'i değildir.
+
+Parser kararı:
+
+- `docs/ADR/0001-acadsharp-3.7.1-parser-baseline.md`: ACadSharp `3.7.1` read-only parser baseline `GO`.
+- Bu karar render/engineering fidelity garantisi değildir.
+- ASCII DXF `unsupported-object` ve yüksek notification hacmi known limitation olarak kaydedildi; sabit warning-count eşiği yok.
+- Kritik DXF parse kaybı olmadığı için IxMilia.Dxf fallback spike başlatılmadı.
+
+Ayrıntı: `docs/evidence/STAGE_05.md` ve ADR 0001.
+
+PR #7 `stage05: validate ACadSharp headless parser` doğrulanmış head üzerinden `main`e merge edilmek üzere kapanış branch'inde hazırlandı. Merge commit checkpoint dosyalarına merge sonrasında gerçek SHA ile yazılacaktır.
+
+AŞAMA 01 fiziksel Android install/launch ve iOS erişim envanteri `DEFERRED_EXTERNAL_GATE` olarak açık kalır.
+
+Sonuç: AŞAMA 05 teknik gate'leri `DONE`. Sonraki aşama AŞAMA 06; aynı kullanıcı turunda başlanmaz.
