@@ -131,7 +131,7 @@ Resolved Android graph:
 
 Lockfile SHA-256: `880bdb834856010d1a08821e72f539208170c9e8a929e183c17eaf7dee2d362d`.
 
-CI restore artık lockfile üretmez; committed lockfile üzerinde doğrudan `dotnet restore --locked-mode` çalışır ve lock diff'i sıfır olmak zorundadır.
+CI restore committed lockfile üzerinde doğrudan `dotnet restore --locked-mode` çalıştırır ve lock diff'i sıfır olmak zorundadır.
 
 ## Exact NuGet artifact manifest
 
@@ -151,31 +151,46 @@ CI audit scripti exact nupkg'leri NuGet flat-container üzerinden yeniden indiri
 
 Workflow: `Stage 02 Dependency Audit`.
 
-Final teknik koşu:
+Final PR-head koşusu:
 
-- Run: `32746969262` / #5.
-- Head: `b46fea68415504cb67d625260d8872b5f438503f`.
+- Run: `32747785867` / #9.
+- Head: `7daa5d7dc326915700f60396bdf50604bf0601e7`.
 - Sonuç: `SUCCESS`.
 - .NET SDK: `10.0.400`.
 - Workload set: `10.0.400`; `maui-android` PASS.
 - Committed locked restore: PASS.
 - Resolved graph kaydı: PASS.
-- Exact nupkg license/hash audit: PASS (`STAGE02_PACKAGE_AUDIT_PASS`).
+- Exact nupkg license/hash audit: PASS.
 - Committed package manifest reproducibility diff: PASS.
 - Vulnerability report: mevcut kaynaklara göre vulnerable package yok.
 - Evidence artifact upload: PASS.
-- Artifact ID: `9527480232`.
-- Artifact ZIP digest: `sha256:e9975e231efefb3a97d6baf945dd7006723f61cdc43765a33d0691df711e504b`.
+- Artifact ID: `9527769476`.
+- Artifact ZIP digest: `sha256:90d41760e306e13b9977586b9996c1aafdf27f615c2b730bb41d74507b4684f3`.
 
-İlk package-audit koşusu `32746443518` de SUCCESS olup paket hashlerini ilk kez üretmiştir; #5 committed evidence + locked restore şeklindeki güçlendirilmiş final kapıdır.
+Aynı head üzerinde Stage 01 regression workflow'u da yeniden çalıştırıldı:
+
+- Workflow: `Stage 01 Toolchain Smoke`.
+- Run: `32747785948` / #29.
+- Sonuç: `SUCCESS`.
+- Repo-root Central Package Management etkisinden kaçınmak için temiz MAUI smoke projesi `$RUNNER_TEMP` altında üretildi.
+- Debug build: PASS.
+- Release build: PASS.
+- Manifest/API baseline: PASS.
+- Artifact upload: PASS.
+- Artifact ID: `9528014030`.
+- Artifact digest: `sha256:57f01ed14600684a5a9434b9ca2db2b6e32b4a9fac95bee90d455a4595e8421e`.
+
+PR #4 doğrulanmış head `7daa5d7dc326915700f60396bdf50604bf0601e7` üzerinden `main`e merge edildi. Merge commit: `f0a43db6cc3aee9103f42798fa124da4d1ff39d1`.
 
 ## Stage 01 CPM regresyonu ve düzeltme
 
 Kök `Directory.Packages.props` ilk eklendiğinde Stage 01 CI'daki repo-altı `.smoke` MAUI template'i CPM'yi miras aldı ve `NU1008` ile düştü. Bu dependency uyumsuzluğu değil, test izolasyonu hatasıydı.
 
-Düzeltme: Stage 01 CI smoke projesi repo ağacı dışında `$RUNNER_TEMP` altında üretilir. Fiziksel cihaz gate scriptleri zaten sistem temp dizini altında proje ürettiği için root CPM'den bağımsızdır. Stage 01 regresyonu final PR kapısında ayrıca tekrar doğrulanır.
+Düzeltme: Stage 01 CI smoke projesi repo ağacı dışında `$RUNNER_TEMP` altında üretilir. İlk düzeltmede workflow-level `${{ runner.temp }}` kullanımının workflow parse/trigger seviyesinde geçersiz olduğu görüldü; kullanım step-level `$RUNNER_TEMP` / `${{ runner.temp }}` alanlarına taşındı. Fiziksel cihaz gate scriptleri zaten sistem temp dizini altında proje ürettiği için root CPM'den bağımsızdır. Final Stage 01 run `32747785948` bu düzeltmenin Debug/Release/manifest/artifact hattını bozmadığını kanıtladı.
 
 ## AŞAMA 02 sonucu
+
+Durum: `DONE`.
 
 - Unknown veya policy-RED NuGet dependency tespit edilmedi.
 - ACadSharp `GREEN` dependency/lisans adayıdır, ancak fidelity açısından AŞAMA 05 geçmeden production-approved değildir.
@@ -183,3 +198,5 @@ Düzeltme: Stage 01 CI smoke projesi repo ağacı dışında `$RUNNER_TEMP` alt�
 - ProCad `REVIEW` ve production default `NO-GO`; yalnız AŞAMA 07 source-pinned spike.
 - IxMilia.Dxf test/fallback scope'unda `GREEN`; Dwg/Shx `REVIEW` ve runtime dışında.
 - Floating/latest production dependency yok; committed lock + locked restore kapısı vardır.
+- Stage 01 root-CPM regresyonu aynı PR head üzerinde kapatıldı.
+- Sonraki çalışma aşaması: AŞAMA 03 — test corpus'u, golden sözleşmesi ve cihaz matrisi.
