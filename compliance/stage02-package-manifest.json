@@ -1,0 +1,45 @@
+{
+  "allow_licenses": [
+    "0BSD",
+    "Apache-2.0",
+    "BSD-2-Clause",
+    "BSD-3-Clause",
+    "ISC",
+    "MIT"
+  ],
+  "failures": [],
+  "packages": [
+    {
+      "dependency_type": "Direct",
+      "id": "ACadSharp",
+      "license": "MIT",
+      "native_entries": [],
+      "nupkg_sha256": "4f9ca3a5dafd1a18af651312522147a3163999818763d168b4d5f59d6ffc1701",
+      "version": "3.7.1"
+    },
+    {
+      "dependency_type": "Direct",
+      "id": "SkiaSharp",
+      "license": "MIT",
+      "native_entries": [],
+      "nupkg_sha256": "2d1feef23f28e55864cad8449f7b60abf5d6db1aa61ec07aef837e9e0eaee73e",
+      "version": "4.151.1"
+    },
+    {
+      "dependency_type": "Transitive",
+      "id": "SkiaSharp.NativeAssets.Android",
+      "license": "MIT",
+      "native_entries": [
+        "runtimes/android-arm/native/libSkiaSharp.so",
+        "runtimes/android-arm64/native/libSkiaSharp.so",
+        "runtimes/android-x64/native/libSkiaSharp.so",
+        "runtimes/android-x86/native/libSkiaSharp.so"
+      ],
+      "nupkg_sha256": "0857f22d4de9f87899675a30312c52801c6ff85e7ca25dc9483a969c43612803",
+      "version": "4.151.1"
+    }
+  ],
+  "result": "PASS",
+  "schema": 1,
+  "target": "net10.0-android36.0"
+}
