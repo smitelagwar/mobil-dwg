@@ -16,13 +16,13 @@ Bu blok ve aşağıdaki aşama kutuları her çalışma turunun sonunda güncell
 
 ```text
 CURRENT_STAGE: AŞAMA 00
-CURRENT_SUBSTEP: 00.1
-STATUS: NOT_STARTED
-LAST_VERIFIED_REVISION: N/A — klasör henüz Git reposu değil
-LAST_SUCCESSFUL_COMMAND: N/A
-EVIDENCE: Plan oluşturuldu; uygulama kodu henüz yok
+CURRENT_SUBSTEP: 00.5
+STATUS: DONE
+LAST_VERIFIED_REVISION: d161b5c4f9ba238f0d2a2e4c92f773535f379487 — AŞAMA 00 öncesi main; bu checkpoint commit'i sonrasında HEAD yeniden doğrulanmalı
+LAST_SUCCESSFUL_COMMAND: GitHub repository/content inventory + local toolchain inventory
+EVIDENCE: Repo ve mevcut belgeler doğrulandı; .gitignore korundu; docs/EXECUTION_LOG.md, karar/evidence şablonları ve gecmis.md eklendi; README handoff yönlendirmesi güncellendi
 BLOCKERS: Yok
-NEXT_ACTION: Çalışma alanını yeniden denetle, Git ve yürütme kayıtlarını başlat
+NEXT_ACTION: AŞAMA 01 — resmi kaynaklardan güncel .NET 10 SDK/MAUI/Android toolchain sürümlerini LIVE-VERIFY et ve geliştirme ortamını kur
 LAST_UPDATE: 2026-08-24
 ```
 
@@ -359,7 +359,7 @@ Kurallar:
 
 ### Aşama indeksi
 
-- [ ] AŞAMA 00 — Çalışma alanı ve yürütme zemini
+- [x] AŞAMA 00 — Çalışma alanı ve yürütme zemini
 - [ ] AŞAMA 01 — .NET/MAUI/Android toolchain ve gerçek telefon
 - [ ] AŞAMA 02 — Canlı dependency/lisans kanıtı ve kilitler
 - [ ] AŞAMA 03 — Test corpus’u, golden sözleşmesi ve cihaz matrisi
@@ -394,14 +394,14 @@ Kurallar:
 
 İşler:
 
-- [ ] Dosya ağacı, disk alanı, Git ve mevcut toolchain yeniden envanterlenir.
-- [ ] Kullanıcı dosyalarına dokunmadan klasörde Git başlatılır; otomatik commit yapılmaz.
-- [ ] Build/temp/private corpus/signing secret’ları için `.gitignore` hazırlanır.
-- [ ] `docs/EXECUTION_LOG.md` ve hafif karar/evidence şablonları oluşturulur.
-- [ ] Bu planın checkpoint’i gerçek durumla güncellenir.
+- [x] Dosya ağacı, disk alanı, Git ve mevcut toolchain yeniden envanterlendi.
+- [x] GitHub’daki mevcut `smitelagwar/mobil-dwg` reposu ve `main` geçmişi doğrulandı; kullanıcı belgeleri korunarak devam edildi. Repo zaten başlatılmış olduğundan yeniden `git init` yapılmadı.
+- [x] Build/temp/private corpus/signing secret’ları için mevcut `.gitignore` incelendi ve yeterli bulundu; gereksiz değişiklik yapılmadı.
+- [x] `docs/EXECUTION_LOG.md`, `docs/ADR/0000-template.md`, `docs/EVIDENCE_TEMPLATE.md` ve proje devri için kökte `gecmis.md` oluşturuldu.
+- [x] Bu planın checkpoint’i gerçek durumla güncellendi.
 
 Test: Git status ve ignore dry-run.  
-Çıkış: Orijinal beş MD değişmeden durur; izlenebilir repo ve tek aktif checkpoint vardır.
+Çıkış: Kaynak araştırma MD’leri değişmeden korunur; yalnız bu nihai planın checkpoint’i yürütme durumu için güncellenir. İzlenebilir repo, yürütme günlüğü ve tek aktif checkpoint vardır.
 
 ### AŞAMA 01 — .NET/MAUI/Android toolchain ve gerçek telefon
 
