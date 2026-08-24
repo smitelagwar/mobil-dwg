@@ -18,11 +18,11 @@ Bu blok ve aşağıdaki aşama kutuları her çalışma turunun sonunda güncell
 CURRENT_STAGE: AŞAMA 01
 CURRENT_SUBSTEP: 01.5
 STATUS: BLOCKED
-LAST_VERIFIED_REVISION: 83379b24e4ba87f04299f612ae2951ae8d8aec13 — Stage 01 CI workflow main merge; handoff/evidence/log aynı gerçek durumla güncellendi
-LAST_SUCCESSFUL_COMMAND: GitHub Actions Stage 01 Toolchain Smoke run 32737334339 — exact toolchain + API 24 pin + Debug/Release + manifest 24/36 + APK artifact SUCCESS
-EVIDENCE: docs/evidence/STAGE_01.md; docs/EXECUTION_LOG.md; GitHub Actions run 32737334339; artifact 9523977201 / SHA-256 3fd12ffe750352e9ace5532eaffa8f1cd6619da449bddeb05efb5acfc91dcd41
+LAST_VERIFIED_REVISION: 9b375af9931a3db23f82e9b983257f29030a7376 — Stage 01 physical-device gate automation PR #2 main merge; evidence/log/handoff güncellendi
+LAST_SUCCESSFUL_COMMAND: GitHub Actions Stage 01 Toolchain Smoke run 32739952628 — device-gate script syntax + exact toolchain/workload + pinned ApplicationId + Debug/Release + manifest/API/package + APK artifact SUCCESS
+EVIDENCE: docs/evidence/STAGE_01.md; docs/EXECUTION_LOG.md; docs/TOOLCHAIN.md; scripts/stage01-device-gate.sh; scripts/stage01-device-gate.ps1; GitHub Actions run 32739952628; artifact 9524964656 / SHA-256 cfd2221a9a31193c76b4347f633ec062d54abca5117edea887bc46a0926f6d0f
 BLOCKERS: Bu oturumda kullanıcının gerçek geliştirme makinesine ve fiziksel Android telefona USB/ADB erişimi yok; Mac/Xcode/iPhone/Apple Developer erişimi de doğrulanmadı
-NEXT_ACTION: Gerçek geliştirme makinesinde pinli toolchain'i doğrula; fiziksel Android cihazı adb devices ile device olarak doğrula; smoke app'i install/launch et; iOS erişim envanterini kapat
+NEXT_ACTION: Gerçek geliştirme makinesinde scripts/stage01-device-gate.ps1 veya scripts/stage01-device-gate.sh çalıştır ve STAGE01_DEVICE_GATE_PASS kanıtını al; ardından iOS erişim envanterini kapat
 LAST_UPDATE: 2026-08-24
 ```
 
@@ -412,11 +412,12 @@ Test: Git status ve ignore dry-run.
 - [x] `[LIVE-VERIFY]` Desteklenen güncel .NET 10 SDK patch’i resmi kaynaktan doğrulandı ve `global.json` ile pinlendi: SDK/workload set `10.0.400`.
 - [x] MAUI/Android workload, Microsoft OpenJDK 21.0.12, Android SDK API 36 / Build-Tools 36.0.0 / stable Platform-Tools 37.0.1 exact hattı GitHub Actions temiz runner üzerinde kuruldu ve kaydedildi.
 - [x] Minimum Android API `24`, target/compile SDK `36` olarak kaydedildi; temiz MAUI 10 template varsayılan min API 21 olduğundan `SupportedOSPlatformVersion=24.0` açıkça pinlendi.
-- [x] Temiz MAUI smoke app `net10.0-android` Debug ve Release derlendi; final CI run `32737334339` her iki build'i de 0 warning / 0 error ile geçti ve manifest `minSdk=24 / targetSdk=36` doğrulandı.
-- [ ] `adb` ile kullanıcının gerçek telefonuna yüklenir ve açılır.
-- [ ] iOS için Mac/Xcode/iPhone/Apple hesap erişimi yalnız envanterlenir; henüz kurulum yapılmaz.
+- [x] Temiz MAUI smoke app `net10.0-android` Debug ve Release derlendi; güncel CI run `32739952628` exact toolchain/workload, pinned `ApplicationId=com.smitelagwar.mobildwg.stage01smoke`, Debug/Release, manifest `minSdk=24 / targetSdk=36` ve APK artifact kapılarını geçti.
+- [x] Fiziksel cihaz kapısı için Windows PowerShell ve Bash gate scriptleri eklendi; CI üzerinde syntax/parse doğrulaması PASS oldu. Scriptler exact toolchain/workload, fiziksel `state=device`, emulator dışlama, Debug/Release build, manifest 24/36, install ve launcher `Status: ok` koşullarını zorunlu kılar.
+- [ ] `adb` ile kullanıcının gerçek telefonuna yüklenir ve açılır; gerçek geliştirme makinesinde `STAGE01_DEVICE_GATE_PASS` alınır.
+- [ ] iOS için Mac/Xcode/iPhone/Apple Developer erişimi yalnız envanterlenir; henüz kurulum yapılmaz.
 
-Test: `dotnet --info`, workload list, Android Debug/Release build ve manifest/API baseline CI üzerinde PASS. Fiziksel Android build/install/launch kapısı bekliyor.  
+Test: `dotnet --info`, workload list, Android Debug/Release build, manifest/API/package baseline ve device-gate script syntax kontrolü CI run `32739952628` üzerinde PASS. Fiziksel Android install/launch ancak gerçek cihazdaki `STAGE01_DEVICE_GATE_PASS` ile kapanır.  
 Çıkış: Gerçek telefonda boş MAUI uygulaması çalışır; exact toolchain kanıtı vardır. Telefon erişimi yoksa aşama `BLOCKED` kalır.
 
 ### AŞAMA 02 — Canlı dependency/lisans kanıtı ve kilitler
