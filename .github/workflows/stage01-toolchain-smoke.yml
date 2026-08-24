@@ -86,7 +86,9 @@ jobs:
           rm -rf .smoke
           dotnet new maui -n Stage01Smoke -o .smoke/Stage01Smoke
           sed -i 's/>21.0<\/SupportedOSPlatformVersion>/>24.0<\/SupportedOSPlatformVersion>/' .smoke/Stage01Smoke/Stage01Smoke.csproj
+          sed -i 's#<ApplicationId>com.companyname.stage01smoke</ApplicationId>#<ApplicationId>com.smitelagwar.mobildwg.stage01smoke</ApplicationId>#' .smoke/Stage01Smoke/Stage01Smoke.csproj
           grep -F '>24.0</SupportedOSPlatformVersion>' .smoke/Stage01Smoke/Stage01Smoke.csproj
+          grep -F '<ApplicationId>com.smitelagwar.mobildwg.stage01smoke</ApplicationId>' .smoke/Stage01Smoke/Stage01Smoke.csproj
 
       - name: Build Debug Android smoke
         shell: bash
@@ -107,6 +109,7 @@ jobs:
           cat "$manifest"
           grep -E 'minSdkVersion="24"|minSdkVersion="24.0"' "$manifest"
           grep -E 'targetSdkVersion="36"|targetSdkVersion="36.0"' "$manifest"
+          grep -F 'package="com.smitelagwar.mobildwg.stage01smoke"' "$manifest"
 
       - name: Upload smoke APKs
         if: always()
