@@ -28,7 +28,7 @@ AŞAMA_01: BLOCKED / DEFERRED_EXTERNAL_GATE — gerçek Android install/launch +
 AŞAMA_06: BLOCKED / DEFERRED_EXTERNAL_GATE — safe-open CI PASS; gerçek telefon FilePicker/SAF+lifecycle/cache gate açık
 AŞAMA_07: DONE / NO-GO — exact unpatched ProCad candidate systematic precision blocker nedeniyle production reuse için reddedildi
 AŞAMA_08: DONE / CHARACTERIZATION — evidence BLOCKED_PARTIAL_EVIDENCE; iOS runtime/device PASS yok
-STAGE08_CI: run 32776201092 / #17 SUCCESS characterization; artifact 9538345504; sha256:527956939b41b04b91cc79af04d821238f111d6f8a5a121598809a3830746b72
+STAGE08_CI: run 32781026946 / #18 SUCCESS characterization; artifact 9540018558; sha256:1414e3bf5a9800e150019c48f620c64efcd3d5282ac7322ef9a5e5746ab746f7
 STAGE08_HOST_BLOCKER: Xcode 26.6 hosted runner install_name_tool/clang lookup
 STAGE08_TRIM_RISK: ACadSharp ILLink/reflection warnings
 STAGE08_NATIVEAOT: iossimulator-arm64 NETSDK1203; ios-arm64 future real-device gate
@@ -68,7 +68,7 @@ Hard blocker: ProCad scene boundary'sinde CAD world point doğrudan float Vector
 
 ## AŞAMA 08 özeti
 
-Exact ACadSharp 3.7.1 + SkiaSharp 4.151.1 iOS hattı GitHub-hosted macOS üzerinde karakterize edildi. Run `32776201092`/#17 characterization SUCCESS; bu iOS PASS değildir. Hosted Xcode 26.6 `install_name_tool`/`clang` lookup final baseline/simulator runtime'ı engelledi. ACadSharp trimming/reflection ILLink riskleri görünür bırakıldı. `iossimulator-arm64` NativeAOT `NETSDK1203` ile desteklenmedi; gerçek AOT `ios-arm64`/physical iPhone'da tekrar gerekir. Fiziksel iPhone ve local Mac kapıları deferred. Ayrıntı `docs/evidence/STAGE_08.md`; gelecekteki ikinci-pass kontrol listesi `docs/LOCAL_DEVICE_REVALIDATION.md`. AŞAMA 09 custom renderer implementation ancak explicit kullanıcı GO ile başlayabilir.
+Exact ACadSharp 3.7.1 + SkiaSharp 4.151.1 iOS hattı GitHub-hosted macOS üzerinde karakterize edildi. Run `32781026946`/#17 characterization SUCCESS; bu iOS PASS değildir. Hosted Xcode 26.6 `install_name_tool`/`clang` lookup final baseline/simulator runtime'ı engelledi. ACadSharp trimming/reflection ILLink riskleri görünür bırakıldı. `iossimulator-arm64` NativeAOT `NETSDK1203` ile desteklenmedi; gerçek AOT `ios-arm64`/physical iPhone'da tekrar gerekir. Fiziksel iPhone ve local Mac kapıları deferred. Ayrıntı `docs/evidence/STAGE_08.md`; gelecekteki ikinci-pass kontrol listesi `docs/LOCAL_DEVICE_REVALIDATION.md`. AŞAMA 09 custom renderer implementation ancak explicit kullanıcı GO ile başlayabilir.
 
 ## Değiştirilemez ilkeler
 

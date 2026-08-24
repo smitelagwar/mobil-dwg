@@ -19,8 +19,8 @@ CURRENT_STAGE: AŞAMA 08
 CURRENT_SUBSTEP: 08.6
 STATUS: DONE — CHARACTERIZATION / RISK_ACCEPTED_FOR_CONTINUATION; iOS PASS NOT CLAIMED
 LAST_VERIFIED_REVISION: 1d7ce7ddc738ba615ad86f19742e3af9f2c78e18 — exact ACadSharp 3.7.1 + SkiaSharp 4.151.1 iOS hattı macOS CI üzerinde karakterize edildi; runtime/device feasibility hosted toolchain ve dış cihaz kapıları nedeniyle kanıtlanmadı
-LAST_SUCCESSFUL_COMMAND: GitHub Actions Stage 08 iOS Feasibility run 32776201092 / #17 SUCCESS — characterization complete; workflow success probe PASS iddiası değildir
-EVIDENCE: docs/evidence/STAGE_08.md; docs/LOCAL_DEVICE_REVALIDATION.md; Stage 08 artifact 9538345504 sha256:527956939b41b04b91cc79af04d821238f111d6f8a5a121598809a3830746b72; STAGE08_HOST_PASS; STAGE08_IOS_WORKLOAD_PASS; STAGE08_EXACT_GRAPH_RECORDED; STAGE08_BASELINE_BUILD_BLOCKED_HOSTED_RUNNER_TOOLCHAIN; STAGE08_IOS_FEASIBILITY_CHARACTERIZATION_COMPLETE
+LAST_SUCCESSFUL_COMMAND: GitHub Actions Stage 08 iOS Feasibility run 32781026946 / #18 SUCCESS — characterization complete; workflow success probe PASS iddiası değildir
+EVIDENCE: docs/evidence/STAGE_08.md; docs/LOCAL_DEVICE_REVALIDATION.md; Stage 08 artifact 9540018558 sha256:1414e3bf5a9800e150019c48f620c64efcd3d5282ac7322ef9a5e5746ab746f7; STAGE08_HOST_PASS; STAGE08_IOS_WORKLOAD_PASS; STAGE08_EXACT_GRAPH_RECORDED; STAGE08_BASELINE_BUILD_BLOCKED_HOSTED_RUNNER_TOOLCHAIN; STAGE08_IOS_FEASIBILITY_CHARACTERIZATION_COMPLETE
 BLOCKERS: iOS runtime/device feasibility NOT PROVEN. GitHub-hosted macos-26/Xcode 26.6 tool lookup install_name_tool/clang problemi baseline/trim runtime sonucunu engelledi; ACadSharp 3.7.1 trimming hattında IL2026/IL2070/IL2072/IL2075/IL2087/IL2090 riskleri görüldü; iossimulator-arm64 NativeAOT NETSDK1203 nedeniyle gerçek AOT kanıtı değildir; fiziksel iPhone ve kullanıcı local Mac envanteri DEFERRED_EXTERNAL_GATE. AŞAMA 01 ve AŞAMA 06 gerçek cihaz kapıları da açık. AŞAMA 09 custom renderer implementation öncesinde ADR 0002 gereği açık kullanıcı GO gerekir.
 NEXT_ACTION: AŞAMA 09 için explicit kullanıcı GO beklenir. Bu AŞAMA 08 kapanış turunda AŞAMA 09 başlatılmaz.
 LAST_UPDATE: 2026-08-25
@@ -538,7 +538,7 @@ Test: Final CI `Stage 07 ProCad Source Spike` run `32766501837` / #5 `SUCCESS`; 
 - [ ] Fiziksel iPhone smoke `NOT_RUN_DEFERRED_EXTERNAL_GATE`; simulator hiçbir durumda gerçek iPhone PASS yerine geçmez.
 - [x] Planın dış blocker/risk seçeneği uygulandı: mevcut kullanıcı-approved execution override ile iOS riskleri açıkça kaydedilip bağımsız sonraki işlerin ilerlemesine izin verildi. Bu risk kabulü iOS'u tamamlanmış/PASS saymaz.
 
-Test: Yetkili karakterizasyon `Stage 08 iOS Feasibility` run `32776201092` / #17 `SUCCESS`; artifact `9538345504`, digest `sha256:527956939b41b04b91cc79af04d821238f111d6f8a5a121598809a3830746b72`. Evidence JSON `BLOCKED_PARTIAL_EVIDENCE`. Workflow success, üç probe'un PASS olduğu anlamına gelmez; gerçek blocker'ları deterministik kaydettiği anlamına gelir.  
+Test: Yetkili karakterizasyon `Stage 08 iOS Feasibility` run `32781026946` / #18 `SUCCESS`; artifact `9540018558`, digest `sha256:1414e3bf5a9800e150019c48f620c64efcd3d5282ac7322ef9a5e5746ab746f7`. Evidence JSON `BLOCKED_PARTIAL_EVIDENCE`. Workflow success, üç probe'un PASS olduğu anlamına gelmez; gerçek blocker'ları deterministik kaydettiği anlamına gelir.  
 Çıkış: **Sağlandı — dış blocker/risk kabulü açıkça kaydedildi; iOS fizibilitesi kanıtlanmış değildir.** Complete local/managed Mac, `ios-arm64` AOT ve fiziksel iPhone kapıları `docs/LOCAL_DEVICE_REVALIDATION.md` ve AŞAMA 23/24 için açık kalır. AŞAMA 09 custom renderer implementation ADR 0002 gereği ayrıca açık kullanıcı GO ister.
 
 ### AŞAMA 09 — RenderScene, kamera ve diagnostics temeli

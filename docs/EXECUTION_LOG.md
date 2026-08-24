@@ -250,7 +250,7 @@ Kullanıcı onaylı `docs/USER_APPROVED_EXECUTION_OVERRIDE.md` gereği AŞAMA 06
 
 - İzole iOS spike production graph değiştirmeden ACadSharp `3.7.1` + SkiaSharp `4.151.1` + `SkiaSharp.NativeAssets.iOS 4.151.1` hattını test etti.
 - .NET SDK `10.0.400`, iOS workload `26.5.10301/10.0.100`, Xcode `26.6` exact host hattı doğrulandı.
-- Yetkili karakterizasyon: `Stage 08 iOS Feasibility` run `32776201092` / #17 `SUCCESS`; artifact `9538345504`, digest `sha256:527956939b41b04b91cc79af04d821238f111d6f8a5a121598809a3830746b72`.
+- Yetkili karakterizasyon: `Stage 08 iOS Feasibility` run `32781026946` / #18 `SUCCESS`; artifact `9540018558`, digest `sha256:1414e3bf5a9800e150019c48f620c64efcd3d5282ac7322ef9a5e5746ab746f7`.
 - Evidence classification `BLOCKED_PARTIAL_EVIDENCE`; workflow success tüm probe'ların PASS olduğu anlamına gelmez.
 - Baseline Release hosted Xcode 26.6 tool lookup'ta `install_name_tool` bulunamadığı için runtime'a ulaşmadı; hosted Xcode bundle yamalanmadı.
 - Trim probe ACadSharp hattında IL2026/IL2070/IL2072/IL2075/IL2087/IL2090 warning ailelerini kaydetti: 30 trimmer, 12 reflection-related, 0 font line.

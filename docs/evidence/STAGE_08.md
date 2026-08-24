@@ -16,15 +16,18 @@ Bu durum **iOS PASS anlamına gelmez**. AŞAMA 08'in plan çıkışındaki ikinc
 - Installed iOS workload: `26.5.10301/10.0.100`.
 - Bu workload ile build'in gerçek Xcode gereksinimi log üzerinden `Xcode 26.6` olarak doğrulandı.
 
-## Yetkili karakterizasyon koşusu
+## Yetkili final karakterizasyon koşusu
 
-- Esas spike head: `1d7ce7ddc738ba615ad86f19742e3af9f2c78e18`.
+- İlk tamamlanmış spike head: `1d7ce7ddc738ba615ad86f19742e3af9f2c78e18`.
+- Güncel `main` tabanına taşınmış final verification head: `4987fa3e5fadfb113aa3b27ac443da9776864ad5`.
 - Workflow: `Stage 08 iOS Feasibility`.
-- Run: `32776201092` / `#17` — `SUCCESS`.
+- Run: `32781026946` / `#17` — `SUCCESS`.
 - Job: `97587720958` — `SUCCESS`.
-- Artifact: `9538345504`, `stage08-ios-feasibility-evidence`, 10,588 bytes.
-- Artifact digest: `sha256:527956939b41b04b91cc79af04d821238f111d6f8a5a121598809a3830746b72`.
+- Artifact: `9540018558`, `stage08-ios-feasibility-evidence`, 10,588 bytes.
+- Artifact digest: `sha256:1414e3bf5a9800e150019c48f620c64efcd3d5282ac7322ef9a5e5746ab746f7`.
 - Evidence JSON classification: `BLOCKED_PARTIAL_EVIDENCE`.
+
+Önceki run #17 aynı karakterizasyonu eski base üzerinde üretmişti. Final kabul kanıtı, güncel `main` tabanlı PR #11 head üzerinde tekrar edilen run #18 ve artifact `9540018558`dir.
 
 Workflow `SUCCESS`, bütün iOS probe'larının PASS olduğu anlamına gelmez. Harness üç sonucu ayrı karakterize edip gerçek blocker'ları evidence olarak yazdığı için workflow başarılıdır.
 

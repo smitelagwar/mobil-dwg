@@ -35,7 +35,7 @@ STAGE06_STATUS: BLOCKED / DEFERRED_EXTERNAL_GATE — safe-open implementation/CI
 STAGE07_STATUS: DONE / NO-GO — exact unpatched ProCad source candidate deterministic precision blocker nedeniyle production reuse için reddedildi
 STAGE08_STATUS: DONE — CHARACTERIZATION / BLOCKED_PARTIAL_EVIDENCE / RISK_ACCEPTED_FOR_CONTINUATION; iOS runtime/device feasibility NOT PROVEN
 STAGE08_DECISION_HEAD: 1d7ce7ddc738ba615ad86f19742e3af9f2c78e18
-STAGE08_CI: run 32776201092 / #17 SUCCESS characterization; artifact 9538345504; sha256:527956939b41b04b91cc79af04d821238f111d6f8a5a121598809a3830746b72
+STAGE08_CI: run 32781026946 / #18 SUCCESS characterization; artifact 9540018558; sha256:1414e3bf5a9800e150019c48f620c64efcd3d5282ac7322ef9a5e5746ab746f7
 STAGE08_HOST_BLOCKER: GitHub-hosted macos-26/Xcode 26.6 install_name_tool/clang lookup; baseline/simulator runtime PASS yok
 STAGE08_TRIM_RISK: ACadSharp 3.7.1 ILLink reflection/trimming warnings; 30 trimmer / 12 reflection-related / 0 font lines
 STAGE08_NATIVEAOT: iossimulator-arm64 PublishAot NETSDK1203 — dependency failure sayılmaz; ios-arm64/physical device future gate
@@ -210,4 +210,4 @@ Exact ProCad source candidate `f8a862b3e7634e27664fee02ff5d68774b102985` product
 
 ### AŞAMA 08 — DONE / CHARACTERIZATION; iOS PASS NOT CLAIMED
 
-Exact ACadSharp 3.7.1 + SkiaSharp 4.151.1 hattı izole macOS/iOS spike ile karakterize edildi. Yetkili CI run `32776201092` / #17 SUCCESS, artifact `9538345504`, digest `sha256:527956939b41b04b91cc79af04d821238f111d6f8a5a121598809a3830746b72`. Evidence JSON `BLOCKED_PARTIAL_EVIDENCE`: exact restore/workload/Xcode hattı kanıtlandı; hosted Xcode 26.6 tool lookup baseline/simulator runtime'ı engelledi; ACadSharp trimming/reflection riskleri kaydedildi; simulator NativeAOT `NETSDK1203` platform sınırı olarak ayrıştırıldı. Fiziksel iPhone ve local Mac kanıtı `DEFERRED_EXTERNAL_GATE`. Kullanıcı-approved execution override uyarınca risk açık kaydedilerek independent continuation kabul edildi; iOS PASS iddiası yok. Gelecek ikinci tur: `docs/LOCAL_DEVICE_REVALIDATION.md`. AŞAMA 09 custom renderer için explicit kullanıcı GO gerekir.
+Exact ACadSharp 3.7.1 + SkiaSharp 4.151.1 hattı izole macOS/iOS spike ile karakterize edildi. Yetkili CI run `32781026946` / #18 SUCCESS, artifact `9540018558`, digest `sha256:1414e3bf5a9800e150019c48f620c64efcd3d5282ac7322ef9a5e5746ab746f7`. Evidence JSON `BLOCKED_PARTIAL_EVIDENCE`: exact restore/workload/Xcode hattı kanıtlandı; hosted Xcode 26.6 tool lookup baseline/simulator runtime'ı engelledi; ACadSharp trimming/reflection riskleri kaydedildi; simulator NativeAOT `NETSDK1203` platform sınırı olarak ayrıştırıldı. Fiziksel iPhone ve local Mac kanıtı `DEFERRED_EXTERNAL_GATE`. Kullanıcı-approved execution override uyarınca risk açık kaydedilerek independent continuation kabul edildi; iOS PASS iddiası yok. Gelecek ikinci tur: `docs/LOCAL_DEVICE_REVALIDATION.md`. AŞAMA 09 custom renderer için explicit kullanıcı GO gerekir.
