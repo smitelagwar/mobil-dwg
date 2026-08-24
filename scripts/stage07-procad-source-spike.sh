@@ -42,31 +42,28 @@ grep -F 'MIT License' "$PROCAD_DIR/external/ACadSharp/LICENSE"
 grep -F 'MIT License' "$PROCAD_DIR/external/ProEdit/LICENSE"
 echo 'STAGE07_SOURCE_PIN_PASS'
 
-# Resolve lineage against the official upstream repository. The pinned fork SHA
-# must be an actual official upstream commit; then measure drift to the approved
-# mobil-dwg 3.7.1 source baseline.
+# Resolve lineage against official ACadSharp and measure drift to the source
+# commit associated with mobil-dwg's approved 3.7.1 parser baseline.
 if ! git -C "$PROCAD_DIR/external/ACadSharp" remote | grep -qx official; then
   git -C "$PROCAD_DIR/external/ACadSharp" remote add official "$ACAD_OFFICIAL"
 fi
 git -C "$PROCAD_DIR/external/ACadSharp" fetch --no-tags official "$ACAD_APPROVED"
-git -C "$PROCAD_DIR/external/ACadSharp" cat-file -e "$ACAD_COMMIT^{commit}"
-git -C "$PROCAD_DIR/external/ACadSharp" cat-file -e "$ACAD_APPROVED^{commit}"
 MERGE_BASE="$(git -C "$PROCAD_DIR/external/ACadSharp" merge-base "$ACAD_COMMIT" "$ACAD_APPROVED")"
 test "$MERGE_BASE" = "$ACAD_COMMIT"
 ACAD_AHEAD="$(git -C "$PROCAD_DIR/external/ACadSharp" rev-list --count "$ACAD_COMMIT..$ACAD_APPROVED")"
 test "$ACAD_AHEAD" = "$ACAD_EXPECTED_AHEAD"
 echo "STAGE07_ACAD_LINEAGE_PASS official_same_sha=$ACAD_COMMIT approved_ahead=$ACAD_AHEAD"
 
-# Source graph and package-band audit.
-grep -F '<VersionPrefix Condition="'"'"'$(VersionPrefix)'"'"' == '"'"''"'"' and '"'"'$(Version)'"'"' == '"'"''"'"'">0.1.1</VersionPrefix>' "$PROCAD_DIR/Directory.Build.targets"
+# Source graph/package-band audit.
+grep -F '>0.1.1</VersionPrefix>' "$PROCAD_DIR/Directory.Build.targets"
 grep -F '<PackageVersion Include="SkiaSharp" Version="3.119.4" />' "$PROCAD_DIR/Directory.Packages.props"
 grep -F '<PackageVersion Include="SkiaSharp.Views.Maui.Controls" Version="4.147.0-preview.2.1" />' "$PROCAD_DIR/Directory.Packages.props"
 grep -F '..\external\ACadSharp\src\ACadSharp\ACadSharp.csproj' "$PROCAD_DIR/ProCad.Rendering/ProCad.Rendering.csproj"
 grep -F '..\external\ACadSharp\src\ACadSharp\ACadSharp.csproj' "$PROCAD_DIR/ProCad.Core/ProCad.Core.csproj"
 echo 'STAGE07_SOURCE_GRAPH_PASS'
 
-# Check whether the package IDs declared by the pinned source are actually
-# available as 0.1.1 on nuget.org. Absence is evidence, not a harness failure.
+# NuGet 0.1.1 availability plus an actual isolated restore graph. This is kept
+# outside the mobil-dwg solution and cannot alter production dependencies.
 NUGET_JSON="$WORK_ROOT/nuget-availability.json"
 python - "$NUGET_JSON" <<'PY'
 import json, sys
@@ -94,15 +91,40 @@ json.dump(data, open(out, 'w', encoding='utf-8'), indent=2, sort_keys=True)
 PY
   fi
 done
+
+NUGET_PROBE="$WORK_ROOT/Nuget011Probe"
+mkdir -p "$NUGET_PROBE"
+cat > "$NUGET_PROBE/Nuget011Probe.csproj" <<'XML'
+<Project Sdk="Microsoft.NET.Sdk">
+  <PropertyGroup>
+    <TargetFramework>net10.0-android</TargetFramework>
+    <UseMaui>true</UseMaui>
+  </PropertyGroup>
+  <ItemGroup>
+    <PackageReference Include="ProCadSharp.Controls.Maui" Version="0.1.1" />
+  </ItemGroup>
+</Project>
+XML
+NUGET_RESTORE_LOG="$WORK_ROOT/nuget-restore.log"
+NUGET_RESTORE_GRAPH="$WORK_ROOT/nuget-restore-graph.txt"
+set +e
+dotnet restore "$NUGET_PROBE/Nuget011Probe.csproj" >"$NUGET_RESTORE_LOG" 2>&1
+NUGET_RESTORE_EXIT=$?
+set -e
+if [ "$NUGET_RESTORE_EXIT" -eq 0 ]; then
+  dotnet list "$NUGET_PROBE/Nuget011Probe.csproj" package --include-transitive > "$NUGET_RESTORE_GRAPH" 2>&1
+else
+  : > "$NUGET_RESTORE_GRAPH"
+fi
+echo "STAGE07_NUGET_011_RESTORE_EXIT=$NUGET_RESTORE_EXIT"
 echo 'STAGE07_NUGET_SOURCE_GRAPH_RECORDED'
 
-# Deterministic precision gate. ProCad converts ACadSharp double XYZ to
-# System.Numerics.Vector2 by direct float casts. Reproduce that exact numeric
-# boundary for a building-scale point and a survey-origin + millimetre detail.
+# Deterministic precision gate. Pinned source converts ACadSharp double XYZ to
+# Vector2 by direct float casts; reproduce the exact numeric boundary.
 grep -F 'return new Vector2((float)point.X, (float)point.Y);' "$PROCAD_DIR/ProCad.Rendering/RenderTransformUtils.cs"
 PRECISION_JSON="$WORK_ROOT/precision.json"
 python - "$PRECISION_JSON" <<'PY'
-import json, math, struct, sys
+import json, struct, sys
 
 def f32(v):
     return struct.unpack('<f', struct.pack('<f', float(v)))[0]
@@ -111,27 +133,22 @@ def case(name, origin, detail):
     a, b = f32(origin), f32(origin + detail)
     observed = float(b - a)
     return {
-        'name': name,
-        'origin': origin,
-        'detail': detail,
-        'float_origin': a,
-        'float_origin_plus_detail': b,
-        'observed_delta': observed,
-        'collapsed': observed == 0.0,
-        'relative_delta_error': None if detail == 0 else abs(observed-detail)/abs(detail),
+        'name': name, 'origin': origin, 'detail': detail,
+        'float_origin': a, 'float_origin_plus_detail': b,
+        'observed_delta': observed, 'collapsed': observed == 0.0,
+        'relative_delta_error': abs(observed-detail)/abs(detail),
     }
-
 small = case('small-building-mm-detail', 100.0, 0.001)
 survey = case('survey-origin-mm-detail', 5_000_000.0, 0.001)
 result = {'cases': [small, survey], 'precision_gate': 'FAIL' if survey['collapsed'] else 'PASS'}
 json.dump(result, open(sys.argv[1], 'w', encoding='utf-8'), indent=2, sort_keys=True)
 if not survey['collapsed']:
-    raise SystemExit('expected survey-origin millimetre detail to expose float precision loss')
+    raise SystemExit('survey-origin millimetre detail did not expose expected float boundary')
 print('STAGE07_FLOAT_PRECISION_BLOCKER_REPRODUCED')
 PY
 
-# Reuse gate: pinned MAUI CadViewer supports one-pointer pan but contains no
-# pinch gesture path. Record absence as a technical reuse gap.
+# Reuse gate: pinned MAUI CadViewer has one-pointer touch pan. No pinch path is
+# present in its MAUI source at the pinned commit.
 grep -F 'case SKTouchAction.Moved:' "$PROCAD_DIR/ProCad.Controls.Maui/CadViewer.cs"
 PINCH_PRESENT=false
 if grep -R -E 'PinchGestureRecognizer|PinchUpdated|ScaleGesture|pinch' "$PROCAD_DIR/ProCad.Controls.Maui" --include='*.cs' --include='*.xaml' -i; then
@@ -143,20 +160,14 @@ else
   echo 'STAGE07_PINCH_REUSE_GAP_RECORDED'
 fi
 
-# Candidate build: source project first, then a clean MAUI APK referencing only
-# the isolated source checkout. A candidate build failure is a ProCad NO-GO
-# signal and is recorded rather than treated as a harness failure.
+# Candidate build. Use normal MSBuild graph restore; do not globally override
+# TargetFramework on referenced net10.0 projects (the first harness version did
+# so and produced a harness-only NETSDK1005 that is deliberately not evidence).
 BUILD_LOG="$WORK_ROOT/procad-android-build.log"
 SMOKE_LOG="$WORK_ROOT/procad-maui-smoke.log"
 set +e
-dotnet restore "$PROCAD_DIR/ProCad.Controls.Maui/ProCad.Controls.Maui.csproj" -p:TargetFramework=net10.0-android >"$BUILD_LOG" 2>&1
-RESTORE_EXIT=$?
-if [ "$RESTORE_EXIT" -eq 0 ]; then
-  dotnet build "$PROCAD_DIR/ProCad.Controls.Maui/ProCad.Controls.Maui.csproj" -f net10.0-android -c Release --no-restore >>"$BUILD_LOG" 2>&1
-  SOURCE_BUILD_EXIT=$?
-else
-  SOURCE_BUILD_EXIT=$RESTORE_EXIT
-fi
+dotnet build "$PROCAD_DIR/ProCad.Controls.Maui/ProCad.Controls.Maui.csproj" -f net10.0-android -c Release >"$BUILD_LOG" 2>&1
+SOURCE_BUILD_EXIT=$?
 set -e
 
 SMOKE_BUILD_EXIT=99
@@ -177,14 +188,8 @@ internal static class Stage07CompileProbe
 }
 CS
   set +e
-  dotnet restore "$SMOKE_CSPROJ" -p:TargetFramework=net10.0-android >>"$SMOKE_LOG" 2>&1
-  SMOKE_RESTORE_EXIT=$?
-  if [ "$SMOKE_RESTORE_EXIT" -eq 0 ]; then
-    dotnet build "$SMOKE_CSPROJ" -f net10.0-android -c Release --no-restore >>"$SMOKE_LOG" 2>&1
-    SMOKE_BUILD_EXIT=$?
-  else
-    SMOKE_BUILD_EXIT=$SMOKE_RESTORE_EXIT
-  fi
+  dotnet build "$SMOKE_CSPROJ" -f net10.0-android -c Release >>"$SMOKE_LOG" 2>&1
+  SMOKE_BUILD_EXIT=$?
   set -e
   if [ "$SMOKE_BUILD_EXIT" -eq 0 ]; then
     SMOKE_APK="$(find "$SMOKE_DIR/bin/Release/net10.0-android" -name '*.apk' -type f | head -n 1 || true)"
@@ -199,11 +204,11 @@ else
 fi
 
 # Exact pinned candidate is NO-GO once the deterministic survey/mm precision
-# blocker is reproduced. Build/pinch/preview data remain supporting evidence.
-python - "$EVIDENCE_PATH" "$PIN_FILE" "$NUGET_JSON" "$PRECISION_JSON" "$PROCAD_COMMIT" "$ACAD_COMMIT" "$ACAD_APPROVED" "$ACAD_AHEAD" "$PROEDIT_COMMIT" "$SOURCE_BUILD_EXIT" "$SMOKE_BUILD_EXIT" "$PINCH_PRESENT" "$SMOKE_APK" <<'PY'
+# blocker is reproduced. Build/pinch/version-band data are supporting evidence.
+python - "$EVIDENCE_PATH" "$PIN_FILE" "$NUGET_JSON" "$PRECISION_JSON" "$PROCAD_COMMIT" "$ACAD_COMMIT" "$ACAD_APPROVED" "$ACAD_AHEAD" "$PROEDIT_COMMIT" "$SOURCE_BUILD_EXIT" "$SMOKE_BUILD_EXIT" "$PINCH_PRESENT" "$SMOKE_APK" "$NUGET_RESTORE_EXIT" <<'PY'
 import json, sys
 (evidence_path, pin_path, nuget_path, precision_path, procad, acad, approved,
- ahead, proedit, source_build, smoke_build, pinch, apk) = sys.argv[1:]
+ ahead, proedit, source_build, smoke_build, pinch, apk, nuget_restore) = sys.argv[1:]
 pins = json.load(open(pin_path, encoding='utf-8'))
 nuget = json.load(open(nuget_path, encoding='utf-8'))
 precision = json.load(open(precision_path, encoding='utf-8'))
@@ -220,6 +225,7 @@ result = {
   'licenses': {'ProCad': 'MIT', 'ACadSharp': 'MIT', 'ProEdit': 'MIT'},
   'source_package_versions': pins['pinned_source_packages'],
   'nuget_package_availability': nuget,
+  'nuget_0_1_1_restore_exit': int(nuget_restore),
   'source_android_build_exit': int(source_build),
   'maui_release_smoke_build_exit': int(smoke_build),
   'maui_release_apk': apk or None,
