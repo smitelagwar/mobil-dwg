@@ -30,12 +30,12 @@ AŞAMA_07: DONE / NO-GO — exact unpatched ProCad candidate precision blocker n
 AŞAMA_08: DONE / CHARACTERIZATION — evidence BLOCKED_PARTIAL_EVIDENCE; iOS runtime/device PASS yok
 AŞAMA_09_BRANCH: stage09-render-scene-camera
 AŞAMA_09_PR: #12
-AŞAMA_09_SOURCE_TEST_HEAD: 6215f9fbd77028273262bc5b95fd3eece19191d3
-AŞAMA_09_WORKFLOW_FIX_HEAD: b6e3b5c825810c70e4ada750f576672ebe25d99d
-AŞAMA_09_IMPLEMENTED: compact immutable RenderScene; stable entity/layer/style/source metadata; double camera pipeline; large-origin precision regression; OCS/WCS; diagnostics; fit/zoom/color context; deterministic semantic snapshot
+AŞAMA_09_LATEST_SOURCE_TEST_HEAD: 9a17d333afc0a3df1de856a9a53fae0e74617c29
+AŞAMA_09_EVIDENCE_HEAD: 14505c549ad3f829827222e8f1ede73c737d8b27
+AŞAMA_09_IMPLEMENTED: compact immutable RenderScene; stable entity/layer/style/source metadata; double camera pipeline; RenderViewport bridge; large-origin precision regression; finite-overflow guards; OCS/WCS scaled normalization; diagnostics; fit/zoom/color context; deterministic semantic snapshot
 AŞAMA_09_VALIDATION: NOT_RUN — hosted jobs reach no steps; runner_id=0
-AŞAMA_09_FINAL_HOSTED_RUN: 32786600644 / #14; macos-26; attempts 1 and 2 both pre-step failure
-AŞAMA_09_FINAL_HOSTED_JOBS: 97619697255; 97619957457
+AŞAMA_09_LATEST_LINUX_RUN: 32791241242 / #28; job 97633067562; ubuntu-latest; pre-step failure
+AŞAMA_09_MACOS_RUN: 32786600644 / #14; macos-26; attempts 1/2/3 all pre-step failure
 AŞAMA_09_SELF_HOSTED_PROBE: 32784140351 / #3; suitable online runner not assigned; temporary workflow removed
 AŞAMA_09_EVIDENCE: docs/evidence/STAGE_09.md
 NEXT_ACTION: obtain any real exact .NET 10.0.400 execution environment; run Stage 09 T0 restore/build + T1 deterministic tests; fix compiler/test defects if any; only then close/merge PR #12
@@ -49,16 +49,18 @@ Kullanıcı özel renderer efor/bakım riskini kabul ederek AŞAMA 09'un başlam
 Uygulanan foundation:
 
 - Stable entity ID, bounds, layer/style token ve parser source reference.
+- `default` record-struct metadata bypass'ları immutable scene sınırında tekrar doğrulanır.
 - World/document coordinates ve world→view→screen hattında `double` precision.
+- `Camera2D` ile Core `RenderViewport` arasında explicit adapter; ikinci gizli kamera hattı yok.
 - Survey origin `5,000,000` çevresinde `0.001` detay regression testi.
-- OCS/WCS arbitrary-axis transform ve oblique round-trip testi.
-- NaN/Infinity/extents guards.
-- Unsupported/Substituted/Dropped/Error scene diagnostics.
-- Camera fit, zoom clamps ve dark/light color context.
+- Finite girdilerin span/subtraction sırasında `Infinity` üretmesine karşı guards; büyük same-sign bounds center overflow-safe hesaplanır.
+- OCS/WCS arbitrary-axis transform, oblique round-trip ve çok büyük finite normal için scaled normalization.
+- Unsupported/Substituted/Dropped/Error scene diagnostics; invalid taxonomy/default entity ID guard'ları.
+- Camera fit, zoom clamps, invalid default-camera guard ve dark/light color context.
 - Stable-ID sıralı immutable scene ve deterministic `render-scene/v1` semantic snapshot.
 - Eski `STAGE04_RENDER_CONTRACT_TESTS_PASS` marker'ı test harness'ta korunur.
 
-Validation henüz PASS değildir. Ubuntu hosted koşuları pre-step `runner_id=0`; ilk macOS fallback'ta yanlış `macos-26-arm64` label'ı fark edilip repoda AŞAMA 08'de kullanılan doğru `macos-26` label'ına düzeltildi. Buna rağmen doğru label ile run `32786600644`/#14 attempt 1 ve explicit rerun attempt 2 de `steps=[]`, `runner_id=0`, empty runner name ile kesildi. Root cause'un billing/quota/capacity olduğu kanıtlanmadığından tahmin edilmez. Configured self-hosted Windows runner probe'u da uygun online runner bulamadı ve geçici workflow silindi.
+Validation henüz PASS değildir. Standard Linux (`ubuntu-latest`) ve doğru macOS (`macos-26`) hosted label'larıyla job'lar checkout başlamadan `steps=[]`, `runner_id=0` ile kesiliyor. Son source head üzerinde Stage 09 run `32791241242`/#28 job `97633067562` aynı sonucu verdi. Configured self-hosted Windows runner probe'u da uygun online runner bulamadı ve geçici workflow silindi. 2026-08-25 resmi GitHub status kontrolünde Actions operational görünüyordu; billing/quota/policy/capacity gibi daha özel root cause kanıtlanmadığından tahmin edilmez.
 
 Bu nedenle PR #12 merge edilmedi ve AŞAMA 10 başlatılmadı.
 
