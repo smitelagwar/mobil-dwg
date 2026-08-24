@@ -9,9 +9,9 @@ Bu dosya AŞAMA 02'de canlı doğrulanan dependency/source gerçekliğini kayded
 | Aday | Exact sürüm/revision | Lisans/dependency sonucu | AŞAMA 02 sınıfı | Runtime kararı |
 |---|---|---|---|---|
 | ACadSharp | NuGet `3.7.1`; source version bump commit `bbc8b14a92ebfac35bb77c0c1a4af70de90ebb50` | NuGet MIT; `net10.0` için ek NuGet dependency yok; source build `CSUtilities` submodule kullanıyor ve onun lisansı MIT | `GREEN` | Ana parser adayı; corpus/fidelity için AŞAMA 05 geçmeden production-approved değil |
-| SkiaSharp | NuGet `4.151.1` | NuGet MIT; `net10.0-android36.0` graph'ı `SkiaSharp.NativeAssets.Android >=4.151.1`, iOS graph'ı `SkiaSharp.NativeAssets.iOS >=4.151.1`; native Skia upstream BSD-3-Clause | `REVIEW` | Ana renderer adayı; final native binary/third-party inventory doğrulanmadan release GREEN değil |
+| SkiaSharp | NuGet `4.151.1` | NuGet MIT; Android graph'ı `SkiaSharp.NativeAssets.Android 4.151.1`; iOS graph'ı platform native asset taşır; native Skia upstream BSD-3-Clause | `REVIEW` | Ana renderer adayı; final native binary/third-party inventory doğrulanmadan release GREEN değil |
 | ProCad | source `f8a862b3e7634e27664fee02ff5d68774b102985` | Repo MIT; `external/ACadSharp` fork submodule `0ed79df48de0806af3c3028d0e2826447cbc1d36`; `external/ProEdit` `64759b79289a024d08463ed1a9094fdcd9a270df`; package graph/source lineage karmaşık | `REVIEW` | Production default NO-GO; yalnız AŞAMA 07 source-pinned izole spike |
-| IxMilia.Dxf | NuGet `0.8.4`; current source head `3ab0f9d6d3f14a6f6fa924e111e8e3af1065c567` | NuGet MIT | `GREEN` (test/fallback scope) | Baştan runtime'a eklenmez; DXF test oracle/koşullu fallback adayı |
+| IxMilia.Dxf | NuGet `0.8.4`; current source head `3ab0f9d6d3f14a6f6fa924e111e8e3af1065c567` | NuGet/source MIT | `GREEN` (test/fallback scope) | Baştan runtime'a eklenmez; DXF test oracle/koşullu fallback adayı |
 | IxMilia.Dwg | source head `269c8a4858cb0f836a7f3f70ba18a67dbafcb05c` | Repo MIT; 2026-08-24 NuGet aramasında güncel paket kanıtı bulunmadı | `REVIEW` | Modern DWG fallback olarak kullanılmaz |
 | IxMilia.Shx | source head `4294bfec27b945c56f18c54ae79ff386238475be` | Repo MIT; 2026-08-24 NuGet aramasında paket kanıtı bulunmadı | `REVIEW` | Yalnız gelecekte SHX parser spike adayı; herhangi bir font dosyası değildir |
 
@@ -49,10 +49,11 @@ Doğrulananlar:
 
 - Latest stable: `4.151.1`, 2026-08-05. `4.152.0-preview.1.1` prerelease olduğu için seçilmedi.
 - NuGet/SkiaSharp repo license: MIT.
-- `net10.0-android36.0` dependency: `SkiaSharp.NativeAssets.Android >= 4.151.1`.
-- `net10.0-ios26.0` dependency: `SkiaSharp.NativeAssets.iOS >= 4.151.1`.
+- Android resolved graph: `SkiaSharp 4.151.1 -> SkiaSharp.NativeAssets.Android 4.151.1`.
+- NuGet metadata iOS tarafında da platform native asset dependency'si taşındığını gösterir.
 - Android native asset paketi `4.151.1` NuGet'te MIT olarak yayınlanmış.
 - Native renderer upstream Google Skia BSD-3-Clause'dur; bu lisans proje allowlist'indedir.
+- Android native package içinde arm, arm64, x64 ve x86 `libSkiaSharp.so` artifact'leri gerçek `.nupkg` taramasında görüldü.
 - Native `.so`/framework içeriğinin third-party notice/artifact inventory doğrulaması final artifact üzerinde yine gereklidir.
 
 Karar: `REVIEW`. Sürüm pinlenebilir ve spike/build için kullanılabilir; native artifact inventory tamamlanmadan release-level `GREEN` yazılmaz.
@@ -71,7 +72,7 @@ Snapshot submodule SHA'ları:
 - `external/ACadSharp` -> `wieslawsoltes/ACadSharp` @ `0ed79df48de0806af3c3028d0e2826447cbc1d36`.
 - `external/ProEdit` -> `wieslawsoltes/ProEdit` @ `64759b79289a024d08463ed1a9094fdcd9a270df`.
 
-Ayrıca snapshot `Directory.Packages.props` içinde:
+Snapshot `Directory.Packages.props` ayrıca şunları içeriyor:
 
 - `SkiaSharp 3.119.4`
 - `SkiaSharp.NativeAssets.Linux 3.119.4`
@@ -87,7 +88,7 @@ Karar: `REVIEW`, production default `NO-GO`. AŞAMA 07 yalnız exact source comm
 ### IxMilia.Dxf
 
 - NuGet latest: `0.8.4`, 2024-06-13.
-- NuGet license: MIT.
+- NuGet/source license: MIT.
 - Current source head 2026-07-28: `3ab0f9d6d3f14a6f6fa924e111e8e3af1065c567`.
 - Repo dokümantasyonu bazı entity/write compatibility sınırlamalarını açıkça listeler.
 
@@ -96,7 +97,7 @@ Karar: `GREEN` yalnız test/fallback kapsamı için. Production graph'a baştan 
 ### IxMilia.Dwg
 
 - Current source head 2026-07-28: `269c8a4858cb0f836a7f3f70ba18a67dbafcb05c`.
-- Repo MIT.
+- Repo `LICENSE.txt`: MIT.
 - README DWG parser/writer projesi olduğunu belirtir; nihai plan bunu modern DWG fallback saymaz.
 
 Karar: `REVIEW`, runtime'a eklenmez.
@@ -104,14 +105,14 @@ Karar: `REVIEW`, runtime'a eklenmez.
 ### IxMilia.Shx
 
 - Current source head 2025-09-06: `4294bfec27b945c56f18c54ae79ff386238475be`.
-- Repo MIT.
+- Repo `LICENSE.txt`: MIT.
 - README bunun AutoCAD SHX fontlarını okumaya yönelik bir .NET library olduğunu belirtir; font dosyasının kendisi değildir.
 
 Karar: `REVIEW`, yalnız AŞAMA 14'te gerekirse izole parser spike adayı.
 
-## Exact package pinleri
+## Exact package pinleri ve lock
 
-Repo kökündeki `Directory.Packages.props` AŞAMA 02 itibarıyla şunları exact pinler:
+Repo kökündeki `Directory.Packages.props` AŞAMA 02 itibarıyla şunları pinler:
 
 - `ACadSharp = 3.7.1`
 - `SkiaSharp = 4.151.1`
@@ -119,16 +120,66 @@ Repo kökündeki `Directory.Packages.props` AŞAMA 02 itibarıyla şunları exac
 
 Production dependency probe yalnız ACadSharp + SkiaSharp kullanır. ProCad production graph'a eklenmez.
 
-## Artifact/restore evidence
+Committed lockfile: `compliance/Stage02.DependencyProbe/packages.lock.json`.
 
-`compliance/Stage02.DependencyProbe` ve `.github/workflows/stage02-dependency-audit.yml` exact Android restore graph'ını üretmek, lockfile'ı doğrulamak ve resolved package license/hash manifest'i oluşturmak için kullanılır.
+Resolved Android graph:
 
-CI tamamlandığında aşağıdaki alanlar gerçek run sonucu ile doldurulur:
+- Direct: `ACadSharp 3.7.1`
+- Direct: `SkiaSharp 4.151.1`
+- Transitive: `SkiaSharp.NativeAssets.Android 4.151.1`
+- TFM: `net10.0-android36.0`
 
-- Final Stage 02 CI run: `PENDING`
-- `packages.lock.json`: `PENDING`
-- Resolved direct/transitive package list: `PENDING`
-- Downloaded `.nupkg` SHA-256 manifest: `PENDING`
-- Unknown/RED license check: `PENDING`
+Lockfile SHA-256: `880bdb834856010d1a08821e72f539208170c9e8a929e183c17eaf7dee2d362d`.
 
-Bu alanlar PASS olmadan AŞAMA 02 `DONE` yapılmaz.
+CI restore artık lockfile üretmez; committed lockfile üzerinde doğrudan `dotnet restore --locked-mode` çalışır ve lock diff'i sıfır olmak zorundadır.
+
+## Exact NuGet artifact manifest
+
+Committed manifest: `compliance/stage02-package-manifest.json`.
+
+Gerçek NuGet `.nupkg` SHA-256 değerleri:
+
+- `ACadSharp 3.7.1`: `4f9ca3a5dafd1a18af651312522147a3163999818763d168b4d5f59d6ffc1701` — MIT, embedded native entry yok.
+- `SkiaSharp 4.151.1`: `2d1feef23f28e55864cad8449f7b60abf5d6db1aa61ec07aef837e9e0eaee73e` — MIT, bu meta-package içinde native entry yok.
+- `SkiaSharp.NativeAssets.Android 4.151.1`: `0857f22d4de9f87899675a30312c52801c6ff85e7ca25dc9483a969c43612803` — MIT; dört Android ABI için `libSkiaSharp.so` içerir.
+
+Package manifest SHA-256: `04350e4ea477131ad19f5b06ae28deb0d4c0c1effd107d66178ee7d3d64fb02c`.
+
+CI audit scripti exact nupkg'leri NuGet flat-container üzerinden yeniden indirir, nuspec license expression'ını okur, SHA-256'yı yeniden hesaplar ve committed manifest ile `git diff --exit-code` uygular.
+
+## Final Stage 02 CI kanıtı
+
+Workflow: `Stage 02 Dependency Audit`.
+
+Final teknik koşu:
+
+- Run: `32746969262` / #5.
+- Head: `b46fea68415504cb67d625260d8872b5f438503f`.
+- Sonuç: `SUCCESS`.
+- .NET SDK: `10.0.400`.
+- Workload set: `10.0.400`; `maui-android` PASS.
+- Committed locked restore: PASS.
+- Resolved graph kaydı: PASS.
+- Exact nupkg license/hash audit: PASS (`STAGE02_PACKAGE_AUDIT_PASS`).
+- Committed package manifest reproducibility diff: PASS.
+- Vulnerability report: mevcut kaynaklara göre vulnerable package yok.
+- Evidence artifact upload: PASS.
+- Artifact ID: `9527480232`.
+- Artifact ZIP digest: `sha256:e9975e231efefb3a97d6baf945dd7006723f61cdc43765a33d0691df711e504b`.
+
+İlk package-audit koşusu `32746443518` de SUCCESS olup paket hashlerini ilk kez üretmiştir; #5 committed evidence + locked restore şeklindeki güçlendirilmiş final kapıdır.
+
+## Stage 01 CPM regresyonu ve düzeltme
+
+Kök `Directory.Packages.props` ilk eklendiğinde Stage 01 CI'daki repo-altı `.smoke` MAUI template'i CPM'yi miras aldı ve `NU1008` ile düştü. Bu dependency uyumsuzluğu değil, test izolasyonu hatasıydı.
+
+Düzeltme: Stage 01 CI smoke projesi repo ağacı dışında `$RUNNER_TEMP` altında üretilir. Fiziksel cihaz gate scriptleri zaten sistem temp dizini altında proje ürettiği için root CPM'den bağımsızdır. Stage 01 regresyonu final PR kapısında ayrıca tekrar doğrulanır.
+
+## AŞAMA 02 sonucu
+
+- Unknown veya policy-RED NuGet dependency tespit edilmedi.
+- ACadSharp `GREEN` dependency/lisans adayıdır, ancak fidelity açısından AŞAMA 05 geçmeden production-approved değildir.
+- SkiaSharp `REVIEW` olarak pinlidir; Android native package lisansı/hash/native entry kanıtı vardır, final binary third-party inventory release gate'inde tekrar açılır.
+- ProCad `REVIEW` ve production default `NO-GO`; yalnız AŞAMA 07 source-pinned spike.
+- IxMilia.Dxf test/fallback scope'unda `GREEN`; Dwg/Shx `REVIEW` ve runtime dışında.
+- Floating/latest production dependency yok; committed lock + locked restore kapısı vardır.
