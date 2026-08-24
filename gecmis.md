@@ -34,7 +34,7 @@ STAGE01_STATUS: BLOCKED / DEFERRED_EXTERNAL_GATE — fiziksel Android install/la
 STAGE06_STATUS: BLOCKED / DEFERRED_EXTERNAL_GATE — safe-open implementation/CI PASS, fiziksel Android FilePicker/SAF+lifecycle/cache gate açık, DONE değil
 STAGE07_STATUS: DONE / NO-GO — exact unpatched ProCad source candidate deterministic precision blocker nedeniyle production reuse için reddedildi
 STAGE08_STATUS: DONE — CHARACTERIZATION / BLOCKED_PARTIAL_EVIDENCE / RISK_ACCEPTED_FOR_CONTINUATION; iOS runtime/device feasibility NOT PROVEN
-STAGE08_DECISION_HEAD: 1d7ce7ddc738ba615ad86f19742e3af9f2c78e18
+STAGE08_DECISION_HEAD: 4987fa3e5fadfb113aa3b27ac443da9776864ad5
 STAGE08_CI: run 32781026946 / #18 SUCCESS characterization; artifact 9540018558; sha256:1414e3bf5a9800e150019c48f620c64efcd3d5282ac7322ef9a5e5746ab746f7
 STAGE08_HOST_BLOCKER: GitHub-hosted macos-26/Xcode 26.6 install_name_tool/clang lookup; baseline/simulator runtime PASS yok
 STAGE08_TRIM_RISK: ACadSharp 3.7.1 ILLink reflection/trimming warnings; 30 trimmer / 12 reflection-related / 0 font lines

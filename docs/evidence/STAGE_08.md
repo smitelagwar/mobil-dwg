@@ -21,9 +21,9 @@ Bu durum **iOS PASS anlamına gelmez**. AŞAMA 08'in plan çıkışındaki ikinc
 - İlk tamamlanmış spike head: `1d7ce7ddc738ba615ad86f19742e3af9f2c78e18`.
 - Güncel `main` tabanına taşınmış final verification head: `4987fa3e5fadfb113aa3b27ac443da9776864ad5`.
 - Workflow: `Stage 08 iOS Feasibility`.
-- Run: `32781026946` / `#17` — `SUCCESS`.
-- Job: `97587720958` — `SUCCESS`.
-- Artifact: `9540018558`, `stage08-ios-feasibility-evidence`, 10,588 bytes.
+- Run: `32781026946` / `#18` — `SUCCESS`.
+- Job: `97602910534` — `SUCCESS`.
+- Artifact: `9540018558`, `stage08-ios-feasibility-evidence`, 10,548 bytes.
 - Artifact digest: `sha256:1414e3bf5a9800e150019c48f620c64efcd3d5282ac7322ef9a5e5746ab746f7`.
 - Evidence JSON classification: `BLOCKED_PARTIAL_EVIDENCE`.
 
@@ -33,7 +33,7 @@ Workflow `SUCCESS`, bütün iOS probe'larının PASS olduğu anlamına gelmez. H
 
 ## Host ve exact graph kanıtı
 
-Run #17:
+Run #18:
 
 - GitHub-hosted image: `macos-26-arm64`, macOS `26.5.2`.
 - .NET SDK: `10.0.400`.
