@@ -1,5 +1,7 @@
 # MOBİL 2D CAD (DWG/DXF) VIEWER
+
 ## Tamamen Ücretsiz / Royalty-Free CAD Teknoloji Yığınıyla Android + iOS Ana Planı
+
 ### Android-first • iOS-ready • Preview-first • Future-editor-ready
 
 **Plan tarihi:** 24 Ağustos 2026  
@@ -94,7 +96,7 @@ Bu nedenle önceki LibreDWG/MLightCAD-GPL merkezli mimari bu yeni planda **ana �
 Burada üç farklı maliyet birbirine karıştırılmamalıdır.
 
 | Kalem | Hedef |
-|---|---|
+| --- | --- |
 | DWG/DXF parser lisansı | **0 USD** |
 | CAD renderer lisansı | **0 USD** |
 | Autodesk lisansı/API | **0 USD** |
@@ -269,7 +271,7 @@ Yani tek viewer iki formatı da açacaktır.
 
 Repo:
 
-https://github.com/DomCR/ACadSharp
+<https://github.com/DomCR/ACadSharp>
 
 Lisans:
 
@@ -362,7 +364,7 @@ Bu nedenle sıfırdan renderer yazmadan önce ProCad incelenecektir.
 
 Repo:
 
-https://github.com/wieslawsoltes/ProCad
+<https://github.com/wieslawsoltes/ProCad>
 
 Lisans:
 
@@ -488,7 +490,7 @@ Bu projede webview tabanlı çözüm yerine .NET MAUI daha doğal hale gelmişti
 
 Repo:
 
-https://github.com/mono/SkiaSharp
+<https://github.com/mono/SkiaSharp>
 
 Lisans:
 
@@ -963,7 +965,7 @@ Kural:
 
 Araştırılacak permissive repo:
 
-https://github.com/ixmilia/shx
+<https://github.com/ixmilia/shx>
 
 Lisans:
 
@@ -1264,7 +1266,7 @@ Bunlar garanti değil, başlangıç benchmark hedefidir.
 Gerçek Android telefon testlerinden sonra güncellenecek.
 
 | Dosya | İlk anlamlı preview hedefi |
-|---|---|
+| --- | --- |
 | < 5 MB | yaklaşık ≤ 2 sn |
 | 5–20 MB | yaklaşık ≤ 5 sn |
 | 20–50 MB | yaklaşık ≤ 10 sn veya progressive |
@@ -2668,45 +2670,45 @@ Bu MD başka bir güçlü modele verildiğinde şu talep eklenebilir:
 
 ## ACadSharp
 
-https://github.com/DomCR/ACadSharp
+<https://github.com/DomCR/ACadSharp>
 
-https://github.com/DomCR/ACadSharp/blob/master/LICENSE
+<https://github.com/DomCR/ACadSharp/blob/master/LICENSE>
 
-https://www.nuget.org/packages/ACadSharp/
+<https://www.nuget.org/packages/ACadSharp/>
 
 ## ProCad
 
-https://github.com/wieslawsoltes/ProCad
+<https://github.com/wieslawsoltes/ProCad>
 
 ## SkiaSharp
 
-https://github.com/mono/SkiaSharp
+<https://github.com/mono/SkiaSharp>
 
-https://github.com/mono/SkiaSharp/blob/main/LICENSE.md
+<https://github.com/mono/SkiaSharp/blob/main/LICENSE.md>
 
 ## .NET MAUI
 
-https://github.com/dotnet/maui
+<https://github.com/dotnet/maui>
 
-https://learn.microsoft.com/dotnet/maui/
+<https://learn.microsoft.com/dotnet/maui/>
 
 ## SHX
 
-https://github.com/ixmilia/shx
+<https://github.com/ixmilia/shx>
 
 ## Autodesk trademark guidance
 
-https://www.autodesk.com/company/legal-notices-trademarks/trademarks/guidelines-for-use
+<https://www.autodesk.com/company/legal-notices-trademarks/trademarks/guidelines-for-use>
 
 ## Apple Developer
 
-https://developer.apple.com/programs/
+<https://developer.apple.com/programs/>
 
-https://developer.apple.com/support/compare-memberships/
+<https://developer.apple.com/support/compare-memberships/>
 
 ## Google Play developer
 
-https://support.google.com/googleplay/android-developer/
+<https://support.google.com/googleplay/android-developer/>
 
 ---
 
