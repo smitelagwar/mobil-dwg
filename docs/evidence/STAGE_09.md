@@ -10,7 +10,8 @@ AŞAMA 09 henüz `DONE` değildir. Uygulama kodu ve hedefli testler yazılmışt
 
 - Base `main`: `b7926cb1df2b2ff1f32c67033dba73aed1c01523`.
 - Branch: `stage09-render-scene-camera`.
-- Güncel implementation head: `5b3f590dca123c3855e8aac7d48f781ba2cdfdb3`.
+- Scene/camera implementation code head: `5b3f590dca123c3855e8aac7d48f781ba2cdfdb3`.
+- Güncel test/PR head: `6215f9fbd77028273262bc5b95fd3eece19191d3`.
 - PR: `#12` — `stage09: add render scene, camera, and diagnostics foundation`.
 - ADR 0002 ProCad exact pinned candidate için `NO-GO` verdiğinden tek production scene yolu **compact özel immutable RenderScene** olarak seçildi.
 - ProCad package/source production graph'a eklenmedi; paralel ikinci scene graph oluşturulmadı.
@@ -26,7 +27,7 @@ AŞAMA 09 henüz `DONE` değildir. Uygulama kodu ve hedefli testler yazılmışt
 | Tek world → view → screen hattı | `Camera/Camera2D.cs` / `CameraTransform` | IMPLEMENTED |
 | OCS/WCS | `Coordinates/OcsTransform.cs`; normal + oblique round-trip tests | IMPLEMENTED |
 | Extents / invalid NaN-Infinity / büyük koordinat | `WorldBounds2` guards + rendering console tests | IMPLEMENTED |
-| Scene diagnostics | `Diagnostics/SceneDiagnostics.cs`: Unsupported/Substituted/Dropped/Error | IMPLEMENTED |
+| Scene diagnostics | `Diagnostics/SceneDiagnostics.cs`: Unsupported/Substituted/Dropped/Error; dört taxonomy türünün hedefli testleri | IMPLEMENTED |
 | Camera fit/zoom bounds | `Camera2D.Fit`, `ZoomBy`, min/max clamps | IMPLEMENTED |
 | Background/color context | `RenderColorContext`, Dark/Light presets | IMPLEMENTED |
 | Deterministic semantic snapshot | `Snapshots/RenderSceneSemanticSnapshot.cs`; insertion-order-independent test | IMPLEMENTED |
@@ -50,6 +51,7 @@ Hedefli regression testi survey origin `5,000,000` çevresinde `0.001` world-uni
 - Duplicate stable entity ID assembler seviyesinde reddedilir.
 - Snapshot formatı invariant culture ve round-trip double (`R`) formatı kullanır.
 - Aynı semantic scene farklı insertion order ile oluşturulduğunda snapshot eşitliği test edilir.
+- Eski `STAGE04_RENDER_CONTRACT_TESTS_PASS` marker'ı korunur; AŞAMA 09 test genişletmesi AŞAMA 04 contract harness davranışını sessizce değiştirmez.
 
 ## T0/T1 doğrulama durumu
 
@@ -78,8 +80,11 @@ Stage 04 örneği, head `5b3f590dca123c3855e8aac7d48f781ba2cdfdb3`:
 
 Stage 09 workflow yalnız platformdan bağımsız `net10.0` Core/Rendering testlerini çalıştırmak üzere `macos-26-arm64` hosted runner'a taşındı.
 
-- Run `32783276536` / #4.
-- Job `97609755819`.
+Güncel validation request:
+
+- Run `32783883913` / #7.
+- Job `97611597376`.
+- Head: `6215f9fbd77028273262bc5b95fd3eece19191d3`.
 - Son gözlem: `queued`, henüz runner/adım yok.
 
 Bu run gerçek T0/T1 sonucu üretmeden AŞAMA 09 kapatılmayacaktır.
@@ -94,6 +99,7 @@ Mevcut execution container'ında `dotnet` kurulu değildir. Exact repo pin'i `.N
 
 - `STAGE09_DOTNET_PIN_PASS`
 - `STAGE09_T0_BUILD_PASS`
+- `STAGE04_RENDER_CONTRACT_TESTS_PASS`
 - `STAGE09_RENDER_SCENE_TESTS_PASS`
 - `STAGE09_T1_SCENE_PASS`
 - `render-scene/v1` semantic snapshot
