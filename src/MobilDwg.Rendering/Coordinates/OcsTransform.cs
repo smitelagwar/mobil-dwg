@@ -18,13 +18,33 @@ public readonly record struct Vector3D
     public double Y { get; }
     public double Z { get; }
 
-    public double Length => Math.Sqrt((X * X) + (Y * Y) + (Z * Z));
+    public double Length
+    {
+        get
+        {
+            var scale = Math.Max(Math.Abs(X), Math.Max(Math.Abs(Y), Math.Abs(Z)));
+            if (scale == 0d) return 0d;
+            var sx = X / scale;
+            var sy = Y / scale;
+            var sz = Z / scale;
+            return scale * Math.Sqrt((sx * sx) + (sy * sy) + (sz * sz));
+        }
+    }
 
     public Vector3D Normalize()
     {
-        var length = Length;
-        if (!double.IsFinite(length) || length <= 0) throw new InvalidOperationException("Cannot normalize zero/invalid vector.");
-        return new Vector3D(X / length, Y / length, Z / length);
+        // Scale first so a direction made of very large finite components does not
+        // overflow merely while computing its Euclidean norm.
+        var scale = Math.Max(Math.Abs(X), Math.Max(Math.Abs(Y), Math.Abs(Z)));
+        if (!double.IsFinite(scale) || scale <= 0d) throw new InvalidOperationException("Cannot normalize zero/invalid vector.");
+
+        var sx = X / scale;
+        var sy = Y / scale;
+        var sz = Z / scale;
+        var scaledLength = Math.Sqrt((sx * sx) + (sy * sy) + (sz * sz));
+        if (!double.IsFinite(scaledLength) || scaledLength <= 0d) throw new InvalidOperationException("Cannot normalize zero/invalid vector.");
+
+        return new Vector3D(sx / scaledLength, sy / scaledLength, sz / scaledLength);
     }
 
     public static double Dot(Vector3D left, Vector3D right) =>
@@ -45,6 +65,8 @@ public sealed class OcsCoordinateSystem
     {
         Normal = extrusionNormal.Normalize();
 
+        // AutoCAD arbitrary-axis algorithm threshold. The reference axis avoids
+        // a near-parallel cross product when the normal is close to world Z.
         var reference = Math.Abs(Normal.X) < (1d / 64d) && Math.Abs(Normal.Y) < (1d / 64d)
             ? UnitY
             : UnitZ;
