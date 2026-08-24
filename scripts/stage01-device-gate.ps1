@@ -95,8 +95,12 @@ try {
     $Csproj = Join-Path $AppDir 'Stage01Smoke.csproj'
     $CsprojText = Get-Content -Raw $Csproj
     $PinnedText = $CsprojText -replace '>21\.0</SupportedOSPlatformVersion>', '>24.0</SupportedOSPlatformVersion>'
+    $PinnedText = $PinnedText -replace '<ApplicationId>com\.companyname\.stage01smoke</ApplicationId>', '<ApplicationId>com.smitelagwar.mobildwg.stage01smoke</ApplicationId>'
     if ($PinnedText -eq $CsprojText -or $PinnedText -notmatch '>24\.0</SupportedOSPlatformVersion>') {
         Fail 'failed to pin Android minimum API to 24.0'
+    }
+    if ($PinnedText -notmatch '<ApplicationId>com\.smitelagwar\.mobildwg\.stage01smoke</ApplicationId>') {
+        Fail 'failed to pin smoke application id'
     }
     Set-Content -Path $Csproj -Value $PinnedText -Encoding utf8
 
@@ -121,7 +125,7 @@ try {
     }
     if (-not $DebugApk) { Fail 'Debug APK not found' }
 
-    $PackageName = 'com.companyname.stage01smoke'
+    $PackageName = 'com.smitelagwar.mobildwg.stage01smoke'
     Write-Host 'Installing Debug APK on physical device...'
     & adb -s $Serial install -r $DebugApk.FullName | Out-Host
     if ($LASTEXITCODE -ne 0) { Fail 'adb install failed' }
@@ -133,8 +137,9 @@ try {
 
     $Resolved = @(& adb -s $Serial shell cmd package resolve-activity --brief -a android.intent.action.MAIN -c android.intent.category.LAUNCHER $PackageName)
     if ($LASTEXITCODE -ne 0) { Fail 'launcher activity resolution failed' }
-    $LauncherComponent = ($Resolved | Where-Object { $_ -match '/' } | Select-Object -Last 1).Trim()
+    $LauncherComponent = $Resolved | Where-Object { $_ -match '/' } | Select-Object -Last 1
     if (-not $LauncherComponent) { Fail 'launcher activity could not be resolved' }
+    $LauncherComponent = $LauncherComponent.Trim()
 
     Write-Host 'Launching smoke app...'
     $LaunchOutput = (& adb -s $Serial shell am start -W $LauncherComponent | Out-String)
