@@ -17,9 +17,6 @@ on:
 permissions:
   contents: read
 
-env:
-  STAGE01_SMOKE_ROOT: ${{ runner.temp }}/mobil-dwg-stage01-smoke
-
 jobs:
   android-toolchain-smoke:
     runs-on: ubuntu-latest
@@ -89,31 +86,32 @@ jobs:
         shell: bash
         run: |
           set -euxo pipefail
-          rm -rf "$STAGE01_SMOKE_ROOT"
-          mkdir -p "$STAGE01_SMOKE_ROOT"
-          dotnet new maui -n Stage01Smoke -o "$STAGE01_SMOKE_ROOT/Stage01Smoke"
-          csproj="$STAGE01_SMOKE_ROOT/Stage01Smoke/Stage01Smoke.csproj"
+          smoke_root="$RUNNER_TEMP/mobil-dwg-stage01-smoke"
+          rm -rf "$smoke_root"
+          mkdir -p "$smoke_root"
+          dotnet new maui -n Stage01Smoke -o "$smoke_root/Stage01Smoke"
+          csproj="$smoke_root/Stage01Smoke/Stage01Smoke.csproj"
           sed -i 's/>21.0<\/SupportedOSPlatformVersion>/>24.0<\/SupportedOSPlatformVersion>/' "$csproj"
           sed -i 's#<ApplicationId>com.companyname.stage01smoke</ApplicationId>#<ApplicationId>com.smitelagwar.mobildwg.stage01smoke</ApplicationId>#' "$csproj"
           grep -F '>24.0</SupportedOSPlatformVersion>' "$csproj"
           grep -F '<ApplicationId>com.smitelagwar.mobildwg.stage01smoke</ApplicationId>' "$csproj"
-          test ! -f "$STAGE01_SMOKE_ROOT/Directory.Packages.props"
+          test ! -f "$smoke_root/Directory.Packages.props"
 
       - name: Build Debug Android smoke
         shell: bash
         run: |
-          dotnet build "$STAGE01_SMOKE_ROOT/Stage01Smoke/Stage01Smoke.csproj" -f net10.0-android -c Debug --no-restore
+          dotnet build "$RUNNER_TEMP/mobil-dwg-stage01-smoke/Stage01Smoke/Stage01Smoke.csproj" -f net10.0-android -c Debug --no-restore
 
       - name: Build Release Android smoke
         shell: bash
         run: |
-          dotnet build "$STAGE01_SMOKE_ROOT/Stage01Smoke/Stage01Smoke.csproj" -f net10.0-android -c Release --no-restore
+          dotnet build "$RUNNER_TEMP/mobil-dwg-stage01-smoke/Stage01Smoke/Stage01Smoke.csproj" -f net10.0-android -c Release --no-restore
 
       - name: Verify API baseline
         shell: bash
         run: |
           set -euxo pipefail
-          manifest="$STAGE01_SMOKE_ROOT/Stage01Smoke/obj/Debug/net10.0-android/android/manifest/AndroidManifest.xml"
+          manifest="$RUNNER_TEMP/mobil-dwg-stage01-smoke/Stage01Smoke/obj/Debug/net10.0-android/android/manifest/AndroidManifest.xml"
           test -f "$manifest"
           cat "$manifest"
           grep -E 'minSdkVersion="24"|minSdkVersion="24.0"' "$manifest"
@@ -127,5 +125,5 @@ jobs:
           name: stage01-maui-android-smoke
           if-no-files-found: warn
           path: |
-            ${{ env.STAGE01_SMOKE_ROOT }}/Stage01Smoke/bin/Debug/net10.0-android/**/*.apk
-            ${{ env.STAGE01_SMOKE_ROOT }}/Stage01Smoke/bin/Release/net10.0-android/**/*.apk
+            ${{ runner.temp }}/mobil-dwg-stage01-smoke/Stage01Smoke/bin/Debug/net10.0-android/**/*.apk
+            ${{ runner.temp }}/mobil-dwg-stage01-smoke/Stage01Smoke/bin/Release/net10.0-android/**/*.apk
