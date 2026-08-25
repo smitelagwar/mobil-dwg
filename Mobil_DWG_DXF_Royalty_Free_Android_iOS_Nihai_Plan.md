@@ -14,9 +14,9 @@
 
 ```text
 ACTIVE_PROGRAM: ANDROID_REVALIDATION_01_09
-CURRENT_STAGE: V07 — ProCad NO-GO + production graph izolasyonu + precision regression
-CURRENT_SUBSTEP: V07.ready
-STATUS: NOT_STARTED
+CURRENT_STAGE: V08 — iOS tarihsel arşiv / Android graph izolasyonu
+CURRENT_SUBSTEP: V08.android_graph_check_pending
+STATUS: SCOPE_ARCHIVED / ANDROID_GRAPH_CHECK_PENDING — NOT_STARTED
 LAST_IMPLEMENTED_STAGE: AŞAMA 09 — DONE
 IMPLEMENTATION_CURSOR: AŞAMA 10 — MAIN'E HENÜZ MERGE EDİLMEDİ
 IMPLEMENTATION_WORKSTREAM: docs/A10_WORKSTREAM.md + varsa açık A10 branch/PR
@@ -26,16 +26,17 @@ V03: VALIDATED — FIXTURE/PROVENANCE/GOLDEN/ANDROID-SMOKE-SET CONTRACT
 V04: VALIDATED — REAL_APP_SHELL_RUNTIME_ONLY_NOT_VIEWER_FIDELITY
 V05: VALIDATED — REAL_ANDROID_APP_PARSER_SMOKE_ONLY_NOT_RENDER_FIDELITY
 V06: VALIDATED — REAL_ANDROID_APP_FILEPICKER_SAF_SAFE_OPEN_EMULATOR_ONLY_NOT_PHYSICAL_PROVIDER_FIDELITY
-LAST_ANDROID_VALIDATION_EVIDENCE: docs/evidence/android-validation/V06.md
-LAST_V06_TESTED_HEAD: ae8682875524157285946724bd70d6ff010f3917
-LAST_V06_TESTED_PR_MERGE_REVISION: 26b3cdd6ca50d34b98a4806d92f50d4828077d41
-LAST_V06_MAIN_MERGE_COMMIT: e17e2472f38557552698b8cf9526d6cbf8b25580
-LAST_V06_RUN_JOB: 32849725110 / 97807551403
-LAST_V06_ARTIFACT: 9564837027; sha256:a88eaf46d7cc2090111cb18ce81c3a1d9b56eaed08bdfd070fb0a22be74194a0
+V07: VALIDATED — PROCAD_NO_GO_PRODUCTION_GRAPH_ISOLATION_AND_PRECISION_REGRESSION_ONLY
+LAST_ANDROID_VALIDATION_EVIDENCE: docs/evidence/android-validation/V07.md
+LAST_V07_TESTED_HEAD: 559c1d033bdacedc6900d9ad126e7ab21fd8aa50
+LAST_V07_TESTED_PR_MERGE_REVISION: bfa728b840f63a5e9db5d5f376d19fb7f32c62f3
+LAST_V07_MAIN_MERGE_COMMIT: 4b3b15afe6c95f8393147758b6d16e092ac75a21
+LAST_V07_RUN_JOB: 32860034697 / 97841446382
+LAST_V07_ARTIFACT: 9567840490; sha256:bb2de209e3f6aecf74dc0d17dc9cf996a795cbeb8975a418f90d99d0d267d0b7
 PENDING_EMULATOR_QUEUE: EMPTY
 PHYSICAL_ANDROID: DEFERRED_RELEASE_DEVICE_GATE
-BLOCKERS: Aktif V07 blocker'ı yok; fiziksel Android release öncesi ayrıca zorunlu; iOS aktif kapsam dışı.
-NEXT_ACTION: Sonraki validation turunda yalnız V07'yi başlat — ProCad NO-GO + production graph izolasyonu + 5,000,000 + 0.001 precision regresyonu; aynı turda V08'e geçme.
+BLOCKERS: Aktif V08 Android graph-isolation blocker'ı yok; tarihsel iOS kapsamı arşivde; fiziksel Android release öncesi ayrıca zorunlu.
+NEXT_ACTION: Sonraki validation turunda yalnız V08 Android production/CI graph isolation kontrolünü başlat; iOS workflow/Mac/simulator/iPhone işini yeniden açma ve aynı turda V09'a geçme.
 NEXT_IF_TEST_OFFLINE: BASLA_A10.md ile yalnız izole A10 draft branch'inde host-independent kod/test işi yap.
 A10_MAIN_MERGE: BLOCKED_UNTIL_V04_V09_CLOSED_AND_A10_ANDROID_GATE
 A11_GATE: BLOCKED_UNTIL_V04_V09_CLOSED_AND_A10_DONE_ON_MAIN_AND_EMULATOR_QUEUE_EMPTY
@@ -110,7 +111,7 @@ Kullanıcı açıkça değiştirmedikçe:
 - ACadSharp `3.7.1`: read-only parser baseline `GO` — ADR 0001; V05 gerçek Android parser smoke PASS; render fidelity garantisi değil.
 - SkiaSharp `4.151.1`: renderer dependency; Android native inventory V02'de doğrulandı.
 - Microsoft.Maui.Controls `10.0.100`: gerçek Android app direct dependency; exact `[10.0.100]`, MIT; V04'te doğrulandı.
-- Exact unpatched ProCad source reuse `NO-GO` — ADR 0002; survey-origin `5,000,000 + 0.001` precision blocker.
+- Exact unpatched ProCad source reuse `NO-GO` — ADR 0002; V07 güncel production/resolved graph ve APK izolasyonunu doğruladı; survey-origin `5,000,000 + 0.001` direct-float blocker yeniden üretildi.
 - IxMilia.Dxf `[0.8.4]`: test/fallback scope; production runtime'a otomatik alınmaz.
 - Production direct NuGet versions strict exact range; lockfile + locked restore zorunlu.
 
@@ -159,6 +160,8 @@ V04 itibarıyla gerçek repository app shell:
 V05 itibarıyla gerçek app validation build'i production `AcadSharpDocumentReader` ile V03 redistributable DXF/DWG smoke inputs'ı Android process içinde parse eder; validation asset/gate'i production writer/save özelliği değildir.
 
 V06 itibarıyla gerçek `MainPage` MAUI FilePicker'ı production `MauiCadFilePickerAdapter` üzerinden stream olarak safe-open coordinator'a bağlar. Seçilen provider içeriği app-private cache'e bounded/atomic kopyalanır, production parser yalnız private copy üzerinde çalışır ve original external CAD immutable kalır. API36 emulator üzerinde DWG/DXF selection, second selection, cancel, rotate, background/foreground, close-cleanup ve reopen akışları PASS aldı; physical provider/device fidelity release gate'e deferred'dır.
+
+V07 itibarıyla exact rejected ProCad candidate production graph dışında tutulmaya devam eder. Current production `src`, lockfile/resolved assets, app package graph ve Release APK üzerinde ProCad/ProCadSharp yokluğu doğrulanmış; world/document precision hattının `double` survey-origin regresyonu yeniden geçmiştir.
 
 ---
 
@@ -237,7 +240,7 @@ Zorunlu:
 - proprietary AutoCAD SHX/font bundle edilmez
 - Android RC'de APK/AAB extraction + SBOM + notices + compliance snapshot zorunlu
 
-V02 probe graph: ACadSharp 3.7.1, SkiaSharp 4.151.1, SkiaSharp.NativeAssets.Android 4.151.1. V04 gerçek app direct graph'e Microsoft.Maui.Controls 10.0.100 exact/MIT ekledi. V05 final technical head'de dependency/corpus regresyonları ayrıca PASS aldı. V06 production dependency baseline'ını değiştirmedi; FilePicker/safe-open doğrulaması mevcut MAUI + ACadSharp graph'ı üzerinde yapıldı.
+V02 probe graph: ACadSharp 3.7.1, SkiaSharp 4.151.1, SkiaSharp.NativeAssets.Android 4.151.1. V04 gerçek app direct graph'e Microsoft.Maui.Controls 10.0.100 exact/MIT ekledi. V05 final technical head'de dependency/corpus regresyonları ayrıca PASS aldı. V06 production dependency baseline'ını değiştirmedi; FilePicker/safe-open doğrulaması mevcut MAUI + ACadSharp graph'ı üzerinde yapıldı. V07 aynı exact production graph'ı yeniden restore edip ProCad/ProCadSharp'ın static source/project, lockfile/resolved assets, app package graph ve Release APK'da bulunmadığını doğruladı.
 
 ---
 
@@ -251,8 +254,8 @@ Yetkili ayrıntı: `ANDROID_DOGRULAMA_PLANI.md`.
 - V04 `VALIDATED`: gerçek installable `MobilDwg.App` MAUI shell; API36 build/install/cold-launch/PID/UI/PNG/crash-ANR/liveness PASS; viewer fidelity değil.
 - V05 `VALIDATED`: production ACadSharp reader real Android app process içinde V03 DXF/DWG smoke setiyle PASS; render fidelity değil.
 - V06 `VALIDATED`: real-app FilePicker/DocumentsUI/SAF → stream → app-private safe-copy → production parser; lifecycle/cleanup/immutability PASS; claim emulator-only, physical provider fidelity değil.
-- **V07 `NOT_STARTED`: ProCad NO-GO/precision/production isolation.**
-- V08: iOS historical archive + Android graph isolation.
+- V07 `VALIDATED`: exact rejected ProCad NO-GO; current production/resolved graph + APK isolation; deterministic direct-float precision blocker and production double regression PASS.
+- **V08 `SCOPE_ARCHIVED / ANDROID_GRAPH_CHECK_PENDING — NOT_STARTED`: iOS historical archive + Android graph isolation.**
 - V09: RenderScene/camera/diagnostics revalidation.
 
 V06 authoritative:
@@ -269,6 +272,20 @@ V06 authoritative:
 - same-head V05 run/job `32849725272 / 97807552194` SUCCESS; artifact `9565243977`, digest `sha256:36ada98dd79f7f70e2ef7e63d6d2cb6cec191141421c07bcf41673dded23b492`
 - marker `ANDROID_VALIDATION_V06_PASS`
 - claim `REAL_ANDROID_APP_FILEPICKER_SAF_SAFE_OPEN_EMULATOR_ONLY_NOT_PHYSICAL_PROVIDER_FIDELITY`
+
+V07 authoritative:
+
+- PR `#20`
+- tested PR head `559c1d033bdacedc6900d9ad126e7ab21fd8aa50`
+- exact checked-out PR synthetic merge `bfa728b840f63a5e9db5d5f376d19fb7f32c62f3`
+- main merge `4b3b15afe6c95f8393147758b6d16e092ac75a21`
+- run/job `32860034697` / `97841446382` — SUCCESS
+- artifact `9567840490`, 19,293 bytes; digest `sha256:bb2de209e3f6aecf74dc0d17dc9cf996a795cbeb8975a418f90d99d0d267d0b7`
+- Release APK `30,913,146` bytes; SHA-256 `4605ff85da02e4b45e8d4ae523ae9f5e678a8f596fbbaca23cef77edcab7d450`; ProCad entry absent
+- rejected direct-float survey delta `0`; production double survey delta `0.001`
+- `STAGE04_RENDER_CONTRACT_TESTS_PASS`, `STAGE09_RENDER_SCENE_TESTS_PASS`, `V07_PRODUCTION_DOUBLE_PRECISION_REGRESSION_PASS`
+- marker `ANDROID_VALIDATION_V07_PASS`
+- claim `PROCAD_NO_GO_PRODUCTION_GRAPH_ISOLATION_AND_PRECISION_REGRESSION_ONLY`
 
 ---
 
