@@ -79,8 +79,32 @@ Pass "V08_ANDROID_LOCKED_RESTORE_PASS"
 $assetsPath = Join-Path $repoRoot "src/MobilDwg.App/obj/project.assets.json"
 if (-not (Test-Path -LiteralPath $assetsPath)) { Fail "MobilDwg.App project.assets.json was not produced." }
 $assetsText = Get-Content -LiteralPath $assetsPath -Raw
-Set-Content -LiteralPath (Join-Path $artifactPath "project-assets-scan.txt") -Value $assetsText
-if ($assetsText -match '(?i)SkiaSharp\.NativeAssets\.iOS|Microsoft\.iOS|net10\.0-ios|ios-arm64|iossimulator') { Fail "Resolved Android project.assets.json contains iOS-specific dependency/target data." }
+$assetsJson = $assetsText | ConvertFrom-Json
+$resolvedLines = New-Object System.Collections.Generic.List[string]
+$forbiddenResolvedTarget = '(?i)(^|/)(net[^/]*-ios|ios-arm64|iossimulator|maccatalyst)'
+$forbiddenResolvedLibrary = '(?i)^(SkiaSharp\.NativeAssets\.iOS|Microsoft\.iOS|Xamarin\.iOS)(/|$)'
+
+$targetProperties = @($assetsJson.targets.PSObject.Properties)
+if ($targetProperties.Count -eq 0) { Fail "Resolved Android project.assets.json has no target graph." }
+foreach ($targetProperty in $targetProperties) {
+    $targetName = [string]$targetProperty.Name
+    $resolvedLines.Add("TARGET=" + $targetName)
+    if ($targetName -match $forbiddenResolvedTarget) { Fail ("Resolved iOS target leaked into Android graph: " + $targetName) }
+    foreach ($libraryProperty in @($targetProperty.Value.PSObject.Properties)) {
+        $libraryName = [string]$libraryProperty.Name
+        $resolvedLines.Add("LIBRARY=" + $libraryName)
+        if ($libraryName -match $forbiddenResolvedLibrary) { Fail ("Resolved iOS-specific library leaked into Android graph: " + $libraryName) }
+    }
+}
+
+$frameworkProperties = @($assetsJson.project.frameworks.PSObject.Properties)
+if ($frameworkProperties.Count -eq 0) { Fail "Resolved Android project.assets.json has no project framework graph." }
+foreach ($frameworkProperty in $frameworkProperties) {
+    $frameworkName = [string]$frameworkProperty.Name
+    $resolvedLines.Add("PROJECT_FRAMEWORK=" + $frameworkName)
+    if ($frameworkName -match '(?i)-ios|maccatalyst') { Fail ("iOS project framework leaked into Android graph: " + $frameworkName) }
+}
+$resolvedLines | Set-Content -LiteralPath (Join-Path $artifactPath "resolved-android-graph.txt")
 Pass "V08_RESOLVED_ANDROID_GRAPH_IOS_ABSENT_PASS"
 
 & dotnet build $appProject -c Release -f net10.0-android36.0 --no-restore -warnaserror 2>&1 | Tee-Object -FilePath (Join-Path $artifactPath "android-release-build.log")
