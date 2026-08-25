@@ -28,16 +28,19 @@ AŞAMA_01: BLOCKED / DEFERRED_EXTERNAL_GATE — gerçek Android install/launch +
 AŞAMA_06: BLOCKED / DEFERRED_EXTERNAL_GATE — safe-open CI PASS; gerçek telefon FilePicker/SAF+lifecycle/cache gate açık
 AŞAMA_07: DONE / NO-GO — exact unpatched ProCad candidate precision blocker nedeniyle production reuse için reddedildi
 AŞAMA_08: DONE / CHARACTERIZATION — evidence BLOCKED_PARTIAL_EVIDENCE; iOS runtime/device PASS yok
+AŞAMA_09_USER_GO: GRANTED — kullanıcı custom renderer implementation başlangıcını açıkça onayladı
 AŞAMA_09_BRANCH: stage09-render-scene-camera
-AŞAMA_09_PR: #12
+AŞAMA_09_PR: #12 — OPEN / NOT_MERGED
 AŞAMA_09_LATEST_SOURCE_TEST_HEAD: 9a17d333afc0a3df1de856a9a53fae0e74617c29
-AŞAMA_09_EVIDENCE_HEAD: 14505c549ad3f829827222e8f1ede73c737d8b27
+AŞAMA_09_LATEST_WORKFLOW_HEAD: 0c5aa84bf491ec24c4409c35ffad83dd159b9290
 AŞAMA_09_IMPLEMENTED: compact immutable RenderScene; stable entity/layer/style/source metadata; double camera pipeline; RenderViewport bridge; large-origin precision regression; finite-overflow guards; OCS/WCS scaled normalization; diagnostics; fit/zoom/color context; deterministic semantic snapshot
-AŞAMA_09_VALIDATION: NOT_RUN — hosted jobs reach no steps; runner_id=0
-AŞAMA_09_LATEST_LINUX_RUN: 32791241242 / #28; job 97633067562; ubuntu-latest; pre-step failure
+AŞAMA_09_VALIDATION: NOT_EXECUTED — hiçbir hosted/self-hosted denemede checkout/build/test step'i başlamadı
+AŞAMA_09_UBUNTU_RUN: 32791364379 / #30; rerun attempt 2 job 97690824454; ubuntu-latest; steps=[]; runner_id=0
 AŞAMA_09_MACOS_RUN: 32786600644 / #14; macos-26; attempts 1/2/3 all pre-step failure
+AŞAMA_09_SLIM_RUN: 32811281420 / #32; job 97690952636; ubuntu-slim; steps=[]; runner_id=0
 AŞAMA_09_SELF_HOSTED_PROBE: 32784140351 / #3; suitable online runner not assigned; temporary workflow removed
 AŞAMA_09_EVIDENCE: docs/evidence/STAGE_09.md
+NEXT_WORK_STAGE: AŞAMA 09
 NEXT_ACTION: obtain any real exact .NET 10.0.400 execution environment; run Stage 09 T0 restore/build + T1 deterministic tests; fix compiler/test defects if any; only then close/merge PR #12
 AŞAMA_10_STATUS: NOT_STARTED
 ```
@@ -60,9 +63,11 @@ Uygulanan foundation:
 - Stable-ID sıralı immutable scene ve deterministic `render-scene/v1` semantic snapshot.
 - Eski `STAGE04_RENDER_CONTRACT_TESTS_PASS` marker'ı test harness'ta korunur.
 
-Validation henüz PASS değildir. Standard Linux (`ubuntu-latest`) ve doğru macOS (`macos-26`) hosted label'larıyla job'lar checkout başlamadan `steps=[]`, `runner_id=0` ile kesiliyor. Son source head üzerinde Stage 09 run `32791241242`/#28 job `97633067562` aynı sonucu verdi. Configured self-hosted Windows runner probe'u da uygun online runner bulamadı ve geçici workflow silindi. 2026-08-25 resmi GitHub status kontrolünde Actions operational görünüyordu; billing/quota/policy/capacity gibi daha özel root cause kanıtlanmadığından tahmin edilmez.
+Validation henüz PASS değildir. Standard Linux (`ubuntu-latest`), doğru macOS (`macos-26`) ve ayrı lightweight container pool (`ubuntu-slim`) hosted job'ları checkout başlamadan `steps=[]`, `runner_id=0` ile kesildi. En güncel ayrı-pool denemesi Stage 09 run `32811281420`/#32, job `97690952636` üzerinde aynı sonucu verdi. Configured self-hosted Windows runner probe'u da uygun online runner bulamadı ve geçici workflow silindi. Bu semptom compile/test failure değildir; billing/quota/policy/capacity gibi özel root cause kanıtlanmadığından tahmin edilmez.
 
-Bu nedenle PR #12 merge edilmedi ve AŞAMA 10 başlatılmadı.
+Exact `.NET SDK 10.0.400` resmi Microsoft release metadata'sında doğrulandı; fakat mevcut execution container'ında SDK/compiler yok ve dış payload indirme yolu tamamlanamadı. Farklı SDK ile sahte PASS üretilmedi.
+
+Bu nedenle PR #12 merge edilmedi ve AŞAMA 10 başlatılmadı. Yeni runner label'ları deneyerek tekrar zinciri üretme; bundan sonraki somut kapı gerçek exact .NET `10.0.400` execution environment'tır.
 
 ## Önceki kritik kararlar
 
