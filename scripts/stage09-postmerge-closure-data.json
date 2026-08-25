@@ -1,0 +1,64 @@
+{
+  "operations": [
+    {
+      "path": ".github/workflows/stage09-render-scene.yml",
+      "old": "  push:\n    branches:\n      - stage09-render-scene-camera",
+      "new": "  push:\n    branches:\n      - main\n      - stage09-render-scene-camera"
+    },
+    {
+      "path": "docs/evidence/STAGE_09.md",
+      "old": "- Güncel base `main` AŞAMA 09 kapanışı sırasında: `b0b0620c40ee5d9a0bcb681783c834fe44040afa`.\n- Branch: `stage09-render-scene-camera`.\n- PR: `#12` — `stage09: add render scene, camera, and diagnostics foundation`.\n- İlk scene/camera implementation head: `5b3f590dca123c3855e8aac7d48f781ba2cdfdb3`.\n- Son source/test hardening head: `9a17d333afc0a3df1de856a9a53fae0e74617c29`.\n- Current-main merge-parent sync: `259793da3828a291c6611700202bbbfcc02652a5`.\n- Yetkili AŞAMA 09 validation head: `7bba0b7a6da30dc4b23050872a7a1ef4e90ca087`.",
+      "new": "- Implementation kapanışı sırasında kullanılan base `main`: `b0b0620c40ee5d9a0bcb681783c834fe44040afa`.\n- Branch: `stage09-render-scene-camera`.\n- PR: `#12` — `stage09: establish render scene and camera foundation` — `MERGED`.\n- İlk scene/camera implementation head: `5b3f590dca123c3855e8aac7d48f781ba2cdfdb3`.\n- Son source/test hardening head: `9a17d333afc0a3df1de856a9a53fae0e74617c29`.\n- Yetkili AŞAMA 09 validation head: `7bba0b7a6da30dc4b23050872a7a1ef4e90ca087`.\n- Final PR head: `68d08bd3984ef4d1fcca027acb788c4bfcc5e43a`.\n- Final merge commit / `main` post-merge head: `0a2dd886bbe59698a6d2eb4c99f66e7f9270063a`.\n- Validation-head → merge-commit compare: AŞAMA 09 production source/test dosyalarında değişiklik yok; yalnız CI cleanup/workflow, handoff/evidence ve kullanıcı remote-test dokümanları değişti."
+    },
+    {
+      "path": "docs/evidence/STAGE_09.md",
+      "old": "- Kalıcı `.github/workflows/stage09-render-scene.yml` platform-independent uzun vadeli CI için tekrar `ubuntu-latest` kullanır.\n- Current `main` üzerindeki Android emulator automation dosyaları korunmuştur; AŞAMA 09 onları değiştirmez.",
+      "new": "- Kalıcı `.github/workflows/stage09-render-scene.yml` platform-independent uzun vadeli CI için `ubuntu-latest` kullanır; post-merge closure ile hem `main` push hem de Stage 09 feature-branch/PR değişikliklerini dinler.\n- Current `main` üzerindeki Android emulator automation dosyaları korunmuştur; AŞAMA 09 onları değiştirmez."
+    },
+    {
+      "path": "docs/evidence/STAGE_09.md",
+      "old": "- production graph'a ProCad eklenmedi.\n\nAŞAMA 01, AŞAMA 06 ve AŞAMA 08'in fiziksel/local dış kapıları değişmeden açık kalır.",
+      "new": "- production graph'a ProCad eklenmedi;\n- PR #12 `0a2dd886bbe59698a6d2eb4c99f66e7f9270063a` merge commit'i ile `main`e alındı;\n- yetkili validation head ile final merge commit arasında AŞAMA 09 source/test farkı olmadığı doğrulandı.\n\nAŞAMA 01, AŞAMA 06 ve AŞAMA 08'in fiziksel/local dış kapıları değişmeden açık kalır."
+    },
+    {
+      "path": "gecmis.md",
+      "old": "STAGE09_CURRENT_MAIN_SYNC: 259793da3828a291c6611700202bbbfcc02652a5 — main b0b0620c40ee5d9a0bcb681783c834fe44040afa Android-emulator automation değişiklikleri korunarak merge edildi\nSTAGE09_VALIDATION_HEAD: 7bba0b7a6da30dc4b23050872a7a1ef4e90ca087",
+      "new": "STAGE09_PR: #12 — MERGED\nSTAGE09_FINAL_PR_HEAD: 68d08bd3984ef4d1fcca027acb788c4bfcc5e43a\nSTAGE09_MERGE_COMMIT: 0a2dd886bbe59698a6d2eb4c99f66e7f9270063a\nSTAGE09_VALIDATION_HEAD: 7bba0b7a6da30dc4b23050872a7a1ef4e90ca087\nSTAGE09_POST_VALIDATION_DELTA: validation head -> merge commit yalnız workflow/docs/handoff; AŞAMA 09 production source/test dosyalarında değişiklik yok"
+    },
+    {
+      "path": "gecmis.md",
+      "old": "Artifact `9551137293`, digest `sha256:486c9d0b5a2a35cd4fbb402d9c56ab226a5b6175b8920da95298d18199054ddd`. Geçici self-hosted A09 workflow'u PASS sonrası kaldırıldı; kalıcı Stage09 workflow `ubuntu-latest` olarak bırakıldı.\n\nAyrıntı: `docs/evidence/STAGE_09.md`.",
+      "new": "Artifact `9551137293`, digest `sha256:486c9d0b5a2a35cd4fbb402d9c56ab226a5b6175b8920da95298d18199054ddd`. Geçici self-hosted A09 workflow'u PASS sonrası kaldırıldı; kalıcı Stage09 workflow `ubuntu-latest` olarak bırakıldı ve post-merge closure'da `main` push kapsamı eklendi. PR #12 final head `68d08bd3984ef4d1fcca027acb788c4bfcc5e43a` üzerinden merge edildi; merge commit `0a2dd886bbe59698a6d2eb4c99f66e7f9270063a`. Validation head ile merge commit arasındaki compare'da A09 production source/test değişikliği yoktur.\n\nAyrıntı: `docs/evidence/STAGE_09.md`."
+    },
+    {
+      "path": "DEVAM.md",
+      "old": "AŞAMA_09_PR: #12 — kapanış/merge için hazırlanmış branch stage09-render-scene-camera\nAŞAMA_09_SOURCE_TEST_HEAD: 9a17d333afc0a3df1de856a9a53fae0e74617c29\nAŞAMA_09_VALIDATION_HEAD: 7bba0b7a6da30dc4b23050872a7a1ef4e90ca087",
+      "new": "AŞAMA_09_PR: #12 — MERGED\nAŞAMA_09_FINAL_PR_HEAD: 68d08bd3984ef4d1fcca027acb788c4bfcc5e43a\nAŞAMA_09_MERGE_COMMIT: 0a2dd886bbe59698a6d2eb4c99f66e7f9270063a\nAŞAMA_09_SOURCE_TEST_HEAD: 9a17d333afc0a3df1de856a9a53fae0e74617c29\nAŞAMA_09_VALIDATION_HEAD: 7bba0b7a6da30dc4b23050872a7a1ef4e90ca087\nAŞAMA_09_POST_VALIDATION_DELTA: yalnız workflow/docs/handoff; production source/test değişikliği yok"
+    },
+    {
+      "path": "DEVAM.md",
+      "old": "Artifact `9551137293`, digest `sha256:486c9d0b5a2a35cd4fbb402d9c56ab226a5b6175b8920da95298d18199054ddd`.\n\nÖnceki `ubuntu-latest`, `macos-26` ve `ubuntu-slim` zero-step/runner_id=0 kayıtları hosted runner allocation problemiydi; self-hosted gerçek execution PASS ile A09 implementation failure olmadığı ayrıştırıldı. Geçici self-hosted A09 workflow'u kapanıştan sonra branch'ten kaldırıldı; kalıcı Stage 09 workflow'u `ubuntu-latest` üzerinde bırakıldı.",
+      "new": "Artifact `9551137293`, digest `sha256:486c9d0b5a2a35cd4fbb402d9c56ab226a5b6175b8920da95298d18199054ddd`. PR #12 final head `68d08bd3984ef4d1fcca027acb788c4bfcc5e43a` üzerinden `0a2dd886bbe59698a6d2eb4c99f66e7f9270063a` merge commit'i ile `main`e alındı. Validation head → merge commit compare'ında A09 production source/test dosyası değişmedi.\n\nÖnceki `ubuntu-latest`, `macos-26` ve `ubuntu-slim` zero-step/runner_id=0 kayıtları hosted runner allocation problemiydi; self-hosted gerçek execution PASS ile A09 implementation failure olmadığı ayrıştırıldı. Geçici self-hosted A09 workflow'u kapanıştan sonra branch'ten kaldırıldı; kalıcı Stage 09 workflow'u `ubuntu-latest` üzerinde bırakıldı ve post-merge closure ile `main` push kapsamı eklendi."
+    },
+    {
+      "path": "Mobil_DWG_DXF_Royalty_Free_Android_iOS_Nihai_Plan.md",
+      "old": "LAST_VERIFIED_REVISION: 7bba0b7a6da30dc4b23050872a7a1ef4e90ca087 — exact .NET 10.0.400 self-hosted execution üzerinde AŞAMA 09 targeted T0/T1 ve full Stage 04 architecture regression PASS",
+      "new": "LAST_VERIFIED_REVISION: 0a2dd886bbe59698a6d2eb4c99f66e7f9270063a — PR #12 merge commit; yetkili exact .NET 10.0.400 validation head 7bba0b7a6da30dc4b23050872a7a1ef4e90ca087 ve validation→merge compare'ında AŞAMA 09 production source/test farkı yok"
+    },
+    {
+      "path": "Mobil_DWG_DXF_Royalty_Free_Android_iOS_Nihai_Plan.md",
+      "old": "EVIDENCE: docs/evidence/STAGE_09.md; run 32815175055/#6; artifact 9551137293; sha256:486c9d0b5a2a35cd4fbb402d9c56ab226a5b6175b8920da95298d18199054ddd; STAGE09_DOTNET_PIN_PASS; STAGE09_T0_BUILD_PASS; STAGE09_RENDER_SCENE_TESTS_PASS; STAGE09_T1_SCENE_PASS; STAGE09_STAGE04_REGRESSION_PASS; render-scene/v1",
+      "new": "EVIDENCE: docs/evidence/STAGE_09.md; run 32815175055/#6; artifact 9551137293; sha256:486c9d0b5a2a35cd4fbb402d9c56ab226a5b6175b8920da95298d18199054ddd; PR #12 MERGED; merge 0a2dd886bbe59698a6d2eb4c99f66e7f9270063a; validation→merge source/test delta NONE; STAGE09_DOTNET_PIN_PASS; STAGE09_T0_BUILD_PASS; STAGE09_RENDER_SCENE_TESTS_PASS; STAGE09_T1_SCENE_PASS; STAGE09_STAGE04_REGRESSION_PASS; render-scene/v1"
+    },
+    {
+      "path": "Mobil_DWG_DXF_Royalty_Free_Android_iOS_Nihai_Plan.md",
+      "old": "Çıkış: **Sağlandı.** Sentetik scene headless üretilebilir; aynı semantic girdi aynı snapshot'ı verir; precision/OCS/diagnostics/architecture gate'leri gerçek exact toolchain üzerinde PASS. AŞAMA 10 aynı kullanıcı turunda başlatılmaz.",
+      "new": "Çıkış: **Sağlandı.** Sentetik scene headless üretilebilir; aynı semantic girdi aynı snapshot'ı verir; precision/OCS/diagnostics/architecture gate'leri gerçek exact toolchain üzerinde PASS. PR #12 final head `68d08bd3984ef4d1fcca027acb788c4bfcc5e43a` üzerinden merge edildi; merge commit `0a2dd886bbe59698a6d2eb4c99f66e7f9270063a`. Validation head ile merge commit arasında A09 production source/test değişikliği yoktur. AŞAMA 10 aynı kullanıcı turunda başlatılmaz."
+    },
+    {
+      "path": "docs/EXECUTION_LOG.md",
+      "old": "Cleanup:\n\n- Geçici `.github/workflows/stage09-self-hosted-validation.yml` PASS sonrası branch'ten kaldırıldı.\n- Kalıcı `.github/workflows/stage09-render-scene.yml` tekrar `ubuntu-latest` olarak bırakıldı.",
+      "new": "Post-merge closure audit:\n\n- PR #12 final head `68d08bd3984ef4d1fcca027acb788c4bfcc5e43a` üzerinden merge edildi; merge commit / `main` head `0a2dd886bbe59698a6d2eb4c99f66e7f9270063a`.\n- `7bba0b7a6da30dc4b23050872a7a1ef4e90ca087..0a2dd886bbe59698a6d2eb4c99f66e7f9270063a` compare'ında A09 production source/test dosyası değişmedi; yalnız workflow cleanup/hardening, evidence/handoff ve remote Android test dokümanı değişti.\n- Kalıcı Stage09 workflow'unun `push` kapsamına `main` eklendi; gelecekte doğrudan main'e gelen Stage09 source/test değişiklikleri de regression gate'ini tetikler.\n\nCleanup:\n\n- Geçici `.github/workflows/stage09-self-hosted-validation.yml` PASS sonrası branch'ten kaldırıldı.\n- Kalıcı `.github/workflows/stage09-render-scene.yml` `ubuntu-latest` olarak bırakıldı ve `main` push kapsamı eklendi."
+    }
+  ]
+}
