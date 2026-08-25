@@ -38,8 +38,11 @@ STAGE08_PHYSICAL_IPHONE: NOT_RUN_DEFERRED_EXTERNAL_GATE
 STAGE09_STATUS: DONE
 STAGE09_USER_GO: GRANTED / CONSUMED — yeniden istenmez
 STAGE09_SOURCE_TEST_HEAD: 9a17d333afc0a3df1de856a9a53fae0e74617c29
-STAGE09_CURRENT_MAIN_SYNC: 259793da3828a291c6611700202bbbfcc02652a5 — main b0b0620c40ee5d9a0bcb681783c834fe44040afa Android-emulator automation değişiklikleri korunarak merge edildi
+STAGE09_PR: #12 — MERGED
+STAGE09_FINAL_PR_HEAD: 68d08bd3984ef4d1fcca027acb788c4bfcc5e43a
+STAGE09_MERGE_COMMIT: 0a2dd886bbe59698a6d2eb4c99f66e7f9270063a
 STAGE09_VALIDATION_HEAD: 7bba0b7a6da30dc4b23050872a7a1ef4e90ca087
+STAGE09_POST_VALIDATION_DELTA: validation head -> merge commit yalnız workflow/docs/handoff; AŞAMA 09 production source/test dosyalarında değişiklik yok
 STAGE09_VALIDATION_RUN: 32815175055 / #6 SUCCESS
 STAGE09_VALIDATION_JOB: 97701882792 SUCCESS
 STAGE09_BUILD: targeted Release + full solution Release = 0 warning / 0 error
@@ -149,7 +152,7 @@ Uygulanan temel:
 
 Hosted Ubuntu/macOS/slim runner'lar bir süre checkout öncesi `runner_id=0` ile kesildi. Sonradan main'e eklenen dedicated `android-test` automation sayesinde self-hosted Windows runner'ın çevrimiçi olduğu doğrulandı. A09 için geçici validator ile gerçek exact .NET `10.0.400` execution yapıldı.
 
-Yetkili kapanış: head `7bba0b7a6da30dc4b23050872a7a1ef4e90ca087`, run `32815175055`/#6, job `97701882792`, `SUCCESS`. Hedefli ve full solution Release build `0 warning / 0 error`. T0/T1, deterministic snapshot, Core/Rendering/Architecture ve Stage05 dependency-boundary regresyon marker'ları geçti. Artifact `9551137293`, digest `sha256:486c9d0b5a2a35cd4fbb402d9c56ab226a5b6175b8920da95298d18199054ddd`. Geçici self-hosted A09 workflow'u PASS sonrası kaldırıldı; kalıcı Stage09 workflow `ubuntu-latest` olarak bırakıldı.
+Yetkili kapanış: head `7bba0b7a6da30dc4b23050872a7a1ef4e90ca087`, run `32815175055`/#6, job `97701882792`, `SUCCESS`. Hedefli ve full solution Release build `0 warning / 0 error`. T0/T1, deterministic snapshot, Core/Rendering/Architecture ve Stage05 dependency-boundary regresyon marker'ları geçti. Artifact `9551137293`, digest `sha256:486c9d0b5a2a35cd4fbb402d9c56ab226a5b6175b8920da95298d18199054ddd`. Geçici self-hosted A09 workflow'u PASS sonrası kaldırıldı; kalıcı Stage09 workflow `ubuntu-latest` olarak bırakıldı ve post-merge closure'da `main` push kapsamı eklendi. PR #12 final head `68d08bd3984ef4d1fcca027acb788c4bfcc5e43a` üzerinden merge edildi; merge commit `0a2dd886bbe59698a6d2eb4c99f66e7f9270063a`. Validation head ile merge commit arasındaki compare'da A09 production source/test değişikliği yoktur.
 
 Ayrıntı: `docs/evidence/STAGE_09.md`.
 

@@ -18,9 +18,9 @@ Bu blok ve aşağıdaki aşama kutuları her çalışma turunun sonunda güncell
 CURRENT_STAGE: AŞAMA 09
 CURRENT_SUBSTEP: 09.complete
 STATUS: DONE
-LAST_VERIFIED_REVISION: 7bba0b7a6da30dc4b23050872a7a1ef4e90ca087 — exact .NET 10.0.400 self-hosted execution üzerinde AŞAMA 09 targeted T0/T1 ve full Stage 04 architecture regression PASS
+LAST_VERIFIED_REVISION: 0a2dd886bbe59698a6d2eb4c99f66e7f9270063a — PR #12 merge commit; yetkili exact .NET 10.0.400 validation head 7bba0b7a6da30dc4b23050872a7a1ef4e90ca087 ve validation→merge compare'ında AŞAMA 09 production source/test farkı yok
 LAST_SUCCESSFUL_COMMAND: Stage 09 Self-Hosted Validation run 32815175055 / #6, job 97701882792 SUCCESS — targeted + full solution Release build 0 warning / 0 error
-EVIDENCE: docs/evidence/STAGE_09.md; run 32815175055/#6; artifact 9551137293; sha256:486c9d0b5a2a35cd4fbb402d9c56ab226a5b6175b8920da95298d18199054ddd; STAGE09_DOTNET_PIN_PASS; STAGE09_T0_BUILD_PASS; STAGE09_RENDER_SCENE_TESTS_PASS; STAGE09_T1_SCENE_PASS; STAGE09_STAGE04_REGRESSION_PASS; render-scene/v1
+EVIDENCE: docs/evidence/STAGE_09.md; run 32815175055/#6; artifact 9551137293; sha256:486c9d0b5a2a35cd4fbb402d9c56ab226a5b6175b8920da95298d18199054ddd; PR #12 MERGED; merge 0a2dd886bbe59698a6d2eb4c99f66e7f9270063a; validation→merge source/test delta NONE; STAGE09_DOTNET_PIN_PASS; STAGE09_T0_BUILD_PASS; STAGE09_RENDER_SCENE_TESTS_PASS; STAGE09_T1_SCENE_PASS; STAGE09_STAGE04_REGRESSION_PASS; render-scene/v1
 BLOCKERS: AŞAMA 09 blocker yok. AŞAMA 01/AŞAMA 06 gerçek Android ve AŞAMA 08 local Mac/ios-arm64/physical iPhone kapıları DEFERRED_EXTERNAL_GATE olarak açık kalır; AŞAMA 09 bunları kapatmaz.
 NEXT_ACTION: AŞAMA 10 — P0 temel geometri renderer'ı — bir sonraki kullanıcı `devam` turunda başlatılır. Bir turda en fazla bir aşama kuralı gereği bu AŞAMA 09 kapanış turunda AŞAMA 10 başlatılmaz.
 LAST_UPDATE: 2026-08-25
@@ -561,7 +561,7 @@ Test: Yetkili karakterizasyon `Stage 08 iOS Feasibility` run `32781026946` / #18
 - [x] T1 deterministic scene/camera executable testleri ve full Stage 04 architecture regression gerçek execution ile geçti; evidence artifact/log alındı.
 
 Test: Yetkili kapanış `Stage 09 Self-Hosted Validation` run `32815175055` / #6, job `97701882792`, head `7bba0b7a6da30dc4b23050872a7a1ef4e90ca087`, `SUCCESS`. Targeted ve full solution Release build `0 Warning / 0 Error`. Marker'lar: `STAGE09_DOTNET_PIN_PASS`, `STAGE09_T0_BUILD_PASS`, `STAGE04_CORE_CONTRACT_TESTS_PASS`, `STAGE04_RENDER_CONTRACT_TESTS_PASS`, `STAGE09_RENDER_SCENE_TESTS_PASS`, `render-scene/v1`, `STAGE09_T1_SCENE_PASS`, `STAGE04_ARCHITECTURE_TESTS_PASS`, `STAGE05_DEPENDENCY_BOUNDARY_PASS`, `STAGE04_T0_PASS`, `STAGE09_STAGE04_REGRESSION_PASS`. Artifact `9551137293`, digest `sha256:486c9d0b5a2a35cd4fbb402d9c56ab226a5b6175b8920da95298d18199054ddd`. Survey-origin snapshot `5000000.001` ayrıntısını korudu. Önceki hosted `runner_id=0` kayıtları infrastructure allocation problemi olarak ayrıştırıldı.  
-Çıkış: **Sağlandı.** Sentetik scene headless üretilebilir; aynı semantic girdi aynı snapshot'ı verir; precision/OCS/diagnostics/architecture gate'leri gerçek exact toolchain üzerinde PASS. AŞAMA 10 aynı kullanıcı turunda başlatılmaz.
+Çıkış: **Sağlandı.** Sentetik scene headless üretilebilir; aynı semantic girdi aynı snapshot'ı verir; precision/OCS/diagnostics/architecture gate'leri gerçek exact toolchain üzerinde PASS. PR #12 final head `68d08bd3984ef4d1fcca027acb788c4bfcc5e43a` üzerinden merge edildi; merge commit `0a2dd886bbe59698a6d2eb4c99f66e7f9270063a`. Validation head ile merge commit arasında A09 production source/test değişikliği yoktur. AŞAMA 10 aynı kullanıcı turunda başlatılmaz.
 
 ### AŞAMA 10 — P0 temel geometri renderer’ı
 

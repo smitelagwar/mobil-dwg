@@ -8,13 +8,15 @@ AŞAMA 09 çıkış kriterleri gerçek exact .NET `10.0.400` execution üzerinde
 
 ## Karar ve kapsam
 
-- Güncel base `main` AŞAMA 09 kapanışı sırasında: `b0b0620c40ee5d9a0bcb681783c834fe44040afa`.
+- Implementation kapanışı sırasında kullanılan base `main`: `b0b0620c40ee5d9a0bcb681783c834fe44040afa`.
 - Branch: `stage09-render-scene-camera`.
-- PR: `#12` — `stage09: add render scene, camera, and diagnostics foundation`.
+- PR: `#12` — `stage09: establish render scene and camera foundation` — `MERGED`.
 - İlk scene/camera implementation head: `5b3f590dca123c3855e8aac7d48f781ba2cdfdb3`.
 - Son source/test hardening head: `9a17d333afc0a3df1de856a9a53fae0e74617c29`.
-- Current-main merge-parent sync: `259793da3828a291c6611700202bbbfcc02652a5`.
 - Yetkili AŞAMA 09 validation head: `7bba0b7a6da30dc4b23050872a7a1ef4e90ca087`.
+- Final PR head: `68d08bd3984ef4d1fcca027acb788c4bfcc5e43a`.
+- Final merge commit / `main` post-merge head: `0a2dd886bbe59698a6d2eb4c99f66e7f9270063a`.
+- Validation-head → merge-commit compare: AŞAMA 09 production source/test dosyalarında değişiklik yok; yalnız CI cleanup/workflow, handoff/evidence ve kullanıcı remote-test dokümanları değişti.
 - ADR 0002 exact ProCad candidate için `NO-GO` verdiğinden tek production scene yolu **compact özel immutable RenderScene** olarak seçildi.
 - ProCad package/source production graph'a eklenmedi; paralel ikinci scene graph oluşturulmadı.
 - AŞAMA 10 geometry renderer kapsamına bu turda başlanmadı.
@@ -109,7 +111,7 @@ AŞAMA 09 kodundan bağımsız olarak standard `ubuntu-latest`, `macos-26` ve `u
 ## CI cleanup
 
 - Geçici `.github/workflows/stage09-self-hosted-validation.yml` yalnız AŞAMA 09 kapanış kanıtını üretmek için kullanıldı ve PASS sonrasında branch'ten kaldırıldı.
-- Kalıcı `.github/workflows/stage09-render-scene.yml` platform-independent uzun vadeli CI için tekrar `ubuntu-latest` kullanır.
+- Kalıcı `.github/workflows/stage09-render-scene.yml` platform-independent uzun vadeli CI için `ubuntu-latest` kullanır; post-merge closure ile hem `main` push hem de Stage 09 feature-branch/PR değişikliklerini dinler.
 - Current `main` üzerindeki Android emulator automation dosyaları korunmuştur; AŞAMA 09 onları değiştirmez.
 
 ## Çıkış
@@ -121,6 +123,8 @@ AŞAMA 09 çıkış kriteri **sağlandı**:
 - large-survey-origin `0.001` detay `double` hattında korundu;
 - exact .NET `10.0.400` T0/T1 geçti;
 - full Stage 04 architecture regression geçti;
-- production graph'a ProCad eklenmedi.
+- production graph'a ProCad eklenmedi;
+- PR #12 `0a2dd886bbe59698a6d2eb4c99f66e7f9270063a` merge commit'i ile `main`e alındı;
+- yetkili validation head ile final merge commit arasında AŞAMA 09 source/test farkı olmadığı doğrulandı.
 
 AŞAMA 01, AŞAMA 06 ve AŞAMA 08'in fiziksel/local dış kapıları değişmeden açık kalır. Bir turda en fazla bir aşama kuralı gereği AŞAMA 10 bu kapanış turunda başlatılmaz.

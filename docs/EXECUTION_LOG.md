@@ -108,10 +108,16 @@ Yetkili kapanış validation'ı:
 - Artifact `9551137293`, `stage09-self-hosted-evidence`, 1,578 bytes.
 - Digest `sha256:486c9d0b5a2a35cd4fbb402d9c56ab226a5b6175b8920da95298d18199054ddd`.
 
+Post-merge closure audit:
+
+- PR #12 final head `68d08bd3984ef4d1fcca027acb788c4bfcc5e43a` üzerinden merge edildi; merge commit / `main` head `0a2dd886bbe59698a6d2eb4c99f66e7f9270063a`.
+- `7bba0b7a6da30dc4b23050872a7a1ef4e90ca087..0a2dd886bbe59698a6d2eb4c99f66e7f9270063a` compare'ında A09 production source/test dosyası değişmedi; yalnız workflow cleanup/hardening, evidence/handoff ve remote Android test dokümanı değişti.
+- Kalıcı Stage09 workflow'unun `push` kapsamına `main` eklendi; gelecekte doğrudan main'e gelen Stage09 source/test değişiklikleri de regression gate'ini tetikler.
+
 Cleanup:
 
 - Geçici `.github/workflows/stage09-self-hosted-validation.yml` PASS sonrası branch'ten kaldırıldı.
-- Kalıcı `.github/workflows/stage09-render-scene.yml` tekrar `ubuntu-latest` olarak bırakıldı.
+- Kalıcı `.github/workflows/stage09-render-scene.yml` `ubuntu-latest` olarak bırakıldı ve `main` push kapsamı eklendi.
 - AŞAMA 01/AŞAMA 06/AŞAMA 08 dış cihaz/local gate'leri değişmeden açık.
 - Bir turda en fazla bir aşama kuralı gereği AŞAMA 10 bu kapanış turunda başlatılmadı.
 
