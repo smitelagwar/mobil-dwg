@@ -45,9 +45,19 @@ function Get-UiXml {
 }
 
 function Find-UiBounds {
-    param([xml]$Xml, [string]$Text, [switch]$Contains)
+    param(
+        [xml]$Xml,
+        [string]$Text,
+        [switch]$Contains,
+        [string]$ResourceId = '',
+        [switch]$ClickableAncestor
+    )
     if ($null -eq $Xml) { return $null }
     foreach ($node in $Xml.SelectNodes('//node')) {
+        if ($ResourceId -and -not [string]::Equals([string]$node.GetAttribute('resource-id'), $ResourceId, [StringComparison]::Ordinal)) {
+            continue
+        }
+
         $nodeText = [string]$node.GetAttribute('text')
         $nodeDesc = [string]$node.GetAttribute('content-desc')
         $match = if ($Contains) {
@@ -57,10 +67,21 @@ function Find-UiBounds {
             [string]::Equals($nodeText, $Text, [StringComparison]::OrdinalIgnoreCase) -or
             [string]::Equals($nodeDesc, $Text, [StringComparison]::OrdinalIgnoreCase)
         }
-        if ($match) {
-            $bounds = [string]$node.GetAttribute('bounds')
-            if ($bounds -match '^\[(\d+),(\d+)\]\[(\d+),(\d+)\]$') { return $bounds }
+        if (-not $match) { continue }
+
+        $target = $node
+        if ($ClickableAncestor) {
+            while ($null -ne $target -and $target.NodeType -eq [System.Xml.XmlNodeType]::Element -and
+                   -not [string]::Equals([string]$target.GetAttribute('clickable'), 'true', [StringComparison]::OrdinalIgnoreCase)) {
+                $target = $target.ParentNode
+            }
+            if ($null -eq $target -or $target.NodeType -ne [System.Xml.XmlNodeType]::Element) {
+                $target = $node
+            }
         }
+
+        $bounds = [string]$target.GetAttribute('bounds')
+        if ($bounds -match '^\[(\d+),(\d+)\]\[(\d+),(\d+)\]$') { return $bounds }
     }
     return $null
 }
@@ -79,9 +100,16 @@ function Click-Bounds {
 }
 
 function Try-ClickUiText {
-    param([string]$Serial, [string]$Text, [string]$Stem, [switch]$Contains)
+    param(
+        [string]$Serial,
+        [string]$Text,
+        [string]$Stem,
+        [switch]$Contains,
+        [string]$ResourceId = '',
+        [switch]$ClickableAncestor
+    )
     $xml = Get-UiXml -Serial $Serial -Stem $Stem
-    $bounds = Find-UiBounds -Xml $xml -Text $Text -Contains:$Contains
+    $bounds = Find-UiBounds -Xml $xml -Text $Text -Contains:$Contains -ResourceId $ResourceId -ClickableAncestor:$ClickableAncestor
     if (-not $bounds) { return $false }
     return Click-Bounds -Serial $Serial -Bounds $bounds
 }
@@ -121,7 +149,12 @@ function Select-Document {
     $openedRoots = $false
     $clickedDownloads = $false
     for ($i = 0; $i -lt 40; $i++) {
-        if (Try-ClickUiText -Serial $Serial -Text $FileName -Stem "$Stem-file-$i") { return }
+        # DocumentsUI grid titles are not themselves clickable. Use the nearest clickable
+        # card ancestor so a tap cannot land on a non-clickable child or behind the drawer.
+        if (Try-ClickUiText -Serial $Serial -Text $FileName -Stem "$Stem-file-$i" -ClickableAncestor) {
+            Start-Sleep -Milliseconds 500
+            return
+        }
 
         if (-not $openedRoots) {
             if (Try-ClickUiText -Serial $Serial -Text 'Show roots' -Stem "$Stem-roots-$i") {
@@ -131,9 +164,13 @@ function Select-Document {
             }
         }
 
-        if ($openedRoots -and -not $clickedDownloads -and (Try-ClickUiText -Serial $Serial -Text 'Downloads' -Stem "$Stem-downloads-$i" -Contains)) {
+        # The open drawer exposes several visible strings containing "Downloads". The
+        # breadcrumb/header is encountered first in UIAutomator XML but does not select a
+        # root. Target the actual drawer row by its android:id/title resource id.
+        if ($openedRoots -and -not $clickedDownloads -and
+            (Try-ClickUiText -Serial $Serial -Text 'Downloads' -Stem "$Stem-downloads-$i" -ResourceId 'android:id/title')) {
             $clickedDownloads = $true
-            Start-Sleep -Seconds 1
+            Start-Sleep -Milliseconds 1500
             continue
         }
 
