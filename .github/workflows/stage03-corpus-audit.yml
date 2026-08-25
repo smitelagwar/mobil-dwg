@@ -8,8 +8,6 @@ on:
       - fixtures/**
       - docs/GOLDEN_CONTRACT.md
       - docs/DEVICE_MATRIX.md
-      - docs/evidence/STAGE_03.md
-      - docs/evidence/android-validation/V03.md
       - scripts/stage03-validate-fixtures.py
       - scripts/stage03-verify-integrity.py
       - scripts/stage03-generate-synthetic-dwg.ps1
