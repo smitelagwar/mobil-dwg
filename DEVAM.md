@@ -30,7 +30,7 @@ IMPLEMENTATION_BASELINE: AŞAMA 09 — DONE
 IMPLEMENTATION_CURSOR: AŞAMA 10 — MAIN'E HENÜZ MERGE EDİLMEDİ
 IMPLEMENTATION_WORKSTREAM: docs/A10_WORKSTREAM.md + varsa açık A10 branch/PR
 ANDROID_VALIDATION_PROGRAM: V01–V09
-ANDROID_VALIDATION_CURRENT: V07 — NOT_STARTED
+ANDROID_VALIDATION_CURRENT: V08 — SCOPE_ARCHIVED / ANDROID_GRAPH_CHECK_PENDING — NOT_STARTED
 PENDING_EMULATOR_QUEUE: EMPTY
 V01: VALIDATED — INFRASTRUCTURE_SMOKE_ONLY
 V02: VALIDATED — dependency/lockfile/license/hash/vulnerability/Android-native boundary
@@ -38,10 +38,11 @@ V03: VALIDATED — fixture/provenance/golden/Android smoke-set contract
 V04: VALIDATED — REAL_APP_SHELL_RUNTIME_ONLY_NOT_VIEWER_FIDELITY
 V05: VALIDATED — REAL_ANDROID_APP_PARSER_SMOKE_ONLY_NOT_RENDER_FIDELITY
 V06: VALIDATED — REAL_ANDROID_APP_FILEPICKER_SAF_SAFE_OPEN_EMULATOR_ONLY_NOT_PHYSICAL_PROVIDER_FIDELITY
+V07: VALIDATED — PROCAD_NO_GO_PRODUCTION_GRAPH_ISOLATION_AND_PRECISION_REGRESSION_ONLY
 PHYSICAL_ANDROID: DEFERRED_RELEASE_DEVICE_GATE
-NEXT_ACTION: Sonraki validation turunda yalnız V07'yi başlat — ProCad NO-GO + production graph izolasyonu + precision regression; aynı turda V08'e geçme.
-NEXT_IF_TEST_READY: Sonraki BASLA/devam turu V07'yi yürütür.
-NEXT_IF_TEST_OFFLINE: Test edilebilir exact V07 SHA varsa queue/WAITING_RUNNER; yoksa gerçek stage durumu korunur. Ayrı sohbet BASLA_A10.md ile A10 draft branch'ini yürütür.
+NEXT_ACTION: Sonraki validation turunda yalnız V08 Android graph-isolation kontrolünü başlat; tarihsel iOS kapsamını yeniden açma ve aynı turda V09'a geçme.
+NEXT_IF_TEST_READY: Sonraki BASLA/devam turu V08 Android graph-isolation kontrolünü yürütür.
+NEXT_IF_TEST_OFFLINE: Test edilebilir exact V08 SHA varsa queue/WAITING_RUNNER; yoksa gerçek stage durumu korunur. Ayrı sohbet BASLA_A10.md ile A10 draft branch'ini yürütür.
 A10_MAIN_MERGE: BLOCKED_UNTIL_V04_V09_CLOSED_AND_A10_ANDROID_GATE
 A11_GATE: BLOCKED_UNTIL_V04_V09_CLOSED_AND_A10_DONE_ON_MAIN_AND_EMULATOR_QUEUE_EMPTY
 ```
@@ -130,17 +131,38 @@ Evidence: `docs/evidence/android-validation/V06.md`.
 
 V06 sırasında iki test-infrastructure false-negative'i düzeltildi: Android-only app'i referanslayan host probe `NU1201` bağı ve DocumentsUI roots drawer navigasyonu. Fiziksel Android/provider-specific fidelity hâlâ `DEFERRED_RELEASE_DEVICE_GATE`.
 
-## Sonraki validation işi — V07 henüz başlanmadı
+### V07 — VALIDATED
 
-- ADR 0002 ve pinned ProCad source kararı yeniden okunacak.
-- ProCad'ın production ProjectReference/PackageReference/native graph'a girmediği otomatik doğrulanacak.
-- `5,000,000 + 0.001` precision regresyonu çalıştırılacak.
-- Reddedilmiş ProCad adayını emulator üzerinde yeniden kurma yapılmayacak.
-- V08 aynı V07 turunda başlatılmayacak.
+Evidence: `docs/evidence/android-validation/V07.md`.
+
+- PR `#20`
+- tested head `559c1d033bdacedc6900d9ad126e7ab21fd8aa50`
+- exact checked-out PR synthetic merge `bfa728b840f63a5e9db5d5f376d19fb7f32c62f3`
+- main merge commit `4b3b15afe6c95f8393147758b6d16e092ac75a21`
+- authoritative run/job `32860034697` / `97841446382` — SUCCESS
+- artifact `9567840490`, 19,293 byte
+- artifact digest `sha256:bb2de209e3f6aecf74dc0d17dc9cf996a795cbeb8975a418f90d99d0d267d0b7`
+- same-job V02 dependency/lockfile/license/native-boundary prerequisite PASS.
+- ADR 0002 + exact rejected ProCad source pin consistency PASS.
+- production static graph, locked/resolved assets, app package graph ve Release APK ProCad/ProCadSharp absence PASS.
+- real current Release APK 30,913,146 byte; SHA-256 `4605ff85da02e4b45e8d4ae523ae9f5e678a8f596fbbaca23cef77edcab7d450`.
+- rejected `5,000,000 + 0.001` direct-float boundary observed delta `0`.
+- current production double scalar delta `0.001`; rendering survey-origin regression PASS.
+- `STAGE04_RENDER_CONTRACT_TESTS_PASS`, `STAGE09_RENDER_SCENE_TESTS_PASS`, `V07_PRODUCTION_DOUBLE_PRECISION_REGRESSION_PASS`.
+- marker `ANDROID_VALIDATION_V07_PASS`.
+- claim limit `PROCAD_NO_GO_PRODUCTION_GRAPH_ISOLATION_AND_PRECISION_REGRESSION_ONLY`.
+
+V07 sırasında üç Windows PowerShell validation portability false-negative'i düzeltildi (`String.Contains` overload, strict-mode JSON property enumeration, `double` evidence formatting); production failure değildir. Reddedilmiş ProCad candidate yeniden build/install edilmedi.
+
+## Sonraki validation işi — V08 henüz başlanmadı
+
+- AŞAMA 08 historical iOS evidence yalnız arşiv olarak korunacak; iOS workflow/Mac/simulator/iPhone işi çalıştırılmayacak.
+- Yalnız Android production/CI graph'ında iOS workload/native zorunluluğu olmadığı doğrulanacak.
+- V09 aynı V08 turunda başlatılmayacak.
 
 ## Paralel A10 yolu
 
-- Normal `BASLA.md`/bu dosya açık V07→V09 validation hattına gider.
+- Normal `BASLA.md`/bu dosya açık V08→V09 validation hattına gider.
 - Bilgisayar veya runner kapalıyken kullanıcı başka sohbette `BASLA_A10.md dosyasını oku` der.
 - A10 yalnız `stage10-p0-geometry-draft` branch'inde dondurulmuş sözleşmelere dokunmayan host-independent taslak işi yapar.
 - Host/GitHub-hosted kontrol sonuçsuzsa `CODED_PENDING_HOST_TESTS`, actual FAIL ise `FIX_REQUIRED/FIX_IN_PROGRESS`, hepsi actual non-zero-step PASS olduğunda V04–V09 uzlaştırması + Android gate bekleyen durum `CODED_PENDING_EMULATOR`dır.
