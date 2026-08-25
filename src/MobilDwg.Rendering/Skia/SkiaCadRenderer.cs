@@ -157,9 +157,29 @@ public sealed class SkiaCadRenderer : ICadRenderer
         alpha: (byte)((argb >> 24) & 0xFF));
 }
 
+public sealed record ScenePngRenderResult(byte[] Png, int NonBackgroundPixels);
+
 public static class SkiaScenePngRenderer
 {
     public static async ValueTask<byte[]> RenderFitAsync(
+        RenderScene scene,
+        int pixelWidth,
+        int pixelHeight,
+        double density = 1d,
+        double paddingFraction = 0.08,
+        CancellationToken cancellationToken = default)
+    {
+        var result = await RenderFitWithStatsAsync(
+            scene,
+            pixelWidth,
+            pixelHeight,
+            density,
+            paddingFraction,
+            cancellationToken);
+        return result.Png;
+    }
+
+    public static async ValueTask<ScenePngRenderResult> RenderFitWithStatsAsync(
         RenderScene scene,
         int pixelWidth,
         int pixelHeight,
@@ -173,6 +193,13 @@ public static class SkiaScenePngRenderer
         var camera = Camera2D.Fit(bounds, pixelWidth, pixelHeight, paddingFraction);
         using var surface = new SkiaBitmapRenderSurface(pixelWidth, pixelHeight, density);
         await new SkiaCadRenderer().RenderAsync(scene, surface, camera.ToViewport(), cancellationToken);
-        return surface.EncodePng();
+
+        var background = scene.ColorContext.BackgroundArgb;
+        var nonBackgroundPixels = surface.Bitmap.Pixels.Count(pixel =>
+            pixel.Alpha != 0 && ToArgb(pixel) != background);
+        return new ScenePngRenderResult(surface.EncodePng(), nonBackgroundPixels);
     }
+
+    private static uint ToArgb(SKColor color) =>
+        ((uint)color.Alpha << 24) | ((uint)color.Red << 16) | ((uint)color.Green << 8) | color.Blue;
 }

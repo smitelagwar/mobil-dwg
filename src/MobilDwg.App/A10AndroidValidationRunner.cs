@@ -1,7 +1,6 @@
 #if A10_VALIDATION
 using System.Security.Cryptography;
 using Android.Util;
-using MobilDwg.Rendering.Camera;
 using MobilDwg.Rendering.Diagnostics;
 using MobilDwg.Rendering.Geometry;
 using MobilDwg.Rendering.Scene;
@@ -31,16 +30,18 @@ internal static class A10AndroidValidationRunner
         Require(semantic.Contains("diagnostic=Dropped|P0_INVALID_GEOMETRY_DROPPED||Invalid source geometry is reported instead of silently rendered.", StringComparison.Ordinal), "controlled invalid geometry diagnostic");
         Log.Info(Tag, "A10_ANDROID_SEMANTIC_GOLDEN_PASS");
 
-        using var surface = new SkiaBitmapRenderSurface(900, 900, density: 1d);
-        var camera = Camera2D.Fit(scene.WorldBounds!.Value, 900, 900, paddingFraction: 0.08);
-        await new SkiaCadRenderer().RenderAsync(scene, surface, camera.ToViewport(), cancellationToken);
+        var render = await SkiaScenePngRenderer.RenderFitWithStatsAsync(
+            scene,
+            pixelWidth: 900,
+            pixelHeight: 900,
+            density: 1d,
+            paddingFraction: 0.08,
+            cancellationToken: cancellationToken);
 
-        var background = scene.ColorContext.BackgroundArgb;
-        var nonBackground = surface.Bitmap.Pixels.Count(pixel => pixel.Alpha != 0 && ToArgb(pixel) != background);
-        Require(nonBackground > 1000, $"expected-content pixel threshold; actual={nonBackground}");
-        Log.Info(Tag, $"A10_ANDROID_EXPECTED_CONTENT_PASS pixels={nonBackground}");
+        Require(render.NonBackgroundPixels > 1000, $"expected-content pixel threshold; actual={render.NonBackgroundPixels}");
+        Log.Info(Tag, $"A10_ANDROID_EXPECTED_CONTENT_PASS pixels={render.NonBackgroundPixels}");
 
-        var png = surface.EncodePng();
+        var png = render.Png;
         Require(png.Length > 2048, $"PNG byte threshold; actual={png.Length}");
         Require(png.Length >= 8 && png[0] == 0x89 && png[1] == 0x50 && png[2] == 0x4E && png[3] == 0x47, "PNG signature");
         var sha = Convert.ToHexString(SHA256.HashData(png)).ToLowerInvariant();
@@ -49,7 +50,7 @@ internal static class A10AndroidValidationRunner
         const string marker = "ANDROID_STAGE10_P0_GEOMETRY_RENDER_PASS";
         Log.Info(Tag, marker);
         Log.Info(Tag, "CLAIM_LIMIT=P0_SYNTHETIC_SCENE_GEOMETRY_RENDERER_API36_ONLY_NOT_CAD_PARSE_TO_SCENE_OR_PHYSICAL_DEVICE_FIDELITY");
-        return new A10AndroidValidationResult(marker, png, nonBackground, sha, semantic);
+        return new A10AndroidValidationResult(marker, png, render.NonBackgroundPixels, sha, semantic);
     }
 
     private static RenderScene BuildAcceptanceScene()
@@ -90,9 +91,6 @@ internal static class A10AndroidValidationRunner
         new RenderStyleToken("BYLAYER"),
         new RenderSourceReference(type, handle: id, sourceIndex: sourceIndex),
         geometry);
-
-    private static uint ToArgb(SkiaSharp.SKColor color) =>
-        ((uint)color.Alpha << 24) | ((uint)color.Red << 16) | ((uint)color.Green << 8) | color.Blue;
 
     private static void Require(bool condition, string message)
     {
