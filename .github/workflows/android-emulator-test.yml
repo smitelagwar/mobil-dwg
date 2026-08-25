@@ -39,6 +39,11 @@ jobs:
         with:
           persist-credentials: false
 
+      - name: Run Local Environment Doctor
+        shell: powershell
+        run: |
+          & .\scripts\doctor-local-environment.ps1
+
       - name: Run Android Emulator Gate Script
         shell: powershell
         run: |

@@ -11,9 +11,9 @@ ACTIVE_PRODUCT_TARGET: ANDROID_ONLY
 IOS_STATUS: DEFERRED_FUTURE_OPTION — aktif kapsam, aktif DoD ve sıradaki işlerden çıkarıldı
 IMPLEMENTATION_BASELINE: AŞAMA 01–09 kodlandı; AŞAMA 09 tamamlandı
 ACTIVE_PROGRAM: ANDROID_REVALIDATION_01_09
-CURRENT_VALIDATION_STAGE: V01
-CURRENT_STATUS: FIX_REQUIRED
-NEXT_ACTION: V01 — executable harness, gerçek kapsam, byte-safe screenshot ve PID/crash/ANR kanıt açıklarını düzelt; ardından exact emulator Release koşusunu al
+CURRENT_VALIDATION_STAGE: V02
+CURRENT_STATUS: NOT_STARTED
+NEXT_ACTION: Yalnız V02'yi başlat — dependency/lockfile/license-vulnerability policy ve Android artifact boundary doğrulaması; aynı turda V03'e geçme
 AFTER_V09: test borcunu temizle ve implementation cursor'ında Android-first tek hatta devam et (başlangıçta AŞAMA 10)
 PENDING_EMULATOR_QUEUE: EMPTY
 ```
@@ -87,7 +87,7 @@ Runner çevrim dışıyken aynı başarısız/queued workflow tekrar tekrar teti
 
 ## 7. V01–V09 doğrulama sırası
 
-### V01 — Toolchain, runner ve emulator altyapısı — `FIX_REQUIRED`
+### V01 — Toolchain, runner ve emulator altyapısı — `VALIDATED`
 
 Amaç: AŞAMA 01 iddialarını mevcut bilgisayarda yeniden okumak ve emulator köprüsünün gerçek sınırını kanıtlamak.
 
@@ -102,6 +102,19 @@ Amaç: AŞAMA 01 iddialarını mevcut bilgisayarda yeniden okumak ve emulator k�
 - Tarihsel fiziksel telefon kapısı aktif geliştirmeyi durdurmaz; release öncesi gerçek Android matrisi için açık kalır.
 
 Çıkış: GitHub → self-hosted Windows → emulator hattı exact commit ile çalışır ve geçerli artifact/marker üretir. Runner çevrim dışıysa bu çıkış sağlanmış sayılmaz; V01 `WAITING_RUNNER` kalırken iki-cursor kuralıyla güvenli kod işi sürebilir.
+
+V01 sonucu (2026-08-25): `VALIDATED`.
+
+- Exact tested SHA: `698c6e901672a736f2803894efb5bda34af08212`.
+- GitHub Actions run/job: `32821991333` / `97721878468`, Release, self-hosted Windows runner.
+- Toolchain doctor: .NET 10.0.400, maui-android, OpenJDK 21.0.12 baseline, Android API 36, Build-Tools 36.0.0, ADB 37.0.1, AVD `mobil-dwg-api36`.
+- Executable harness marker'ları: `STAGE04_CORE_CONTRACT_TESTS_PASS`, `STAGE04_RENDER_CONTRACT_TESTS_PASS`, `STAGE09_RENDER_SCENE_TESTS_PASS`, `STAGE04_ARCHITECTURE_TESTS_PASS`, `STAGE05_DEPENDENCY_BOUNDARY_PASS`.
+- Emulator: Android 16 / API 36 / x86_64 / QEMU=1; Stage01Smoke Release APK install ve cold launch `Status: ok`; live PID `3374`.
+- Screenshot: byte-safe PNG tam imza `89 50 4E 47 0D 0A 1A 0A`; artifact screenshot'ı indirildi, açıldı ve çalışan MAUI Stage01Smoke UI görüldü.
+- Crash/ANR: package/PID crash buffer boş; post-launch events create/start/resume/draw akışını içeriyor; `dumpsys activity lastanr` boot'tan beri ANR olmadığını bildiriyor.
+- Artifact: `9553530359`, digest `sha256:ad96924682330a93368c95889d75e8112dff8387170dcdeb17b17e3d72c8e7f7`, 7 dosya, 271043-byte ZIP.
+- Claim limit `INFRASTRUCTURE_SMOKE_ONLY`: gerçek `MobilDwg.App` viewer/DWG/DXF fidelity PASS değildir.
+- Ayrıntılı kanıt: `docs/evidence/android-validation/V01.md`.
 
 ### V02 — Dependency, lockfile ve Android artifact sınırı — `NOT_STARTED`
 
