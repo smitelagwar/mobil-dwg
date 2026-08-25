@@ -21,7 +21,7 @@ dotnet restore MobilDwg.sln
 dotnet build MobilDwg.sln \
   --configuration Release \
   --no-restore \
-  /warnaserror
+  -warnaserror
 
 dotnet run --project tests/MobilDwg.Architecture.Tests/MobilDwg.Architecture.Tests.csproj \
   --configuration Release \
@@ -32,7 +32,7 @@ dotnet restore tools/Stage06.OpenFlowProbe/Stage06.OpenFlowProbe.csproj
 dotnet build tools/Stage06.OpenFlowProbe/Stage06.OpenFlowProbe.csproj \
   --configuration Release \
   --no-restore \
-  /warnaserror
+  -warnaserror
 
 dotnet run --project tools/Stage06.OpenFlowProbe/Stage06.OpenFlowProbe.csproj \
   --configuration Release \
@@ -77,9 +77,9 @@ sed -i 's/local:MainPage/local:Stage06MainPage/g' "$SMOKE_ROOT/AppShell.xaml"
 grep -F 'local:Stage06MainPage' "$SMOKE_ROOT/AppShell.xaml"
 
 dotnet restore "$SMOKE_CSPROJ"
-dotnet build "$SMOKE_CSPROJ" -f net10.0-android -c Debug --no-restore /warnaserror
+dotnet build "$SMOKE_CSPROJ" -f net10.0-android -c Debug --no-restore -warnaserror
 echo 'STAGE06_ANDROID_DEBUG_BUILD_PASS'
-dotnet build "$SMOKE_CSPROJ" -f net10.0-android -c Release --no-restore /warnaserror
+dotnet build "$SMOKE_CSPROJ" -f net10.0-android -c Release --no-restore -warnaserror
 echo 'STAGE06_ANDROID_RELEASE_BUILD_PASS'
 
 MANIFEST="$SMOKE_ROOT/obj/Debug/net10.0-android/android/manifest/AndroidManifest.xml"
