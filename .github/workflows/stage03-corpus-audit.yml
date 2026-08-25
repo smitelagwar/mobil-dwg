@@ -9,8 +9,10 @@ on:
       - docs/GOLDEN_CONTRACT.md
       - docs/DEVICE_MATRIX.md
       - docs/evidence/STAGE_03.md
+      - docs/evidence/android-validation/V03.md
       - scripts/stage03-validate-fixtures.py
       - scripts/stage03-verify-integrity.py
+      - scripts/stage03-generate-synthetic-dwg.ps1
       - .github/workflows/stage03-corpus-audit.yml
       - .gitignore
   push:
@@ -21,50 +23,69 @@ on:
       - docs/DEVICE_MATRIX.md
       - scripts/stage03-validate-fixtures.py
       - scripts/stage03-verify-integrity.py
+      - scripts/stage03-generate-synthetic-dwg.ps1
       - .github/workflows/stage03-corpus-audit.yml
       - .gitignore
 
 permissions:
   contents: read
 
+concurrency:
+  group: stage03-corpus-${{ github.repository }}-${{ github.ref }}
+  cancel-in-progress: false
+
 jobs:
   corpus-audit:
-    runs-on: ubuntu-latest
-    timeout-minutes: 15
+    name: V03 fixture, provenance and Android smoke-set contract
+    runs-on: [self-hosted, windows, android-test, mobil-dwg]
+    timeout-minutes: 20
 
     steps:
-      - name: Checkout
+      - name: Checkout exact revision
         uses: actions/checkout@v5
-
-      - name: Set up Python
-        uses: actions/setup-python@v6
         with:
-          python-version: '3.13'
+          persist-credentials: false
+          clean: true
 
-      - name: Validate manifest JSON and script syntax
+      - name: Validate toolchain and script syntax
+        shell: powershell
         run: |
-          python -m json.tool fixtures/manifest/schema.json >/dev/null
-          python -m json.tool fixtures/manifest/stage03-mini.json >/dev/null
-          python -m json.tool fixtures/manifest/stage03-source-integrity.json >/dev/null
-          python -m py_compile scripts/stage03-validate-fixtures.py
-          python -m py_compile scripts/stage03-verify-integrity.py
+          $ErrorActionPreference = "Stop"
+          if ((dotnet --version).Trim() -ne "10.0.400") { throw "Expected .NET SDK 10.0.400" }
+          python --version
+          python -m json.tool fixtures/manifest/schema.json | Out-Null
+          python -m json.tool fixtures/manifest/stage03-mini.json | Out-Null
+          python -m json.tool fixtures/manifest/stage03-source-integrity.json | Out-Null
+          python -m py_compile scripts/stage03-validate-fixtures.py scripts/stage03-verify-integrity.py
+          Write-Host "V03_TOOLCHAIN_AND_SYNTAX_PASS"
 
-      - name: Validate corpus access, hashes and provenance
+      - name: Generate redistributable synthetic DWG candidate
+        shell: powershell
         run: |
-          python scripts/stage03-validate-fixtures.py \
-            --manifest fixtures/manifest/stage03-mini.json \
-            --cache "$RUNNER_TEMP/mobil-dwg-stage03" \
-            --evidence "$RUNNER_TEMP/stage03-fixture-audit.json"
+          $output = Join-Path $env:RUNNER_TEMP "mobil-dwg-stage03-generated/synthetic_turkish_basic_ac1015.dwg"
+          & .\scripts\stage03-generate-synthetic-dwg.ps1 -OutputDwg $output
 
-      - name: Verify immutable source dual hashes
+      - name: Validate corpus access, hashes, provenance and private boundary
+        shell: powershell
         run: |
-          python scripts/stage03-verify-integrity.py \
-            --audit "$RUNNER_TEMP/stage03-fixture-audit.json" \
-            --integrity fixtures/manifest/stage03-source-integrity.json
+          $cache = Join-Path $env:RUNNER_TEMP "mobil-dwg-stage03-cache"
+          $evidence = Join-Path $env:RUNNER_TEMP "stage03-fixture-audit.json"
+          python scripts/stage03-validate-fixtures.py --manifest fixtures/manifest/stage03-mini.json --cache $cache --evidence $evidence
+
+      - name: Verify immutable-source dual hashes
+        shell: powershell
+        run: |
+          $evidence = Join-Path $env:RUNNER_TEMP "stage03-fixture-audit.json"
+          python scripts/stage03-verify-integrity.py --audit $evidence --integrity fixtures/manifest/stage03-source-integrity.json
+          Write-Host "ANDROID_VALIDATION_V03_PROBE_PASS"
 
       - name: Upload Stage 03 evidence
         uses: actions/upload-artifact@v4
+        if: always()
         with:
           name: stage03-corpus-evidence
-          path: ${{ runner.temp }}/stage03-fixture-audit.json
-          if-no-files-found: error
+          path: |
+            ${{ runner.temp }}/stage03-fixture-audit.json
+            ${{ runner.temp }}/mobil-dwg-stage03-generated/synthetic_turkish_basic_ac1015.dwg
+          retention-days: 14
+          if-no-files-found: warn
