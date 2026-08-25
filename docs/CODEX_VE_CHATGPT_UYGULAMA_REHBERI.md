@@ -4,6 +4,8 @@
 **Aktif Kapsam:** Android-only Offline 2D DWG/DXF Viewer (v1)  
 **Hedef:** Bu doküman, projede bugüne kadar yapılanları özetler, mevcut plan ve kod mimarisindeki eksik/riskli noktaları ortaya koyar ve Codex / ChatGPT ile güvenle uygulanabilecek net, token-tasarruflu aksiyon paketleri sunar.
 
+> **Yetki sınırı:** Bu dosya öneri/inceleme belgesidir; yürütme checkpoint'i değildir. Gerçek `main`, açık PR/Actions, `Mobil_DWG_DXF_Royalty_Free_Android_iOS_Nihai_Plan.md`, `ANDROID_DOGRULAMA_PLANI.md` ve ilgili evidence her zaman üstündür. Prompt paketleri körlemesine uygulanmaz; açık validation PR'ının sahip olduğu checkpoint/evidence başka sohbet veya Codex tarafından paralel biçimde yeniden yazılmaz.
+
 ---
 
 ## BÖLÜM 1: Şu Ana Kadar Neler Yaptık? (Mevcut Durum Özeti)
@@ -34,7 +36,7 @@ Projede iki ana faz başarıyla tamamlanmış ve Android doğrulama fazı yürü
 
 > **SONUÇ:** **Evet, stratejik ve mimari olarak çok doğru bir yoldasınız.** Projede sıfır royalty, temiz lisans, sıfır ticari bağımlılık ve yüksek koordinat hassasiyeti (`double`) prensiplerine kusursuz uyulmuştur.
 
-Ancak, sonraki aşamalarda (özellikle V06 ve AŞAMA 10/11) sorun yaşamamak için aşağıdaki **7 risk ve eksik noktaya** dikkat edilmelidir:
+Ancak, sonraki aşamalarda (özellikle V06 ve AŞAMA 10/11) sorun yaşamamak için aşağıdaki **5 risk ve eksik noktaya** dikkat edilmelidir:
 
 ### 1. SkiaSharp Render Katmanı & Geometri Primitifleri (AŞAMA 10 Kritik Riski)
 * **Bulgu:** `MobilDwg.Rendering.csproj` içinde henüz SkiaSharp referansı yoktur. `RenderSceneEntity` şu an sadece metadata ve Bounds taşımaktadır.
@@ -42,7 +44,7 @@ Ancak, sonraki aşamalarda (özellikle V06 ve AŞAMA 10/11) sorun yaşamamak iç
 
 ### 2. Sentetik Fixture vs Gerçek Dünya Mühendislik Çizimleri (Corpus Riski)
 * **Bulgu:** Testler şu anda yalnızca birkaç entity içeren sentetik 0BSD dosyalarla yapılmaktadır.
-* **Öneri/Önlem:** Türkiye'deki gerçek inşaat/mimarlık projelerinde (kolon aplikasyon, kalıp planı, donatı detayları) yer alan 50.000+ entity'li çizimlerde bellek (OOM) ve FPS performansını ölçmek için test matrisine orta ölçekli gerçek/anonimleştirilmiş DWG paftaları dahil edilmelidir.
+* **Öneri/Önlem:** 50.000+ entity bellek/FPS ölçümü AŞAMA 20/21 performans kapısında yapılmalıdır. Kullanıcıya ait veya yalnız “anonimleştirildiği” varsayılan özel pafta repoya/CI artifact'ine konmaz; yalnız açık yeniden dağıtım izni/provenance kanıtlı corpus ya da kontrollü sentetik üretim kullanılır.
 
 ### 3. SHX Font ve Türkçe Karakter Desteği
 * **Bulgu:** `AcadSharpDocumentReader.cs` içinde `File.Exists(filename)` kontrolü Android ortamında çalışmaz (çünkü `.shx` fontları dosya sisteminde dağınık değildir).
@@ -64,45 +66,45 @@ Aşağıdaki prompt blokları, token tasarrufu sağlayacak şekilde doğrudan Ch
 
 ---
 
-### PAKET 1: V05 Kapanışı ve V06 (Android Safe-Open & SAF) Hazırlığı
+### PAKET 1: V05 Kapanışı; V06'yı Yalnız Sonraki Tur İçin Hazır Bırakma
 *(Bu promptu V05 testi tamamlandığında ChatGPT/Codex'e verin)*
 
 ```markdown
-GÖREV: Android V05 revalidation aşamasını tamamla ve V06 (FilePicker/SAF & Safe-Open) aşamasına geç.
+GÖREV: Android V05 revalidation aşamasını gerçek kanıtla kapat; V06'yı aynı turda başlatma.
 
 TALİMATLAR:
 1. `docs/evidence/android-validation/V05.md` dosyasını gerçek Android API 36 emülatör parse kanıtlarıyla oluştur/güncelle.
 2. `gecmis.md`, `ANDROID_DOGRULAMA_PLANI.md`, `DEVAM.md` ve `Mobil_DWG_DXF_Royalty_Free_Android_iOS_Nihai_Plan.md` dosyalarındaki checkpoint'leri V05 VALIDATED olarak işaretle.
-3. CURRENT_STAGE değerini V06 yap.
-4. V06 için `src/MobilDwg.App/Opening/` altındaki `CadFileOpenCoordinator` ve `SafeCadFileCache` bileşenlerini Android FilePicker / Documents provider üzerinden gerçek bir DWG/DXF açma akışına bağlayacak emülatör gate betiğini hazırla.
-5. Hiçbir dosyada GPL kütüphane veya CAD writer kodu ekleme.
+3. Yalnız bütün zorunlu actual/non-zero-step sonuçlar ve exact evidence doğrulandıysa sonraki cursor'ı `V06 — NOT_STARTED` yap.
+4. Bu kapanış turunda V06 source/workflow/gate kodu yazma; sonraki kullanıcı turuna net `NEXT_ACTION` bırak.
+5. Hiçbir dosyada GPL kütüphane veya CAD writer kodu ekleme; queued/zero-step sonucu PASS sayma.
 ```
 
 ---
 
 ### PAKET 2: AŞAMA 10 (P0 Geometri Primitifleri & Tessellation) Hazırlığı
-*(Bu promptu V09 revalidation tamamlandıktan veya offline A10 çalışmasına başlarken verin)*
+*(V09 öncesi yalnız aşağıdaki dar offline kapsam; mevcut sözleşme/Skia entegrasyonu ancak V09 sonrasında)*
 
 ```markdown
-GÖREV: AŞAMA 10 — P0 Geometri Modeli ve SkiaSharp Öncesi Tessellation Altyapısını Kur.
+GÖREV: AŞAMA 10 — canonical `BASLA_A10.md` sınırları içinde P0 geometri taslağını hazırla.
 
 TALİMATLAR:
-1. `src/MobilDwg.Rendering/Scene/` altına aşağıdaki 2D primitif yapılarını ekle:
+1. Önce `BASLA_A10.md` ve `docs/A10_WORKSTREAM.md` dosyalarını oku; yalnız ayrı `stage10-p0-geometry-draft` branch'inde çalış.
+2. V09 kapanmadan yalnız yeni/internal, platform-neutral ve mevcut sözleşmelerden bağımsız saf geometri matematiği/testleri ekle. Aday yapılar:
    - `LineGeometry` (Start: WorldPoint2, End: WorldPoint2)
    - `PolylineGeometry` (Points: IReadOnlyList<WorldPoint2>, IsClosed: bool, Bulges: IReadOnlyList<double>?)
    - `CircleGeometry` (Center: WorldPoint2, Radius: double)
    - `ArcGeometry` (Center: WorldPoint2, Radius: double, StartAngle: double, EndAngle: double)
    - `TextGeometry` (InsertionPoint: WorldPoint2, Text: string, Height: double, Rotation: double)
-2. Tüm geometrik koordinatları `double` olarak koru.
-3. `RenderSceneEntity` kaydına bu geometrileri tutan `IGeometry2D` veya `SceneGeometryData` alanını ekle.
-4. `Bulge` (yaylı polyline segmentleri) için arc tessellation fonksiyonunu `double` hassasiyetle yaz.
-5. Unit testlerini `tests/MobilDwg.Rendering.Tests/Program.cs` içine ekle ve tüm testlerin PASS olduğunu doğrula.
+3. Tüm geometrik koordinatları `double` olarak koru; `Bulge` tessellation saf matematik olarak test edilebilir.
+4. V09 kapanmadan `RenderSceneEntity`, `IRenderScene`/`ICadRenderer`, snapshot/architecture, `.csproj`/Skia wiring veya fixture/image-golden sözleşmelerini değiştirme.
+5. V09 sonrasında güncel validated `main` ile integration yap; ancak o turda mevcut scene sözleşmesine bağlama ve Skia ekran-piksel dönüşümünü değerlendir. Android gate olmadan merge/DONE yoktur.
 ```
 
 ---
 
 ### PAKET 3: Türkçe Karakter & SHX Font Eşleme (Substitution) Modülü
-*(Bu promptu metin renderına geçerken Codex/ChatGPT'ye verin)*
+*(Bu promptu yalnız metin-render aşaması açıldığında verin; V05/V06 veya erken A10 kapsamında uygulamayın)*
 
 ```markdown
 GÖREV: CAD Metinleri ve Türkçe Karakterler İçin Güvenli Font Eşleme (Font Substitution) Tablosu Geliştir.
@@ -126,3 +128,12 @@ TALİMATLAR:
 | **SAF / Dosya Açma** | İyi | DÜŞÜK | Android 14+ testlerinde bilinmeyen stream uzunluğu durumunu kontrol et. |
 | **Font & Türkçe Karakter** | Geliştirilecek | ORTA | Paket 3 promptunu uygula. |
 | **Gerçek DWG Testleri** | Geliştirilecek | YÜKSEK | V09 sonrası gerçek 50k+ entity'li mimari paftalarla performans testi yap. |
+
+---
+
+## Codex değerlendirme kararı — 25 Ağustos 2026
+
+- Dış `CODEX_ONERILER.md` içindeki `3aa365d`, `V05 CODED_PENDING_EMULATOR`, boş V05 evidence oluşturma ve ana checkpoint'i elle değiştirme önerileri artık güncel değildir. Açık PR `#18` kendi gerçek V05 evidence'ını ve V06-next checkpoint'ini oluşturmuştur; bu iş `main` üzerinde tekrarlanmaz.
+- PR `#18` kapanmadan onun source/evidence/checkpoint dosyalarına paralel düzeltme yapılmaz. Sonuçlar queued iken `VALIDATED/DONE` türetilmez; PR sahibi sohbet actual sonuçları izler.
+- Şu an uygulanacak yeni production kodu yoktur. SAF, font/encoding, background parsing ve büyük-corpus maddeleri ilgili V06+/AŞAMA 10+/performans aşamasında yeniden doğrulanacak önerilerdir.
+- Doğru yol korunuyor: Android-only, VXX sıralı validation, ayrı ve dar A10 draft hattı, iOS future option, A11 kapısı kapalı.
