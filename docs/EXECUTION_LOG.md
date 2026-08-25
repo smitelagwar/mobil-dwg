@@ -7,7 +7,7 @@ Bu dosya teknik yürütme geçmişinin kısa indeksidir. Ayrıntılı kanıt `do
 - 2026-08-24 — AŞAMA 00 — `DONE`: execution/evidence/ADR/handoff zemini.
 - 2026-08-24 — AŞAMA 01 — `BLOCKED / DEFERRED_EXTERNAL_GATE`: pinned Android toolchain; fiziksel Android dış kapısı açık.
 - 2026-08-24 — AŞAMA 02 — `DONE`: dependency/lisans/lockfile; PR #4 merge `f0a43db6cc3aee9103f42798fa124da4d1ff39d1`.
-- 2026-08-24 — AŞAMA 03 — `DONE`: mini corpus/golden; historical run `32752374980`; PR #5 merge `fb2d0982efeab8f78bc78dc82a7a8deb688190f8`.
+- 2026-08-24 — AŞAMA 03 — `DONE`: mini corpus/golden; run `32752374980`; PR #5 merge `fb2d0982efeab8f78bc78dc82a7a8deb688190f8`.
 - 2026-08-24 — AŞAMA 04 — `DONE`: Core/Cad/Rendering/App architecture; run `32755230695`; PR #6 merge `c01311ccb5c82b7bac023b24ae6a8000ae4655af`.
 - 2026-08-24 — AŞAMA 05 — `DONE`: ACadSharp 3.7.1 parser baseline GO; run `32760139261`; artifact `9532379884`; PR #7 merge `bbe5b62224ae6e7fdaebd1c1c6ace87418f09b9f`.
 - 2026-08-24 — AŞAMA 06 — host implementation done / physical FilePicker-SAF deferred; run `32762879583`; artifact `9533538573`.
@@ -19,7 +19,7 @@ Bu dosya teknik yürütme geçmişinin kısa indeksidir. Ayrıntılı kanıt `do
 ## Android validation V01 — VALIDATED
 
 - tested SHA `698c6e901672a736f2803894efb5bda34af08212`
-- run/job `32821991333` / `97721878468`
+- run/job `32821991333 / 97721878468`
 - artifact `9553530359`, digest `sha256:ad96924682330a93368c95889d75e8112dff8387170dcdeb17b17e3d72c8e7f7`
 - claim `INFRASTRUCTURE_SMOKE_ONLY`
 - evidence `docs/evidence/android-validation/V01.md`
@@ -28,109 +28,86 @@ Bu dosya teknik yürütme geçmişinin kısa indeksidir. Ayrıntılı kanıt `do
 
 - strict exact ACadSharp `[3.7.1]`, SkiaSharp `[4.151.1]`, fallback IxMilia.Dxf `[0.8.4]`
 - locked restore/license/hash/vulnerability/Android-native/source boundary PASS
-- authoritative run/job `32824397251` / `97729154385`
+- run/job `32824397251 / 97729154385`
 - artifact `9554326162`, digest `sha256:921847d550b74b566ee056e8a45956db76e3213f892ca512df07eda77a6d504a`
 - evidence `docs/evidence/android-validation/V02.md`
 
 ## Android validation V03 — VALIDATED
 
-- fixture/provenance/golden/smoke-set contract hardened; committed hash Git blob bytes üzerinden.
-- generated AC1015 DWG writer/read-back smoke evidence, binary golden değil.
-- tested head `69e4e842b5426d71453f5f69a01ebba5948d6b9c`
-- tested merge `1171807016e2deacc4f575b7980400b4f8b4708c`
-- run/job `32827625875` / `97739039060`
+- tested head `69e4e842b5426d71453f5f69a01ebba5948d6b9c`; tested merge `1171807016e2deacc4f575b7980400b4f8b4708c`
+- run/job `32827625875 / 97739039060`
 - artifact `9555501552`, digest `sha256:d964063ba786c61bccdbdbd1c184cf0023e35ee44a1e4b8d33986f1ddebac23a`
 - marker `ANDROID_VALIDATION_V03_PASS`
 - evidence `docs/evidence/android-validation/V03.md`
 
 ## Android validation V04 — VALIDATED
 
-- real Android-only MAUI `MobilDwg.App`, package `com.smitelagwar.mobildwg`, API36 build/install/cold-launch/UI/PID/crash-ANR/liveness PASS.
-- tested head `227ffa49c3095c4328f146acf1a2d9ecc07eb62d`
-- tested merge `6201be929a636b963235f7da8ee72b0bbf9decf2`
-- run/job `32832142832` / `97752997848`
-- same-head V02 regression `32832142882` / `97752998222`
-- artifact `9557331919`, digest `sha256:0ccdb5028b417212f6d428475e8793ebc9d3a8018164c63b2703228dda00c0b4`
+- real Android-only MAUI `MobilDwg.App`; API36 build/install/cold-launch/UI/PID/crash-ANR/liveness PASS
+- tested head `227ffa49c3095c4328f146acf1a2d9ecc07eb62d`; tested merge `6201be929a636b963235f7da8ee72b0bbf9decf2`
+- run/job `32832142832 / 97752997848`; artifact `9557331919`, digest `sha256:0ccdb5028b417212f6d428475e8793ebc9d3a8018164c63b2703228dda00c0b4`
 - claim `REAL_APP_SHELL_RUNTIME_ONLY_NOT_VIEWER_FIDELITY`
 - evidence `docs/evidence/android-validation/V04.md`
 
 ## 2026-08-25 — İki çalışma hattı / sınırlı A10 taslak kararı
 
 - Validation cursor V04→V09 sırasını korur ve genel `BASLA.md` sohbetinde yürür.
-- Yalnız AŞAMA 10, ayrı `stage10-p0-geometry-draft` branch'inde `BASLA_A10.md` protokolüyle önden hazırlanabilir.
+- AŞAMA 10 yalnız ayrı `stage10-p0-geometry-draft` branch'inde `BASLA_A10.md` protokolüyle önden hazırlanabilir.
 - V09 sonrası güncel validated `main` ile integration + Android gate olmadan A10 main merge/DONE yoktur.
 - A11 yalnız A10 `DONE ON MAIN` ve boş emulator kuyruğu sonrasında açılır.
-- Kalıcı çalışma kaydı: `docs/A10_WORKSTREAM.md`.
 
 ## Android validation V05 — VALIDATED
 
-- Production `AcadSharpDocumentReader` V03 redistributable DXF/DWG smoke setiyle gerçek Android `MobilDwg.App` process'i içinde çalıştırıldı.
-- İlk portability false-negative: Git Bash/MSYS `/warnaserror` → path dönüşümü; `-warnaserror` ile düzeltildi.
-- İkinci portability false-negative: localized `dotnet list package` çıktısını parse eden grep; final gate central props + lockfile + `project.assets.json` ile locale-independent yapıldı.
-- tested PR head revision `de39866f8bd71c20fa51b355748ed79884fbb4e6`
-- main merge commit `9013d52702d1cb44e378aeacda46ee51e53caa65`
-- authoritative run/job `32838507832` / `97772635524` — SUCCESS
-- artifact `9561607163`, 29,656,507 byte; digest `sha256:16359b01f4d3c72847b90227b03b321036495b45f2d65cd34d2c772f14528109`
-- host mini corpus `9` fixture + `2` derived negative PASS
-- `STAGE05_ACADSHARP_PACKAGE_PASS central=[3.7.1] resolved=3.7.1`
-- generated AC1015 DWG 8021 byte + DwgReader read-back PASS; run-specific SHA `0cb734fae8a87ca63562ff7b2e056f835c09f08150cc4345e0a1b5a847cf0099`; binary golden değil
-- `V05_PRODUCTION_WRITER_ABSENT_PASS`
-- validation APK 30,876,566 byte; SHA-256 `1c0dc516b9e1db6270b4f9d8818c3dff09efb98ebc63b085d914358dc11a12ac`
-- package install/cold-launch/UI parse/stability PASS; PID `3835`
-- marker `ANDROID_VALIDATION_V05_PASS`
-- claim `REAL_ANDROID_APP_PARSER_SMOKE_ONLY_NOT_RENDER_FIDELITY`
-- same-head V04 regression `32838507889 / 97772635962` — SUCCESS; artifact `9561764023`, digest `sha256:b5f8581c4c4290adb83fb243968bb93b7a3991ca14c6658e418468acf76288e8`
+- production `AcadSharpDocumentReader` real Android app process içinde V03 DXF/DWG smoke setiyle PASS
+- tested head `de39866f8bd71c20fa51b355748ed79884fbb4e6`; main merge `9013d52702d1cb44e378aeacda46ee51e53caa65`
+- run/job `32838507832 / 97772635524`; artifact `9561607163`, digest `sha256:16359b01f4d3b888c6235f240208b4674b834edc550dd1208ce37e34a6506d2b65`
+- package `ACadSharp 3.7.1`; writer/save absent; install/cold-launch/UI parse/stability PASS
+- marker `ANDROID_VALIDATION_V05_PASS`; claim `REAL_ANDROID_APP_PARSER_SMOKE_ONLY_NOT_RENDER_FIDELITY`
 - evidence `docs/evidence/android-validation/V05.md`
 
 ## Android validation V06 — VALIDATED
 
-- Real `MobilDwg.App` MAUI FilePicker → Android DocumentsUI/SAF → `FileResult.OpenReadAsync()` → app-private safe-copy → production parser zinciri API36 emulator üzerinde doğrulandı.
-- Historical Stage06 host probe Android-only app'i `net10.0` host'tan referansladığı için `NU1201` veriyordu; app multi-target yapılmadan production safe-open BCL kaynakları probe'a linklendi.
-- DocumentsUI ilk gerçek koşuda `Recent / No items` ekranında kalırken roots drawer açılmadan `Downloads` aranıyordu; failure artifact UI XML'indeki `Show roots` kanıtıyla navigation `Show roots` → `Downloads` → file olarak düzeltildi.
-- diagnostic failed run/job `32846335305 / 97796783640`: host probe `NU1201`; artifact `9562991064`, digest `sha256:5951a3ba321cc0f0954cdd688614b0c177f141089c3328f39e272542ea6b66b5`.
-- diagnostic failed run/job `32847919780 / 97801845809`: DocumentsUI target file görünürlüğü; artifact `9563560512`, digest `sha256:2d7a310a5e6317923134ad00b17b10578431c5e6c184383574bc5eb7499cd911`.
-- tested PR head `ae8682875524157285946724bd70d6ff010f3917`
-- tested PR synthetic merge `26b3cdd6ca50d34b98a4806d92f50d4828077d41`
-- PR #19 main merge `e17e2472f38557552698b8cf9526d6cbf8b25580`
-- authoritative run/job `32849725110` / `97807551403` — SUCCESS
-- artifact `9564837027`, 29,743,234 byte; digest `sha256:a88eaf46d7cc2090111cb18ce81c3a1d9b56eaed08bdfd070fb0a22be74194a0`
-- `STAGE06_ACTUAL_DWG_DXF_PASS`, `STAGE06_SAFE_COPY_GUARDS_PASS`, `STAGE06_LAST_REQUEST_WINS_PASS`, `STAGE06_CANCEL_SEMANTICS_PASS`, `STAGE06_T2_HEADLESS_PASS`
-- validation APK 30,917,242 byte; SHA-256 `4bcd819def4483fbc076865dd70b10026eb2eae7515c07561a9cdfe02ff9c9a5`
-- package/install/cold-launch PASS; real DWG SAF open PASS; second selection DXF/latest-state PASS
-- rotate/background-foreground/picker-cancel/close-cleanup/reopen PASS; PID `3876`
-- original external CAD bytes immutable PASS
-- broad external-storage permission absent; immediate-copy path persistable URI grant gerektirmedi/almadı
-- package/PID crash + post-launch ANR/liveness PASS
-- marker `ANDROID_VALIDATION_V06_PASS`
+- real `MobilDwg.App` FilePicker → DocumentsUI/SAF → private safe-copy → production parser PASS
+- diagnostic `32846335305 / 97796783640`: host probe `NU1201`; artifact `9562991064`
+- diagnostic `32847919780 / 97801845809`: DocumentsUI roots navigation; artifact `9563560512`
+- tested head `ae8682875524157285946724bd70d6ff010f3917`; synthetic merge `26b3cdd6ca50d34b98a4806d92f50d4828077d41`; main merge `e17e2472f38557552698b8cf9526d6cbf8b25580`
+- run/job `32849725110 / 97807551403`; artifact `9564837027`, digest `sha256:a88eaf46d7cc2090111cb18ce81c3a1d9b56eaed08bdfd070fb0a22be74194a0`
+- DWG/DXF selection + lifecycle/cleanup/immutability PASS; marker `ANDROID_VALIDATION_V06_PASS`
 - claim `REAL_ANDROID_APP_FILEPICKER_SAF_SAFE_OPEN_EMULATOR_ONLY_NOT_PHYSICAL_PROVIDER_FIDELITY`
-- same-head V04 regression `32849725215 / 97807552081` — SUCCESS; artifact `9565016182`, digest `sha256:6922f2168334e8312debc2c90cb7905d9db5da58eb8cb10da3f8aadf6e53bb3f`
-- same-head V05 regression `32849725272 / 97807552194` — SUCCESS; artifact `9565243977`, digest `sha256:36ada98dd79f7f70e2ef7e63d6d2cb6cec191141421c07bcf41673dded23b492`
 - evidence `docs/evidence/android-validation/V06.md`
-- physical Android/provider-specific fidelity `DEFERRED_RELEASE_DEVICE_GATE` olarak açık kalır.
 
 ## Android validation V07 — VALIDATED
 
-- Dedicated workflow `Android V07 ProCad Isolation` aynı job içinde V02 prerequisite + current production graph/APK/precision gate'ini gerçek non-zero-step çalıştırdı.
-- tested PR head `559c1d033bdacedc6900d9ad126e7ab21fd8aa50`
-- exact checked-out PR synthetic merge `bfa728b840f63a5e9db5d5f376d19fb7f32c62f3`
-- PR #20 main merge `4b3b15afe6c95f8393147758b6d16e092ac75a21`
-- authoritative run/job `32860034697` / `97841446382` — SUCCESS
-- artifact `9567840490`, 19,293 byte; digest `sha256:bb2de209e3f6aecf74dc0d17dc9cf996a795cbeb8975a418f90d99d0d267d0b7`
-- V02 exact version/locked restore/license/native-boundary/vulnerability prerequisite PASS
-- ADR 0002/source-pin consistency PASS
-- static production graph, production lockfiles/resolved `project.assets.json`, current app package graph ve Release APK ProCad/ProCadSharp absence PASS
-- current Release APK 30,913,146 byte; SHA-256 `4605ff85da02e4b45e8d4ae523ae9f5e678a8f596fbbaca23cef77edcab7d450`
-- rejected direct-float survey-origin precision blocker reproduced: observed delta `0`
-- production double scalar observed delta `0.001`; `STAGE04_RENDER_CONTRACT_TESTS_PASS`, `STAGE09_RENDER_SCENE_TESTS_PASS`, `V07_PRODUCTION_DOUBLE_PRECISION_REGRESSION_PASS`
-- marker `ANDROID_VALIDATION_V07_PASS`
-- claim `PROCAD_NO_GO_PRODUCTION_GRAPH_ISOLATION_AND_PRECISION_REGRESSION_ONLY`
-- three pre-PASS Windows PowerShell validation portability failures were corrected; details in `docs/evidence/android-validation/V07.md`
-- same-head Stage01/Stage06/Stage07 historical `failure` records had `steps=null`; allocation/non-execution, not V07 product failures.
-- rejected ProCad candidate was not reopened, upgraded, patched or installed on emulator.
+- dedicated workflow aynı job içinde V02 prerequisite + production graph/APK/precision gate'ini gerçek non-zero-step çalıştırdı
+- tested head `559c1d033bdacedc6900d9ad126e7ab21fd8aa50`; synthetic merge `bfa728b840f63a5e9db5d5f376d19fb7f32c62f3`; main merge `4b3b15afe6c95f8393147758b6d16e092ac75a21`
+- run/job `32860034697 / 97841446382`; artifact `9567840490`, digest `sha256:bb2de209e3f6aecf74dc0d17dc9cf996a795cbeb8975a418f90d99d0d267d0b7`
+- ProCad/ProCadSharp production graph/APK absence PASS; rejected direct-float delta `0`; production double delta `0.001` PASS
+- marker `ANDROID_VALIDATION_V07_PASS`; claim `PROCAD_NO_GO_PRODUCTION_GRAPH_ISOLATION_AND_PRECISION_REGRESSION_ONLY`
 - evidence `docs/evidence/android-validation/V07.md`
+
+## Android validation V08 — VALIDATED
+
+- V08 yalnız Android production/CI graph izolasyonunu doğruladı; tarihsel iOS workstream'i yeniden açılmadı.
+- first diagnostic run/job `32862117992 / 97848411995`: V02 ve static/CI/locked restore kontrolleri geçti; raw `project.assets.json` içindeki cross-platform NuGet package-file inventory yanlışlıkla resolved Android graph sayıldığı için false-positive oluştu.
+- diagnostic artifact `9568592189`, 44,605 byte; digest `sha256:98bfa8c20530579ada137f3c1dda0d6244a93f3d7ea1b1360a9e8f302fbde9fd`.
+- gate actual `targets`, `project.frameworks` ve resolved library kimliklerini denetleyecek şekilde düzeltildi.
+- tested head `08abd4a1a953e62a2c0cdc3e48329de90e870195`
+- exact checked-out synthetic merge `8cd31f3d9f5f507108e5b91ddd3577748df5c952`
+- PR #21 main merge `829fd503ba3cd72950b2ec89cfde57f98a1b2417`
+- authoritative run/job `32862330823 / 97849123497` — SUCCESS
+- artifact `9568747271`, 19,064 byte; digest `sha256:6b5172553b65973af7fc3eac4f52f7c14a36048b6861368435bcd2355c062ebd`
+- same-job V02 dependency/lockfile/license/native-boundary prerequisite PASS
+- app TFM `net10.0-android36.0`; production project/lockfile/solution/central package graph iOS-specific requirement içermiyor
+- historical Stage08 iOS workflow `workflow_dispatch` only; active/non-historical CI macOS/iOS toolchain gerektirmiyor
+- Windows .NET SDK `10.0.400`; recorded workload list yalnız `maui-android`; locked restore + Release build without Xcode PASS
+- resolved Android graph iOS target/library absence PASS
+- Release APK 30,913,146 byte; SHA-256 `7adf8b2495b2eb7389adf48a1f92d9b57f7a0dade56758a0bbefc1b966075f1b`; iOS native/framework entry yok
+- marker `ANDROID_VALIDATION_V08_PASS`
+- claim `ANDROID_PRODUCTION_CI_GRAPH_IOS_ISOLATION_ONLY_HISTORICAL_IOS_SCOPE_ARCHIVED`
+- evidence `docs/evidence/android-validation/V08.md`
+- historical iOS characterization future-only arşivdir; V08 iOS PASS/simulator/device/AOT claim'i değildir.
 
 ## Sonraki iş
 
-`NEXT_VALIDATION_STAGE = V08 — SCOPE_ARCHIVED / ANDROID_GRAPH_CHECK_PENDING (NOT_STARTED)`.
+`NEXT_VALIDATION_STAGE = V09 — RenderScene, camera and diagnostics revalidation (NOT_STARTED)`.
 
-Bir sonraki validation `devam` yalnız V08 Android production/CI graph-isolation kontrolünü açar; tarihsel iOS workflow/Mac/simulator/iPhone kapsamını yeniden açmaz ve aynı turda V09'a geçmez. Implementation cursor `AŞAMA 10 — MAIN'E HENÜZ MERGE EDİLMEDİ` olarak ayrı korunur. Bilgisayar/runner kapalı A10 sohbeti yalnız `BASLA_A10.md` ile ayrı draft branch'te yürür.
+Bir sonraki validation `devam` yalnız V09'u açar. Bu V08 kapanış turunda V09, A10 merge/DONE veya A11 başlatılmaz. Implementation cursor `AŞAMA 10 — MAIN'E HENÜZ MERGE EDİLMEDİ` olarak ayrı korunur.
