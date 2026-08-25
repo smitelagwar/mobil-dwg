@@ -14,6 +14,7 @@ on:
       - scripts/stage03-verify-integrity.py
       - scripts/stage03-generate-synthetic-dwg.ps1
       - .github/workflows/stage03-corpus-audit.yml
+      - .gitattributes
       - .gitignore
   push:
     branches: [main]
@@ -25,6 +26,7 @@ on:
       - scripts/stage03-verify-integrity.py
       - scripts/stage03-generate-synthetic-dwg.ps1
       - .github/workflows/stage03-corpus-audit.yml
+      - .gitattributes
       - .gitignore
 
 permissions:
@@ -59,11 +61,25 @@ jobs:
           python -m py_compile scripts/stage03-validate-fixtures.py scripts/stage03-verify-integrity.py
           Write-Host "V03_TOOLCHAIN_AND_SYNTAX_PASS"
 
-      - name: Generate redistributable synthetic DWG candidate
+      - name: Generate redistributable synthetic DWG smoke artifact
         shell: powershell
         run: |
-          $output = Join-Path $env:RUNNER_TEMP "mobil-dwg-stage03-generated/synthetic_turkish_basic_ac1015.dwg"
+          $ErrorActionPreference = "Stop"
+          $generatedDir = Join-Path $env:RUNNER_TEMP "mobil-dwg-stage03-generated"
+          $output = Join-Path $generatedDir "synthetic_turkish_basic_ac1015.dwg"
           & .\scripts\stage03-generate-synthetic-dwg.ps1 -OutputDwg $output
+          $item = Get-Item -LiteralPath $output
+          $sha = (Get-FileHash -LiteralPath $output -Algorithm SHA256).Hash.ToLowerInvariant()
+          @(
+            "generator=ACadSharp-3.7.1"
+            "source_fixture=synthetic-turkish-basic-ac1015"
+            "format=dwg"
+            "acad_version=AC1015"
+            "bytes=$($item.Length)"
+            "sha256=$sha"
+            "claim_limit=generated-readback-smoke-not-independent-fidelity-golden"
+          ) | Set-Content -LiteralPath (Join-Path $generatedDir "generated-dwg-evidence.txt") -Encoding ASCII
+          Write-Host "V03_GENERATED_DWG_EVIDENCE_PASS bytes=$($item.Length) sha256=$sha"
 
       - name: Validate corpus access, hashes, provenance and private boundary
         shell: powershell
@@ -75,9 +91,10 @@ jobs:
       - name: Verify immutable-source dual hashes
         shell: powershell
         run: |
+          $ErrorActionPreference = "Stop"
           $evidence = Join-Path $env:RUNNER_TEMP "stage03-fixture-audit.json"
           python scripts/stage03-verify-integrity.py --audit $evidence --integrity fixtures/manifest/stage03-source-integrity.json
-          Write-Host "ANDROID_VALIDATION_V03_PROBE_PASS"
+          Write-Host "ANDROID_VALIDATION_V03_PASS"
 
       - name: Upload Stage 03 evidence
         uses: actions/upload-artifact@v4
@@ -87,5 +104,6 @@ jobs:
           path: |
             ${{ runner.temp }}/stage03-fixture-audit.json
             ${{ runner.temp }}/mobil-dwg-stage03-generated/synthetic_turkish_basic_ac1015.dwg
+            ${{ runner.temp }}/mobil-dwg-stage03-generated/generated-dwg-evidence.txt
           retention-days: 14
           if-no-files-found: warn
