@@ -1,6 +1,6 @@
 # Mobil DWG/DXF Görüntüleyici — Nihai Uygulama ve Yürütme Planı
 
-**Plan sürümü:** 1.4  
+**Plan sürümü:** 1.5  
 **Son checkpoint:** 25 Ağustos 2026  
 **Aktif ürün:** Android-only, local/offline, read-only 2D DWG/DXF viewer  
 **iOS:** future option; aktif Android DoD ve sıranın dışında  
@@ -14,8 +14,8 @@
 
 ```text
 ACTIVE_PROGRAM: ANDROID_REVALIDATION_01_09
-CURRENT_STAGE: V05 — ACadSharp parser entegrasyonu
-CURRENT_SUBSTEP: V05.ready
+CURRENT_STAGE: V06 — Android FilePicker/SAF + safe-open
+CURRENT_SUBSTEP: V06.ready
 STATUS: NOT_STARTED
 LAST_IMPLEMENTED_STAGE: AŞAMA 09 — DONE
 IMPLEMENTATION_CURSOR: AŞAMA 10 — MAIN'E HENÜZ MERGE EDİLMEDİ
@@ -24,15 +24,16 @@ V01: VALIDATED — INFRASTRUCTURE_SMOKE_ONLY
 V02: VALIDATED — DEPENDENCY/LOCKFILE/LICENSE/HASH/VULNERABILITY/ANDROID-NATIVE BOUNDARY
 V03: VALIDATED — FIXTURE/PROVENANCE/GOLDEN/ANDROID-SMOKE-SET CONTRACT
 V04: VALIDATED — REAL_APP_SHELL_RUNTIME_ONLY_NOT_VIEWER_FIDELITY
-LAST_ANDROID_VALIDATION_EVIDENCE: docs/evidence/android-validation/V04.md
-LAST_V04_TESTED_HEAD: 227ffa49c3095c4328f146acf1a2d9ecc07eb62d
-LAST_V04_TESTED_PR_MERGE_REVISION: 6201be929a636b963235f7da8ee72b0bbf9decf2
-LAST_V04_RUN_JOB: 32832142832 / 97752997848
-LAST_V04_ARTIFACT: 9557331919; sha256:0ccdb5028b417212f6d428475e8793ebc9d3a8018164c63b2703228dda00c0b4
+V05: VALIDATED — REAL_ANDROID_APP_PARSER_SMOKE_ONLY_NOT_RENDER_FIDELITY
+LAST_ANDROID_VALIDATION_EVIDENCE: docs/evidence/android-validation/V05.md
+LAST_V05_TECHNICAL_HEAD: d1552960d910b1fc6baea00ac14f6971344bd66e
+LAST_V05_TESTED_PR_MERGE_REVISION: 3aa365dd92222ec445a589003fc796ee6290f505
+LAST_V05_RUN_JOB: 32836712300 / 97767085940
+LAST_V05_ARTIFACT: 9559245377; sha256:2453ac4df3b888c6235f240208b4674b834edc550dd1208ce37e34a6506d2b65
 PENDING_EMULATOR_QUEUE: EMPTY
 PHYSICAL_ANDROID: DEFERRED_RELEASE_DEVICE_GATE
-BLOCKERS: Aktif V05 blocker'ı yok; fiziksel Android release öncesi ayrıca zorunlu; iOS aktif kapsam dışı.
-NEXT_ACTION: Yalnız V05'i başlat — gerçek MobilDwg.App içinde ACadSharp parser adapter + V03 DWG/DXF smoke seti; aynı turda V06'ya geçme.
+BLOCKERS: Aktif V06 blocker'ı yok; fiziksel Android release öncesi ayrıca zorunlu; iOS aktif kapsam dışı.
+NEXT_ACTION: Yalnız V06'yı başlat — gerçek MobilDwg.App FilePicker/SAF + safe-open/document-service bridge ve emulator lifecycle kapısı; aynı turda V07'ye geçme.
 NEXT_IF_TEST_OFFLINE: BASLA_A10.md ile yalnız izole A10 draft branch'inde host-independent kod/test işi yap.
 A10_MAIN_MERGE: BLOCKED_UNTIL_V04_V09_CLOSED_AND_A10_ANDROID_GATE
 A11_GATE: BLOCKED_UNTIL_V04_V09_CLOSED_AND_A10_DONE_ON_MAIN_AND_EMULATOR_QUEUE_EMPTY
@@ -104,7 +105,7 @@ Kullanıcı açıkça değiştirmedikçe:
 - .NET SDK/workload set `10.0.400`.
 - Android min API `24`, target/compile API `36`.
 - OpenJDK baseline `21.0.12`, Build-Tools `36.0.0`, Platform-Tools/ADB `37.0.1`.
-- ACadSharp `3.7.1`: read-only parser baseline `GO` — ADR 0001; render fidelity garantisi değil.
+- ACadSharp `3.7.1`: read-only parser baseline `GO` — ADR 0001; V05 gerçek Android parser smoke PASS; render fidelity garantisi değil.
 - SkiaSharp `4.151.1`: renderer dependency; Android native inventory V02'de doğrulandı.
 - Microsoft.Maui.Controls `10.0.100`: gerçek Android app direct dependency; exact `[10.0.100]`, MIT; V04'te doğrulandı.
 - Exact unpatched ProCad source reuse `NO-GO` — ADR 0002; survey-origin `5,000,000 + 0.001` precision blocker.
@@ -152,6 +153,8 @@ V04 itibarıyla gerçek repository app shell:
 - package `com.smitelagwar.mobildwg`
 - gerçek `MainActivity` / `MainApplication`
 - API36 emulator build/install/cold-launch/UI/liveness PASS
+
+V05 itibarıyla gerçek app validation build'i production `AcadSharpDocumentReader` ile V03 redistributable DXF/DWG smoke inputs'ı Android process içinde parse eder; validation asset/gate'i production writer/save özelliği değildir.
 
 ---
 
@@ -230,7 +233,7 @@ Zorunlu:
 - proprietary AutoCAD SHX/font bundle edilmez
 - Android RC'de APK/AAB extraction + SBOM + notices + compliance snapshot zorunlu
 
-V02 probe graph: ACadSharp 3.7.1, SkiaSharp 4.151.1, SkiaSharp.NativeAssets.Android 4.151.1. V04 gerçek app direct graph'e Microsoft.Maui.Controls 10.0.100 exact/MIT ekledi; same-head V02 regression PASS.
+V02 probe graph: ACadSharp 3.7.1, SkiaSharp 4.151.1, SkiaSharp.NativeAssets.Android 4.151.1. V04 gerçek app direct graph'e Microsoft.Maui.Controls 10.0.100 exact/MIT ekledi. V05 final technical head'de V02 regression `32836712385 / 97767086999` SUCCESS; artifact `9559261198`, digest `sha256:e3d9dafeb576b20b63b06b96ba5b1729c15bece13f7d8426d0967d615841500a`.
 
 ---
 
@@ -242,21 +245,29 @@ Yetkili ayrıntı: `ANDROID_DOGRULAMA_PLANI.md`.
 - V02 `VALIDATED`: dependency/lockfile/license/hash/vulnerability/Android-native boundary.
 - V03 `VALIDATED`: fixture/provenance/golden/redistributable Android smoke-set/device matrix.
 - V04 `VALIDATED`: gerçek installable `MobilDwg.App` MAUI shell; API36 build/install/cold-launch/PID/UI/PNG/crash-ANR/liveness PASS; viewer fidelity değil.
-- **V05 `NOT_STARTED`: ACadSharp parser in real Android app.**
-- V06: FilePicker/SAF + safe-open in real app.
+- V05 `VALIDATED`: production ACadSharp reader real Android app process içinde V03 DXF/DWG smoke setiyle PASS; render fidelity değil.
+- **V06 `NOT_STARTED`: FilePicker/SAF + safe-open/document-service bridge in real app.**
 - V07: ProCad NO-GO/precision/production isolation.
 - V08: iOS historical archive + Android graph isolation.
 - V09: RenderScene/camera/diagnostics revalidation.
 
-V04 authoritative run/job `32832142832` / `97752997848`; artifact `9557331919`.
+V05 authoritative:
+
+- technical head `d1552960d910b1fc6baea00ac14f6971344bd66e`
+- tested synthetic merge `3aa365dd92222ec445a589003fc796ee6290f505`
+- run/job `32836712300` / `97767085940`
+- artifact `9559245377`, digest `sha256:2453ac4df3b888c6235f240208b4674b834edc550dd1208ce37e34a6506d2b65`
+- validation APK SHA-256 `a270689a6bda814b9145601498b075b8a3638dd03d6ed6d9026e293c5e0738b5`
+- marker `ANDROID_VALIDATION_V05_PASS`
+- claim `REAL_ANDROID_APP_PARSER_SMOKE_ONLY_NOT_RENDER_FIDELITY`
 
 ---
 
 ## 9. Implementation aşamaları
 
-AŞAMA 00–09 tarihsel implementation evidence `docs/evidence/STAGE_XX.md` ve ADR'lerde korunur. Implementation cursor AŞAMA 10'dadır. V04–V09 validation hattı ana/öncelikli sıradır; bilgisayar veya runner kapalıyken yalnız `BASLA_A10.md` protokolüyle izole branch'te sınırlı A10 taslağı hazırlanabilir. Bu taslak validation sonucu, `main` revision veya tamamlanmış aşama sayılmaz.
+AŞAMA 00–09 tarihsel implementation evidence `docs/evidence/STAGE_XX.md` ve ADR'lerde korunur. Implementation cursor AŞAMA 10'dadır fakat `main`e henüz merge edilmemiştir. V04–V09 validation hattı ana/öncelikli sıradır; bilgisayar veya runner kapalıyken yalnız `BASLA_A10.md` protokolüyle izole branch'te sınırlı A10 taslağı hazırlanabilir. Bu taslak validation sonucu, `main` revision veya tamamlanmış aşama sayılmaz.
 
-### AŞAMA 10 — P0 temel geometri renderer'ı — `NOT_STARTED`
+### AŞAMA 10 — P0 temel geometri renderer'ı — `MAIN'E HENÜZ MERGE EDİLMEDİ`
 
 LINE/ARC/CIRCLE/ELLIPSE/POINT, polyline+bulge, SPLINE, SOLID/TRACE/3DFACE 2D; OCS/extrusion/mirror/large-coordinate; draw-order/clipping/AA baseline. Önce correctness; GPU/batching/tiling yok.
 
@@ -265,7 +276,7 @@ Paralel erken çalışma sınırı:
 - Ayrı branch: `stage10-p0-geometry-draft`; `android-test` geliştirme branch'i değildir.
 - V04–V09 sürerken yalnız yeni/internal platform-neutral primitive-tessellator matematiği ve saf testler yapılır. V09 kapanana kadar mevcut RenderScene/interface/snapshot, architecture, `.csproj`/Skia ve fixture/image-golden sözleşmeleri dondurulur; A11, MAUI/FilePicker/lifecycle ve ProCad kapsam dışıdır.
 - Host/hosted build-harness yoksa `CODED_PENDING_HOST_TESTS`; bu kontroller gerçekten geçse bile Android gate öncesi en ileri durum `CODED_PENDING_EMULATOR`dır. `main` merge/DONE yasaktır.
-- V09 sonrasında güncel validated `main` branch'e alınır. Etkilenen V02/V03, V04–V07, V08 Android graph-isolation, V09 ve A10 T1/semantic-golden/C3 exact integration SHA üzerinde geçer; iOS workflow açılmaz. Gerçek `MobilDwg.App` API 36 render kanıtı PID/PNG/crash/ANR yanında expected-content pixel probe, Android golden veya kayıtlı görsel incelemeden en az birini içerir.
+- V09 sonrasında güncel validated `main` branch'e alınır. Etkilenen V02/V03, V04–V07, V08 Android graph-isolation, V09 ve A10 T1/semantic-golden/C3 exact integration SHA üzerinde geçer; iOS workflow açılmaz. Gerçek `MobilDwg.App` API36 render kanıtı PID/PNG/crash/ANR yanında expected-content pixel probe, Android golden veya kayıtlı görsel incelemeden en az birini içerir.
 - A10 yalnız doğrulanmış PR main'e merge, post-merge kontrol ve `docs/evidence/STAGE_10.md` kapanışı sonrasında `DONE` olur.
 
 ### AŞAMA 11 — Mobil viewport ve gesture
