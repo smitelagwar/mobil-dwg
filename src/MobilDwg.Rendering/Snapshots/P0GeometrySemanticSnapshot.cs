@@ -31,6 +31,22 @@ public static class P0GeometrySemanticSnapshot
             }
         }
 
+        var diagnostics = scene.Diagnostics.Items
+            .OrderBy(item => item.Kind)
+            .ThenBy(item => item.Code, StringComparer.Ordinal)
+            .ThenBy(item => item.EntityId?.Value ?? string.Empty, StringComparer.Ordinal)
+            .ToArray();
+        sb.Append("diagnostics=").Append(diagnostics.Length).AppendLine();
+        foreach (var diagnostic in diagnostics)
+        {
+            sb.Append("diagnostic=")
+                .Append(diagnostic.Kind).Append('|')
+                .Append(E(diagnostic.Code)).Append('|')
+                .Append(E(diagnostic.EntityId?.Value ?? string.Empty)).Append('|')
+                .Append(E(diagnostic.Message))
+                .AppendLine();
+        }
+
         return sb.ToString();
     }
 
