@@ -4,18 +4,28 @@ Bu dosya yeni bir ChatGPT/AI oturumunda projeye kaldığı yerden devam etmek i�
 
 ## Yeni AI için doğrudan talimat
 
-1. `@GitHub` üzerinden `smitelagwar/mobil-dwg` reposunu, gerçek `main` HEAD'i ve açık PR'ları doğrula.
+1. `@GitHub` üzerinden `smitelagwar/mobil-dwg` reposunu, gerçek `main` HEAD'ini ve açık PR'ları doğrula.
 2. `Mobil_DWG_DXF_Royalty_Free_Android_iOS_Nihai_Plan.md`, `gecmis.md`, `docs/USER_APPROVED_EXECUTION_OVERRIDE.md` ve son tamamlanan/aktif aşama evidence dosyasını oku.
-3. Açık `IN_PROGRESS` aşama varsa yeni aşama başlatmadan yalnız onu sürdür.
-4. Bir kullanıcı turunda en fazla bir aşama tamamla.
-5. Fiziksel cihaz/Mac/Apple hesabı gibi dış kapıları sahte PASS/DONE yapma.
-6. Production dependency'yi evidence olmadan yükseltme veya ProCad'ı tekrar graph'a sokma.
+3. **Çalışma bağlamını gerçek araç erişimine göre sınıflandır.** Kod/depo değişiklikleri ChatGPT sohbetinden GitHub üzerinden yapılıyor ve yerel repo/terminal/ADB'ye doğrudan erişim yoksa `CHATGPT_REMOTE_GITHUB` bağlamıdır; bu durumda `docs/CHATGPT_REMOTE_ANDROID_TEST_WORKFLOW.md` dosyasını okumak zorunludur. Dosyanın okunması zorunlu olsa da içindeki batching/test sıklığı/zaman yönetimi önerileri zorunlu değildir. Yerel IDE/ajan gerçek çalışma ağacı + terminal/ADB erişimiyle çalışıyorsa `LOCAL_IDE` bağlamıdır ve remote test modeli yürütme için geçersizdir.
+4. Açık `IN_PROGRESS` aşama varsa yeni aşama başlatmadan yalnız onu sürdür. Kullanıcı yalnız `devam` diyorsa `NEXT_WORK_STAGE` üzerinden ilerle.
+5. Bir kullanıcı turunda en fazla bir aşama tamamla; aynı turda sonraki aşamayı başlatma.
+6. Fiziksel cihaz/Mac/Apple hesabı gibi dış kapıları sahte PASS/DONE yapma; `DEFERRED_EXTERNAL_GATE` bırak.
+7. Her aşama sonunda canonical checkpoint, `gecmis.md`, `DEVAM.md` ve `docs/evidence/STAGE_XX.md` kaydını gerçek CI/commit/artifact kanıtıyla güncelle.
+8. Production dependency'yi evidence olmadan yükseltme veya ProCad'ı tekrar graph'a sokma.
 
 ## Repo / ürün
 
 - Repo: `smitelagwar/mobil-dwg` (private), default `main`.
 - Android-first, iOS zorunlu ikinci platform, local/offline 2D DWG/DXF viewer.
 - v1 viewer-only; edit/save/export/cloud/account yok.
+
+## Çalışma bağlamı notu
+
+`CHATGPT_REMOTE_GITHUB` bağlamında mevcut Android/self-hosted test altyapısı her küçük GitHub değişikliğinde çalıştırılmak zorunda değildir. Ajan aynı mantıksal işte birkaç düşük-riskli değişikliği tamamlayıp sonra ilgili test hattını bir kez tetikleyebilir; riskli tek bir değişiklikte hemen test etmeyi de seçebilir. Bu batching davranışı öneridir, zorunlu değildir.
+
+Bir aşamanın ilk turunda implementasyonun tamamı veya bir kısmı yapılabilir; sonraki `devam` turunda kalan değişiklikler, Android/self-hosted testleri veya evidence kapanışı yapılabilir. Değişmez olan kural: aktif aşama bitmeden sonraki aşamaya geçilmez ve gerçek kanıt olmadan `DONE` yazılmaz.
+
+Ayrıntılı remote test modeli: `docs/CHATGPT_REMOTE_ANDROID_TEST_WORKFLOW.md`.
 
 ## Güncel checkpoint
 
