@@ -108,8 +108,29 @@ Bu dosya teknik yürütme geçmişinin kısa indeksidir. Ayrıntılı kanıt `do
 - evidence `docs/evidence/android-validation/V06.md`
 - physical Android/provider-specific fidelity `DEFERRED_RELEASE_DEVICE_GATE` olarak açık kalır.
 
+## Android validation V07 — VALIDATED
+
+- Dedicated workflow `Android V07 ProCad Isolation` aynı job içinde V02 prerequisite + current production graph/APK/precision gate'ini gerçek non-zero-step çalıştırdı.
+- tested PR head `559c1d033bdacedc6900d9ad126e7ab21fd8aa50`
+- exact checked-out PR synthetic merge `bfa728b840f63a5e9db5d5f376d19fb7f32c62f3`
+- PR #20 main merge `4b3b15afe6c95f8393147758b6d16e092ac75a21`
+- authoritative run/job `32860034697` / `97841446382` — SUCCESS
+- artifact `9567840490`, 19,293 byte; digest `sha256:bb2de209e3f6aecf74dc0d17dc9cf996a795cbeb8975a418f90d99d0d267d0b7`
+- V02 exact version/locked restore/license/native-boundary/vulnerability prerequisite PASS
+- ADR 0002/source-pin consistency PASS
+- static production graph, production lockfiles/resolved `project.assets.json`, current app package graph ve Release APK ProCad/ProCadSharp absence PASS
+- current Release APK 30,913,146 byte; SHA-256 `4605ff85da02e4b45e8d4ae523ae9f5e678a8f596fbbaca23cef77edcab7d450`
+- rejected direct-float survey-origin precision blocker reproduced: observed delta `0`
+- production double scalar observed delta `0.001`; `STAGE04_RENDER_CONTRACT_TESTS_PASS`, `STAGE09_RENDER_SCENE_TESTS_PASS`, `V07_PRODUCTION_DOUBLE_PRECISION_REGRESSION_PASS`
+- marker `ANDROID_VALIDATION_V07_PASS`
+- claim `PROCAD_NO_GO_PRODUCTION_GRAPH_ISOLATION_AND_PRECISION_REGRESSION_ONLY`
+- three pre-PASS Windows PowerShell validation portability failures were corrected; details in `docs/evidence/android-validation/V07.md`
+- same-head Stage01/Stage06/Stage07 historical `failure` records had `steps=null`; allocation/non-execution, not V07 product failures.
+- rejected ProCad candidate was not reopened, upgraded, patched or installed on emulator.
+- evidence `docs/evidence/android-validation/V07.md`
+
 ## Sonraki iş
 
-`NEXT_VALIDATION_STAGE = V07 — ProCad NO-GO + production graph isolation + precision regression (NOT_STARTED)`.
+`NEXT_VALIDATION_STAGE = V08 — SCOPE_ARCHIVED / ANDROID_GRAPH_CHECK_PENDING (NOT_STARTED)`.
 
-Bir sonraki validation `devam` yalnız V07'yi açar; aynı turda V08'e geçmez. Implementation cursor `AŞAMA 10 — MAIN'E HENÜZ MERGE EDİLMEDİ` olarak ayrı korunur. Bilgisayar/runner kapalı A10 sohbeti yalnız `BASLA_A10.md` ile ayrı draft branch'te yürür.
+Bir sonraki validation `devam` yalnız V08 Android production/CI graph-isolation kontrolünü açar; tarihsel iOS workflow/Mac/simulator/iPhone kapsamını yeniden açmaz ve aynı turda V09'a geçmez. Implementation cursor `AŞAMA 10 — MAIN'E HENÜZ MERGE EDİLMEDİ` olarak ayrı korunur. Bilgisayar/runner kapalı A10 sohbeti yalnız `BASLA_A10.md` ile ayrı draft branch'te yürür.
