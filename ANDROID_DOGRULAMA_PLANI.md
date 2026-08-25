@@ -7,16 +7,18 @@ Bu belge AŞAMA 01–09 arasında geliştirilen kodu Android hedefinde sırayla 
 ```text
 ACTIVE_PRODUCT_TARGET: ANDROID_ONLY
 IOS_STATUS: DEFERRED_FUTURE_OPTION
-IMPLEMENTATION_BASELINE: AŞAMA 01–09 kodlandı; AŞAMA 09 tamamlandı
+IMPLEMENTATION_BASELINE: AŞAMA 09 — DONE
 IMPLEMENTATION_NEXT: AŞAMA 10 — NOT_STARTED
 ACTIVE_PROGRAM: ANDROID_REVALIDATION_01_09
-CURRENT_VALIDATION_STAGE: V04
+CURRENT_VALIDATION_STAGE: V05
 CURRENT_STATUS: NOT_STARTED
 V01: VALIDATED — INFRASTRUCTURE_SMOKE_ONLY
 V02: VALIDATED — DEPENDENCY/LOCKFILE/LICENSE/HASH/VULNERABILITY/ANDROID-NATIVE BOUNDARY
 V03: VALIDATED — FIXTURE/PROVENANCE/GOLDEN/ANDROID-SMOKE-SET CONTRACT
-NEXT_ACTION: Yalnız V04'ü başlat — mimari sınırlar + gerçek installable Android MobilDwg.App kabuğu; aynı turda V05'e geçme
+V04: VALIDATED — REAL_APP_SHELL_RUNTIME_ONLY_NOT_VIEWER_FIDELITY
+NEXT_ACTION: Yalnız V05'i başlat — ACadSharp parser adapter yolunu gerçek MobilDwg.App içinde V03 DWG/DXF smoke setiyle Android üzerinde doğrula; aynı turda V06'ya geçme
 PENDING_EMULATOR_QUEUE: EMPTY
+PHYSICAL_ANDROID: DEFERRED_RELEASE_DEVICE_GATE
 ```
 
 iOS kodu ve tarihsel evidence korunur fakat kullanıcı iOS yolunu açıkça yeniden etkinleştirene kadar Mac/Xcode/iPhone/iOS workload/signing/simulator/App Store işi Android'i bloke etmez.
@@ -32,6 +34,7 @@ Kullanıcı `BASLA.md dosyasını oku` veya `devam` dediğinde ajan:
 5. Emulator fiziksel cihaz sayılmaz; geçici `Stage01Smoke` gerçek viewer sayılmaz; queued/zero-step workflow PASS sayılmaz.
 6. Test/evidence olmadan `VALIDATED/DONE` yazmaz.
 7. Implementation cursor AŞAMA 10'da validation cursor'dan ayrı korunur.
+8. Exact tested SHA/PR merge revision, run/job ve artifact evidence'e yazılır.
 
 ## 3. Gerçeklik sınıfları
 
@@ -57,6 +60,7 @@ Kullanıcı `BASLA.md dosyasını oku` veya `devam` dediğinde ajan:
 - Runner çevrim dışıysa aynı queued işi çoğaltma; exact SHA/test `PENDING_EMULATOR_QUEUE` kaydına alınır.
 - Force-push/force-ref update yapılmaz.
 - Workflow `SUCCESS` yalnız gerçekten çalışan adımlar kadar güçlüdür.
+- GitHub-hosted job `steps=[]`, `runner_id=0`, boş runner adı ile biterse bu runner-allocation failure'dır; kod/test failure olarak sınıflandırılmaz.
 
 ## 6. Validation sırası
 
@@ -64,22 +68,23 @@ Kullanıcı `BASLA.md dosyasını oku` veya `devam` dediğinde ajan:
 
 Authoritative evidence: `docs/evidence/android-validation/V01.md`.
 
-- Exact tested SHA `698c6e901672a736f2803894efb5bda34af08212`.
-- Run/job `32821991333` / `97721878468`.
-- .NET 10.0.400, maui-android, OpenJDK 21.0.12 baseline, API 36, Build-Tools 36.0.0, ADB 37.0.1, AVD `mobil-dwg-api36`.
-- Core/Rendering/Architecture executable harness marker'ları gerçekten çalıştı.
-- Stage01Smoke Release APK install/cold launch, numeric PID, byte-safe PNG, crash/ANR evidence geçti.
-- Claim limit: `INFRASTRUCTURE_SMOKE_ONLY`; gerçek MobilDwg.App/viewer PASS değildir.
+- exact tested SHA `698c6e901672a736f2803894efb5bda34af08212`
+- run/job `32821991333` / `97721878468`
+- artifact `9553530359`
+- .NET 10.0.400, maui-android, OpenJDK 21.0.12, API 36, Build-Tools 36.0.0, ADB 37.0.1
+- Core/Rendering/Architecture executable harness marker'ları PASS
+- Stage01Smoke install/cold-launch/PID/PNG/crash-ANR PASS
+- claim limit `INFRASTRUCTURE_SMOKE_ONLY`
 
 ### V02 — Dependency, lockfile ve Android artifact sınırı — `VALIDATED`
 
 Authoritative evidence: `docs/evidence/android-validation/V02.md`.
 
-- Strict exact NuGet ranges: ACadSharp `[3.7.1]`, SkiaSharp `[4.151.1]`, test/fallback IxMilia.Dxf `[0.8.4]`.
-- Locked restore, exact graph, nupkg hash/license, vulnerability ve production `src/` boundary denetimi geçti.
-- Android probe graph: ACadSharp 3.7.1 + SkiaSharp 4.151.1 + transitive SkiaSharp.NativeAssets.Android 4.151.1.
-- ProCad/iOS-only/unknown native sızıntısı yok.
-- Claim limit: dependency/native boundary; viewer/APK/fidelity PASS değildir.
+- ACadSharp `[3.7.1]`, SkiaSharp `[4.151.1]`, test/fallback IxMilia.Dxf `[0.8.4]`
+- locked restore, exact graph, nupkg hash/license, vulnerability ve production `src/` boundary PASS
+- Android probe graph: ACadSharp 3.7.1 + SkiaSharp 4.151.1 + SkiaSharp.NativeAssets.Android 4.151.1
+- ProCad/iOS-only/unknown native sızıntısı yok
+- claim limit dependency/native boundary
 
 ### V03 — Fixture, golden sözleşmesi ve Android test matrisi — `VALIDATED`
 
@@ -87,55 +92,57 @@ Authoritative evidence: `docs/evidence/android-validation/V03.md`.
 
 Final validation:
 
-- tested branch head `69e4e842b5426d71453f5f69a01ebba5948d6b9c`;
-- PR merge test revision `1171807016e2deacc4f575b7980400b4f8b4708c`;
-- run/job `32827625875` / `97739039060`;
-- artifact `9555501552`, digest `sha256:d964063ba786c61bccdbdbd1c184cf0023e35ee44a1e4b8d33986f1ddebac23a`.
+- branch head `69e4e842b5426d71453f5f69a01ebba5948d6b9c`
+- PR merge test revision `1171807016e2deacc4f575b7980400b4f8b4708c`
+- run/job `32827625875` / `97739039060`
+- artifact `9555501552`
+- digest `sha256:d964063ba786c61bccdbdbd1c184cf0023e35ee44a1e4b8d33986f1ddebac23a`
+- redistributable Android smoke set: committed 0BSD DXF + validation-time AC1015 DWG + missing-font/missing-XREF negative DXF
+- committed fixture hash evidence Git blob bytes'a dayanır
+- generated DWG writer/read-back smoke evidence'dir; independent engineering-fidelity golden değildir
+- marker `ANDROID_VALIDATION_V03_PASS`
 
-Geçen ana marker'lar:
+### V04 — Mimari ve gerçek Android uygulama kabuğu — `VALIDATED`
 
-- `V03_TOOLCHAIN_AND_SYNTAX_PASS`
-- `STAGE03_SYNTHETIC_DWG_PACKAGE_PASS`
-- `STAGE03_SYNTHETIC_DWG_READBACK_PASS`
-- `V03_ANDROID_SMOKE_SET_PASS ... formats=dwg,dxf`
-- `STAGE03_FIXTURE_AUDIT_PASS fixtures=9 derived_negatives=2`
-- `STAGE03_DUAL_HASH_PASS fixtures=6`
-- `ANDROID_VALIDATION_V03_PASS`
+Authoritative evidence: `docs/evidence/android-validation/V04.md`.
 
-V03'te bulunan ve düzeltilen drift:
+V04 başlangıcında `MobilDwg.App` yalnız `net10.0` platform-neutral projeydi; installable Android app yoktu. Aynı dördüncü production proje Android-only .NET MAUI executable'a dönüştürüldü; yeni production proje açılmadı.
 
-1. E-API36 device matrix stale `V01_FIX_REQUIRED` durumundaydı; V01 gerçekliğiyle hizalandı.
-2. Redistributable DWG smoke girdisi yoktu; committed 0BSD DXF'den exact ACadSharp 3.7.1 generator ile validation-time AC1015 DWG üretim/read-back sözleşmesi kuruldu.
-3. Windows self-hosted worktree CRLF normalization committed DXF working-tree boyutunu değiştirebiliyordu. `.gitattributes` eklendi ve authoritative hash doğrulaması doğrudan `HEAD:<path>` Git blob bytes üzerinden yapıldı.
-4. Generated DWG output hash'i runlar arasında değiştiği için binary golden olarak commit edilmedi; source + exact generator + AC1015 magic + DwgReader read-back + run-specific hash provenance sözleşmesi seçildi.
+Gerçek app:
 
-Claim limit: fixture/provenance/rights/golden/test-matrix sözleşmesi; parser, renderer, real app veya physical Android PASS değildir.
+- target `net10.0-android36.0`
+- package `com.smitelagwar.mobildwg`
+- `MainActivity` + `MainApplication`
+- Core/Cad/Rendering dependency yönleri korunuyor
+- `Microsoft.Maui.Controls` exact `[10.0.100]`, MIT
 
-### V04 — Mimari ve gerçek Android uygulama kabuğu — `NOT_STARTED`
+Final authoritative validation:
 
-Amaç: Stage01Smoke ile gerçek viewer arasındaki en kritik boşluğu kapatmak.
+- branch head `227ffa49c3095c4328f146acf1a2d9ecc07eb62d`
+- tested PR synthetic merge revision `6201be929a636b963235f7da8ee72b0bbf9decf2`
+- run/job `32832142832` / `97752997848` — SUCCESS
+- same-head V02 regression run/job `32832142882` / `97752998222` — SUCCESS
+- artifact `9557331919`, digest `sha256:0ccdb5028b417212f6d428475e8793ebc9d3a8018164c63b2703228dda00c0b4`
+- real APK `com.smitelagwar.mobildwg-Signed.apk`, 30,827,130 byte
+- APK SHA-256 `60d8d59b3fd452d786519a364875b155d3961c3e4aa210f986c004098789ba42`
+- launcher `com.smitelagwar.mobildwg/crc64d52a5cdc4f267319.MainActivity`
+- cold launch `Status: ok`, PID `3783`
+- UI hierarchy, byte-safe PNG, package/PID crash/ANR ve process liveness PASS
+- final marker `ANDROID_VALIDATION_V04_PASS`
+- claim limit `REAL_APP_SHELL_RUNTIME_ONLY_NOT_VIEWER_FIDELITY`
 
-Zorunlu işler:
-
-- AŞAMA 04 dependency yönlerini ve tüm executable Core/Rendering/Architecture harness marker'larını yeniden çalıştır.
-- Mevcut `src/MobilDwg.App` gerçekliğini oku; bugün installable MAUI Android app değilse bunu açıkça kaydet.
-- Android-only aktif hedef için minimal installable `MobilDwg.App` MAUI shell kur; Core/Cad/Rendering sınırlarını koru.
-- Gerçek package ID/launcher üret; Stage01Smoke'u viewer sonucu olarak kullanmayı bırak.
-- Emulator gate'i gerçek MobilDwg.App APK build/install/launch için geliştir. Infrastructure smoke gerekirse ayrı mod olarak kalabilir.
-- Exact app process PID, screenshot, lifecycle, crash/ANR kanıtı al.
-- Emulator dışında kalan fiziksel cihaz farkını release matrisi için açık tut.
-
-Çıkış: gerçek `MobilDwg.App` APK test edilen exact revision'da E-API36 üzerinde açılır. Viewer fidelity henüz V05+ kapsamıdır.
+V04 parser/render fidelity kanıtlamaz ve fiziksel Android release/device kapısı açık kalır.
 
 ### V05 — ACadSharp parser entegrasyonu — `NOT_STARTED`
 
 - AŞAMA 05 parser/corpus/diagnostics executable testlerini yeniden çalıştır.
 - Gerçek Android app içinde V03 smoke setinden en az bir DWG ve bir DXF parse yolu çağrılır.
+- Android üzerinde gerçek `ICadDocumentReader` / ACadSharp adapter yolu çalıştığı kanıtlanır; host-only parser PASS yeterli değildir.
 - Writer/save production graph'a girmez; original input immutable kalır.
 - Pozitif parse + kontrollü negatif + redacted diagnostic kanıtı alınır.
-- Host-only parser PASS ile Android app parse PASS karıştırılmaz.
+- Fixture provenance/hashes V03 contract'ına bağlı kalır.
 
-Çıkış: gerçek app revision parser adapter yolunu Android üzerinde çalıştırır.
+Çıkış: gerçek app revision parser adapter yolunu Android üzerinde DWG ve DXF ile çalıştırır; V06 aynı turda başlatılmaz.
 
 ### V06 — Android FilePicker/SAF ve safe-open — `NOT_STARTED`
 
