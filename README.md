@@ -20,6 +20,7 @@ Projeyi devralan kişi veya ajan önce şu dosyaları bu sırayla okumalıdır:
 9. [docs/evidence/STAGE_02.md](docs/evidence/STAGE_02.md) ve [compliance/DEPENDENCY_EVIDENCE.md](compliance/DEPENDENCY_EVIDENCE.md) — dependency/source/artifact kanıtı.
 10. [docs/EXECUTION_LOG.md](docs/EXECUTION_LOG.md) — teknik yürütme geçmişi.
 11. [docs/TOOLCHAIN.md](docs/TOOLCHAIN.md) ve [docs/evidence/STAGE_01.md](docs/evidence/STAGE_01.md) — pinlenmiş toolchain ve ertelenmiş Stage 01 dış kapıları.
+12. [docs/ANDROID_TEST_KULLANIM_KILAVUZU.md](docs/ANDROID_TEST_KULLANIM_KILAVUZU.md) — Self-Hosted Windows runner ve Android Emulator test kılavuzu.
 
 Sohbet veya model hafızası süreklilik kaynağı değildir; repo kayıtları esas alınır.
 
