@@ -30,7 +30,7 @@ IMPLEMENTATION_BASELINE: AŞAMA 09 — DONE
 IMPLEMENTATION_CURSOR: AŞAMA 10 — MAIN'E HENÜZ MERGE EDİLMEDİ
 IMPLEMENTATION_WORKSTREAM: docs/A10_WORKSTREAM.md + varsa açık A10 branch/PR
 ANDROID_VALIDATION_PROGRAM: V01–V09
-ANDROID_VALIDATION_CURRENT: V08 — SCOPE_ARCHIVED / ANDROID_GRAPH_CHECK_PENDING — NOT_STARTED
+ANDROID_VALIDATION_CURRENT: V09 — NOT_STARTED
 PENDING_EMULATOR_QUEUE: EMPTY
 V01: VALIDATED — INFRASTRUCTURE_SMOKE_ONLY
 V02: VALIDATED — dependency/lockfile/license/hash/vulnerability/Android-native boundary
@@ -39,10 +39,11 @@ V04: VALIDATED — REAL_APP_SHELL_RUNTIME_ONLY_NOT_VIEWER_FIDELITY
 V05: VALIDATED — REAL_ANDROID_APP_PARSER_SMOKE_ONLY_NOT_RENDER_FIDELITY
 V06: VALIDATED — REAL_ANDROID_APP_FILEPICKER_SAF_SAFE_OPEN_EMULATOR_ONLY_NOT_PHYSICAL_PROVIDER_FIDELITY
 V07: VALIDATED — PROCAD_NO_GO_PRODUCTION_GRAPH_ISOLATION_AND_PRECISION_REGRESSION_ONLY
+V08: VALIDATED — ANDROID_PRODUCTION_CI_GRAPH_IOS_ISOLATION_ONLY_HISTORICAL_IOS_SCOPE_ARCHIVED
 PHYSICAL_ANDROID: DEFERRED_RELEASE_DEVICE_GATE
-NEXT_ACTION: Sonraki validation turunda yalnız V08 Android graph-isolation kontrolünü başlat; tarihsel iOS kapsamını yeniden açma ve aynı turda V09'a geçme.
-NEXT_IF_TEST_READY: Sonraki BASLA/devam turu V08 Android graph-isolation kontrolünü yürütür.
-NEXT_IF_TEST_OFFLINE: Test edilebilir exact V08 SHA varsa queue/WAITING_RUNNER; yoksa gerçek stage durumu korunur. Ayrı sohbet BASLA_A10.md ile A10 draft branch'ini yürütür.
+NEXT_ACTION: Sonraki validation turunda yalnız V09 RenderScene/kamera/diagnostics revalidation hattını başlat; aynı turda A10 merge/DONE veya A11 başlatma.
+NEXT_IF_TEST_READY: Sonraki BASLA/devam turu yalnız V09'u yürütür.
+NEXT_IF_TEST_OFFLINE: Test edilebilir exact V09 SHA varsa queue/WAITING_RUNNER; yoksa gerçek stage durumu korunur. Ayrı sohbet BASLA_A10.md ile A10 draft branch'ini yürütür.
 A10_MAIN_MERGE: BLOCKED_UNTIL_V04_V09_CLOSED_AND_A10_ANDROID_GATE
 A11_GATE: BLOCKED_UNTIL_V04_V09_CLOSED_AND_A10_DONE_ON_MAIN_AND_EMULATOR_QUEUE_EMPTY
 ```
@@ -154,15 +155,39 @@ Evidence: `docs/evidence/android-validation/V07.md`.
 
 V07 sırasında üç Windows PowerShell validation portability false-negative'i düzeltildi (`String.Contains` overload, strict-mode JSON property enumeration, `double` evidence formatting); production failure değildir. Reddedilmiş ProCad candidate yeniden build/install edilmedi.
 
-## Sonraki validation işi — V08 henüz başlanmadı
+### V08 — VALIDATED
 
-- AŞAMA 08 historical iOS evidence yalnız arşiv olarak korunacak; iOS workflow/Mac/simulator/iPhone işi çalıştırılmayacak.
-- Yalnız Android production/CI graph'ında iOS workload/native zorunluluğu olmadığı doğrulanacak.
-- V09 aynı V08 turunda başlatılmayacak.
+Evidence: `docs/evidence/android-validation/V08.md`.
+
+- PR `#21`
+- tested head `08abd4a1a953e62a2c0cdc3e48329de90e870195`
+- exact checked-out PR synthetic merge `8cd31f3d9f5f507108e5b91ddd3577748df5c952`
+- main merge commit `829fd503ba3cd72950b2ec89cfde57f98a1b2417`
+- authoritative run/job `32862330823` / `97849123497` — SUCCESS
+- artifact `9568747271`, 19,064 byte
+- artifact digest `sha256:6b5172553b65973af7fc3eac4f52f7c14a36048b6861368435bcd2355c062ebd`
+- same-job V02 dependency/native-boundary prerequisite PASS.
+- `MobilDwg.App` Android-only `net10.0-android36.0`; production project/lockfile/solution/central package graph iOS-specific requirement içermiyor.
+- historical `Stage 08 iOS Feasibility` workflow manual-only kaldı; aktif CI macOS/iOS toolchain zorunluluğu taşımıyor.
+- Windows host: .NET SDK `10.0.400`; recorded workload list yalnız `maui-android`.
+- locked Android restore, resolved Android target/library graph scan ve Release build PASS; Xcode gerekmedi.
+- Release APK 30,913,146 byte; SHA-256 `7adf8b2495b2eb7389adf48a1f92d9b57f7a0dade56758a0bbefc1b966075f1b`; iOS native/framework entry yok.
+- marker `ANDROID_VALIDATION_V08_PASS`.
+- claim limit `ANDROID_PRODUCTION_CI_GRAPH_IOS_ISOLATION_ONLY_HISTORICAL_IOS_SCOPE_ARCHIVED`.
+- diagnostic run/job `32862117992 / 97848411995`: raw cross-platform NuGet package-file inventory yanlışlıkla resolved Android graph sayıldığı için false-positive; artifact `9568592189`, digest `sha256:98bfa8c20530579ada137f3c1dda0d6244a93f3d7ea1b1360a9e8f302fbde9fd`.
+
+Historical AŞAMA 08 iOS characterization future-only arşiv olarak korunur; V08 iOS PASS, simulator/device veya iOS AOT claim'i değildir.
+
+## Sonraki validation işi — V09 henüz başlanmadı
+
+- AŞAMA 09 T0/T1, semantic snapshot, OCS/WCS, invalid geometry, overflow ve large-coordinate regresyonları yeniden çalıştırılacak.
+- Real app Core/Cad/Rendering composition sınırı doğrulanacak.
+- Ayrı A10 draft varsa V09 sonucu üstündür; draft daha sonra güncel validated `main` ile uzlaştırılır.
+- Bu V08 kapanış turunda V09 başlatılmaz; A10 merge/DONE veya A11 başlangıcı yapılmaz.
 
 ## Paralel A10 yolu
 
-- Normal `BASLA.md`/bu dosya açık V08→V09 validation hattına gider.
+- Normal `BASLA.md`/bu dosya açık V09 validation hattına gider.
 - Bilgisayar veya runner kapalıyken kullanıcı başka sohbette `BASLA_A10.md dosyasını oku` der.
 - A10 yalnız `stage10-p0-geometry-draft` branch'inde dondurulmuş sözleşmelere dokunmayan host-independent taslak işi yapar.
 - Host/GitHub-hosted kontrol sonuçsuzsa `CODED_PENDING_HOST_TESTS`, actual FAIL ise `FIX_REQUIRED/FIX_IN_PROGRESS`, hepsi actual non-zero-step PASS olduğunda V04–V09 uzlaştırması + Android gate bekleyen durum `CODED_PENDING_EMULATOR`dır.
