@@ -149,14 +149,14 @@ function Select-Document {
     $openedRoots = $false
     $clickedDownloads = $false
     for ($i = 0; $i -lt 40; $i++) {
-        # DocumentsUI grid titles are not themselves clickable. Use the nearest clickable
-        # card ancestor so a tap cannot land on a non-clickable child or behind the drawer.
-        if (Try-ClickUiText -Serial $Serial -Text $FileName -Stem "$Stem-file-$i" -ClickableAncestor) {
-            Start-Sleep -Milliseconds 500
-            return
-        }
-
+        # When the picker already opens in Downloads, select the document directly.
+        # Once the roots drawer is opened, never tap a file card behind that drawer.
         if (-not $openedRoots) {
+            if (Try-ClickUiText -Serial $Serial -Text $FileName -Stem "$Stem-file-direct-$i" -ClickableAncestor) {
+                Start-Sleep -Milliseconds 500
+                return
+            }
+
             if (Try-ClickUiText -Serial $Serial -Text 'Show roots' -Stem "$Stem-roots-$i") {
                 $openedRoots = $true
                 Start-Sleep -Milliseconds 750
@@ -164,14 +164,27 @@ function Select-Document {
             }
         }
 
-        # The open drawer exposes several visible strings containing "Downloads". The
-        # breadcrumb/header is encountered first in UIAutomator XML but does not select a
-        # root. Target the actual drawer row by its android:id/title resource id.
-        if ($openedRoots -and -not $clickedDownloads -and
-            (Try-ClickUiText -Serial $Serial -Text 'Downloads' -Stem "$Stem-downloads-$i" -ResourceId 'android:id/title')) {
-            $clickedDownloads = $true
-            Start-Sleep -Milliseconds 1500
+        # The drawer exposes several visible strings containing "Downloads" while the
+        # background grid can already contain the target file. Select the actual drawer
+        # row first, using android:id/title and its clickable ancestor, before considering
+        # any document card. This prevents taps landing on a file hidden behind the drawer.
+        if ($openedRoots -and -not $clickedDownloads) {
+            if (Try-ClickUiText -Serial $Serial -Text 'Downloads' -Stem "$Stem-downloads-$i" -ResourceId 'android:id/title' -ClickableAncestor) {
+                $clickedDownloads = $true
+                Start-Sleep -Milliseconds 1500
+                continue
+            }
+
+            Start-Sleep -Milliseconds 500
             continue
+        }
+
+        # DocumentsUI grid titles are not themselves clickable. Use the nearest clickable
+        # card ancestor after the Downloads drawer row has been selected and the drawer closed.
+        if ($clickedDownloads -and
+            (Try-ClickUiText -Serial $Serial -Text $FileName -Stem "$Stem-file-$i" -ClickableAncestor)) {
+            Start-Sleep -Milliseconds 500
+            return
         }
 
         Start-Sleep -Milliseconds 500
