@@ -39,6 +39,17 @@ jobs:
         with:
           persist-credentials: false
 
+      - name: Run Local Environment Doctor
+        shell: powershell
+        run: |
+          New-Item -ItemType Directory -Path "artifacts/android-emulator-result" -Force | Out-Null
+          $doctorOutput = (& .\scripts\doctor-local-environment.ps1 2>&1 | Out-String)
+          Write-Host $doctorOutput
+          Set-Content -Path "artifacts/android-emulator-result/doctor.txt" -Value $doctorOutput -Encoding utf8
+          if ($doctorOutput -notmatch 'ENVIRONMENT STATUS: 100% HEALTHY & READY FOR AUTOMATION!') {
+            throw "Local environment doctor did not report a healthy Android test environment."
+          }
+
       - name: Run Android Emulator Gate Script
         shell: powershell
         run: |
