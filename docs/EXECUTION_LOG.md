@@ -198,7 +198,6 @@ AŞAMA 01 fiziksel Android install/launch ve iOS erişim envanteri `DEFERRED_EXT
 
 Sonuç: AŞAMA 05 teknik gate'leri `DONE`. Sonraki aşama AŞAMA 06; aynı kullanıcı turunda başlanmaz.
 
-
 ---
 
 ## 2026-08-24 — AŞAMA 06 — BLOCKED / DEFERRED_EXTERNAL_GATE
@@ -231,7 +230,6 @@ Açık dış kapı: gerçek fiziksel Android telefonda FilePicker/SAF DWG+DXF, m
 
 Kullanıcı onaylı `docs/USER_APPROVED_EXECUTION_OVERRIDE.md` gereği AŞAMA 06 PR #8 merge edildikten sonra sonraki bağımsız çalışma AŞAMA 07 olabilir; AŞAMA 06 fiziksel gate release/beta/final kapılarında yeniden zorunludur.
 
-
 ## 2026-08-24 — AŞAMA 07 closure
 
 - PR #8 AŞAMA 06 merge commit doğrulandı: `e3a9c36e04be6c51827926ca17bb1a386c6b1142`. AŞAMA 06 physical Android gate bu merge ile kapanmadı.
@@ -244,7 +242,6 @@ Kullanıcı onaylı `docs/USER_APPROVED_EXECUTION_OVERRIDE.md` gereği AŞAMA 06
 - ADR 0002 exact unpatched candidate için `NO-GO`. Physical Android T3 `NOT_RUN_AFTER_DETERMINISTIC_BLOCKER`, PASS değildir.
 - ProCad production dependency graph'a eklenmedi. AŞAMA 01 ve 06 dış cihaz gate'leri açık.
 - Sonraki bağımsız aşama AŞAMA 08. AŞAMA 09 custom renderer implementation öncesinde kullanıcı GO kararı zorunlu.
-
 
 ## 2026-08-25 — AŞAMA 08 — DONE / CHARACTERIZATION; iOS PASS NOT CLAIMED
 
@@ -259,3 +256,19 @@ Kullanıcı onaylı `docs/USER_APPROVED_EXECUTION_OVERRIDE.md` gereği AŞAMA 06
 - Kullanıcının mevcut execution override'ı uyarınca dış blocker/risk açıkça kaydedilip bağımsız sonraki işe ilerleme kabul edildi; iOS PASS iddiası yok.
 - Future local/device acceptance listesi `docs/LOCAL_DEVICE_REVALIDATION.md` olarak eklendi.
 - AŞAMA 09 custom renderer implementation ADR 0002 nedeniyle explicit kullanıcı GO bekler.
+
+## 2026-08-25 — AŞAMA 09 — IN_PROGRESS / IMPLEMENTATION_READY / T0_T1_VALIDATION_PENDING_RUNNER
+
+- Kullanıcı ADR 0002'deki custom renderer yüksek efor/bakım riskini açıkça kabul etti ve AŞAMA 09 implementation başladı; GO yeniden istenmez.
+- Branch `stage09-render-scene-camera`, PR #12 açıldı. Base `main` `b7926cb1df2b2ff1f32c67033dba73aed1c01523`.
+- Tek production scene yolu compact özel immutable `RenderScene`; ProCad production graph'a eklenmedi.
+- Stable entity ID/bounds/layer/style/source metadata, `double` world→view→screen kamera hattı, Core `RenderViewport` bridge, large-origin 0.001 precision regression, OCS/WCS, diagnostics taxonomy, fit/zoom/color context ve deterministic `render-scene/v1` snapshot testleri eklendi.
+- Static hardening ile default metadata bypass, finite-span/subtraction overflow, large-vector normalization ve invalid/default camera guard'ları kapatıldı.
+- Son source/test hardening head `9a17d333afc0a3df1de856a9a53fae0e74617c29`.
+- Hosted validation standard `ubuntu-latest`, doğru `macos-26` ve ayrı `ubuntu-slim` pool'larında checkout başlamadan `steps=[]`, `runner_id=0` ile kesildi; bu compile/test failure veya PASS değildir.
+- Standard Ubuntu son explicit rerun: run `32791364379` / #30, attempt 2 job `97690824454`.
+- Separate lightweight pool: head `0c5aa84bf491ec24c4409c35ffad83dd159b9290`, run `32811281420` / #32, job `97690952636`, `ubuntu-slim`, yine pre-step allocation failure.
+- Configured `[self-hosted, windows, android-test, mobil-dwg]` probe uygun online runner bulamadı; geçici workflow silindi.
+- Exact .NET SDK `10.0.400` resmi Microsoft release metadata'sında doğrulandı; mevcut execution container'ında SDK/compiler yok ve dış SDK payload indirme yolu tamamlanamadı. Farklı SDK ile sahte PASS üretilmedi.
+- `docs/evidence/STAGE_09.md`, `DEVAM.md`, `gecmis.md` ve kanonik plan A09 `IN_PROGRESS` durumuna senkronize edildi.
+- PR #12 gerçek T0/T1 marker/artifact olmadan merge edilmez. AŞAMA 10 `NOT_STARTED` kalır.
