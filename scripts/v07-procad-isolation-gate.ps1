@@ -95,7 +95,9 @@ if (-not $Assets) { Fail "No production project.assets.json files were produced"
 $AssetInventory = New-Object System.Collections.Generic.List[string]
 foreach ($Asset in $Assets) {
     $Json = Get-Content -Raw $Asset.FullName | ConvertFrom-Json
-    foreach ($Library in $Json.libraries.PSObject.Properties.Name) {
+    if ($null -eq $Json.libraries) { Fail "Resolved asset file has no libraries object: $($Asset.FullName)" }
+    foreach ($LibraryProperty in $Json.libraries.PSObject.Properties) {
+        $Library = [string]$LibraryProperty.Name
         $AssetInventory.Add("$($Asset.FullName): $Library")
         if ($Library -match '^(?i)ProCad(?:Sharp)?[/.]') {
             Fail "ProCad found in resolved production asset graph: $Library"
