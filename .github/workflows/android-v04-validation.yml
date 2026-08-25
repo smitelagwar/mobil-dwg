@@ -1,0 +1,46 @@
+name: Android V04 Real App Shell
+
+on:
+  pull_request:
+    paths:
+      - 'src/MobilDwg.App/**'
+      - 'src/MobilDwg.Core/**'
+      - 'src/MobilDwg.Cad/**'
+      - 'src/MobilDwg.Rendering/**'
+      - 'tests/MobilDwg.Architecture.Tests/**'
+      - 'Directory.Packages.props'
+      - 'scripts/android-emulator-gate.ps1'
+      - 'scripts/v04-real-app-gate.ps1'
+      - '.github/workflows/android-v04-validation.yml'
+  workflow_dispatch:
+
+permissions:
+  contents: read
+
+jobs:
+  real-app-shell:
+    runs-on: [self-hosted, windows, android-test, mobil-dwg]
+    timeout-minutes: 35
+    steps:
+      - name: Checkout exact revision
+        uses: actions/checkout@v5
+        with:
+          persist-credentials: false
+          clean: true
+
+      - name: Revalidate V01 infrastructure and executable harness prerequisite
+        shell: powershell
+        run: .\scripts\android-emulator-gate.ps1 -Configuration Release -ArtifactsDir artifacts/v04-real-app/v01-infrastructure-prerequisite -AvdName mobil-dwg-api36 -Headless
+
+      - name: Validate real MobilDwg.App on API 36 emulator
+        shell: powershell
+        run: .\scripts\v04-real-app-gate.ps1 -Configuration Release -ArtifactsDir artifacts/v04-real-app
+
+      - name: Upload V04 evidence
+        if: always()
+        uses: actions/upload-artifact@v4
+        with:
+          name: android-v04-real-app-evidence
+          path: artifacts/v04-real-app
+          if-no-files-found: warn
+          retention-days: 14
