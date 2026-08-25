@@ -59,7 +59,7 @@ Bu dosya teknik yürütme geçmişinin kısa indeksidir. Ayrıntılı kanıt `do
 
 - production `AcadSharpDocumentReader` real Android app process içinde V03 DXF/DWG smoke setiyle PASS
 - tested head `de39866f8bd71c20fa51b355748ed79884fbb4e6`; main merge `9013d52702d1cb44e378aeacda46ee51e53caa65`
-- run/job `32838507832 / 97772635524`; artifact `9561607163`, digest `sha256:16359b01f4d3b888c6235f240208b4674b834edc550dd1208ce37e34a6506d2b65`
+- run/job `32838507832 / 97772635524`; artifact `9561607163`, digest `sha256:16359b01f4d3c72847b90227b03b321036495b45f2d65cd34d2c772f14528109`
 - package `ACadSharp 3.7.1`; writer/save absent; install/cold-launch/UI parse/stability PASS
 - marker `ANDROID_VALIDATION_V05_PASS`; claim `REAL_ANDROID_APP_PARSER_SMOKE_ONLY_NOT_RENDER_FIDELITY`
 - evidence `docs/evidence/android-validation/V05.md`
