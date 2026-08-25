@@ -27,7 +27,14 @@ AssertProjectReferences("src/MobilDwg.App/MobilDwg.App.csproj",
 AssertPackageReferences("src/MobilDwg.Core/MobilDwg.Core.csproj", []);
 AssertPackageReferences("src/MobilDwg.Cad/MobilDwg.Cad.csproj", ["ACadSharp"]);
 AssertPackageReferences("src/MobilDwg.Rendering/MobilDwg.Rendering.csproj", []);
-AssertPackageReferences("src/MobilDwg.App/MobilDwg.App.csproj", []);
+AssertPackageReferences("src/MobilDwg.App/MobilDwg.App.csproj", ["Microsoft.Maui.Controls"]);
+
+AssertProjectProperty("src/MobilDwg.App/MobilDwg.App.csproj", "TargetFramework", "net10.0-android36.0");
+AssertProjectProperty("src/MobilDwg.App/MobilDwg.App.csproj", "OutputType", "Exe");
+AssertProjectProperty("src/MobilDwg.App/MobilDwg.App.csproj", "UseMaui", "true", ignoreCase: true);
+AssertProjectProperty("src/MobilDwg.App/MobilDwg.App.csproj", "SingleProject", "true", ignoreCase: true);
+AssertProjectProperty("src/MobilDwg.App/MobilDwg.App.csproj", "ApplicationId", "com.smitelagwar.mobildwg");
+AssertProjectProperty("src/MobilDwg.App/MobilDwg.App.csproj", "SupportedOSPlatformVersion", "24.0");
 
 AssertForbiddenSourceTerms(
     "src/MobilDwg.Core",
@@ -41,6 +48,7 @@ AssertForbiddenSourceTerms(
 
 Console.WriteLine("STAGE04_ARCHITECTURE_TESTS_PASS");
 Console.WriteLine("STAGE05_DEPENDENCY_BOUNDARY_PASS");
+Console.WriteLine("V04_REAL_ANDROID_APP_PROJECT_PASS");
 
 void AssertProjectReferences(string projectPath, IReadOnlyCollection<string> expected)
 {
@@ -73,6 +81,22 @@ void AssertPackageReferences(string projectPath, IReadOnlyCollection<string> exp
 
     Assert(actual.SequenceEqual(expectedOrdered, StringComparer.Ordinal),
         $"{projectPath} package references [{string.Join(", ", actual)}], expected [{string.Join(", ", expectedOrdered)}]");
+}
+
+void AssertProjectProperty(string projectPath, string propertyName, string expected, bool ignoreCase = false)
+{
+    var document = XDocument.Load(Path.Combine(repoRoot, projectPath));
+    var values = document
+        .Descendants(propertyName)
+        .Select(element => (element.Value ?? string.Empty).Trim())
+        .Where(value => value.Length > 0)
+        .ToArray();
+    Assert(values.Length == 1,
+        $"{projectPath} must contain exactly one {propertyName}; got [{string.Join(", ", values)}]");
+
+    var comparison = ignoreCase ? StringComparison.OrdinalIgnoreCase : StringComparison.Ordinal;
+    Assert(string.Equals(values[0], expected, comparison),
+        $"{projectPath} {propertyName} is '{values[0]}', expected '{expected}'");
 }
 
 void AssertForbiddenSourceTerms(string relativeDirectory, IReadOnlyCollection<string> forbiddenTerms)

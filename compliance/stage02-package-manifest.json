@@ -42,6 +42,7 @@
   "production_boundary": {
     "allowed_package_references": [
       "ACadSharp",
+      "Microsoft.Maui.Controls",
       "SkiaSharp"
     ],
     "forbidden_tfm_tokens": [
