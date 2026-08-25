@@ -30,13 +30,19 @@ internal static class A10AndroidValidationRunner
         Require(semantic.Contains("diagnostic=Dropped|P0_INVALID_GEOMETRY_DROPPED||Invalid source geometry is reported instead of silently rendered.", StringComparison.Ordinal), "controlled invalid geometry diagnostic");
         Log.Info(Tag, "A10_ANDROID_SEMANTIC_GOLDEN_PASS");
 
-        var render = await SkiaScenePngRenderer.RenderFitWithStatsAsync(
-            scene,
-            pixelWidth: 900,
-            pixelHeight: 900,
-            density: 1d,
-            paddingFraction: 0.08,
-            cancellationToken: cancellationToken);
+        // The offscreen Skia acceptance render is CPU-heavy and must not monopolize the
+        // MAUI UI thread. Keep the renderer semantics unchanged, but execute the render
+        // work on a worker thread; MainPage resumes on the UI context to publish the PNG.
+        var render = await Task.Run(
+            () => SkiaScenePngRenderer.RenderFitWithStatsAsync(
+                    scene,
+                    pixelWidth: 900,
+                    pixelHeight: 900,
+                    density: 1d,
+                    paddingFraction: 0.08,
+                    cancellationToken: cancellationToken)
+                .AsTask(),
+            cancellationToken);
 
         Require(render.NonBackgroundPixels > 1000, $"expected-content pixel threshold; actual={render.NonBackgroundPixels}");
         Log.Info(Tag, $"A10_ANDROID_EXPECTED_CONTENT_PASS pixels={render.NonBackgroundPixels}");
