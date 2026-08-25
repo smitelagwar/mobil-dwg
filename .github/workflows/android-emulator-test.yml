@@ -1,43 +1,44 @@
 name: Android Emulator Automated Test Gate
 
-# Bu workflow normal push islemlerinde calismaz.
-# Yalnizca manual (workflow_dispatch) veya ozel tetikleme ile tetiklenir.
+# Bu workflow normal main veya feature branch push'larında ÇALIŞMAZ.
+# Yalnızca 'android-test' branch'ine push yapıldığında veya manuel (workflow_dispatch) tetiklenir.
 on:
+  push:
+    branches:
+      - android-test
   workflow_dispatch:
     inputs:
       configuration:
-        description: 'Build Configuration (Debug / Release)'
+        description: 'Build Configuration (Release / Debug)'
         required: true
-        default: 'Debug'
+        default: 'Release'
         type: choice
         options:
-          - Debug
           - Release
+          - Debug
 
 jobs:
-  emulator-test:
-    name: Run MAUI Android Tests on Self-Hosted Emulator
+  android-emulator-gate:
+    name: Run Android Emulator Gate on Windows Runner
     runs-on: [self-hosted, windows, android-test, mobil-dwg]
-    timeout-minutes: 25
+    timeout-minutes: 30
 
     steps:
       - name: Checkout Repository
         uses: actions/checkout@v4
 
-      - name: Doctor Environment Health Check
+      - name: Run Android Emulator Gate Script
         shell: powershell
         run: |
-          & .\scripts\doctor-local-environment.ps1
+          $config = if ("${{ github.event_name }}" -eq "workflow_dispatch") { "${{ inputs.configuration }}" } else { "Release" }
+          Write-Host "Triggered by: ${{ github.event_name }} on branch: ${{ github.ref_name }}"
+          Write-Host "Running android-emulator-gate.ps1 with Configuration: $config"
+          & .\scripts\android-emulator-gate.ps1 -Configuration $config -ArtifactsDir "artifacts/android-emulator-result"
 
-      - name: Run Emulator Automation Test Suite
-        shell: powershell
-        run: |
-          & .\scripts\run-emulator-tests.ps1 -Configuration ${{ inputs.configuration }} -ArtifactsDir "artifacts"
-
-      - name: Upload Test Artifacts (Screenshots & Logs)
+      - name: Upload Test Diagnostics Artifacts
         uses: actions/upload-artifact@v4
         if: always()
         with:
-          name: android-emulator-test-artifacts-${{ inputs.configuration }}
-          path: artifacts/
+          name: android-emulator-result
+          path: artifacts/android-emulator-result/
           retention-days: 14

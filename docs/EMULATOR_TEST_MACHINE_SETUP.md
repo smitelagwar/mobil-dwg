@@ -64,11 +64,11 @@ Launches `mobil-dwg-api36` in background and blocks until `sys.boot_completed=1`
 ```
 Gracefully shuts down running emulator instances.
 
-### Run Full Test Suite on Emulator
+### Android Emulator Automated Gate
 ```powershell
-.\scripts\run-emulator-tests.ps1 -Configuration Debug
+.\scripts\android-emulator-gate.ps1 -Configuration Release
 ```
-Executes solution tests, boots emulator, builds APK, installs on emulator, verifies activity launch, and outputs `artifacts/emulator_test_result.png` and `artifacts/emulator_logcat.txt`.
+Standalone gate executing prerequisite checks, boots/reuses `mobil-dwg-api36`, runs solution tests, builds MAUI Android APK, installs & launches on emulator, verifies activity stability (no crash/ANR), collects diagnostic artifacts into `artifacts/android-emulator-result/`, and outputs `ANDROID_EMULATOR_GATE_PASS`.
 
 ---
 
@@ -84,28 +84,26 @@ The runner binaries are installed in `C:\actions-runner`.
 
 ### Registering the Runner (One-Time User Action)
 1. Go to repository settings: `https://github.com/smitelagwar/mobil-dwg/settings/actions/runners/new`
-2. Copy the registration token under **Configure**.
+2. Copy the registration token shown under **Configure**.
 3. Open PowerShell as Administrator and run:
 ```powershell
 & C:\actions-runner\register-and-run.ps1
 ```
 4. Enter the token when prompted.
-5. To run the runner in interactive mode:
-```powershell
-cd C:\actions-runner
-.\run.cmd
-```
-6. (Optional) To run permanently as a Windows background service:
-```powershell
-cd C:\actions-runner
-.\actions.runner.service.exe install
-.\actions.runner.service.exe start
-```
+
+### Runner Execution Mode (Interactive vs Service)
+> [!IMPORTANT]
+> **Recommended Execution Model: Interactive User Session (`.\run.cmd`)**
+> Android Emulator relies on WHPX/GPU hardware acceleration and desktop display subsystems. Windows Services run under Session 0 isolation without an interactive desktop, which causes GPU initialization failure or emulator crashes. For reliable automated runs, keep the runner active in an interactive desktop session (`C:\actions-runner\run.cmd`) or configured via user startup.
 
 ---
 
-## 5. Automation & Safety Policy
+## 5. Automation & Trigger Policy
 
-1. **No Automatic Push Triggers**: The runner is configured exclusively for `workflow_dispatch` via `.github/workflows/android-emulator-test.yml`. It will **never** trigger unprompted on routine git commits or pushes.
-2. **Physical Device Integrity**: Emulator automation is an additional automated gate. It does not replace or modify the mandatory physical device gate defined in `scripts/stage01-device-gate.ps1`.
-3. **Zero Secrets in Code**: No authentication tokens, PATs, or signing keys are stored in files or commit history.
+1. **Trigger Isolation**: The self-hosted Windows runner is **never** triggered by normal commits or pushes to `main` or feature branches.
+2. **Dedicated Test Branch**: The Windows runner triggers exclusively when:
+   - Commits are pushed to the dedicated `android-test` branch, OR
+   - Manually dispatched via GitHub Actions (`workflow_dispatch`).
+3. **Physical Device Integrity**: Emulator automation is an additional automated gate in `scripts/android-emulator-gate.ps1`. It does not replace or modify the mandatory physical device gate defined in `scripts/stage01-device-gate.ps1`.
+4. **Zero Secrets in Code**: No authentication tokens, PATs, or signing keys are stored in files or commit history.
+
