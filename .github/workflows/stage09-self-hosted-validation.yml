@@ -16,7 +16,7 @@ permissions:
 jobs:
   stage09-t0-t1:
     runs-on: [self-hosted, windows, android-test, mobil-dwg]
-    timeout-minutes: 15
+    timeout-minutes: 20
     steps:
       - name: Checkout
         uses: actions/checkout@v4
@@ -56,9 +56,22 @@ jobs:
           }
           Write-Host 'STAGE09_T1_SCENE_PASS'
 
+      - name: Run Stage 04 regression suite
+        shell: bash
+        run: |
+          set -euo pipefail
+          bash scripts/stage04-test.sh | tee stage09-stage04-regression.log
+          grep -q '^STAGE04_CORE_CONTRACT_TESTS_PASS$' stage09-stage04-regression.log
+          grep -q '^STAGE04_RENDER_CONTRACT_TESTS_PASS$' stage09-stage04-regression.log
+          grep -q '^STAGE04_ARCHITECTURE_TESTS_PASS$' stage09-stage04-regression.log
+          grep -q '^STAGE04_T0_PASS$' stage09-stage04-regression.log
+          echo 'STAGE09_STAGE04_REGRESSION_PASS'
+
       - name: Upload Stage 09 evidence
         uses: actions/upload-artifact@v4
         with:
           name: stage09-self-hosted-evidence
-          path: stage09-render-scene.log
+          path: |
+            stage09-render-scene.log
+            stage09-stage04-regression.log
           if-no-files-found: error
