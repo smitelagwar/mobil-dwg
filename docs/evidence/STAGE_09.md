@@ -4,7 +4,7 @@
 
 `IN_PROGRESS — IMPLEMENTATION_READY / T0_T1_VALIDATION_PENDING_RUNNER`
 
-AŞAMA 09 henüz `DONE` değildir. Uygulama kodu ve hedefli testler yazılmıştır; ancak gerçek derleme/test yürütme kanıtı alınmadan çıkış kriteri kapatılmaz.
+AŞAMA 09 henüz `DONE` değildir. Uygulama kodu ve hedefli testler yazılmıştır; ancak gerçek .NET `10.0.400` restore/build/test yürütme kanıtı alınmadan çıkış kriteri kapatılmaz.
 
 ## Karar ve kapsam
 
@@ -12,7 +12,7 @@ AŞAMA 09 henüz `DONE` değildir. Uygulama kodu ve hedefli testler yazılmışt
 - Branch: `stage09-render-scene-camera`.
 - İlk scene/camera implementation head: `5b3f590dca123c3855e8aac7d48f781ba2cdfdb3`.
 - Son source/test hardening head: `9a17d333afc0a3df1de856a9a53fae0e74617c29`.
-- Stage 09 workflow platform-neutral validation için `ubuntu-latest` kullanır; macOS/iOS kanıtı AŞAMA 08/23 kapsamındadır.
+- Son workflow/fallback head: `0c5aa84bf491ec24c4409c35ffad83dd159b9290`.
 - PR: `#12` — `stage09: add render scene, camera, and diagnostics foundation`.
 - ADR 0002 exact ProCad candidate için `NO-GO` verdiğinden tek production scene yolu **compact özel immutable RenderScene** olarak seçildi.
 - ProCad package/source production graph'a eklenmedi; paralel ikinci scene graph oluşturulmadı.
@@ -33,7 +33,9 @@ AŞAMA 09 henüz `DONE` değildir. Uygulama kodu ve hedefli testler yazılmışt
 | Camera fit/zoom bounds | `Camera2D.Fit`, `ZoomBy`, min/max clamps, invalid default-camera guard | IMPLEMENTED |
 | Background/color context | `RenderColorContext`, Dark/Light presets | IMPLEMENTED |
 | Deterministic semantic snapshot | insertion-order-independent invariant/round-trip snapshot | IMPLEMENTED |
-| ProCad facade sınırı | N/A — ADR 0002 exact ProCad candidate'ı reddetti | NOT_APPLICABLE |
+| ProCad facade sınırı | N/A — ADR 0002 exact ProCad candidate'ı reddetti; custom path seçildi | NOT_APPLICABLE |
+| T0 restore/build | Exact .NET `10.0.400` üzerinde gerçek execution gerekir | NOT_EXECUTED |
+| T1 deterministic tests | Hedefli test executable hazır; gerçek execution gerekir | NOT_EXECUTED |
 
 ## Precision ve robustness tasarım kuralı
 
@@ -61,30 +63,32 @@ Hedefli regression testi survey origin `5,000,000` çevresinde `0.001` world-uni
 
 ## T0/T1 doğrulama durumu
 
-### Hosted runner allocation bulgusu
+### GitHub-hosted runner allocation blocker
 
-İlk Ubuntu denemeleri, doğru `macos-26` fallback denemeleri ve daha sonra tekrar standard `ubuntu-latest` üzerinde aynı davranışı gösterdi: job checkout başlamadan `steps=[]`, `runner_id=0`, empty runner name ile failure oldu. Bu, compile/test failure kanıtı değildir.
+Standard Ubuntu, doğru macOS ve GitHub'ın ayrı lightweight container pool'u üzerinde aynı davranış gözlendi: job checkout başlamadan `steps=[]`, `runner_id=0`, empty runner name ile failure oldu. Bu kayıtlar **C# compile/test failure değildir** ve PASS de değildir.
 
 Önemli kayıtlar:
 
 - Ubuntu ilk Stage 09 run `32783063933` / #2, job `97609094989`: pre-step failure.
-- macOS doğru label run `32786600644` / #14:
+- macOS doğru `macos-26` label run `32786600644` / #14:
   - attempt 1 job `97619697255`;
   - attempt 2 job `97619957457`;
   - attempt 3 job `97631138677`;
-  - üçünde de `steps=[]`, `runner_id=0`, label `macos-26`.
-- Linux standard runner doğrulaması head `a456f0e058346b3df2ee704ca2bb810a86d1c767`:
-  - run `32790863975` / #18;
-  - job `97631981506`;
-  - `ubuntu-latest`, `steps=[]`, `runner_id=0`.
-- Son source/test hardening head `9a17d333afc0a3df1de856a9a53fae0e74617c29`:
-  - Stage 09 run `32791241242` / #28;
-  - job `97633067562`;
-  - yine runner/adım başlamadan failure.
+  - üçünde de `steps=[]`, `runner_id=0`.
+- Standard Linux run `32790863975` / #18, job `97631981506`: `ubuntu-latest`, pre-step failure.
+- Son canonical branch head öncesi run `32791364379` / #30:
+  - initial job `97633411528`;
+  - 2026-08-25 explicit rerun attempt 2 job `97690824454`;
+  - attempt 2 de `ubuntu-latest`, `steps=[]`, `runner_id=0`.
+- Bağımsız lightweight pool fallback, head `0c5aa84bf491ec24c4409c35ffad83dd159b9290`:
+  - Stage 09 run `32811281420` / #32;
+  - job `97690952636`;
+  - label `ubuntu-slim`;
+  - `steps=[]`, `runner_id=0`.
 
-Aynı head ailelerinde Stage 01/02/04/05/06/07/08 workflow'larının da pre-step failure/queue davranışı göstermesi problemi A09 kaynak koduna özgü olmaktan çıkarır.
+`ubuntu-slim` denemesi standard Ubuntu/macOS pool'undan ayrı bir hosted runner hattında da aynı allocation semptomunu üretmiştir. Bu nedenle yeni runner-label denemeleriyle tekrar zinciri üretmek için teknik gerekçe kalmamıştır.
 
-2026-08-25 kontrolünde resmi GitHub status sayfası Actions hizmetini operational gösteriyordu. Bu nedenle genel bir GitHub Actions outage iddia edilmez. Repo/account billing/quota/policy veya kapasite gibi daha özel bir root cause connector kanıtıyla doğrulanamadığından tahmin edilmez.
+Aynı head ailelerinde Stage 01/02/04/05/06/07/08 workflow'larının da pre-step failure göstermesi problemi AŞAMA 09 kaynak koduna özgü olmaktan çıkarır. GitHub Community'de Temmuz 2026'da private repo hosted jobs için aynı gözlenebilir `runner_id=0` / zero-step sınıfı raporlanmıştır; bu yalnız dış corroboration'dır, mobil-dwg için billing/quota/policy/capacity gibi özel kök neden kanıtlanmadığından tahmin edilmez.
 
 ### Configured self-hosted runner probe
 
@@ -92,13 +96,18 @@ Repo içinde daha önce tanımlanmış `[self-hosted, windows, android-test, mob
 
 - PR run `32784140351` / #3.
 - Job `97612382891`.
-- Uygun çevrimiçi runner atanmadı; job queued kaldı.
+- Uygun çevrimiçi runner atanmadı.
 - Probe workflow PR'dan tekrar silindi; kalıcı CI yüzeyine eklenmedi.
 - Bu probe PASS değildir ve fiziksel Android cihaz kanıtı değildir.
 
-### Container fallback
+### Exact SDK / container fallback
 
-Mevcut execution container'ında `dotnet` kurulu değildir. Exact `.NET SDK 10.0.400` Microsoft `dotnet/core` 10.0.11 release metadata'sında Linux x64 binary URL + SHA-512 ile doğrulandı. Container dış DNS/network erişimi olmadığından SDK payload'ı indirilemedi. Farklı SDK ile sahte yerel PASS üretilmedi.
+Exact `.NET SDK 10.0.400` Microsoft `dotnet/core` release metadata'sında doğrulandı:
+
+- Linux x64 archive: `https://builds.dotnet.microsoft.com/dotnet/Sdk/10.0.400/dotnet-sdk-10.0.400-linux-x64.tar.gz`
+- SHA-512: `1033977dd837150e0814cf0c5d5b17ceb63925fda7ba2158b47258a4bd7c048cf82eac3bc1166f3146f53124a3f5fba09db1de1260d2ce96399860303b404b48`
+
+Mevcut execution container'ında `dotnet`/C# compiler kurulu değildir ve dış SDK payload indirme yolu execution-network sınırları nedeniyle tamamlanamamıştır. Farklı SDK ile sahte yerel PASS üretilmedi.
 
 ## Beklenen T0/T1 marker'ları
 
@@ -115,11 +124,11 @@ Artifact: `stage09-render-scene-evidence` / `stage09-render-scene.log`.
 
 ## Açık çıkış kriteri
 
-AŞAMA 09 exit kriteri şu anda **sağlanmış sayılmaz**. Gerekli kalan adım:
+AŞAMA 09 exit kriteri şu anda **sağlanmış sayılmaz**. Gerekli kalan tek doğrulama zinciri:
 
-1. exact .NET `10.0.400` üzerinde Stage 09 T0 restore/build + T1 deterministic scene/camera tests gerçek runner'da çalışacak;
+1. exact .NET `10.0.400` üzerinde Stage 09 T0 restore/build + T1 deterministic scene/camera tests gerçek execution environment'ta çalışacak;
 2. varsa compiler/test hataları aynı AŞAMA 09 branch'inde düzeltilecek;
-3. marker'lar ve artifact doğrulanacak;
+3. marker'lar ve evidence artifact/log doğrulanacak;
 4. bundan sonra canonical checkpoint/gecmis/DEVAM `DONE` olarak güncellenip PR #12 merge edilebilecek.
 
 AŞAMA 01, AŞAMA 06 ve AŞAMA 08'in fiziksel/local dış kapıları değişmeden açık kalır. AŞAMA 10 bu doğrulama gelmeden başlatılmaz.
