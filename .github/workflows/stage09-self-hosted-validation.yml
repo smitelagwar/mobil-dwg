@@ -1,0 +1,64 @@
+name: Stage 09 Self-Hosted Validation
+
+on:
+  push:
+    branches:
+      - stage09-render-scene-camera
+    paths:
+      - '.github/workflows/stage09-self-hosted-validation.yml'
+      - 'src/MobilDwg.Core/Rendering/**'
+      - 'src/MobilDwg.Rendering/**'
+      - 'tests/MobilDwg.Rendering.Tests/**'
+
+permissions:
+  contents: read
+
+jobs:
+  stage09-t0-t1:
+    runs-on: [self-hosted, windows, android-test, mobil-dwg]
+    timeout-minutes: 15
+    steps:
+      - name: Checkout
+        uses: actions/checkout@v4
+
+      - name: Verify exact .NET SDK
+        shell: powershell
+        run: |
+          $ErrorActionPreference = 'Stop'
+          $version = (& dotnet --version).Trim()
+          if ($version -ne '10.0.400') { throw "Expected .NET 10.0.400, got $version" }
+          Write-Host 'STAGE09_DOTNET_PIN_PASS'
+
+      - name: Restore T0
+        shell: powershell
+        run: |
+          $ErrorActionPreference = 'Stop'
+          & dotnet restore tests/MobilDwg.Rendering.Tests/MobilDwg.Rendering.Tests.csproj
+          if ($LASTEXITCODE -ne 0) { exit $LASTEXITCODE }
+
+      - name: Build T0
+        shell: powershell
+        run: |
+          $ErrorActionPreference = 'Stop'
+          & dotnet build tests/MobilDwg.Rendering.Tests/MobilDwg.Rendering.Tests.csproj -c Release --no-restore /warnaserror
+          if ($LASTEXITCODE -ne 0) { exit $LASTEXITCODE }
+          Write-Host 'STAGE09_T0_BUILD_PASS'
+
+      - name: Run deterministic scene T1
+        shell: powershell
+        run: |
+          $ErrorActionPreference = 'Stop'
+          & dotnet run --project tests/MobilDwg.Rendering.Tests/MobilDwg.Rendering.Tests.csproj -c Release --no-build 2>&1 | Tee-Object -FilePath stage09-render-scene.log
+          if ($LASTEXITCODE -ne 0) { exit $LASTEXITCODE }
+          $log = Get-Content -Raw stage09-render-scene.log
+          foreach ($marker in @('STAGE04_RENDER_CONTRACT_TESTS_PASS','STAGE09_RENDER_SCENE_TESTS_PASS','render-scene/v1')) {
+            if ($log -notmatch [regex]::Escape($marker)) { throw "Missing marker: $marker" }
+          }
+          Write-Host 'STAGE09_T1_SCENE_PASS'
+
+      - name: Upload Stage 09 evidence
+        uses: actions/upload-artifact@v4
+        with:
+          name: stage09-self-hosted-evidence
+          path: stage09-render-scene.log
+          if-no-files-found: error
