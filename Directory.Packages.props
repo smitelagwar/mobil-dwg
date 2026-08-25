@@ -5,11 +5,11 @@
   </PropertyGroup>
 
   <ItemGroup>
-    <!-- Production candidates: exact versions only. -->
-    <PackageVersion Include="ACadSharp" Version="3.7.1" />
-    <PackageVersion Include="SkiaSharp" Version="4.151.1" />
+    <!-- Production candidates: strict exact versions only. NuGet exact-range syntax is intentional. -->
+    <PackageVersion Include="ACadSharp" Version="[3.7.1]" />
+    <PackageVersion Include="SkiaSharp" Version="[4.151.1]" />
 
     <!-- Test/fallback candidate only; not referenced by the production probe. -->
-    <PackageVersion Include="IxMilia.Dxf" Version="0.8.4" />
+    <PackageVersion Include="IxMilia.Dxf" Version="[0.8.4]" />
   </ItemGroup>
 </Project>
