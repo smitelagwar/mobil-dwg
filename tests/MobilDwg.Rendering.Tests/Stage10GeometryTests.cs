@@ -1,6 +1,9 @@
 using System.Runtime.CompilerServices;
+using MobilDwg.Rendering.Camera;
 using MobilDwg.Rendering.Geometry;
 using MobilDwg.Rendering.Scene;
+using MobilDwg.Rendering.Skia;
+using MobilDwg.Rendering.Snapshots;
 
 internal static class Stage10GeometryTests
 {
@@ -72,9 +75,77 @@ internal static class Stage10GeometryTests
         AssertThrows<ArgumentException>(() => new SplinePrimitive(2, [new WorldPoint2(0, 0), new WorldPoint2(1, 1), new WorldPoint2(2, 0)], [0d, 0d, 1d, 0.5d, 1d, 1d]), "decreasing spline knots must fail");
         AssertThrows<ArgumentOutOfRangeException>(() => new GeometryTessellationOptions(double.NaN), "NaN chord error must fail");
 
+        var acceptanceScene = BuildAcceptanceScene(reverseInsertion: false);
+        var acceptanceSceneReversed = BuildAcceptanceScene(reverseInsertion: true);
+        var snapshot = P0GeometrySemanticSnapshot.Create(acceptanceScene);
+        var reversedSnapshot = P0GeometrySemanticSnapshot.Create(acceptanceSceneReversed);
+        Assert(snapshot == reversedSnapshot, "source-order P0 semantic golden must be insertion-order independent");
+        Assert(snapshot.StartsWith("p0-geometry/v1\n", StringComparison.Ordinal), "P0 semantic snapshot version");
+        Assert(snapshot.Contains("primitive=LINE|-30,-20|30,-20", StringComparison.Ordinal), "P0 semantic line golden");
+        Assert(snapshot.Contains("primitive=ARC|0,0|18|0|3.141592653589793", StringComparison.Ordinal), "P0 semantic arc golden");
+        Assert(snapshot.Contains("primitive=POLYLINE|0|-28,18,0.5;-10,30,0;8,18,0", StringComparison.Ordinal), "P0 bulge semantic golden");
+        Assert(snapshot.Contains("primitive=SPLINE|2|-25,0;-5,35;25,5|0,0,0,1,1,1|1,1,1", StringComparison.Ordinal), "P0 spline semantic golden");
+
+        using (var surface = new SkiaBitmapRenderSurface(640, 480))
+        {
+            var camera = Camera2D.Fit(acceptanceScene.WorldBounds!.Value, 640, 480, paddingFraction: 0.08);
+            new SkiaCadRenderer().RenderAsync(acceptanceScene, surface, camera.ToViewport()).GetAwaiter().GetResult();
+            var background = acceptanceScene.ColorContext.BackgroundArgb;
+            var nonBackground = surface.Bitmap.Pixels.Count(pixel => pixel.Alpha != 0 && ToArgb(pixel) != background);
+            Assert(nonBackground > 500, $"Skia acceptance render must contain expected foreground content; pixels={nonBackground}");
+            var png = surface.EncodePng();
+            Assert(png.Length > 1024, "Skia acceptance PNG must be non-trivial");
+            Assert(png[0] == 0x89 && png[1] == 0x50 && png[2] == 0x4E && png[3] == 0x47, "Skia acceptance output must be PNG");
+        }
+
         Console.WriteLine("STAGE10_GEOMETRY_PRIMITIVES_TESTS_PASS");
         Console.WriteLine("STAGE10_TESSELLATION_PRECISION_TESTS_PASS");
+        Console.WriteLine("STAGE10_P0_SEMANTIC_GOLDEN_PASS");
+        Console.WriteLine("STAGE10_SKIA_EXPECTED_CONTENT_HOST_PASS");
     }
+
+    internal static RenderScene BuildAcceptanceScene(bool reverseInsertion)
+    {
+        var entities = new[]
+        {
+            Entity("P0-LINE", "LINE", 1, [new LinePrimitive(new WorldPoint2(-30, -20), new WorldPoint2(30, -20))]),
+            Entity("P0-ARC", "ARC", 2, [new ArcPrimitive(new WorldPoint2(0, 0), 18, 0, Math.PI)]),
+            Entity("P0-CIRCLE", "CIRCLE", 3, [new ArcPrimitive(new WorldPoint2(30, 15), 10, 0, Math.PI * 2d)]),
+            Entity("P0-ELLIPSE", "ELLIPSE", 4, [new EllipsePrimitive(new WorldPoint2(0, -2), 16, 7, Math.PI / 5d)]),
+            Entity("P0-POINT", "POINT", 5, [new PointPrimitive(new WorldPoint2(-32, 30))]),
+            Entity("P0-LWPOLYLINE", "LWPOLYLINE", 6, [new PolylinePrimitive([
+                new PolylineVertex(new WorldPoint2(-28, 18), 0.5),
+                new PolylineVertex(new WorldPoint2(-10, 30)),
+                new PolylineVertex(new WorldPoint2(8, 18)),
+            ])]),
+            Entity("P0-SPLINE", "SPLINE", 7, [new SplinePrimitive(2,
+                [new WorldPoint2(-25, 0), new WorldPoint2(-5, 35), new WorldPoint2(25, 5)],
+                [0d, 0d, 0d, 1d, 1d, 1d])]),
+            Entity("P0-SOLID", "SOLID", 8, [new PolygonPrimitive([
+                new WorldPoint2(15, 25), new WorldPoint2(35, 25), new WorldPoint2(28, 40), new WorldPoint2(18, 38),
+            ])]),
+            Entity("P0-TRACE", "TRACE", 9, [new PolygonPrimitive([
+                new WorldPoint2(-5, -35), new WorldPoint2(8, -35), new WorldPoint2(10, -28), new WorldPoint2(-8, -28),
+            ])]),
+            Entity("P0-3DFACE", "3DFACE", 10, [new PolygonPrimitive([
+                new WorldPoint2(20, -35), new WorldPoint2(38, -32), new WorldPoint2(34, -22), new WorldPoint2(22, -24),
+            ])]),
+        };
+
+        var builder = new RenderSceneAssembler(RenderColorContext.Dark);
+        foreach (var entity in reverseInsertion ? entities.Reverse() : entities) builder.AddEntity(entity);
+        return builder.Build();
+    }
+
+    private static RenderSceneEntity Entity(string id, string type, int sourceIndex, IEnumerable<RenderGeometryPrimitive> geometry) => new(
+        new RenderEntityId(id),
+        new RenderLayerToken("0"),
+        new RenderStyleToken("BYLAYER"),
+        new RenderSourceReference(type, handle: id, sourceIndex: sourceIndex),
+        geometry);
+
+    private static uint ToArgb(SkiaSharp.SKColor color) =>
+        ((uint)color.Alpha << 24) | ((uint)color.Red << 16) | ((uint)color.Green << 8) | color.Blue;
 
     private static void Assert(bool condition, string message)
     {
