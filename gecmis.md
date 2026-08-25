@@ -31,21 +31,22 @@ IOS_STATUS: DEFERRED_FUTURE_OPTION — aktif sıra ve Android DoD dışında
 IMPLEMENTATION_BASELINE: AŞAMA 09 — DONE
 IMPLEMENTATION_NEXT: AŞAMA 10 — NOT_STARTED
 ANDROID_VALIDATION_PLAN: ANDROID_DOGRULAMA_PLANI.md
-ANDROID_VALIDATION_CURRENT: V01 — FIX_REQUIRED
-ANDROID_VALIDATION_NEXT: mevcut gate'in gerçek harness/APK/screenshot/crash-ANR kanıt açıklarını düzelt
+ANDROID_VALIDATION_CURRENT: V02 — NOT_STARTED
+ANDROID_VALIDATION_NEXT: V02 — dependency, lockfile ve Android artifact sınırı
 PENDING_EMULATOR_QUEUE: EMPTY
-CURRENT_GATE_TRUTH: geçici Stage01Smoke APK; `dotnet test` executable harness gövdelerini çalıştırmıyor; mevcut PNG'ler bozuk; PID/crash/ANR kontrolü eksik
+CURRENT_GATE_TRUTH: V01 hardened Stage01Smoke infrastructure gate exact Release run'da gerçek executable harness, byte-safe PNG, live PID ve package/PID crash + post-launch ANR kanıtıyla geçti
 CURRENT_GATE_CLAIM_LIMIT: INFRASTRUCTURE_SMOKE_ONLY — MobilDwg.App/viewer PASS değil
 PHYSICAL_ANDROID: DEFERRED_RELEASE_DEVICE_GATE
 STAGE08_IOS: HISTORICAL_CHARACTERIZATION / FUTURE_INACTIVE
 STAGE09_HISTORICAL_EVIDENCE: docs/evidence/STAGE_09.md; run 32815175055/#6; artifact 9551137293; merge 0a2dd886bbe59698a6d2eb4c99f66e7f9270063a
-NEXT_ACTION: V01'de kanıt altyapısını düzelt ve exact Android emulator Release koşusunu gerçek kapsamıyla kaydet.
+V01_EVIDENCE: docs/evidence/android-validation/V01.md; tested SHA 698c6e901672a736f2803894efb5bda34af08212; run 32821991333; job 97721878468; artifact 9553530359
+NEXT_ACTION: Yalnız V02'yi başlat — locked dependency graph, license/vulnerability policy ve Android artifact boundary doğrulaması; aynı turda V03'e geçme.
 LAST_UPDATE: 2026-08-25
 ```
 
 ## Yürütme kuralı
 
-AŞAMA 01–09 implementation geçmişi değiştirilmeden korunur; yeni Android doğrulama cursor'ı V01'den başlar. Runner çevrim dışıysa exact SHA test kuyruğuna alınır ve host-independent kod/test işi implementation cursor'ında sürdürülebilir. Emulator sonucu uydurulmaz; fiziksel Android release öncesi yeniden zorunludur. iOS future option'dır ve aktif Android sırasını bloke etmez.
+AŞAMA 01–09 implementation geçmişi değiştirilmeden korunur; Android doğrulama cursor'ı V01'den başlayıp sırayla ilerler. Runner çevrim dışıysa exact SHA test kuyruğuna alınır ve host-independent kod/test işi implementation cursor'ında sürdürülebilir. Emulator sonucu uydurulmaz; fiziksel Android release öncesi yeniden zorunludur. iOS future option'dır ve aktif Android sırasını bloke etmez.
 
 AŞAMA 09 için ADR 0002'deki yüksek efor/bakım riski kullanıcı tarafından açıkça kabul edildi ve stage gerçek T0/T1 kanıtıyla kapatıldı. Bu GO yeniden istenmez. AŞAMA 10 için ayrı bir GO bariyeri tanımlı değildir.
 
@@ -141,6 +142,14 @@ Yetkili kapanış: head `7bba0b7a6da30dc4b23050872a7a1ef4e90ca087`, run `3281517
 
 Ayrıntı: `docs/evidence/STAGE_09.md`.
 
+### Android revalidation V01 — VALIDATED
+
+V01'in başlangıçta `FIX_REQUIRED` olmasının nedeni gerçek kanıt boşluklarıydı: gate yalnız `dotnet test` çağrısıyla executable harness gövdelerini doğrulamıyor, PowerShell redirect screenshot'ı byte-safe üretmiyor ve PID/crash/ANR iddiaları yeterince sert değildi. Gate bu açıklar için düzeltildi.
+
+Yetkili V01 koşusu exact SHA `698c6e901672a736f2803894efb5bda34af08212`, self-hosted Windows run `32821991333`, job `97721878468`, `SUCCESS`. Release solution build geçti; Core/Rendering/Architecture executable harness marker'ları gerçekten çalıştı. `Stage01Smoke` signed APK Android 16 / API 36 emulator üzerinde kuruldu, cold-launch `Status: ok` verdi ve PID `3374` zorunlu olarak bulundu. Screenshot tam PNG imzasıyla byte-safe doğrulandı, artifact indirildi ve görsel açıldı. Package/PID crash buffer boştu; post-launch events gerçek lifecycle/draw akışını gösterdi ve `dumpsys activity lastanr` boot'tan beri ANR olmadığını bildirdi.
+
+Artifact `9553530359`, 7 dosya, 271043 byte; digest `sha256:ad96924682330a93368c95889d75e8112dff8387170dcdeb17b17e3d72c8e7f7`. Sonuç yalnız `INFRASTRUCTURE_SMOKE_ONLY`; `Stage01Smoke` gerçek `MobilDwg.App` veya DWG/DXF fidelity kanıtı değildir. Ayrıntı: `docs/evidence/android-validation/V01.md`.
+
 ## Değiştirilemez temel teknik kararlar
 
 - v1 yalnız 2D viewer; edit/write yok.
@@ -159,8 +168,8 @@ Ayrıntı: `docs/evidence/STAGE_09.md`.
 
 1. Gerçek `main` HEAD ve açık PR durumunu doğrula.
 2. Kullanıcı değişikliklerini koru; destructive Git işlemi yapma.
-3. Kullanıcı yalnız `devam` diyorsa `ANDROID_DOGRULAMA_PLANI.md` içindeki açık **V01** üzerinden ilerle.
-4. Runner çevrim dışıysa V01 testini çoğaltma; exact SHA'yı kuyruğa al ve güvenli host-independent iş varsa AŞAMA 10 implementation cursor'ında sürdürebilirsin.
+3. Kullanıcı yalnız `devam` diyorsa `ANDROID_DOGRULAMA_PLANI.md` içindeki açık **V02** üzerinden ilerle.
+4. Runner çevrim dışıysa gereken Android kanıtını çoğaltma; exact SHA'yı kuyruğa al ve güvenli host-independent iş varsa implementation cursor'ında sürdürebilirsin.
 5. Bir turda en fazla bir validation veya implementation aşaması tamamla; aynı turda sonraki aşamaya geçme.
 6. Emulatoru fiziksel Android, `Stage01Smoke` uygulamasını viewer veya queued işi PASS sayma. iOS işi başlatma.
 7. Dependency kendiliğinden yükseltme ve ProCad'ı production graph'a geri sokma.
@@ -168,4 +177,4 @@ Ayrıntı: `docs/evidence/STAGE_09.md`.
 
 ## Bir sonraki tur
 
-Kullanıcı `devam` veya `BASLA.md dosyasını oku` dediğinde **V01 — Toolchain, runner ve emulator altyapısı** başlatılır. İlk iş mevcut gate'i doğruluk açısından düzeltmektir: executable harness'ları gerçekten çalıştır, screenshot'ı byte-safe üretip PNG imzasını doğrula, PID/crash/ANR ve exact AVD/API kontrollerini sertleştir, sonucu `INFRASTRUCTURE_SMOKE` ile gerçek viewer kanıtından ayır. AŞAMA 10 cursor'ı korunur; runner çevrim dışı olduğunda güvenli kod işinin devamı için kullanılabilir.
+Kullanıcı `devam` veya `BASLA.md dosyasını oku` dediğinde **V02 — Dependency, lockfile ve Android artifact sınırı** başlatılır. V01 tekrar çalıştırılmaz; yalnız V02'nin package/source/license geçmişi ile güncel locked restore, resolved graph, vulnerability/license audit ve Android native/runtime artifact sınırı karşılaştırılır. ProCad ve iOS-only bileşenlerin Android production graph'a sızmadığı kanıtlanır. Bu turda V03 başlatılmaz. AŞAMA 10 implementation cursor'ı ayrı olarak korunur.
