@@ -38,9 +38,12 @@ AŞAMA_07: DONE / NO-GO — exact unpatched ProCad candidate precision blocker n
 AŞAMA_08: DONE / CHARACTERIZATION — evidence BLOCKED_PARTIAL_EVIDENCE; iOS runtime/device PASS yok
 AŞAMA_09: DONE — compact immutable RenderScene + double camera + diagnostics + deterministic snapshot
 AŞAMA_09_USER_GO: GRANTED / CONSUMED — yeniden istenmez
-AŞAMA_09_PR: #12 — kapanış/merge için hazırlanmış branch stage09-render-scene-camera
+AŞAMA_09_PR: #12 — MERGED
+AŞAMA_09_FINAL_PR_HEAD: 68d08bd3984ef4d1fcca027acb788c4bfcc5e43a
+AŞAMA_09_MERGE_COMMIT: 0a2dd886bbe59698a6d2eb4c99f66e7f9270063a
 AŞAMA_09_SOURCE_TEST_HEAD: 9a17d333afc0a3df1de856a9a53fae0e74617c29
 AŞAMA_09_VALIDATION_HEAD: 7bba0b7a6da30dc4b23050872a7a1ef4e90ca087
+AŞAMA_09_POST_VALIDATION_DELTA: yalnız workflow/docs/handoff; production source/test değişikliği yok
 AŞAMA_09_VALIDATION_RUN: 32815175055 / #6 SUCCESS
 AŞAMA_09_VALIDATION_JOB: 97701882792 SUCCESS
 AŞAMA_09_ARTIFACT: 9551137293; stage09-self-hosted-evidence; 1578 bytes
@@ -71,9 +74,9 @@ Tamamlanan foundation:
 - Camera fit, zoom clamps ve dark/light color context.
 - Stable-ID sıralı immutable scene ve deterministic `render-scene/v1` semantic snapshot.
 
-Yetkili kapanış validation'ı self-hosted Windows runner üzerinde exact .NET `10.0.400` ile gerçek checkout/restore/build/run yaptı. Hedefli A09 Release build ve tam solution Release build `0 warning / 0 error`; Core/Rendering/Architecture ve Stage 05 dependency-boundary regresyonları geçti. Artifact `9551137293`, digest `sha256:486c9d0b5a2a35cd4fbb402d9c56ab226a5b6175b8920da95298d18199054ddd`.
+Yetkili kapanış validation'ı self-hosted Windows runner üzerinde exact .NET `10.0.400` ile gerçek checkout/restore/build/run yaptı. Hedefli A09 Release build ve tam solution Release build `0 warning / 0 error`; Core/Rendering/Architecture ve Stage 05 dependency-boundary regresyonları geçti. Artifact `9551137293`, digest `sha256:486c9d0b5a2a35cd4fbb402d9c56ab226a5b6175b8920da95298d18199054ddd`. PR #12 final head `68d08bd3984ef4d1fcca027acb788c4bfcc5e43a` üzerinden `0a2dd886bbe59698a6d2eb4c99f66e7f9270063a` merge commit'i ile `main`e alındı. Validation head → merge commit compare'ında A09 production source/test dosyası değişmedi.
 
-Önceki `ubuntu-latest`, `macos-26` ve `ubuntu-slim` zero-step/runner_id=0 kayıtları hosted runner allocation problemiydi; self-hosted gerçek execution PASS ile A09 implementation failure olmadığı ayrıştırıldı. Geçici self-hosted A09 workflow'u kapanıştan sonra branch'ten kaldırıldı; kalıcı Stage 09 workflow'u `ubuntu-latest` üzerinde bırakıldı.
+Önceki `ubuntu-latest`, `macos-26` ve `ubuntu-slim` zero-step/runner_id=0 kayıtları hosted runner allocation problemiydi; self-hosted gerçek execution PASS ile A09 implementation failure olmadığı ayrıştırıldı. Geçici self-hosted A09 workflow'u kapanıştan sonra branch'ten kaldırıldı; kalıcı Stage 09 workflow'u `ubuntu-latest` üzerinde bırakıldı ve post-merge closure ile `main` push kapsamı eklendi.
 
 ## Önceki kritik kararlar
 
