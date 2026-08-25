@@ -1,4 +1,4 @@
-# Mobil DWG/DXF Görüntüleyici — Nihai Uygulama ve Yürütme Planı
+﻿# Mobil DWG/DXF Görüntüleyici — Nihai Uygulama ve Yürütme Planı
 
 **Plan sürümü:** 1.0  
 **Hazırlanma/doğrulama tarihi:** 24 Ağustos 2026  
@@ -15,14 +15,14 @@
 Bu blok ve aşağıdaki aşama kutuları her çalışma turunun sonunda güncellenir.
 
 ```text
-CURRENT_STAGE: AŞAMA 09
-CURRENT_SUBSTEP: 09.validation
-STATUS: IN_PROGRESS — IMPLEMENTATION_READY / T0_T1_VALIDATION_PENDING_RUNNER
-LAST_VERIFIED_REVISION: 0c5aa84bf491ec24c4409c35ffad83dd159b9290 — Stage 09 production-independent scene/camera foundation source/tests hazır; standard Ubuntu, macOS ve ayrı ubuntu-slim hosted pool'larında checkout başlamadan runner allocation failure yeniden üretildi
-LAST_SUCCESSFUL_COMMAND: AŞAMA 09 için henüz yok — T0/T1 gerçek execution başlamadı; son validation request Stage 09 run 32811281420 / #32 job 97690952636 `steps=[]`, `runner_id=0`
-EVIDENCE: docs/evidence/STAGE_09.md; DEVAM.md; gecmis.md; PR #12; source/test hardening head 9a17d333afc0a3df1de856a9a53fae0e74617c29; workflow/fallback head 0c5aa84bf491ec24c4409c35ffad83dd159b9290
-BLOCKERS: AŞAMA 09 implementation hazır fakat exact .NET 10.0.400 restore/build/test yürütülmedi. `ubuntu-latest`, `macos-26` ve `ubuntu-slim` hosted jobs checkout öncesi `steps=[]`, `runner_id=0` ile kesiliyor; configured self-hosted probe da uygun online runner bulamadı. Bu compile/test FAIL veya PASS değildir. AŞAMA 01/AŞAMA 06 gerçek Android ve AŞAMA 08 local Mac/ios-arm64/physical iPhone kapıları ayrıca DEFERRED_EXTERNAL_GATE olarak açık.
-NEXT_ACTION: Exact .NET 10.0.400 çalışan gerçek bir execution environment elde et; `tests/MobilDwg.Rendering.Tests/MobilDwg.Rendering.Tests.csproj` için T0 restore/build + T1 deterministic scene/camera testlerini çalıştır; gerçek marker/artifact olmadan PR #12 merge etme, AŞAMA 09'u DONE yapma veya AŞAMA 10'a geçme.
+CURRENT_STAGE: AÅAMA 09
+CURRENT_SUBSTEP: 09.complete
+STATUS: DONE
+LAST_VERIFIED_REVISION: 7bba0b7a6da30dc4b23050872a7a1ef4e90ca087 â€” exact .NET 10.0.400 self-hosted execution Ã¼zerinde AÅAMA 09 targeted T0/T1 ve full Stage 04 architecture regression PASS
+LAST_SUCCESSFUL_COMMAND: Stage 09 Self-Hosted Validation run 32815175055 / #6, job 97701882792 SUCCESS â€” targeted + full solution Release build 0 warning / 0 error
+EVIDENCE: docs/evidence/STAGE_09.md; run 32815175055/#6; artifact 9551137293; sha256:486c9d0b5a2a35cd4fbb402d9c56ab226a5b6175b8920da95298d18199054ddd; STAGE09_DOTNET_PIN_PASS; STAGE09_T0_BUILD_PASS; STAGE09_RENDER_SCENE_TESTS_PASS; STAGE09_T1_SCENE_PASS; STAGE09_STAGE04_REGRESSION_PASS; render-scene/v1
+BLOCKERS: AÅAMA 09 blocker yok. AÅAMA 01/AÅAMA 06 gerÃ§ek Android ve AÅAMA 08 local Mac/ios-arm64/physical iPhone kapÄ±larÄ± DEFERRED_EXTERNAL_GATE olarak aÃ§Ä±k kalÄ±r; AÅAMA 09 bunlarÄ± kapatmaz.
+NEXT_ACTION: AÅAMA 10 â€” P0 temel geometri renderer'Ä± â€” bir sonraki kullanÄ±cÄ± `devam` turunda baÅŸlatÄ±lÄ±r. Bir turda en fazla bir aÅŸama kuralÄ± gereÄŸi bu AÅAMA 09 kapanÄ±ÅŸ turunda AÅAMA 10 baÅŸlatÄ±lmaz.
 LAST_UPDATE: 2026-08-25
 ```
 
@@ -374,7 +374,7 @@ Kurallar:
 - [ ] AŞAMA 06 — Android güvenli dosya alma ve parse spike — `BLOCKED / DEFERRED_EXTERNAL_GATE`
 - [x] AŞAMA 07 — ProCad source-pinned Android spike ve GO/NO-GO — `DONE / NO-GO`
 - [x] AŞAMA 08 — Erken iOS AOT/native fizibilite smoke — `DONE / CHARACTERIZATION; iOS PASS NOT CLAIMED`
-- [ ] AŞAMA 09 — RenderScene, kamera ve diagnostics temeli — `IN_PROGRESS / IMPLEMENTATION_READY / T0_T1_VALIDATION_PENDING_RUNNER`
+- [x] AÅAMA 09 â€” RenderScene, kamera ve diagnostics temeli â€” `DONE`
 - [ ] AŞAMA 10 — P0 temel geometri renderer’ı — `NOT_STARTED`
 - [ ] AŞAMA 11 — Mobil viewport ve gesture’lar
 - [ ] AŞAMA 12 — Block/INSERT/attribute dönüşümleri
@@ -543,26 +543,25 @@ Test: Final CI `Stage 07 ProCad Source Spike` run `32766501837` / #5 `SUCCESS`; 
 Test: Yetkili karakterizasyon `Stage 08 iOS Feasibility` run `32781026946` / #18 `SUCCESS`; artifact `9540018558`, digest `sha256:1414e3bf5a9800e150019c48f620c64efcd3d5282ac7322ef9a5e5746ab746f7`. Evidence JSON `BLOCKED_PARTIAL_EVIDENCE`. Workflow success, üç probe'un PASS olduğu anlamına gelmez; gerçek blocker'ları deterministik kaydettiği anlamına gelir.  
 Çıkış: **Sağlandı — dış blocker/risk kabulü açıkça kaydedildi; iOS fizibilitesi kanıtlanmış değildir.** Complete local/managed Mac, `ios-arm64` AOT ve fiziksel iPhone kapıları `docs/LOCAL_DEVICE_REVALIDATION.md` ve AŞAMA 23/24 için açık kalır. AŞAMA 09 için gerekli kullanıcı GO kararı daha sonra verilmiş ve implementation başlamıştır.
 
-### AŞAMA 09 — RenderScene, kamera ve diagnostics temeli
+### AÅAMA 09 â€” RenderScene, kamera ve diagnostics temeli
 
-**Amaç:** Seçilen yol üzerinde parser’dan bağımsız, test edilebilir sahne çekirdeği.
+**AmaÃ§:** SeÃ§ilen yol Ã¼zerinde parserâ€™dan baÄŸÄ±msÄ±z, test edilebilir sahne Ã§ekirdeÄŸi.
 
-İşler:
+Ä°ÅŸler:
 
-- [x] Tek scene implementasyonu seçildi: ADR 0002 ProCad exact reuse `NO-GO` olduğundan compact özel immutable scene; paralel iki scene graph yok.
-- [x] Stable entity ID, bounds, layer/style token ve source reference scene üzerinde modellendi; default-value bypass ve duplicate-ID guard'ları eklendi.
-- [x] Document/world koordinatları `double`; world→view→screen tek transform hattıdır; Core `RenderViewport` ile explicit bridge vardır.
-- [x] OCS/WCS, extents, invalid NaN/Infinity, finite-overflow ve büyük koordinat hedefli unit-test senaryoları eklendi; büyük normal vektörleri scaled normalization kullanır.
-- [x] Scene build diagnostics `unsupported/substituted/dropped/error` türlerini toplar ve invalid taxonomy reddedilir.
-- [x] Camera fit/zoom bounds ve background/color context tanımlandı; invalid/default camera guard'ları eklendi.
-- [x] ProCad adapter gereksinimi ADR 0002 nedeniyle `NOT_APPLICABLE`; aynı sınırlar seçilen custom scene yolunda korunur.
-- [x] Deterministic `render-scene/v1` semantic snapshot ve insertion-order bağımsızlığı testi yazıldı; Stage 04 render-contract marker'ı korunur.
-- [ ] Exact .NET `10.0.400` üzerinde T0 restore/build gerçek execution ile çalıştırılır.
-- [ ] T1 deterministic scene/camera executable testleri gerçek execution ile çalıştırılır ve evidence artifact/log alınır.
+- [x] Tek scene implementasyonu seÃ§ildi: ADR 0002 ProCad exact reuse `NO-GO` olduÄŸundan compact Ã¶zel immutable scene; paralel iki scene graph yok.
+- [x] Stable entity ID, bounds, layer/style token ve source reference scene Ã¼zerinde modellendi; default-value bypass ve duplicate-ID guard'larÄ± eklendi.
+- [x] Document/world koordinatlarÄ± `double`; worldâ†’viewâ†’screen tek transform hattÄ±dÄ±r; Core `RenderViewport` ile explicit bridge vardÄ±r.
+- [x] OCS/WCS, extents, invalid NaN/Infinity, finite-overflow ve bÃ¼yÃ¼k koordinat hedefli unit-test senaryolarÄ± gerÃ§ek execution'da geÃ§ti; bÃ¼yÃ¼k normal vektÃ¶rleri scaled normalization kullanÄ±r.
+- [x] Scene build diagnostics `unsupported/substituted/dropped/error` tÃ¼rlerini toplar ve invalid taxonomy reddedilir.
+- [x] Camera fit/zoom bounds ve background/color context tanÄ±mlandÄ±; invalid/default camera guard'larÄ± eklendi.
+- [x] ProCad adapter gereksinimi ADR 0002 nedeniyle `NOT_APPLICABLE`; aynÄ± sÄ±nÄ±rlar seÃ§ilen custom scene yolunda korunur.
+- [x] Deterministic `render-scene/v1` semantic snapshot ve insertion-order baÄŸÄ±msÄ±zlÄ±ÄŸÄ± testi gerÃ§ek execution'da geÃ§ti; Stage 04 render-contract marker'Ä± korunur.
+- [x] Exact .NET `10.0.400` Ã¼zerinde T0 restore/build gerÃ§ek self-hosted execution ile geÃ§ti.
+- [x] T1 deterministic scene/camera executable testleri ve full Stage 04 architecture regression gerÃ§ek execution ile geÃ§ti; evidence artifact/log alÄ±ndÄ±.
 
-Test: **NOT_EXECUTED.** Test kodu hazırdır fakat GitHub-hosted standard Ubuntu, macOS ve ayrı `ubuntu-slim` runner pool'larında checkout başlamadan `steps=[]`, `runner_id=0` allocation failure oluştu. Son bağımsız pool denemesi `Stage 09 Render Scene Foundation` run `32811281420` / #32, job `97690952636`. Configured self-hosted probe da uygun online runner bulamadı. Bu compile/test failure veya PASS değildir.  
-Çıkış: **Henüz sağlanmadı.** Sentetik scene ve deterministic snapshot implementation/test kodu mevcut; gerçek exact .NET `10.0.400` T0/T1 marker'ları ve artifact/log elde edilmeden AŞAMA 09 `DONE` sayılmaz ve PR #12 merge edilmez.
-
+Test: Yetkili kapanÄ±ÅŸ `Stage 09 Self-Hosted Validation` run `32815175055` / #6, job `97701882792`, head `7bba0b7a6da30dc4b23050872a7a1ef4e90ca087`, `SUCCESS`. Targeted ve full solution Release build `0 Warning / 0 Error`. Marker'lar: `STAGE09_DOTNET_PIN_PASS`, `STAGE09_T0_BUILD_PASS`, `STAGE04_CORE_CONTRACT_TESTS_PASS`, `STAGE04_RENDER_CONTRACT_TESTS_PASS`, `STAGE09_RENDER_SCENE_TESTS_PASS`, `render-scene/v1`, `STAGE09_T1_SCENE_PASS`, `STAGE04_ARCHITECTURE_TESTS_PASS`, `STAGE05_DEPENDENCY_BOUNDARY_PASS`, `STAGE04_T0_PASS`, `STAGE09_STAGE04_REGRESSION_PASS`. Artifact `9551137293`, digest `sha256:486c9d0b5a2a35cd4fbb402d9c56ab226a5b6175b8920da95298d18199054ddd`. Survey-origin snapshot `5000000.001` ayrÄ±ntÄ±sÄ±nÄ± korudu. Ã–nceki hosted `runner_id=0` kayÄ±tlarÄ± infrastructure allocation problemi olarak ayrÄ±ÅŸtÄ±rÄ±ldÄ±.  
+Ã‡Ä±kÄ±ÅŸ: **SaÄŸlandÄ±.** Sentetik scene headless Ã¼retilebilir; aynÄ± semantic girdi aynÄ± snapshot'Ä± verir; precision/OCS/diagnostics/architecture gate'leri gerÃ§ek exact toolchain Ã¼zerinde PASS. AÅAMA 10 aynÄ± kullanÄ±cÄ± turunda baÅŸlatÄ±lmaz.
 ### AŞAMA 10 — P0 temel geometri renderer’ı
 
 **Amaç:** Temel 2D geometriyi doğru, sade Skia baseline ile çizmek.
@@ -945,3 +944,4 @@ Yürütme gününde live-verify edilir:
 ## Nihai teknik ilke
 
 > Doğrudan oku; cihazda işle; eksikliği saklama; önce doğruluğu kanıtla; sonra yalnız ölçülmüş darboğazı optimize et; final artifact’in tamamının kaynağını ve lisansını gösterebilmeden release yapma.
+
