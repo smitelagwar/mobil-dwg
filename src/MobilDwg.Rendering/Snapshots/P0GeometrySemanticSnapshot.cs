@@ -11,8 +11,8 @@ public static class P0GeometrySemanticSnapshot
     {
         ArgumentNullException.ThrowIfNull(scene);
         var sb = new StringBuilder();
-        sb.AppendLine("p0-geometry/v1");
-        sb.Append("entities=").Append(scene.Entities.Count).AppendLine();
+        sb.Append("p0-geometry/v1\n");
+        sb.Append("entities=").Append(scene.Entities.Count).Append('\n');
 
         foreach (var entity in scene.Entities)
         {
@@ -23,11 +23,11 @@ public static class P0GeometrySemanticSnapshot
                 .Append(E(entity.Layer.Value)).Append('|')
                 .Append(E(entity.Style.Value)).Append('|')
                 .Append(entity.Geometry.Count)
-                .AppendLine();
+                .Append('\n');
 
             foreach (var primitive in entity.Geometry)
             {
-                sb.Append("primitive=").Append(Describe(primitive)).AppendLine();
+                sb.Append("primitive=").Append(Describe(primitive)).Append('\n');
             }
         }
 
@@ -36,7 +36,7 @@ public static class P0GeometrySemanticSnapshot
             .ThenBy(item => item.Code, StringComparer.Ordinal)
             .ThenBy(item => item.EntityId?.Value ?? string.Empty, StringComparer.Ordinal)
             .ToArray();
-        sb.Append("diagnostics=").Append(diagnostics.Length).AppendLine();
+        sb.Append("diagnostics=").Append(diagnostics.Length).Append('\n');
         foreach (var diagnostic in diagnostics)
         {
             sb.Append("diagnostic=")
@@ -44,7 +44,7 @@ public static class P0GeometrySemanticSnapshot
                 .Append(E(diagnostic.Code)).Append('|')
                 .Append(E(diagnostic.EntityId?.Value ?? string.Empty)).Append('|')
                 .Append(E(diagnostic.Message))
-                .AppendLine();
+                .Append('\n');
         }
 
         return sb.ToString();
