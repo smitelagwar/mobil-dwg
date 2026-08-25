@@ -57,10 +57,10 @@ foreach ($Required in @(
     '5,000,000.0',
     '0.001'
 )) {
-    if (-not $Adr.Contains($Required, [StringComparison]::Ordinal)) { Fail "ADR 0002 invariant missing: $Required" }
+    if ($Adr.IndexOf($Required, [StringComparison]::Ordinal) -lt 0) { Fail "ADR 0002 invariant missing: $Required" }
 }
-if (-not $Stage07Evidence.Contains('AŞAMA 07 sonucu: **NO-GO**', [StringComparison]::Ordinal)) { Fail "Historical Stage07 NO-GO evidence missing" }
-if (-not $Stage07Evidence.Contains($ExpectedProCad, [StringComparison]::Ordinal)) { Fail "Historical Stage07 exact pin missing" }
+if ($Stage07Evidence.IndexOf('AŞAMA 07 sonucu: **NO-GO**', [StringComparison]::Ordinal) -lt 0) { Fail "Historical Stage07 NO-GO evidence missing" }
+if ($Stage07Evidence.IndexOf($ExpectedProCad, [StringComparison]::Ordinal) -lt 0) { Fail "Historical Stage07 exact pin missing" }
 Write-Host "V07_ADR_PIN_DECISION_PASS"
 
 # 2) Static production graph boundary: no ProCad/ProCadSharp references under src,
@@ -135,7 +135,8 @@ Write-Host "V07_PROCAD_FLOAT_PRECISION_BLOCKER_REPRODUCED observed_delta=$FloatO
 # rerun the rendering executable tests that contain the survey-origin camera/scene checks.
 $DoubleObservedDelta = 5000000.001d - 5000000.0d
 if ([Math]::Abs($DoubleObservedDelta - 0.001d) -gt 1e-9) { Fail "Production double precision delta unexpected: $DoubleObservedDelta" }
-Write-Host "V07_PRODUCTION_DOUBLE_SCALAR_PASS observed_delta=$($DoubleObservedDelta.ToString('R', [Globalization.CultureInfo]::InvariantCulture))"
+$DoubleObservedText = $DoubleObservedDelta.ToString('R', [Globalization.CultureInfo]::InvariantCulture)
+Write-Host "V07_PRODUCTION_DOUBLE_SCALAR_PASS observed_delta=$DoubleObservedText"
 
 $RenderingOutput = (& dotnet run --project 'tests/MobilDwg.Rendering.Tests/MobilDwg.Rendering.Tests.csproj' --configuration Release 2>&1 | Out-String)
 $RenderingExit = $LASTEXITCODE
@@ -163,8 +164,7 @@ Production static graph ProCad: ABSENT
 Production resolved assets/lockfiles ProCad: ABSENT
 Release APK ProCad entries: ABSENT
 Rejected candidate absolute-float survey delta: $FloatObservedDelta
-Production double survey delta: $($DoubleObservedDelta.ToString('R', [Globalization.CultureInfo]::InvariantCulture)
-)
+Production double survey delta: $DoubleObservedText
 Rendering survey-origin regression: PASS
 Physical Android / rejected ProCad emulator install: NOT REQUIRED / NOT RUN BY V07
 Result: ANDROID_VALIDATION_V07_PASS
