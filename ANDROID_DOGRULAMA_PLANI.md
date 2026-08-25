@@ -11,8 +11,8 @@ IMPLEMENTATION_BASELINE: AŞAMA 09 — DONE
 IMPLEMENTATION_CURSOR: AŞAMA 10 — MAIN'E HENÜZ MERGE EDİLMEDİ
 IMPLEMENTATION_WORKSTREAM: docs/A10_WORKSTREAM.md + varsa açık A10 branch/PR
 ACTIVE_PROGRAM: ANDROID_REVALIDATION_01_09
-CURRENT_VALIDATION_STAGE: V08
-CURRENT_STATUS: SCOPE_ARCHIVED / ANDROID_GRAPH_CHECK_PENDING — NOT_STARTED
+CURRENT_VALIDATION_STAGE: V09
+CURRENT_STATUS: NOT_STARTED
 V01: VALIDATED — INFRASTRUCTURE_SMOKE_ONLY
 V02: VALIDATED — DEPENDENCY/LOCKFILE/LICENSE/HASH/VULNERABILITY/ANDROID-NATIVE BOUNDARY
 V03: VALIDATED — FIXTURE/PROVENANCE/GOLDEN/ANDROID-SMOKE-SET CONTRACT
@@ -20,8 +20,9 @@ V04: VALIDATED — REAL_APP_SHELL_RUNTIME_ONLY_NOT_VIEWER_FIDELITY
 V05: VALIDATED — REAL_ANDROID_APP_PARSER_SMOKE_ONLY_NOT_RENDER_FIDELITY
 V06: VALIDATED — REAL_ANDROID_APP_FILEPICKER_SAF_SAFE_OPEN_EMULATOR_ONLY_NOT_PHYSICAL_PROVIDER_FIDELITY
 V07: VALIDATED — PROCAD_NO_GO_PRODUCTION_GRAPH_ISOLATION_AND_PRECISION_REGRESSION_ONLY
-NEXT_ACTION: Sonraki validation turunda yalnız V08 Android graph-isolation kontrolünü başlat; tarihsel iOS kapsamını yeniden açma ve aynı turda V09'a geçme
-NEXT_IF_TEST_READY: Sonraki turda V08 Android graph-isolation hattını yürüt
+V08: VALIDATED — ANDROID_PRODUCTION_CI_GRAPH_IOS_ISOLATION_ONLY_HISTORICAL_IOS_SCOPE_ARCHIVED
+NEXT_ACTION: Sonraki validation turunda yalnız V09 RenderScene/kamera/diagnostics revalidation hattını başlat; aynı turda A10 merge/DONE veya A11 başlatma
+NEXT_IF_TEST_READY: Sonraki turda yalnız V09 validation hattını yürüt
 NEXT_IF_TEST_OFFLINE: BASLA_A10.md ile yalnız ayrı branch'te A10 host-independent taslağını yürüt
 A10_MAIN_MERGE: BLOCKED_UNTIL_V04_V09_CLOSED_AND_A10_ANDROID_GATE
 A11_GATE: BLOCKED_UNTIL_V04_V09_CLOSED_AND_A10_DONE_ON_MAIN_AND_EMULATOR_QUEUE_EMPTY
@@ -29,7 +30,7 @@ PENDING_EMULATOR_QUEUE: EMPTY
 PHYSICAL_ANDROID: DEFERRED_RELEASE_DEVICE_GATE
 ```
 
-iOS kodu ve tarihsel evidence korunur fakat kullanıcı iOS yolunu açıkça yeniden etkinleştirene kadar Mac/Xcode/iPhone/iOS workload/signing/simulator/App Store işi Android'i bloke etmez.
+iOS kodu ve tarihsel evidence korunur fakat kullanıcı iOS yolunu açıkça yeniden etkinleştirene kadar Mac/Xcode/iPhone/iOS workload/signing/simulator/App Store işi Android'i bloke etmez. V08 yalnız aktif Android production/CI graph izolasyonunu doğruladı; tarihsel iOS characterization iOS PASS olarak yeniden sınıflandırılmadı.
 
 ## 2. `BASLA.md` / `devam` protokolü
 
@@ -207,11 +208,36 @@ Authoritative final:
 
 V07 sırasında üç Windows PowerShell validation portability false-negative'i düzeltildi: `String.Contains` overload'u, strict-mode JSON property enumeration ve `double.ToString("R", culture)` evidence formatting. Bunlar production failure değildir.
 
-### V08 — iOS tarihsel arşiv / Android sınırı — `SCOPE_ARCHIVED / ANDROID_GRAPH_CHECK_PENDING`
+### V08 — iOS tarihsel arşiv / Android graph izolasyonu — `VALIDATED`
 
-- AŞAMA 08 historical evidence korunur; iOS workflow/Mac/simulator/iPhone testi çalıştırılmaz.
-- Android production/CI graph'ında iOS workload/native zorunluluğu olmadığı doğrulanır.
-- Bu V07 kapanış turunda V08 başlatılmadı.
+Evidence: `docs/evidence/android-validation/V08.md`.
+
+V08 tarihsel iOS workstream'ini yeniden açmadan yalnız aktif Android production/CI graph izolasyonunu doğruladı.
+
+Authoritative final:
+
+- PR `#21`
+- tested PR head revision `08abd4a1a953e62a2c0cdc3e48329de90e870195`
+- exact checked-out PR synthetic merge revision `8cd31f3d9f5f507108e5b91ddd3577748df5c952`
+- main merge commit `829fd503ba3cd72950b2ec89cfde57f98a1b2417`
+- run/job `32862330823` / `97849123497` — SUCCESS
+- artifact `9568747271`, 19,064 byte; digest `sha256:6b5172553b65973af7fc3eac4f52f7c14a36048b6861368435bcd2355c062ebd`
+- same-job V02 dependency/lockfile/license/native-boundary prerequisite PASS
+- `MobilDwg.App` target `net10.0-android36.0`; production project/lockfile/solution/central package graph iOS-specific requirement içermiyor
+- historical Stage08 iOS workflow manual-only (`workflow_dispatch`); active/non-historical CI macOS/iOS toolchain gerektirmiyor
+- Windows .NET SDK `10.0.400`; recorded workload list yalnız `maui-android`
+- locked Android restore + resolved target/library graph scan + Release build without Xcode PASS
+- Release APK 30,913,146 byte; SHA-256 `7adf8b2495b2eb7389adf48a1f92d9b57f7a0dade56758a0bbefc1b966075f1b`; iOS native/framework entry absent
+- marker `ANDROID_VALIDATION_V08_PASS`
+- claim `ANDROID_PRODUCTION_CI_GRAPH_IOS_ISOLATION_ONLY_HISTORICAL_IOS_SCOPE_ARCHIVED`
+
+Diagnostic:
+
+- run/job `32862117992 / 97848411995`: raw `project.assets.json` package-file inventory içindeki cross-platform iOS files yanlışlıkla resolved Android dependency sayıldı; V02/static/CI/locked restore kontrolleri geçmişti.
+- artifact `9568592189`, 44,605 byte; digest `sha256:98bfa8c20530579ada137f3c1dda0d6244a93f3d7ea1b1360a9e8f302fbde9fd`.
+- gate actual `targets`, `project.frameworks` ve resolved library identities üzerinden düzeltildi.
+
+Tarihsel `docs/evidence/STAGE_08.md` characterization future-only arşivdir; V08 iOS PASS, simulator/device veya iOS AOT claim'i değildir.
 
 ### V09 — RenderScene, kamera ve diagnostics — `NOT_STARTED`
 
