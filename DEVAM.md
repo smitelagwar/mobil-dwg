@@ -5,7 +5,7 @@ Bu dosya yeni bir ChatGPT/AI oturumunda projeye kaldığı yerden devam etmek i�
 ## Yeni AI için doğrudan talimat
 
 1. `@GitHub` üzerinden `smitelagwar/mobil-dwg` reposunu, gerçek `main` HEAD'i ve açık PR'ları doğrula.
-2. `Mobil_DWG_DXF_Royalty_Free_Android_iOS_Nihai_Plan.md`, `gecmis.md`, `docs/USER_APPROVED_EXECUTION_OVERRIDE.md` ve aktif aşama evidence dosyasını oku.
+2. `Mobil_DWG_DXF_Royalty_Free_Android_iOS_Nihai_Plan.md`, `gecmis.md`, `docs/USER_APPROVED_EXECUTION_OVERRIDE.md` ve son tamamlanan/aktif aşama evidence dosyasını oku.
 3. Açık `IN_PROGRESS` aşama varsa yeni aşama başlatmadan yalnız onu sürdür.
 4. Bir kullanıcı turunda en fazla bir aşama tamamla.
 5. Fiziksel cihaz/Mac/Apple hesabı gibi dış kapıları sahte PASS/DONE yapma.
@@ -20,54 +20,50 @@ Bu dosya yeni bir ChatGPT/AI oturumunda projeye kaldığı yerden devam etmek i�
 ## Güncel checkpoint
 
 ```text
-LAST_COMPLETED_STAGE: AŞAMA 08 — CHARACTERIZATION / RISK_ACCEPTED_FOR_CONTINUATION; iOS PASS NOT CLAIMED
-CURRENT_STAGE: AŞAMA 09
-CURRENT_STAGE_STATUS: IN_PROGRESS — IMPLEMENTATION_READY / T0_T1_VALIDATION_PENDING_RUNNER
+LAST_COMPLETED_STAGE: AŞAMA 09 — DONE
 DEFERRED_STAGES: AŞAMA 01; AŞAMA 06; AŞAMA 08 local Mac/ios-arm64/physical iPhone gates
 AŞAMA_01: BLOCKED / DEFERRED_EXTERNAL_GATE — gerçek Android install/launch + iOS erişim envanteri
 AŞAMA_06: BLOCKED / DEFERRED_EXTERNAL_GATE — safe-open CI PASS; gerçek telefon FilePicker/SAF+lifecycle/cache gate açık
 AŞAMA_07: DONE / NO-GO — exact unpatched ProCad candidate precision blocker nedeniyle production reuse için reddedildi
 AŞAMA_08: DONE / CHARACTERIZATION — evidence BLOCKED_PARTIAL_EVIDENCE; iOS runtime/device PASS yok
-AŞAMA_09_USER_GO: GRANTED — kullanıcı custom renderer implementation başlangıcını açıkça onayladı
-AŞAMA_09_BRANCH: stage09-render-scene-camera
-AŞAMA_09_PR: #12 — OPEN / NOT_MERGED
-AŞAMA_09_LATEST_SOURCE_TEST_HEAD: 9a17d333afc0a3df1de856a9a53fae0e74617c29
-AŞAMA_09_LATEST_WORKFLOW_HEAD: 0c5aa84bf491ec24c4409c35ffad83dd159b9290
-AŞAMA_09_IMPLEMENTED: compact immutable RenderScene; stable entity/layer/style/source metadata; double camera pipeline; RenderViewport bridge; large-origin precision regression; finite-overflow guards; OCS/WCS scaled normalization; diagnostics; fit/zoom/color context; deterministic semantic snapshot
-AŞAMA_09_VALIDATION: NOT_EXECUTED — hiçbir hosted/self-hosted denemede checkout/build/test step'i başlamadı
-AŞAMA_09_UBUNTU_RUN: 32791364379 / #30; rerun attempt 2 job 97690824454; ubuntu-latest; steps=[]; runner_id=0
-AŞAMA_09_MACOS_RUN: 32786600644 / #14; macos-26; attempts 1/2/3 all pre-step failure
-AŞAMA_09_SLIM_RUN: 32811281420 / #32; job 97690952636; ubuntu-slim; steps=[]; runner_id=0
-AŞAMA_09_SELF_HOSTED_PROBE: 32784140351 / #3; suitable online runner not assigned; temporary workflow removed
+AŞAMA_09: DONE — compact immutable RenderScene + double camera + diagnostics + deterministic snapshot
+AŞAMA_09_USER_GO: GRANTED / CONSUMED — yeniden istenmez
+AŞAMA_09_PR: #12 — kapanış/merge için hazırlanmış branch stage09-render-scene-camera
+AŞAMA_09_SOURCE_TEST_HEAD: 9a17d333afc0a3df1de856a9a53fae0e74617c29
+AŞAMA_09_VALIDATION_HEAD: 7bba0b7a6da30dc4b23050872a7a1ef4e90ca087
+AŞAMA_09_VALIDATION_RUN: 32815175055 / #6 SUCCESS
+AŞAMA_09_VALIDATION_JOB: 97701882792 SUCCESS
+AŞAMA_09_ARTIFACT: 9551137293; stage09-self-hosted-evidence; 1578 bytes
+AŞAMA_09_ARTIFACT_DIGEST: sha256:486c9d0b5a2a35cd4fbb402d9c56ab226a5b6175b8920da95298d18199054ddd
+AŞAMA_09_MARKERS: STAGE09_DOTNET_PIN_PASS; STAGE09_T0_BUILD_PASS; STAGE04_RENDER_CONTRACT_TESTS_PASS; STAGE09_RENDER_SCENE_TESTS_PASS; render-scene/v1; STAGE09_T1_SCENE_PASS; STAGE09_STAGE04_REGRESSION_PASS
+AŞAMA_09_BUILD: targeted + full solution Release 0 warning / 0 error
 AŞAMA_09_EVIDENCE: docs/evidence/STAGE_09.md
-NEXT_WORK_STAGE: AŞAMA 09
-NEXT_ACTION: obtain any real exact .NET 10.0.400 execution environment; run Stage 09 T0 restore/build + T1 deterministic tests; fix compiler/test defects if any; only then close/merge PR #12
 AŞAMA_10_STATUS: NOT_STARTED
+NEXT_WORK_STAGE: AŞAMA 10
+NEXT_WORK_STATUS: READY / WAITING_USER_CONTINUE
+NEXT_ACTION: kullanıcı `devam` dediğinde yalnız AŞAMA 10 — P0 temel geometri renderer'ı — başlat; aynı turda AŞAMA 11'e geçme.
 ```
 
 ## AŞAMA 09 özeti
 
-Kullanıcı özel renderer efor/bakım riskini kabul ederek AŞAMA 09'un başlamasını açıkça onayladı. ADR 0002 sonrası tek production scene yolu compact özel immutable scene olarak seçildi; ProCad production graph'a eklenmedi.
+Kullanıcı ADR 0002'deki özel renderer yüksek efor/bakım riskini kabul etti. Exact ProCad reuse `NO-GO` olduğundan tek production scene yolu compact özel immutable scene seçildi; ProCad production graph'a eklenmedi.
 
-Uygulanan foundation:
+Tamamlanan foundation:
 
 - Stable entity ID, bounds, layer/style token ve parser source reference.
-- `default` record-struct metadata bypass'ları immutable scene sınırında tekrar doğrulanır.
+- `default` record-struct metadata bypass ve duplicate-ID guard'ları.
 - World/document coordinates ve world→view→screen hattında `double` precision.
-- `Camera2D` ile Core `RenderViewport` arasında explicit adapter; ikinci gizli kamera hattı yok.
-- Survey origin `5,000,000` çevresinde `0.001` detay regression testi.
-- Finite girdilerin span/subtraction sırasında `Infinity` üretmesine karşı guards; büyük same-sign bounds center overflow-safe hesaplanır.
-- OCS/WCS arbitrary-axis transform, oblique round-trip ve çok büyük finite normal için scaled normalization.
-- Unsupported/Substituted/Dropped/Error scene diagnostics; invalid taxonomy/default entity ID guard'ları.
-- Camera fit, zoom clamps, invalid default-camera guard ve dark/light color context.
+- `Camera2D` ile Core `RenderViewport` arasında explicit adapter.
+- Survey origin `5,000,000` çevresinde `0.001` detail precision regression.
+- Finite span/subtraction overflow guards ve overflow-safe center.
+- OCS/WCS arbitrary-axis transform, oblique round-trip ve büyük finite normal için scaled normalization.
+- Unsupported/Substituted/Dropped/Error scene diagnostics.
+- Camera fit, zoom clamps ve dark/light color context.
 - Stable-ID sıralı immutable scene ve deterministic `render-scene/v1` semantic snapshot.
-- Eski `STAGE04_RENDER_CONTRACT_TESTS_PASS` marker'ı test harness'ta korunur.
 
-Validation henüz PASS değildir. Standard Linux (`ubuntu-latest`), doğru macOS (`macos-26`) ve ayrı lightweight container pool (`ubuntu-slim`) hosted job'ları checkout başlamadan `steps=[]`, `runner_id=0` ile kesildi. En güncel ayrı-pool denemesi Stage 09 run `32811281420`/#32, job `97690952636` üzerinde aynı sonucu verdi. Configured self-hosted Windows runner probe'u da uygun online runner bulamadı ve geçici workflow silindi. Bu semptom compile/test failure değildir; billing/quota/policy/capacity gibi özel root cause kanıtlanmadığından tahmin edilmez.
+Yetkili kapanış validation'ı self-hosted Windows runner üzerinde exact .NET `10.0.400` ile gerçek checkout/restore/build/run yaptı. Hedefli A09 Release build ve tam solution Release build `0 warning / 0 error`; Core/Rendering/Architecture ve Stage 05 dependency-boundary regresyonları geçti. Artifact `9551137293`, digest `sha256:486c9d0b5a2a35cd4fbb402d9c56ab226a5b6175b8920da95298d18199054ddd`.
 
-Exact `.NET SDK 10.0.400` resmi Microsoft release metadata'sında doğrulandı; fakat mevcut execution container'ında SDK/compiler yok ve dış payload indirme yolu tamamlanamadı. Farklı SDK ile sahte PASS üretilmedi.
-
-Bu nedenle PR #12 merge edilmedi ve AŞAMA 10 başlatılmadı. Yeni runner label'ları deneyerek tekrar zinciri üretme; bundan sonraki somut kapı gerçek exact .NET `10.0.400` execution environment'tır.
+Önceki `ubuntu-latest`, `macos-26` ve `ubuntu-slim` zero-step/runner_id=0 kayıtları hosted runner allocation problemiydi; self-hosted gerçek execution PASS ile A09 implementation failure olmadığı ayrıştırıldı. Geçici self-hosted A09 workflow'u kapanıştan sonra branch'ten kaldırıldı; kalıcı Stage 09 workflow'u `ubuntu-latest` üzerinde bırakıldı.
 
 ## Önceki kritik kararlar
 
