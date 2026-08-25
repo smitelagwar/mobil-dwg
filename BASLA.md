@@ -24,12 +24,22 @@ GitHub connector kullanılabiliyorsa gerçek repo durumunu mutlaka connector üz
 2. `Mobil_DWG_DXF_Royalty_Free_Android_iOS_Nihai_Plan.md` dosyasını oku. Bu **canonical/yetkili plandır**.
 3. `gecmis.md` dosyasını oku. Buradaki aktif checkpoint, son tamamlanan aşama, `NEXT_WORK_STAGE`, açık blocker’lar ve son CI/merge kanıtlarını doğrula.
 4. `docs/USER_APPROVED_EXECUTION_OVERRIDE.md` dosyasını oku ve dış cihaz/hesap kapılarının yürütme kuralını uygula.
-5. Eğer `gecmis.md` veya canonical plan bir `IN_PROGRESS` aşama gösteriyorsa **o aşamadan devam et**. Yeni aşama başlatma.
-6. Aşama `DONE` ve bir `NEXT_WORK_STAGE` varsa, **NEXT_WORK_STAGE’i doğrudan başlat**.
-7. Aktif aşama için ilgili `docs/evidence/STAGE_XX.md`, mimari/compliance/fixture dosyaları, açık PR’lar ve GitHub Actions koşularını gerektiği kadar oku.
-8. Açık PR veya yarım CI run varsa yeni iş açmadan önce onların gerçek durumunu kontrol et ve kaldığı yerden devam et.
-9. Kullanıcıdan daha önce verilmiş bilgiyi tekrar isteme. Fiziksel erişim gerektirmeyen işi mümkün olduğunca tamamla.
-10. Bir kullanıcı turunda en fazla **bir aşama** tamamla. Aynı turda sonraki aşamaya başlama.
+5. **Gerçek çalışma bağlamını otomatik sınıflandır:** Kod değişiklikleri ChatGPT sohbetinden GitHub connector/API üzerinden yapılıyor ve ajan kullanıcının yerel repo/terminal/ADB ortamında doğrudan çalışmıyorsa bağlam `CHATGPT_REMOTE_GITHUB` sayılır. Bu bağlamda `docs/CHATGPT_REMOTE_ANDROID_TEST_WORKFLOW.md` dosyasını **okumadan implementasyona başlama**. Bu dosyanın okunması zorunludur; dosya içindeki batching, test tetikleme sıklığı ve 25 dakikalık zaman kullanımı önerileri zorunlu yürütme kuralları değildir. AntiGravity, Visual Studio + Codex, Codex IDE veya başka bir yerel ajan gerçek yerel çalışma ağacı + terminal/ADB erişimiyle çalışıyorsa bağlam `LOCAL_IDE` sayılır ve remote test dosyası yürütme modeli olarak uygulanmaz.
+6. Eğer `gecmis.md` veya canonical plan bir `IN_PROGRESS` aşama gösteriyorsa **o aşamadan devam et**. Yeni aşama başlatma.
+7. Aşama `DONE` ve bir `NEXT_WORK_STAGE` varsa, **NEXT_WORK_STAGE’i doğrudan başlat**.
+8. Aktif aşama için ilgili `docs/evidence/STAGE_XX.md`, mimari/compliance/fixture dosyaları, açık PR’lar ve GitHub Actions koşularını gerektiği kadar oku.
+9. Açık PR veya yarım CI run varsa yeni iş açmadan önce onların gerçek durumunu kontrol et ve kaldığı yerden devam et.
+10. Kullanıcıdan daha önce verilmiş bilgiyi tekrar isteme. Fiziksel erişim gerektirmeyen işi mümkün olduğunca tamamla.
+11. Bir kullanıcı turunda en fazla **bir aşama** tamamla. Aynı turda sonraki aşamaya başlama.
+
+### 2.1 Çalışma bağlamı nasıl anlaşılır?
+
+Kararı ürün adına veya kullanılan model adına göre değil, **gerçek dosya değiştirme ve test çalıştırma yoluna göre** ver:
+
+- ChatGPT sohbeti → GitHub üzerinden dosya değişikliği → gerektiğinde GitHub üzerinden self-hosted Windows/Android Emulator testi: `CHATGPT_REMOTE_GITHUB`.
+- Yerel IDE/ajan → yerel repo dosyalarına doğrudan yazma → yerel terminal, emulator veya ADB'yi doğrudan çalıştırma: `LOCAL_IDE`.
+
+Bağlam araçlardan açıkça anlaşılabiliyorsa kullanıcıya sorma. Gerçekten ayırt edilemiyorsa yalnız o zaman kısa bir netleştirme iste.
 
 ## 3. En önemli davranış kuralı
 
@@ -42,6 +52,7 @@ dediğinde cevap davranışı şu olmalıdır:
 - Dosyayı oku.
 - GitHub `main` durumunu doğrula.
 - Canonical plan + `gecmis.md` checkpoint’ini çöz.
+- Çalışma bağlamını sınıflandır; `CHATGPT_REMOTE_GITHUB` ise `docs/CHATGPT_REMOTE_ANDROID_TEST_WORKFLOW.md` dosyasını da zorunlu olarak oku.
 - Mevcut/sonraki aşamayı belirle.
 - **Doğrudan uygulamaya başla.**
 
@@ -58,6 +69,8 @@ Kaynaklar arasında çelişki varsa sessizce tahmin etme.
 3. `gecmis.md` aktif checkpoint/handoff.
 4. İlgili `docs/evidence/STAGE_XX.md` ve compliance/test kayıtları.
 5. `DEVAM.md` yalnız yardımcı snapshot olabilir; daha güncel gerçek repo kayıtlarının önüne geçmez.
+
+`docs/CHATGPT_REMOTE_ANDROID_TEST_WORKFLOW.md` ürün kapsamını, stage çıkış kriterlerini veya canonical planı değiştirmez. Yalnız `CHATGPT_REMOTE_GITHUB` bağlamındaki mevcut test altyapısını ve verimli kullanım seçeneklerini açıklar.
 
 Çelişki güvenli biçimde çözülebiliyorsa aynı turda kayıtları senkronize et ve çalışmaya devam et. Gerçek bir blocker değilse kullanıcıya karar yükleme.
 
