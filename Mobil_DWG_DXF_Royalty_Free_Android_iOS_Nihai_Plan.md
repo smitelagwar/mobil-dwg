@@ -14,8 +14,8 @@
 
 ```text
 ACTIVE_PROGRAM: ANDROID_REVALIDATION_01_09
-CURRENT_STAGE: V06 — Android FilePicker/SAF + safe-open
-CURRENT_SUBSTEP: V06.ready
+CURRENT_STAGE: V07 — ProCad NO-GO + production graph izolasyonu + precision regression
+CURRENT_SUBSTEP: V07.ready
 STATUS: NOT_STARTED
 LAST_IMPLEMENTED_STAGE: AŞAMA 09 — DONE
 IMPLEMENTATION_CURSOR: AŞAMA 10 — MAIN'E HENÜZ MERGE EDİLMEDİ
@@ -25,15 +25,17 @@ V02: VALIDATED — DEPENDENCY/LOCKFILE/LICENSE/HASH/VULNERABILITY/ANDROID-NATIVE
 V03: VALIDATED — FIXTURE/PROVENANCE/GOLDEN/ANDROID-SMOKE-SET CONTRACT
 V04: VALIDATED — REAL_APP_SHELL_RUNTIME_ONLY_NOT_VIEWER_FIDELITY
 V05: VALIDATED — REAL_ANDROID_APP_PARSER_SMOKE_ONLY_NOT_RENDER_FIDELITY
-LAST_ANDROID_VALIDATION_EVIDENCE: docs/evidence/android-validation/V05.md
-LAST_V05_TESTED_HEAD: de39866f8bd71c20fa51b355748ed79884fbb4e6
-LAST_V05_MAIN_MERGE_COMMIT: 9013d52702d1cb44e378aeacda46ee51e53caa65
-LAST_V05_RUN_JOB: 32838507832 / 97772635524
-LAST_V05_ARTIFACT: 9561607163; sha256:16359b01f4d3c72847b90227b03b321036495b45f2d65cd34d2c772f14528109
+V06: VALIDATED — REAL_ANDROID_APP_FILEPICKER_SAF_SAFE_OPEN_EMULATOR_ONLY_NOT_PHYSICAL_PROVIDER_FIDELITY
+LAST_ANDROID_VALIDATION_EVIDENCE: docs/evidence/android-validation/V06.md
+LAST_V06_TESTED_HEAD: ae8682875524157285946724bd70d6ff010f3917
+LAST_V06_TESTED_PR_MERGE_REVISION: 26b3cdd6ca50d34b98a4806d92f50d4828077d41
+LAST_V06_MAIN_MERGE_COMMIT: e17e2472f38557552698b8cf9526d6cbf8b25580
+LAST_V06_RUN_JOB: 32849725110 / 97807551403
+LAST_V06_ARTIFACT: 9564837027; sha256:a88eaf46d7cc2090111cb18ce81c3a1d9b56eaed08bdfd070fb0a22be74194a0
 PENDING_EMULATOR_QUEUE: EMPTY
 PHYSICAL_ANDROID: DEFERRED_RELEASE_DEVICE_GATE
-BLOCKERS: Aktif V06 blocker'ı yok; fiziksel Android release öncesi ayrıca zorunlu; iOS aktif kapsam dışı.
-NEXT_ACTION: Yalnız V06'yı başlat — gerçek MobilDwg.App FilePicker/SAF + safe-open/document-service bridge ve emulator lifecycle kapısı; aynı turda V07'ye geçme.
+BLOCKERS: Aktif V07 blocker'ı yok; fiziksel Android release öncesi ayrıca zorunlu; iOS aktif kapsam dışı.
+NEXT_ACTION: Sonraki validation turunda yalnız V07'yi başlat — ProCad NO-GO + production graph izolasyonu + 5,000,000 + 0.001 precision regresyonu; aynı turda V08'e geçme.
 NEXT_IF_TEST_OFFLINE: BASLA_A10.md ile yalnız izole A10 draft branch'inde host-independent kod/test işi yap.
 A10_MAIN_MERGE: BLOCKED_UNTIL_V04_V09_CLOSED_AND_A10_ANDROID_GATE
 A11_GATE: BLOCKED_UNTIL_V04_V09_CLOSED_AND_A10_DONE_ON_MAIN_AND_EMULATOR_QUEUE_EMPTY
@@ -156,6 +158,8 @@ V04 itibarıyla gerçek repository app shell:
 
 V05 itibarıyla gerçek app validation build'i production `AcadSharpDocumentReader` ile V03 redistributable DXF/DWG smoke inputs'ı Android process içinde parse eder; validation asset/gate'i production writer/save özelliği değildir.
 
+V06 itibarıyla gerçek `MainPage` MAUI FilePicker'ı production `MauiCadFilePickerAdapter` üzerinden stream olarak safe-open coordinator'a bağlar. Seçilen provider içeriği app-private cache'e bounded/atomic kopyalanır, production parser yalnız private copy üzerinde çalışır ve original external CAD immutable kalır. API36 emulator üzerinde DWG/DXF selection, second selection, cancel, rotate, background/foreground, close-cleanup ve reopen akışları PASS aldı; physical provider/device fidelity release gate'e deferred'dır.
+
 ---
 
 ## 5. Fidelity ve compatibility sözleşmesi
@@ -233,7 +237,7 @@ Zorunlu:
 - proprietary AutoCAD SHX/font bundle edilmez
 - Android RC'de APK/AAB extraction + SBOM + notices + compliance snapshot zorunlu
 
-V02 probe graph: ACadSharp 3.7.1, SkiaSharp 4.151.1, SkiaSharp.NativeAssets.Android 4.151.1. V04 gerçek app direct graph'e Microsoft.Maui.Controls 10.0.100 exact/MIT ekledi. V05 final technical head'de V02 regression `32836712385 / 97767086999` SUCCESS; artifact `9559261198`, digest `sha256:e3d9dafeb576b20b63b06b96ba5b1729c15bece13f7d8426d0967d615841500a`.
+V02 probe graph: ACadSharp 3.7.1, SkiaSharp 4.151.1, SkiaSharp.NativeAssets.Android 4.151.1. V04 gerçek app direct graph'e Microsoft.Maui.Controls 10.0.100 exact/MIT ekledi. V05 final technical head'de dependency/corpus regresyonları ayrıca PASS aldı. V06 production dependency baseline'ını değiştirmedi; FilePicker/safe-open doğrulaması mevcut MAUI + ACadSharp graph'ı üzerinde yapıldı.
 
 ---
 
@@ -246,20 +250,25 @@ Yetkili ayrıntı: `ANDROID_DOGRULAMA_PLANI.md`.
 - V03 `VALIDATED`: fixture/provenance/golden/redistributable Android smoke-set/device matrix.
 - V04 `VALIDATED`: gerçek installable `MobilDwg.App` MAUI shell; API36 build/install/cold-launch/PID/UI/PNG/crash-ANR/liveness PASS; viewer fidelity değil.
 - V05 `VALIDATED`: production ACadSharp reader real Android app process içinde V03 DXF/DWG smoke setiyle PASS; render fidelity değil.
-- **V06 `NOT_STARTED`: FilePicker/SAF + safe-open/document-service bridge in real app.**
-- V07: ProCad NO-GO/precision/production isolation.
+- V06 `VALIDATED`: real-app FilePicker/DocumentsUI/SAF → stream → app-private safe-copy → production parser; lifecycle/cleanup/immutability PASS; claim emulator-only, physical provider fidelity değil.
+- **V07 `NOT_STARTED`: ProCad NO-GO/precision/production isolation.**
 - V08: iOS historical archive + Android graph isolation.
 - V09: RenderScene/camera/diagnostics revalidation.
 
-V05 authoritative:
+V06 authoritative:
 
-- technical head `d1552960d910b1fc6baea00ac14f6971344bd66e`
-- tested synthetic merge `3aa365dd92222ec445a589003fc796ee6290f505`
-- run/job `32836712300` / `97767085940`
-- artifact `9559245377`, digest `sha256:2453ac4df3b888c6235f240208b4674b834edc550dd1208ce37e34a6506d2b65`
-- validation APK SHA-256 `a270689a6bda814b9145601498b075b8a3638dd03d6ed6d9026e293c5e0738b5`
-- marker `ANDROID_VALIDATION_V05_PASS`
-- claim `REAL_ANDROID_APP_PARSER_SMOKE_ONLY_NOT_RENDER_FIDELITY`
+- PR `#19`
+- tested PR head `ae8682875524157285946724bd70d6ff010f3917`
+- tested PR synthetic merge `26b3cdd6ca50d34b98a4806d92f50d4828077d41`
+- main merge `e17e2472f38557552698b8cf9526d6cbf8b25580`
+- run/job `32849725110` / `97807551403` — SUCCESS
+- artifact `9564837027`, 29,743,234 bytes; digest `sha256:a88eaf46d7cc2090111cb18ce81c3a1d9b56eaed08bdfd070fb0a22be74194a0`
+- validation APK `30,917,242` bytes; SHA-256 `4bcd819def4483fbc076865dd70b10026eb2eae7515c07561a9cdfe02ff9c9a5`
+- real DWG SAF open + second-selection DXF + rotate/background-foreground/picker-cancel/close-cleanup/reopen + original input immutability PASS
+- same-head V04 run/job `32849725215 / 97807552081` SUCCESS; artifact `9565016182`, digest `sha256:6922f2168334e8312debc2c90cb7905d9db5da58eb8cb10da3f8aadf6e53bb3f`
+- same-head V05 run/job `32849725272 / 97807552194` SUCCESS; artifact `9565243977`, digest `sha256:36ada98dd79f7f70e2ef7e63d6d2cb6cec191141421c07bcf41673dded23b492`
+- marker `ANDROID_VALIDATION_V06_PASS`
+- claim `REAL_ANDROID_APP_FILEPICKER_SAF_SAFE_OPEN_EMULATOR_ONLY_NOT_PHYSICAL_PROVIDER_FIDELITY`
 
 ---
 

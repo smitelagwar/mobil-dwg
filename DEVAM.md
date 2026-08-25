@@ -30,17 +30,18 @@ IMPLEMENTATION_BASELINE: AŞAMA 09 — DONE
 IMPLEMENTATION_CURSOR: AŞAMA 10 — MAIN'E HENÜZ MERGE EDİLMEDİ
 IMPLEMENTATION_WORKSTREAM: docs/A10_WORKSTREAM.md + varsa açık A10 branch/PR
 ANDROID_VALIDATION_PROGRAM: V01–V09
-ANDROID_VALIDATION_CURRENT: V06 — NOT_STARTED
+ANDROID_VALIDATION_CURRENT: V07 — NOT_STARTED
 PENDING_EMULATOR_QUEUE: EMPTY
 V01: VALIDATED — INFRASTRUCTURE_SMOKE_ONLY
 V02: VALIDATED — dependency/lockfile/license/hash/vulnerability/Android-native boundary
 V03: VALIDATED — fixture/provenance/golden/Android smoke-set contract
 V04: VALIDATED — REAL_APP_SHELL_RUNTIME_ONLY_NOT_VIEWER_FIDELITY
 V05: VALIDATED — REAL_ANDROID_APP_PARSER_SMOKE_ONLY_NOT_RENDER_FIDELITY
+V06: VALIDATED — REAL_ANDROID_APP_FILEPICKER_SAF_SAFE_OPEN_EMULATOR_ONLY_NOT_PHYSICAL_PROVIDER_FIDELITY
 PHYSICAL_ANDROID: DEFERRED_RELEASE_DEVICE_GATE
-NEXT_ACTION: Yalnız V06'yı başlat — gerçek MobilDwg.App FilePicker/SAF + safe-open/document-service bridge ve emulator lifecycle kapısı; aynı turda V07'ye geçme.
-NEXT_IF_TEST_READY: Bu sohbet V06'yı yürütür.
-NEXT_IF_TEST_OFFLINE: Test edilebilir exact V06 SHA varsa queue/WAITING_RUNNER; yoksa gerçek stage durumu korunur. Ayrı sohbet BASLA_A10.md ile A10 draft branch'ini yürütür.
+NEXT_ACTION: Sonraki validation turunda yalnız V07'yi başlat — ProCad NO-GO + production graph izolasyonu + precision regression; aynı turda V08'e geçme.
+NEXT_IF_TEST_READY: Sonraki BASLA/devam turu V07'yi yürütür.
+NEXT_IF_TEST_OFFLINE: Test edilebilir exact V07 SHA varsa queue/WAITING_RUNNER; yoksa gerçek stage durumu korunur. Ayrı sohbet BASLA_A10.md ile A10 draft branch'ini yürütür.
 A10_MAIN_MERGE: BLOCKED_UNTIL_V04_V09_CLOSED_AND_A10_ANDROID_GATE
 A11_GATE: BLOCKED_UNTIL_V04_V09_CLOSED_AND_A10_DONE_ON_MAIN_AND_EMULATOR_QUEUE_EMPTY
 ```
@@ -103,23 +104,43 @@ Evidence: `docs/evidence/android-validation/V05.md`.
 - real app install/cold-launch/UI parse/PID `3835`/stability PASS.
 - marker `ANDROID_VALIDATION_V05_PASS`.
 - claim limit `REAL_ANDROID_APP_PARSER_SMOKE_ONLY_NOT_RENDER_FIDELITY`.
-- same-head V04 regression `32838507889 / 97772635962` SUCCESS; artifact `9561764023`, digest `sha256:b5f8581c4c4290adb83fb243968bb93b7a3991ca14c6658e418468acf76288e8`.
-- same-head V02 regression `32838507864 / 97775556718` SUCCESS.
-- same-head V03 regression `32838507809 / 97775415411` SUCCESS.
 
-V05 sırasında iki test-gate portability false-negative'i düzeltildi: Git Bash `/warnaserror` path conversion ve localized `dotnet list package` grep. Parser/product failure olarak sınıflandırılmadı.
+### V06 — VALIDATED
 
-## V06'da yapılacak iş — henüz başlanmadı
+Evidence: `docs/evidence/android-validation/V06.md`.
 
-- AŞAMA 06 quota/disk/atomic-copy/generation/cancel/cleanup host testleri yeniden çalıştırılacak.
-- Gerçek `MobilDwg.App` FilePicker/SAF/document-service safe-open bridge'i API 36 emulator üzerinde doğrulanacak.
-- Küçük redistributable DWG/DXF açma, cancel, hızlı ikinci seçim, rotate/background/foreground, close/reopen ve cleanup davranışı sınanacak.
-- Üreticiye özgü SAF ve fiziksel cihaz farkları `DEFERRED_PHYSICAL_ANDROID` kalacak.
-- V07 aynı V06 turunda başlatılmayacak.
+- PR `#19`
+- tested head `ae8682875524157285946724bd70d6ff010f3917`
+- tested PR synthetic merge revision `26b3cdd6ca50d34b98a4806d92f50d4828077d41`
+- main merge commit `e17e2472f38557552698b8cf9526d6cbf8b25580`
+- authoritative run/job `32849725110` / `97807551403` — SUCCESS
+- artifact `9564837027`, 29,743,234 byte
+- artifact digest `sha256:a88eaf46d7cc2090111cb18ce81c3a1d9b56eaed08bdfd070fb0a22be74194a0`
+- historical Stage06 actual DWG/DXF, safe-copy guards, last-request-wins, cancel semantics ve T2 headless markers PASS.
+- real validation APK 30,917,242 byte; SHA-256 `4bcd819def4483fbc076865dd70b10026eb2eae7515c07561a9cdfe02ff9c9a5`.
+- MAUI FilePicker → DocumentsUI/SAF → `OpenReadAsync()` → private safe-copy → production parser DWG PASS.
+- ikinci gerçek seçim DXF/latest-state PASS.
+- rotate/background-foreground/picker cancel/close cleanup/reopen PASS; PID `3876`.
+- original external DWG/DXF immutable PASS.
+- broad external-storage permission yok; immediate-copy için persistable URI grant alınmadı/gerekmedi.
+- marker `ANDROID_VALIDATION_V06_PASS`.
+- claim limit `REAL_ANDROID_APP_FILEPICKER_SAF_SAFE_OPEN_EMULATOR_ONLY_NOT_PHYSICAL_PROVIDER_FIDELITY`.
+- same-head V04 regression `32849725215 / 97807552081` SUCCESS; artifact `9565016182`, digest `sha256:6922f2168334e8312debc2c90cb7905d9db5da58eb8cb10da3f8aadf6e53bb3f`.
+- same-head V05 regression `32849725272 / 97807552194` SUCCESS; artifact `9565243977`, digest `sha256:36ada98dd79f7f70e2ef7e63d6d2cb6cec191141421c07bcf41673dded23b492`.
+
+V06 sırasında iki test-infrastructure false-negative'i düzeltildi: Android-only app'i referanslayan host probe `NU1201` bağı ve DocumentsUI roots drawer navigasyonu. Fiziksel Android/provider-specific fidelity hâlâ `DEFERRED_RELEASE_DEVICE_GATE`.
+
+## Sonraki validation işi — V07 henüz başlanmadı
+
+- ADR 0002 ve pinned ProCad source kararı yeniden okunacak.
+- ProCad'ın production ProjectReference/PackageReference/native graph'a girmediği otomatik doğrulanacak.
+- `5,000,000 + 0.001` precision regresyonu çalıştırılacak.
+- Reddedilmiş ProCad adayını emulator üzerinde yeniden kurma yapılmayacak.
+- V08 aynı V07 turunda başlatılmayacak.
 
 ## Paralel A10 yolu
 
-- Normal `BASLA.md`/bu dosya açık V06→V09 validation hattına gider.
+- Normal `BASLA.md`/bu dosya açık V07→V09 validation hattına gider.
 - Bilgisayar veya runner kapalıyken kullanıcı başka sohbette `BASLA_A10.md dosyasını oku` der.
 - A10 yalnız `stage10-p0-geometry-draft` branch'inde dondurulmuş sözleşmelere dokunmayan host-independent taslak işi yapar.
 - Host/GitHub-hosted kontrol sonuçsuzsa `CODED_PENDING_HOST_TESTS`, actual FAIL ise `FIX_REQUIRED/FIX_IN_PROGRESS`, hepsi actual non-zero-step PASS olduğunda V04–V09 uzlaştırması + Android gate bekleyen durum `CODED_PENDING_EMULATOR`dır.

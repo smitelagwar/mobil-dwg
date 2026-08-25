@@ -28,16 +28,17 @@ IOS_STATUS: DEFERRED_FUTURE_OPTION
 IMPLEMENTATION_BASELINE: AŞAMA 09 — DONE
 IMPLEMENTATION_CURSOR: AŞAMA 10 — MAIN'E HENÜZ MERGE EDİLMEDİ
 IMPLEMENTATION_WORKSTREAM: docs/A10_WORKSTREAM.md + varsa açık A10 branch/PR
-ANDROID_VALIDATION_CURRENT: V06 — NOT_STARTED
+ANDROID_VALIDATION_CURRENT: V07 — NOT_STARTED
 PENDING_EMULATOR_QUEUE: EMPTY
 V01_EVIDENCE: docs/evidence/android-validation/V01.md; run 32821991333; job 97721878468; artifact 9553530359
 V02_EVIDENCE: docs/evidence/android-validation/V02.md; run 32824397251; job 97729154385; artifact 9554326162
 V03_EVIDENCE: docs/evidence/android-validation/V03.md; tested head 69e4e842b5426d71453f5f69a01ebba5948d6b9c; tested merge 1171807016e2deacc4f575b7980400b4f8b4708c; run 32827625875; job 97739039060; artifact 9555501552
 V04_EVIDENCE: docs/evidence/android-validation/V04.md; tested head 227ffa49c3095c4328f146acf1a2d9ecc07eb62d; tested merge 6201be929a636b963235f7da8ee72b0bbf9decf2; run 32832142832; job 97752997848; artifact 9557331919
 V05_EVIDENCE: docs/evidence/android-validation/V05.md; tested head de39866f8bd71c20fa51b355748ed79884fbb4e6; main merge 9013d52702d1cb44e378aeacda46ee51e53caa65; run 32838507832; job 97772635524; artifact 9561607163
+V06_EVIDENCE: docs/evidence/android-validation/V06.md; tested head ae8682875524157285946724bd70d6ff010f3917; tested merge 26b3cdd6ca50d34b98a4806d92f50d4828077d41; main merge e17e2472f38557552698b8cf9526d6cbf8b25580; run 32849725110; job 97807551403; artifact 9564837027
 PHYSICAL_ANDROID: DEFERRED_RELEASE_DEVICE_GATE
-NEXT_ACTION: Yalnız V06'yı başlat — real MobilDwg.App FilePicker/SAF + safe-open/document-service bridge; aynı turda V07'ye geçme.
-NEXT_IF_TEST_READY: BASLA.md hattında V06.
+NEXT_ACTION: Sonraki validation turunda yalnız V07'yi başlat — ProCad NO-GO + production graph izolasyonu + precision regression; aynı turda V08'e geçme.
+NEXT_IF_TEST_READY: BASLA.md hattında sonraki tur V07.
 NEXT_IF_TEST_OFFLINE: Ayrı BASLA_A10.md sohbetinde yalnız A10 draft branch'i.
 A10_MAIN_MERGE: BLOCKED_UNTIL_V04_V09_CLOSED_AND_A10_ANDROID_GATE
 A11_GATE: BLOCKED_UNTIL_V04_V09_CLOSED_AND_A10_DONE_ON_MAIN_AND_EMULATOR_QUEUE_EMPTY
@@ -56,7 +57,7 @@ Android V01–V09 validation cursor'ı implementation cursor'dan ayrıdır. Norm
 - AŞAMA 03 — corpus/golden/matris — `DONE`.
 - AŞAMA 04 — minimal solution/mimari sınırlar — `DONE`.
 - AŞAMA 05 — ACadSharp parser spike — `DONE`; ADR 0001 `GO`.
-- AŞAMA 06 — safe-open implementation; fiziksel FilePicker/SAF kapısı deferred.
+- AŞAMA 06 — safe-open implementation; physical provider/device fidelity release gate'e deferred; real-app emulator bridge V06'da ayrıca doğrulandı.
 - AŞAMA 07 — ProCad exact source spike — `DONE / NO-GO`; ADR 0002.
 - AŞAMA 08 — iOS characterization — historical/future; iOS PASS iddiası yok.
 - AŞAMA 09 — immutable RenderScene/kamera/diagnostics foundation — `DONE`; authoritative run `32815175055`, artifact `9551137293`, merge `0a2dd886bbe59698a6d2eb4c99f66e7f9270063a`.
@@ -127,16 +128,45 @@ Authoritative final:
 - real app install/cold-launch/UI parse/stability PASS; PID `3835`
 - marker `ANDROID_VALIDATION_V05_PASS`
 - claim `REAL_ANDROID_APP_PARSER_SMOKE_ONLY_NOT_RENDER_FIDELITY`
-- same-head V04 regression `32838507889 / 97772635962` SUCCESS; artifact `9561764023`, digest `sha256:b5f8581c4c4290adb83fb243968bb93b7a3991ca14c6658e418468acf76288e8`
-- same-head V02 regression `32838507864 / 97775556718` SUCCESS
-- same-head V03 regression `32838507809 / 97775415411` SUCCESS
 
 Ayrıntı `docs/evidence/android-validation/V05.md`.
+
+### V06 — VALIDATED
+
+Gerçek Android `MobilDwg.App` FilePicker/SAF safe-open zinciri API 36 emulator üzerinde doğrulandı. Production adapter `FileResult.OpenReadAsync()` stream'ini app-private safe-copy katmanına verir; provider physical path varsayılmaz.
+
+Gate hardening sırasında iki test-infrastructure false-negative bulundu ve düzeltildi:
+
+- historical `Stage06.OpenFlowProbe` `net10.0` host'tan Android-only app'i referansladığı için `NU1201` veriyordu; app multi-target yapılmadan production safe-open BCL kaynakları probe'a linklendi.
+- DocumentsUI picker doğru açılmışken `Recent / No items` ekranında roots drawer kapalıydı; failure artifact UI XML'indeki `Show roots` kanıtıyla otomasyon `Show roots` → `Downloads` → file olarak düzeltildi.
+
+Authoritative final:
+
+- PR `#19`
+- tested PR head `ae8682875524157285946724bd70d6ff010f3917`
+- tested PR synthetic merge `26b3cdd6ca50d34b98a4806d92f50d4828077d41`
+- main merge `e17e2472f38557552698b8cf9526d6cbf8b25580`
+- run/job `32849725110` / `97807551403` — SUCCESS
+- artifact `9564837027`, 29,743,234 byte
+- digest `sha256:a88eaf46d7cc2090111cb18ce81c3a1d9b56eaed08bdfd070fb0a22be74194a0`
+- validation APK 30,917,242 byte; SHA-256 `4bcd819def4483fbc076865dd70b10026eb2eae7515c07561a9cdfe02ff9c9a5`
+- historical safe-copy quota/disk/atomic cleanup + last-request-wins + cancel semantics PASS
+- real DWG SAF open PASS; second selection DXF/latest-state PASS
+- rotate/background-foreground/picker cancel/close cleanup/reopen PASS; PID `3876`
+- original external input immutable PASS
+- broad storage permission absent; persistable URI grant not taken/not needed for immediate private copy
+- marker `ANDROID_VALIDATION_V06_PASS`
+- claim `REAL_ANDROID_APP_FILEPICKER_SAF_SAFE_OPEN_EMULATOR_ONLY_NOT_PHYSICAL_PROVIDER_FIDELITY`
+- same-head V04 `32849725215 / 97807552081` SUCCESS; artifact `9565016182`, digest `sha256:6922f2168334e8312debc2c90cb7905d9db5da58eb8cb10da3f8aadf6e53bb3f`
+- same-head V05 `32849725272 / 97807552194` SUCCESS; artifact `9565243977`, digest `sha256:36ada98dd79f7f70e2ef7e63d6d2cb6cec191141421c07bcf41673dded23b492`
+
+Physical Android/provider-specific behavior `DEFERRED_RELEASE_DEVICE_GATE` olarak açık kalır. Ayrıntı `docs/evidence/android-validation/V06.md`.
 
 ## Kalıcı teknik kararlar
 
 - Original CAD immutable; production writer/save yok.
 - ACadSharp `3.7.1` read-only parser baseline `GO` ve gerçek Android V05 smoke ile doğrulandı.
+- Gerçek FilePicker/SAF stream → immediate app-private safe-copy → parser zinciri V06 API36 emulator'da doğrulandı; physical provider/device fidelity ayrı release gate'tir.
 - Exact unpatched ProCad production reuse `NO-GO`.
 - UI parser entity'lerine doğrudan bağlanmaz.
 - World/document coordinate hattı `double` precision.

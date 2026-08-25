@@ -11,15 +11,16 @@ IMPLEMENTATION_BASELINE: AŞAMA 09 — DONE
 IMPLEMENTATION_CURSOR: AŞAMA 10 — MAIN'E HENÜZ MERGE EDİLMEDİ
 IMPLEMENTATION_WORKSTREAM: docs/A10_WORKSTREAM.md + varsa açık A10 branch/PR
 ACTIVE_PROGRAM: ANDROID_REVALIDATION_01_09
-CURRENT_VALIDATION_STAGE: V06
+CURRENT_VALIDATION_STAGE: V07
 CURRENT_STATUS: NOT_STARTED
 V01: VALIDATED — INFRASTRUCTURE_SMOKE_ONLY
 V02: VALIDATED — DEPENDENCY/LOCKFILE/LICENSE/HASH/VULNERABILITY/ANDROID-NATIVE BOUNDARY
 V03: VALIDATED — FIXTURE/PROVENANCE/GOLDEN/ANDROID-SMOKE-SET CONTRACT
 V04: VALIDATED — REAL_APP_SHELL_RUNTIME_ONLY_NOT_VIEWER_FIDELITY
 V05: VALIDATED — REAL_ANDROID_APP_PARSER_SMOKE_ONLY_NOT_RENDER_FIDELITY
-NEXT_ACTION: Yalnız V06'yı başlat — gerçek MobilDwg.App FilePicker/SAF + safe-open/document-service bridge ve emulator lifecycle kapısı; aynı turda V07'ye geçme
-NEXT_IF_TEST_READY: V06 validation hattını yürüt
+V06: VALIDATED — REAL_ANDROID_APP_FILEPICKER_SAF_SAFE_OPEN_EMULATOR_ONLY_NOT_PHYSICAL_PROVIDER_FIDELITY
+NEXT_ACTION: Sonraki validation turunda yalnız V07'yi başlat — ProCad NO-GO + production graph izolasyonu + precision regression; aynı turda V08'e geçme
+NEXT_IF_TEST_READY: Sonraki turda V07 validation hattını yürüt
 NEXT_IF_TEST_OFFLINE: BASLA_A10.md ile yalnız ayrı branch'te A10 host-independent taslağını yürüt
 A10_MAIN_MERGE: BLOCKED_UNTIL_V04_V09_CLOSED_AND_A10_ANDROID_GATE
 A11_GATE: BLOCKED_UNTIL_V04_V09_CLOSED_AND_A10_DONE_ON_MAIN_AND_EMULATOR_QUEUE_EMPTY
@@ -146,15 +147,40 @@ Authoritative final:
 
 V05 render/engineering fidelity, FilePicker/SAF lifecycle veya physical-device PASS değildir.
 
-### V06 — Android FilePicker/SAF ve safe-open — `NOT_STARTED`
+### V06 — Android FilePicker/SAF ve safe-open — `VALIDATED`
 
-- AŞAMA 06 quota/disk/atomic-copy/generation/cancel/cleanup testleri yeniden çalışır.
-- Emulator Documents/provider yolundan gerçek app ile redistributable küçük DWG/DXF seçilir.
-- Gerçek app FilePicker/SAF → safe-open/document-service bridge çalıştığı kanıtlanır.
-- Açma, cancel, hızlı ikinci seçim, rotate, background/foreground, close/reopen, cleanup denenir.
-- Üreticiye özgü SAF/fiziksel cihaz farkları `DEFERRED_PHYSICAL_ANDROID` kalır.
+Evidence: `docs/evidence/android-validation/V06.md`.
 
-Çıkış: emulator üzerinde real-app safe-open PASS; fiziksel fark açık. V07 aynı turda başlatılmaz.
+V06 gerçek `MobilDwg.App` üzerinde MAUI FilePicker → Android DocumentsUI/SAF → `FileResult.OpenReadAsync()` → app-private safe-copy → production parser zincirini API 36 emulator üzerinde doğruladı. Fiziksel cihaz/provider fidelity bu claim'in dışındadır.
+
+Gate hardening sırasında iki test-infrastructure false-negative'i düzeltildi:
+
+- Android-only `MobilDwg.App` projesini `net10.0` host probe'dan referanslayan tarihsel `Stage06.OpenFlowProbe` `NU1201` üretiyordu; probe production safe-open BCL kaynaklarını linkleyecek şekilde ayrıştırıldı, app multi-target yapılmadı.
+- DocumentsUI `Recent / No items` ekranında roots drawer açılmadan `Downloads` aranıyordu; artifact UI XML'ine göre `Show roots` → `Downloads` → file navigasyonu eklendi.
+
+Authoritative final:
+
+- PR `#19`
+- tested PR head revision `ae8682875524157285946724bd70d6ff010f3917`
+- tested PR synthetic merge revision `26b3cdd6ca50d34b98a4806d92f50d4828077d41`
+- main merge commit `e17e2472f38557552698b8cf9526d6cbf8b25580`
+- run/job `32849725110` / `97807551403` — SUCCESS
+- artifact `9564837027`, 29,743,234 byte; digest `sha256:a88eaf46d7cc2090111cb18ce81c3a1d9b56eaed08bdfd070fb0a22be74194a0`
+- historical safe-open markers `STAGE06_ACTUAL_DWG_DXF_PASS`, `STAGE06_SAFE_COPY_GUARDS_PASS`, `STAGE06_LAST_REQUEST_WINS_PASS`, `STAGE06_CANCEL_SEMANTICS_PASS`, `STAGE06_T2_HEADLESS_PASS`
+- validation APK 30,917,242 byte; SHA-256 `4bcd819def4483fbc076865dd70b10026eb2eae7515c07561a9cdfe02ff9c9a5`
+- package `com.smitelagwar.mobildwg`; install/cold-launch PASS
+- real DWG SAF open PASS
+- real DXF second selection/latest-state PASS
+- rotate/background-foreground/picker-cancel/close-cleanup/reopen PASS; PID `3876`
+- original external CAD immutable PASS
+- broad external-storage permission absent; persistable URI grant not needed/taken for immediate private copy
+- package/PID stability and post-launch ANR gate PASS
+- marker `ANDROID_VALIDATION_V06_PASS`
+- claim `REAL_ANDROID_APP_FILEPICKER_SAF_SAFE_OPEN_EMULATOR_ONLY_NOT_PHYSICAL_PROVIDER_FIDELITY`
+- same-head V04 regression `32849725215 / 97807552081` SUCCESS; artifact `9565016182`, digest `sha256:6922f2168334e8312debc2c90cb7905d9db5da58eb8cb10da3f8aadf6e53bb3f`
+- same-head V05 regression `32849725272 / 97807552194` SUCCESS; artifact `9565243977`, digest `sha256:36ada98dd79f7f70e2ef7e63d6d2cb6cec191141421c07bcf41673dded23b492`
+
+Üreticiye özgü SAF/fiziksel cihaz farkları `DEFERRED_RELEASE_DEVICE_GATE` kalır. V06 render/engineering fidelity veya release readiness claim'i değildir.
 
 ### V07 — ProCad NO-GO ve production graph izolasyonu — `NOT_STARTED`
 

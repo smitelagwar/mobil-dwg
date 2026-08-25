@@ -80,12 +80,36 @@ Bu dosya teknik yürütme geçmişinin kısa indeksidir. Ayrıntılı kanıt `do
 - marker `ANDROID_VALIDATION_V05_PASS`
 - claim `REAL_ANDROID_APP_PARSER_SMOKE_ONLY_NOT_RENDER_FIDELITY`
 - same-head V04 regression `32838507889 / 97772635962` — SUCCESS; artifact `9561764023`, digest `sha256:b5f8581c4c4290adb83fb243968bb93b7a3991ca14c6658e418468acf76288e8`
-- same-head V02 regression `32838507864 / 97775556718` — SUCCESS
-- same-head V03 regression `32838507809 / 97775415411` — SUCCESS
 - evidence `docs/evidence/android-validation/V05.md`
+
+## Android validation V06 — VALIDATED
+
+- Real `MobilDwg.App` MAUI FilePicker → Android DocumentsUI/SAF → `FileResult.OpenReadAsync()` → app-private safe-copy → production parser zinciri API36 emulator üzerinde doğrulandı.
+- Historical Stage06 host probe Android-only app'i `net10.0` host'tan referansladığı için `NU1201` veriyordu; app multi-target yapılmadan production safe-open BCL kaynakları probe'a linklendi.
+- DocumentsUI ilk gerçek koşuda `Recent / No items` ekranında kalırken roots drawer açılmadan `Downloads` aranıyordu; failure artifact UI XML'indeki `Show roots` kanıtıyla navigation `Show roots` → `Downloads` → file olarak düzeltildi.
+- diagnostic failed run/job `32846335305 / 97796783640`: host probe `NU1201`; artifact `9562991064`, digest `sha256:5951a3ba321cc0f0954cdd688614b0c177f141089c3328f39e272542ea6b66b5`.
+- diagnostic failed run/job `32847919780 / 97801845809`: DocumentsUI target file görünürlüğü; artifact `9563560512`, digest `sha256:2d7a310a5e6317923134ad00b17b10578431c5e6c184383574bc5eb7499cd911`.
+- tested PR head `ae8682875524157285946724bd70d6ff010f3917`
+- tested PR synthetic merge `26b3cdd6ca50d34b98a4806d92f50d4828077d41`
+- PR #19 main merge `e17e2472f38557552698b8cf9526d6cbf8b25580`
+- authoritative run/job `32849725110` / `97807551403` — SUCCESS
+- artifact `9564837027`, 29,743,234 byte; digest `sha256:a88eaf46d7cc2090111cb18ce81c3a1d9b56eaed08bdfd070fb0a22be74194a0`
+- `STAGE06_ACTUAL_DWG_DXF_PASS`, `STAGE06_SAFE_COPY_GUARDS_PASS`, `STAGE06_LAST_REQUEST_WINS_PASS`, `STAGE06_CANCEL_SEMANTICS_PASS`, `STAGE06_T2_HEADLESS_PASS`
+- validation APK 30,917,242 byte; SHA-256 `4bcd819def4483fbc076865dd70b10026eb2eae7515c07561a9cdfe02ff9c9a5`
+- package/install/cold-launch PASS; real DWG SAF open PASS; second selection DXF/latest-state PASS
+- rotate/background-foreground/picker-cancel/close-cleanup/reopen PASS; PID `3876`
+- original external CAD bytes immutable PASS
+- broad external-storage permission absent; immediate-copy path persistable URI grant gerektirmedi/almadı
+- package/PID crash + post-launch ANR/liveness PASS
+- marker `ANDROID_VALIDATION_V06_PASS`
+- claim `REAL_ANDROID_APP_FILEPICKER_SAF_SAFE_OPEN_EMULATOR_ONLY_NOT_PHYSICAL_PROVIDER_FIDELITY`
+- same-head V04 regression `32849725215 / 97807552081` — SUCCESS; artifact `9565016182`, digest `sha256:6922f2168334e8312debc2c90cb7905d9db5da58eb8cb10da3f8aadf6e53bb3f`
+- same-head V05 regression `32849725272 / 97807552194` — SUCCESS; artifact `9565243977`, digest `sha256:36ada98dd79f7f70e2ef7e63d6d2cb6cec191141421c07bcf41673dded23b492`
+- evidence `docs/evidence/android-validation/V06.md`
+- physical Android/provider-specific fidelity `DEFERRED_RELEASE_DEVICE_GATE` olarak açık kalır.
 
 ## Sonraki iş
 
-`NEXT_VALIDATION_STAGE = V06 — Android FilePicker/SAF + safe-open/document-service bridge (NOT_STARTED)`.
+`NEXT_VALIDATION_STAGE = V07 — ProCad NO-GO + production graph isolation + precision regression (NOT_STARTED)`.
 
-Bir sonraki validation `devam` yalnız V06'yı açar; aynı turda V07'ye geçmez. Implementation cursor `AŞAMA 10 — MAIN'E HENÜZ MERGE EDİLMEDİ` olarak ayrı korunur. Bilgisayar/runner kapalı A10 sohbeti yalnız `BASLA_A10.md` ile ayrı draft branch'te yürür.
+Bir sonraki validation `devam` yalnız V07'yi açar; aynı turda V08'e geçmez. Implementation cursor `AŞAMA 10 — MAIN'E HENÜZ MERGE EDİLMEDİ` olarak ayrı korunur. Bilgisayar/runner kapalı A10 sohbeti yalnız `BASLA_A10.md` ile ayrı draft branch'te yürür.
