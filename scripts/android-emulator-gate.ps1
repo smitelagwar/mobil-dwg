@@ -120,7 +120,7 @@ $RepoRoot = Split-Path -Parent $PSScriptRoot
 Set-Location $RepoRoot
 
 Write-Host "=========================================================="
-Write-Host "  ANDROID EMULATOR AUTOMATED TEST GATE — V01 HARDENED"
+Write-Host "  ANDROID EMULATOR AUTOMATED TEST GATE - V01 HARDENED"
 Write-Host "=========================================================="
 Write-Host "Configuration : $Configuration"
 Write-Host "AVD Name      : $AvdName"
@@ -417,7 +417,7 @@ try {
     $timestamp = (Get-Date).ToUniversalTime().ToString("yyyy-MM-dd HH:mm:ss 'UTC'")
     $summary = @"
 ==========================================================
-ANDROID EMULATOR GATE TEST SUMMARY — V01 HARDENED
+ANDROID EMULATOR GATE TEST SUMMARY - V01 HARDENED
 ==========================================================
 Timestamp        : $timestamp
 Test Scope       : Stage01Smoke infrastructure only; NOT MobilDwg.App/viewer validation
