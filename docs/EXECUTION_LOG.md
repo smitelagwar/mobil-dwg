@@ -132,8 +132,22 @@ Ayrıntı: `docs/evidence/STAGE_09.md`.
 - Stage 08 iOS workflow'u Android/Core değişikliklerinde macOS kaynağı tüketmemesi için manual `workflow_dispatch`-only yapıldı.
 - Bu tur plan/dokümantasyon ve trigger policy turudur; V01 teknik düzeltmeleri/koşusu başlatılmadı ve eski emulator sonucu viewer PASS sayılmadı.
 
+## 2026-08-25 — Android validation V01 — VALIDATED
+
+- Çalışma bağlamı `CHATGPT_REMOTE_GITHUB`; exact tested SHA `698c6e901672a736f2803894efb5bda34af08212`.
+- Self-hosted Windows Android Emulator Release run `32821991333`, job `97721878468`, `SUCCESS`.
+- Environment doctor .NET `10.0.400`, `maui-android`, Microsoft OpenJDK 21.0.12 baseline, Android API 36, Build-Tools 36.0.0, ADB 37.0.1 ve AVD `mobil-dwg-api36` kontrollerini geçti.
+- Gate tam solution Release build'ini yaptı ve Core/Rendering/Architecture executable harness'larını `dotnet run` ile gerçekten yürüttü; gerekli Stage04/Stage05/Stage09 marker'ları doğrulandı.
+- Temporary `Stage01Smoke` signed APK Android 16 / API 36 / x86_64 emulator üzerinde kuruldu; cold launch `Status: ok`, live PID `3374`.
+- Screenshot byte-safe yakalandı ve tam PNG imzası `89 50 4E 47 0D 0A 1A 0A` doğrulandı. Artifact indirildi ve screenshot görsel olarak açıldı; çalışan MAUI Stage01Smoke UI görüldü, crash dialog yoktu.
+- Package/PID crash buffer boştu; post-launch events create/start/resume/draw akışını gösterdi; `dumpsys activity lastanr` boot'tan beri ANR olmadığını bildirdi.
+- Artifact `9553530359`, 7 dosya, 271043 byte; digest `sha256:ad96924682330a93368c95889d75e8112dff8387170dcdeb17b17e3d72c8e7f7`.
+- Önceki V01 denemelerindeki doctor-output assertion ve Windows PowerShell UTF-8 parser hataları gerçek PASS sayılmadı; yalnız yukarıdaki exact koşu yetkilidir.
+- Karar: `V01 VALIDATED`, fakat claim limit `INFRASTRUCTURE_SMOKE_ONLY`. Bu sonuç gerçek `MobilDwg.App`, DWG/DXF fidelity veya fiziksel Android PASS değildir.
+- Ayrıntı: `docs/evidence/android-validation/V01.md`.
+
 ## Sonraki iş
 
-`NEXT_VALIDATION_STAGE = V01 — Toolchain, runner ve emulator altyapısı (FIX_REQUIRED)`.
+`NEXT_VALIDATION_STAGE = V02 — Dependency, lockfile ve Android artifact sınırı (NOT_STARTED)`.
 
-Kullanıcı `devam` veya `BASLA.md dosyasını oku` dediğinde V01 açılır. Önce gate executable harness çalıştırma, gerçek kapsam marker'ı, byte-safe PNG, exact AVD/API, numeric PID ve crash/ANR kontrolleriyle düzeltilir; ardından exact Release emulator koşusu alınır. Implementation cursor'ı AŞAMA 10'da korunur ve yalnız runner-offline güvenli devam kuralı gerektiğinde kullanılır.
+Kullanıcı `devam` veya `BASLA.md dosyasını oku` dediğinde yalnız V02 açılır. Güncel package/source/license kanıtı; locked restore, resolved dependency graph, vulnerability/license policy ve Android runtime/native artifact sınırı yeniden doğrulanır. ProCad ve iOS-only bileşenlerin Android production graph'a sızmadığı kanıtlanır. Bir turda en fazla bir validation aşaması kuralı nedeniyle V03 aynı turda başlatılmaz. Implementation cursor'ı AŞAMA 10'da korunur.
