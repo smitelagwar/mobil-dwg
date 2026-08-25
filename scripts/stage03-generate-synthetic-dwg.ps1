@@ -60,6 +60,12 @@ string output = Path.GetFullPath(args[1]);
 using (DxfReader reader = new DxfReader(input))
 {
     var document = reader.Read();
+
+    // The hand-authored DXF intentionally contains only the tables needed for
+    // read-side smoke coverage. Complete ACadSharp's default table hierarchy
+    // before writing DWG so the fixture is structurally self-contained.
+    document.CreateDefaults();
+
     using (DwgWriter writer = new DwgWriter(output, document))
     {
         writer.Write();
