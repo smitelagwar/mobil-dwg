@@ -128,15 +128,16 @@ public sealed class SkiaCadRenderer : ICadRenderer
             return;
         }
 
-        using var skPath = new SKPath();
+        using var builder = new SKPathBuilder();
         var first = CameraTransform.WorldToScreen(path.Points[0], camera);
-        skPath.MoveTo(ToFloat(first.X), ToFloat(first.Y));
+        builder.MoveTo(ToFloat(first.X), ToFloat(first.Y));
         for (var i = 1; i < path.Points.Count; i++)
         {
             var screen = CameraTransform.WorldToScreen(path.Points[i], camera);
-            skPath.LineTo(ToFloat(screen.X), ToFloat(screen.Y));
+            builder.LineTo(ToFloat(screen.X), ToFloat(screen.Y));
         }
-        if (path.Closed) skPath.Close();
+        if (path.Closed) builder.Close();
+        using var skPath = builder.Detach();
 
         if (path.Filled) canvas.DrawPath(skPath, fillPaint);
         else canvas.DrawPath(skPath, strokePaint);
