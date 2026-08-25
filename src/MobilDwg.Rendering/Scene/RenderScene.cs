@@ -33,8 +33,11 @@ public sealed class RenderScene : IRenderScene
         Diagnostics = diagnostics ?? throw new ArgumentNullException(nameof(diagnostics));
         ColorContext = colorContext ?? throw new ArgumentNullException(nameof(colorContext));
 
+        // SourceIndex is the parser/scene-builder draw-order contract when available.
+        // Stable ID remains the deterministic fallback for synthetic or source-less entities.
         var sorted = entities
-            .OrderBy(x => x.Id.Value, StringComparer.Ordinal)
+            .OrderBy(x => x.Source.SourceIndex ?? int.MaxValue)
+            .ThenBy(x => x.Id.Value, StringComparer.Ordinal)
             .ToArray();
         _entities = Array.AsReadOnly(sorted);
         WorldBounds = CalculateBounds(_entities);
