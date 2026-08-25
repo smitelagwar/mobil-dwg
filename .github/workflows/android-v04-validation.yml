@@ -28,9 +28,13 @@ jobs:
           persist-credentials: false
           clean: true
 
+      - name: Revalidate V01 infrastructure and executable harness prerequisite
+        shell: powershell
+        run: .\scripts\android-emulator-gate.ps1 -Configuration Release -ArtifactsDir artifacts/v04-real-app/v01-infrastructure-prerequisite -AvdName mobil-dwg-api36 -Headless
+
       - name: Validate real MobilDwg.App on API 36 emulator
         shell: powershell
-        run: .\scripts\v04-real-app-gate.ps1 -Configuration Release -ArtifactsDir artifacts/v04-real-app -AvdName mobil-dwg-api36
+        run: .\scripts\v04-real-app-gate.ps1 -Configuration Release -ArtifactsDir artifacts/v04-real-app
 
       - name: Upload V04 evidence
         if: always()
