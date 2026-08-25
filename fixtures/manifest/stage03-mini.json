@@ -1,1 +1,194 @@
-{"schema_version":1,"generated_on":"2026-08-24","sources":{"acadsharp-samples":{"kind":"github-repository","repository":"DomCR/ACadSharp","revision":"592d70a7bf0eaffbd932d23900f289b4e6305832","base_url":"https://raw.githubusercontent.com/DomCR/ACadSharp/592d70a7bf0eaffbd932d23900f289b4e6305832/samples/","license":"MIT","license_url":"https://github.com/DomCR/ACadSharp/blob/592d70a7bf0eaffbd932d23900f289b4e6305832/LICENSE","redistribution":"remote-reference-only","provenance":"ACadSharp samples; samples/sample_base/save_samples.lsp records SAVEAS generation of the same base drawing across DWG/DXF versions.","rights_note":"Repository root LICENSE is MIT and no sample-specific exception was found. mobil-dwg does not vendor these binary files."}},"rights_profiles":{"mobil-dwg-synthetic-0bsd":{"license":"0BSD","redistribution":"committed-permitted","provenance":"mobil-dwg Stage 03 synthetic DXF authored in-repo; no customer/private CAD content."}},"fixtures":[{"id":"acadsharp-ac1015-dwg","corpus":"public","role":"positive","format":"dwg","acad_version":"AC1015","version_family":"R2000","storage":{"mode":"remote-pinned","source":"acadsharp-samples","path":"sample_AC1015.dwg"},"size_bytes":1297511,"hash":{"algorithm":"git-blob-sha1","value":"24768ce675970ab1cf9ae4f3b84f6bf12b999c2e"},"features":["basic_geometry","block_reference","nested_block","dimension","hatch","paper_space"],"expected":{"open_result":"success-with-warnings","entity_counts":{"mode":"minimum","LINE":1,"CIRCLE":1,"BLOCK_REFERENCE":1,"DIMENSION":1,"HATCH":1},"warnings":{"must_not_include":["fatal-corrupt"],"may_include":["unsupported-object","proxy-object","external-reference","missing-resource"]}},"golden":{"semantic":"manifest","image_status":"not-created","redistribution":"not-applicable"}},{"id":"acadsharp-ac1018-dwg","corpus":"public","role":"positive","format":"dwg","acad_version":"AC1018","version_family":"R2004","storage":{"mode":"remote-pinned","source":"acadsharp-samples","path":"sample_AC1018.dwg"},"size_bytes":1097214,"hash":{"algorithm":"git-blob-sha1","value":"7ccac9ce2ccc49a9de05ea22b849b91f1d25fb4b"},"features":["basic_geometry","block_reference","nested_block","dimension","hatch","paper_space"],"expected":{"open_result":"success-with-warnings","entity_counts":{"mode":"minimum","LINE":1,"CIRCLE":1,"BLOCK_REFERENCE":1,"DIMENSION":1,"HATCH":1},"warnings":{"must_not_include":["fatal-corrupt"],"may_include":["unsupported-object","proxy-object","external-reference","missing-resource"]}},"golden":{"semantic":"manifest","image_status":"not-created","redistribution":"not-applicable"}},{"id":"acadsharp-ac1024-dwg","corpus":"public","role":"positive","format":"dwg","acad_version":"AC1024","version_family":"R2010","storage":{"mode":"remote-pinned","source":"acadsharp-samples","path":"sample_AC1024.dwg"},"size_bytes":1122389,"hash":{"algorithm":"git-blob-sha1","value":"3346e2b2063215eb475a6a4ab918c939472e38d0"},"features":["basic_geometry","block_reference","nested_block","dimension","hatch","paper_space"],"expected":{"open_result":"success-with-warnings","entity_counts":{"mode":"minimum","LINE":1,"CIRCLE":1,"BLOCK_REFERENCE":1,"DIMENSION":1,"HATCH":1},"warnings":{"must_not_include":["fatal-corrupt"],"may_include":["unsupported-object","proxy-object","external-reference","missing-resource"]}},"golden":{"semantic":"manifest","image_status":"not-created","redistribution":"not-applicable"}},{"id":"acadsharp-ac1032-dwg","corpus":"public","role":"positive","format":"dwg","acad_version":"AC1032","version_family":"R2018","storage":{"mode":"remote-pinned","source":"acadsharp-samples","path":"sample_AC1032.dwg"},"size_bytes":1081979,"hash":{"algorithm":"git-blob-sha1","value":"4cfa790d6719acf3aad9818bacbd693ac3ab71b8"},"features":["basic_geometry","block_reference","nested_block","dimension","hatch","paper_space"],"expected":{"open_result":"success-with-warnings","entity_counts":{"mode":"minimum","LINE":1,"CIRCLE":1,"BLOCK_REFERENCE":1,"DIMENSION":1,"HATCH":1},"warnings":{"must_not_include":["fatal-corrupt"],"may_include":["unsupported-object","proxy-object","external-reference","missing-resource"]}},"golden":{"semantic":"manifest","image_status":"not-created","redistribution":"not-applicable"}},{"id":"acadsharp-ac1015-ascii-dxf","corpus":"public","role":"positive","format":"dxf","acad_version":"AC1015","version_family":"R2000","storage":{"mode":"remote-pinned","source":"acadsharp-samples","path":"sample_AC1015_ascii.dxf"},"size_bytes":2632305,"hash":{"algorithm":"git-blob-sha1","value":"47e909dec754db6fbd3f990af30672e7166a3c40"},"features":["basic_geometry","block_reference","nested_block","dimension","hatch","paper_space"],"expected":{"open_result":"success-with-warnings","entity_counts":{"mode":"minimum","LINE":1,"CIRCLE":1,"BLOCK_REFERENCE":1,"DIMENSION":1,"HATCH":1},"warnings":{"must_not_include":["fatal-corrupt"],"may_include":["unsupported-object","proxy-object","external-reference","missing-resource"]}},"golden":{"semantic":"manifest","image_status":"not-created","redistribution":"not-applicable"}},{"id":"acadsharp-ac1032-ascii-dxf","corpus":"public","role":"positive","format":"dxf","acad_version":"AC1032","version_family":"R2018","storage":{"mode":"remote-pinned","source":"acadsharp-samples","path":"sample_AC1032_ascii.dxf"},"size_bytes":2566547,"hash":{"algorithm":"git-blob-sha1","value":"e4401ec6d62d940c11c9346a39a84887344797c9"},"features":["basic_geometry","block_reference","nested_block","dimension","hatch","paper_space"],"expected":{"open_result":"success-with-warnings","entity_counts":{"mode":"minimum","LINE":1,"CIRCLE":1,"BLOCK_REFERENCE":1,"DIMENSION":1,"HATCH":1},"warnings":{"must_not_include":["fatal-corrupt"],"may_include":["unsupported-object","proxy-object","external-reference","missing-resource"]}},"golden":{"semantic":"manifest","image_status":"not-created","redistribution":"not-applicable"}},{"id":"synthetic-turkish-basic-ac1015","corpus":"synthetic","role":"positive","format":"dxf","acad_version":"AC1015","version_family":"R2000","storage":{"mode":"committed","path":"fixtures/public/synthetic/synthetic_turkish_basic_ac1015.dxf","rights_profile":"mobil-dwg-synthetic-0bsd"},"size_bytes":769,"hash":{"algorithm":"sha256","value":"aa79ad97de188abc87f546e5919e9cc1495479eaa25b02d433900654fe2e9021"},"features":["basic_geometry","turkish_text","nested_block"],"expected":{"open_result":"success","entity_counts":{"mode":"exact","LINE":2,"CIRCLE":1,"ARC":1,"LWPOLYLINE":1,"TEXT":1,"INSERT":2},"warnings":{"must_not_include":["fatal-corrupt"],"must_include":[],"may_include":[]}},"golden":{"semantic":"manifest","image_status":"not-created","redistribution":"not-applicable"}},{"id":"negative-missing-font-ac1015","corpus":"synthetic","role":"negative","format":"dxf","acad_version":"AC1015","version_family":"R2000","storage":{"mode":"committed","path":"fixtures/public/synthetic/negative_missing_font_ac1015.dxf","rights_profile":"mobil-dwg-synthetic-0bsd"},"size_bytes":300,"hash":{"algorithm":"sha256","value":"d3cd3b2642685f2ef61e1b5cfd9404021ea9e127077cdb6240c18283c246f1e3"},"features":["missing_font","text"],"expected":{"open_result":"success-with-warnings","entity_counts":{"mode":"minimum","TEXT":1},"warnings":{"must_not_include":[],"must_include":["missing-font"],"may_include":[]}},"golden":{"semantic":"manifest","image_status":"not-created","redistribution":"not-applicable"}},{"id":"negative-missing-xref-ac1015","corpus":"synthetic","role":"negative","format":"dxf","acad_version":"AC1015","version_family":"R2000","storage":{"mode":"committed","path":"fixtures/public/synthetic/negative_missing_xref_ac1015.dxf","rights_profile":"mobil-dwg-synthetic-0bsd"},"size_bytes":544,"hash":{"algorithm":"sha256","value":"edd11993a6390b6d3b22ec00a13649691e570af9da21357a32eadf6c18889708"},"features":["missing_xref","block_reference"],"expected":{"open_result":"success-with-warnings","entity_counts":{"mode":"minimum","INSERT":1},"warnings":{"must_not_include":[],"must_include":["missing-xref"],"may_include":[]}},"golden":{"semantic":"manifest","image_status":"not-created","redistribution":"not-applicable"}}],"negative_derivations":[{"id":"derived-truncated-ac1015-dwg","source_id":"acadsharp-ac1015-dwg","transform":{"type":"truncate","bytes":4096},"expected":{"open_result":"controlled-failure","warning_category":"truncated-or-corrupt"}},{"id":"derived-corrupt-ac1018-dwg","source_id":"acadsharp-ac1018-dwg","transform":{"type":"xor-byte","offset":512,"value":255},"expected":{"open_result":"controlled-failure-or-warning","warning_category":"corrupt-or-checksum"}}],"coverage_requirements":{"minimum_positive_dwg":4,"minimum_positive_dxf":2,"minimum_distinct_dwg_version_families":2,"required_features":["basic_geometry","turkish_text","nested_block","dimension","hatch","paper_space"],"required_negative_categories":["truncated","corrupt","missing_font","missing_xref"]},"upstream_reference_evidence":{"source":"acadsharp-samples","sample_generation_script":"sample_base/save_samples.lsp","semantic_tree":"sample_base/sample_base_tree.json","observed_in_tree":{"Hatch":8,"BlockReference":13,"Dimension":12,"PaperSpaceBlockRecords":3},"note":"Independent upstream feature/provenance evidence only; not mobil-dwg parser output."}}
+{
+  "schema_version": 1,
+  "generated_on": "2026-08-25",
+  "sources": {
+    "acadsharp-samples": {
+      "kind": "github-repository",
+      "repository": "DomCR/ACadSharp",
+      "revision": "592d70a7bf0eaffbd932d23900f289b4e6305832",
+      "base_url": "https://raw.githubusercontent.com/DomCR/ACadSharp/592d70a7bf0eaffbd932d23900f289b4e6305832/samples/",
+      "license": "MIT",
+      "license_url": "https://github.com/DomCR/ACadSharp/blob/592d70a7bf0eaffbd932d23900f289b4e6305832/LICENSE",
+      "redistribution": "remote-reference-only",
+      "provenance": "ACadSharp samples; samples/sample_base/save_samples.lsp records SAVEAS generation of the same base drawing across DWG/DXF versions.",
+      "rights_note": "Repository root LICENSE is MIT and no sample-specific exception was found. mobil-dwg does not vendor these binary files."
+    }
+  },
+  "rights_profiles": {
+    "mobil-dwg-synthetic-0bsd": {
+      "license": "0BSD",
+      "redistribution": "committed-permitted",
+      "provenance": "mobil-dwg Stage 03 synthetic CAD authored in-repo; no customer/private CAD content. Generated DWG smoke artifacts inherit this source-data provenance and are created only by the pinned fixture generator."
+    }
+  },
+  "fixtures": [
+    {
+      "id": "acadsharp-ac1015-dwg",
+      "corpus": "public",
+      "role": "positive",
+      "format": "dwg",
+      "acad_version": "AC1015",
+      "version_family": "R2000",
+      "storage": {"mode": "remote-pinned", "source": "acadsharp-samples", "path": "sample_AC1015.dwg"},
+      "size_bytes": 1297511,
+      "hash": {"algorithm": "git-blob-sha1", "value": "24768ce675970ab1cf9ae4f3b84f6bf12b999c2e"},
+      "features": ["basic_geometry", "block_reference", "nested_block", "dimension", "hatch", "paper_space"],
+      "expected": {"open_result": "success-with-warnings", "entity_counts": {"mode": "minimum", "LINE": 1, "CIRCLE": 1, "BLOCK_REFERENCE": 1, "DIMENSION": 1, "HATCH": 1}, "warnings": {"must_not_include": ["fatal-corrupt"], "may_include": ["unsupported-object", "proxy-object", "external-reference", "missing-resource"]}},
+      "golden": {"semantic": "manifest", "image_status": "not-created", "redistribution": "not-applicable"}
+    },
+    {
+      "id": "acadsharp-ac1018-dwg",
+      "corpus": "public",
+      "role": "positive",
+      "format": "dwg",
+      "acad_version": "AC1018",
+      "version_family": "R2004",
+      "storage": {"mode": "remote-pinned", "source": "acadsharp-samples", "path": "sample_AC1018.dwg"},
+      "size_bytes": 1097214,
+      "hash": {"algorithm": "git-blob-sha1", "value": "7ccac9ce2ccc49a9de05ea22b849b91f1d25fb4b"},
+      "features": ["basic_geometry", "block_reference", "nested_block", "dimension", "hatch", "paper_space"],
+      "expected": {"open_result": "success-with-warnings", "entity_counts": {"mode": "minimum", "LINE": 1, "CIRCLE": 1, "BLOCK_REFERENCE": 1, "DIMENSION": 1, "HATCH": 1}, "warnings": {"must_not_include": ["fatal-corrupt"], "may_include": ["unsupported-object", "proxy-object", "external-reference", "missing-resource"]}},
+      "golden": {"semantic": "manifest", "image_status": "not-created", "redistribution": "not-applicable"}
+    },
+    {
+      "id": "acadsharp-ac1024-dwg",
+      "corpus": "public",
+      "role": "positive",
+      "format": "dwg",
+      "acad_version": "AC1024",
+      "version_family": "R2010",
+      "storage": {"mode": "remote-pinned", "source": "acadsharp-samples", "path": "sample_AC1024.dwg"},
+      "size_bytes": 1122389,
+      "hash": {"algorithm": "git-blob-sha1", "value": "3346e2b2063215eb475a6a4ab918c939472e38d0"},
+      "features": ["basic_geometry", "block_reference", "nested_block", "dimension", "hatch", "paper_space"],
+      "expected": {"open_result": "success-with-warnings", "entity_counts": {"mode": "minimum", "LINE": 1, "CIRCLE": 1, "BLOCK_REFERENCE": 1, "DIMENSION": 1, "HATCH": 1}, "warnings": {"must_not_include": ["fatal-corrupt"], "may_include": ["unsupported-object", "proxy-object", "external-reference", "missing-resource"]}},
+      "golden": {"semantic": "manifest", "image_status": "not-created", "redistribution": "not-applicable"}
+    },
+    {
+      "id": "acadsharp-ac1032-dwg",
+      "corpus": "public",
+      "role": "positive",
+      "format": "dwg",
+      "acad_version": "AC1032",
+      "version_family": "R2018",
+      "storage": {"mode": "remote-pinned", "source": "acadsharp-samples", "path": "sample_AC1032.dwg"},
+      "size_bytes": 1081979,
+      "hash": {"algorithm": "git-blob-sha1", "value": "4cfa790d6719acf3aad9818bacbd693ac3ab71b8"},
+      "features": ["basic_geometry", "block_reference", "nested_block", "dimension", "hatch", "paper_space"],
+      "expected": {"open_result": "success-with-warnings", "entity_counts": {"mode": "minimum", "LINE": 1, "CIRCLE": 1, "BLOCK_REFERENCE": 1, "DIMENSION": 1, "HATCH": 1}, "warnings": {"must_not_include": ["fatal-corrupt"], "may_include": ["unsupported-object", "proxy-object", "external-reference", "missing-resource"]}},
+      "golden": {"semantic": "manifest", "image_status": "not-created", "redistribution": "not-applicable"}
+    },
+    {
+      "id": "acadsharp-ac1015-ascii-dxf",
+      "corpus": "public",
+      "role": "positive",
+      "format": "dxf",
+      "acad_version": "AC1015",
+      "version_family": "R2000",
+      "storage": {"mode": "remote-pinned", "source": "acadsharp-samples", "path": "sample_AC1015_ascii.dxf"},
+      "size_bytes": 2632305,
+      "hash": {"algorithm": "git-blob-sha1", "value": "47e909dec754db6fbd3f990af30672e7166a3c40"},
+      "features": ["basic_geometry", "block_reference", "nested_block", "dimension", "hatch", "paper_space"],
+      "expected": {"open_result": "success-with-warnings", "entity_counts": {"mode": "minimum", "LINE": 1, "CIRCLE": 1, "BLOCK_REFERENCE": 1, "DIMENSION": 1, "HATCH": 1}, "warnings": {"must_not_include": ["fatal-corrupt"], "may_include": ["unsupported-object", "proxy-object", "external-reference", "missing-resource"]}},
+      "golden": {"semantic": "manifest", "image_status": "not-created", "redistribution": "not-applicable"}
+    },
+    {
+      "id": "acadsharp-ac1032-ascii-dxf",
+      "corpus": "public",
+      "role": "positive",
+      "format": "dxf",
+      "acad_version": "AC1032",
+      "version_family": "R2018",
+      "storage": {"mode": "remote-pinned", "source": "acadsharp-samples", "path": "sample_AC1032_ascii.dxf"},
+      "size_bytes": 2566547,
+      "hash": {"algorithm": "git-blob-sha1", "value": "e4401ec6d62d940c11c9346a39a84887344797c9"},
+      "features": ["basic_geometry", "block_reference", "nested_block", "dimension", "hatch", "paper_space"],
+      "expected": {"open_result": "success-with-warnings", "entity_counts": {"mode": "minimum", "LINE": 1, "CIRCLE": 1, "BLOCK_REFERENCE": 1, "DIMENSION": 1, "HATCH": 1}, "warnings": {"must_not_include": ["fatal-corrupt"], "may_include": ["unsupported-object", "proxy-object", "external-reference", "missing-resource"]}},
+      "golden": {"semantic": "manifest", "image_status": "not-created", "redistribution": "not-applicable"}
+    },
+    {
+      "id": "synthetic-turkish-basic-ac1015",
+      "corpus": "synthetic",
+      "role": "positive",
+      "format": "dxf",
+      "acad_version": "AC1015",
+      "version_family": "R2000",
+      "storage": {"mode": "committed", "path": "fixtures/public/synthetic/synthetic_turkish_basic_ac1015.dxf", "rights_profile": "mobil-dwg-synthetic-0bsd"},
+      "size_bytes": 769,
+      "hash": {"algorithm": "sha256", "value": "aa79ad97de188abc87f546e5919e9cc1495479eaa25b02d433900654fe2e9021"},
+      "features": ["basic_geometry", "turkish_text", "nested_block"],
+      "expected": {"open_result": "success", "entity_counts": {"mode": "exact", "LINE": 2, "CIRCLE": 1, "ARC": 1, "LWPOLYLINE": 1, "TEXT": 1, "INSERT": 2}, "warnings": {"must_not_include": ["fatal-corrupt"], "must_include": [], "may_include": []}},
+      "golden": {"semantic": "manifest", "image_status": "not-created", "redistribution": "not-applicable"}
+    },
+    {
+      "id": "negative-missing-font-ac1015",
+      "corpus": "synthetic",
+      "role": "negative",
+      "format": "dxf",
+      "acad_version": "AC1015",
+      "version_family": "R2000",
+      "storage": {"mode": "committed", "path": "fixtures/public/synthetic/negative_missing_font_ac1015.dxf", "rights_profile": "mobil-dwg-synthetic-0bsd"},
+      "size_bytes": 300,
+      "hash": {"algorithm": "sha256", "value": "d3cd3b2642685f2ef61e1b5cfd9404021ea9e127077cdb6240c18283c246f1e3"},
+      "features": ["missing_font", "text"],
+      "expected": {"open_result": "success-with-warnings", "entity_counts": {"mode": "minimum", "TEXT": 1}, "warnings": {"must_not_include": [], "must_include": ["missing-font"], "may_include": []}},
+      "golden": {"semantic": "manifest", "image_status": "not-created", "redistribution": "not-applicable"}
+    },
+    {
+      "id": "negative-missing-xref-ac1015",
+      "corpus": "synthetic",
+      "role": "negative",
+      "format": "dxf",
+      "acad_version": "AC1015",
+      "version_family": "R2000",
+      "storage": {"mode": "committed", "path": "fixtures/public/synthetic/negative_missing_xref_ac1015.dxf", "rights_profile": "mobil-dwg-synthetic-0bsd"},
+      "size_bytes": 544,
+      "hash": {"algorithm": "sha256", "value": "edd11993a6390b6d3b22ec00a13649691e570af9da21357a32eadf6c18889708"},
+      "features": ["missing_xref", "block_reference"],
+      "expected": {"open_result": "success-with-warnings", "entity_counts": {"mode": "minimum", "INSERT": 1}, "warnings": {"must_not_include": [], "must_include": ["missing-xref"], "may_include": []}},
+      "golden": {"semantic": "manifest", "image_status": "not-created", "redistribution": "not-applicable"}
+    }
+  ],
+  "generated_fixtures": [
+    {
+      "id": "synthetic-turkish-basic-ac1015-dwg",
+      "corpus": "synthetic",
+      "role": "positive",
+      "format": "dwg",
+      "acad_version": "AC1015",
+      "version_family": "R2000",
+      "source_fixture_id": "synthetic-turkish-basic-ac1015",
+      "generator": "scripts/stage03-generate-synthetic-dwg.ps1",
+      "generator_dependency": {"id": "ACadSharp", "version": "3.7.1"},
+      "rights_profile": "mobil-dwg-synthetic-0bsd",
+      "features": ["basic_geometry", "turkish_text", "nested_block"],
+      "expected": {"open_result": "success", "semantic_source": "synthetic-turkish-basic-ac1015", "validation": "AC1015 magic plus DwgReader read-back"},
+      "artifact_policy": "generated-at-validation-time-not-committed"
+    }
+  ],
+  "android_smoke_set": {
+    "positive_fixture_ids": ["synthetic-turkish-basic-ac1015"],
+    "generated_fixture_ids": ["synthetic-turkish-basic-ac1015-dwg"],
+    "negative_fixture_ids": ["negative-missing-font-ac1015", "negative-missing-xref-ac1015"],
+    "minimum_positive_formats": ["dwg", "dxf"],
+    "claim_limit": "Fixture provenance, redistribution eligibility and controlled Android open-path smoke input only; not an independent DWG engineering-fidelity golden."
+  },
+  "negative_derivations": [
+    {"id": "derived-truncated-ac1015-dwg", "source_id": "acadsharp-ac1015-dwg", "transform": {"type": "truncate", "bytes": 4096}, "expected": {"open_result": "controlled-failure", "warning_category": "truncated-or-corrupt"}},
+    {"id": "derived-corrupt-ac1018-dwg", "source_id": "acadsharp-ac1018-dwg", "transform": {"type": "xor-byte", "offset": 512, "value": 255}, "expected": {"open_result": "controlled-failure-or-warning", "warning_category": "corrupt-or-checksum"}}
+  ],
+  "coverage_requirements": {
+    "minimum_positive_dwg": 4,
+    "minimum_positive_dxf": 2,
+    "minimum_distinct_dwg_version_families": 2,
+    "required_features": ["basic_geometry", "turkish_text", "nested_block", "dimension", "hatch", "paper_space"],
+    "required_negative_categories": ["truncated", "corrupt", "missing_font", "missing_xref"]
+  },
+  "upstream_reference_evidence": {
+    "source": "acadsharp-samples",
+    "sample_generation_script": "sample_base/save_samples.lsp",
+    "semantic_tree": "sample_base/sample_base_tree.json",
+    "observed_in_tree": {"Hatch": 8, "BlockReference": 13, "Dimension": 12, "PaperSpaceBlockRecords": 3},
+    "note": "Independent upstream feature/provenance evidence only; not mobil-dwg parser output."
+  }
+}
