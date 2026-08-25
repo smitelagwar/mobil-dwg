@@ -32,6 +32,19 @@ def load_json(path: Path) -> dict:
         return json.load(handle)
 
 
+def read_committed_blob(repo_root: Path, repo_path: str) -> bytes:
+    proc = subprocess.run(
+        ["git", "show", f"HEAD:{repo_path}"],
+        cwd=repo_root,
+        stdout=subprocess.PIPE,
+        stderr=subprocess.PIPE,
+        check=False,
+    )
+    if proc.returncode != 0:
+        fail(f"unable to read committed Git blob {repo_path}: {proc.stderr.decode('utf-8', errors='replace').strip()}")
+    return proc.stdout
+
+
 def check_git_private_ignore(repo_root: Path) -> None:
     sentinel = "fixtures/private/stage03-sentinel.dwg"
     proc = subprocess.run(["git", "check-ignore", "-q", sentinel], cwd=repo_root, check=False)
@@ -64,7 +77,7 @@ def check_cad_byte_attributes(repo_root: Path, paths: list[str]) -> None:
 
 def fetch_remote(url: str, target: Path) -> bytes:
     target.parent.mkdir(parents=True, exist_ok=True)
-    request = urllib.request.Request(url, headers={"User-Agent": "mobil-dwg-stage03-fixture-audit/2"})
+    request = urllib.request.Request(url, headers={"User-Agent": "mobil-dwg-stage03-fixture-audit/3"})
     with urllib.request.urlopen(request, timeout=60) as response:
         data = response.read()
     target.write_bytes(data)
@@ -268,8 +281,9 @@ def main() -> int:
     cache_root.mkdir(parents=True, exist_ok=True)
     payload_by_id: dict[str, bytes] = {}
     evidence = {
-        "schema_version": 2,
+        "schema_version": 3,
         "manifest": str(manifest_path.relative_to(repo_root)),
+        "fixture_byte_source": "committed fixtures are verified from HEAD Git blob bytes, not platform-normalized working-tree bytes",
         "fixtures": [],
         "derived_negatives": [],
         "generated_fixture_contracts": manifest.get("generated_fixtures", []),
@@ -279,6 +293,7 @@ def main() -> int:
     for entry in fixtures:
         validate_entry_shape(entry, manifest, repo_root)
         mode = entry["storage"]["mode"]
+        working_tree_bytes = None
         if mode == "remote-pinned":
             source_key = entry["storage"].get("source")
             source = manifest.get("sources", {}).get(source_key)
@@ -293,10 +308,12 @@ def main() -> int:
             target = cache_root / "remote" / f"{entry['id']}.{entry['format']}"
             data = fetch_remote(url, target)
         elif mode == "committed":
-            target = repo_root / entry["storage"]["path"]
+            repo_path = str(entry["storage"]["path"])
+            target = repo_root / repo_path
             if not target.is_file():
                 fail(f"{entry['id']}: committed fixture missing: {target}")
-            data = target.read_bytes()
+            working_tree_bytes = target.stat().st_size
+            data = read_committed_blob(repo_root, repo_path)
         elif mode == "private-local":
             continue
         else:
@@ -304,16 +321,17 @@ def main() -> int:
         validate_hash(entry, data)
         validate_magic(entry, data)
         payload_by_id[entry["id"]] = data
-        evidence["fixtures"].append(
-            {
-                "id": entry["id"],
-                "bytes": len(data),
-                "manifest_hash": entry["hash"],
-                "sha256_observed": sha256(data),
-                "git_blob_sha1_observed": git_blob_sha1(data),
-                "magic": data[:6].decode("ascii", errors="replace"),
-            }
-        )
+        observed = {
+            "id": entry["id"],
+            "bytes": len(data),
+            "manifest_hash": entry["hash"],
+            "sha256_observed": sha256(data),
+            "git_blob_sha1_observed": git_blob_sha1(data),
+            "magic": data[:6].decode("ascii", errors="replace"),
+        }
+        if working_tree_bytes is not None:
+            observed["working_tree_bytes_observed"] = working_tree_bytes
+        evidence["fixtures"].append(observed)
 
     for derived in manifest["negative_derivations"]:
         source_id = derived["source_id"]
