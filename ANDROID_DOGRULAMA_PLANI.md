@@ -11,16 +11,17 @@ IMPLEMENTATION_BASELINE: AŞAMA 09 — DONE
 IMPLEMENTATION_CURSOR: AŞAMA 10 — MAIN'E HENÜZ MERGE EDİLMEDİ
 IMPLEMENTATION_WORKSTREAM: docs/A10_WORKSTREAM.md + varsa açık A10 branch/PR
 ACTIVE_PROGRAM: ANDROID_REVALIDATION_01_09
-CURRENT_VALIDATION_STAGE: V07
-CURRENT_STATUS: NOT_STARTED
+CURRENT_VALIDATION_STAGE: V08
+CURRENT_STATUS: SCOPE_ARCHIVED / ANDROID_GRAPH_CHECK_PENDING — NOT_STARTED
 V01: VALIDATED — INFRASTRUCTURE_SMOKE_ONLY
 V02: VALIDATED — DEPENDENCY/LOCKFILE/LICENSE/HASH/VULNERABILITY/ANDROID-NATIVE BOUNDARY
 V03: VALIDATED — FIXTURE/PROVENANCE/GOLDEN/ANDROID-SMOKE-SET CONTRACT
 V04: VALIDATED — REAL_APP_SHELL_RUNTIME_ONLY_NOT_VIEWER_FIDELITY
 V05: VALIDATED — REAL_ANDROID_APP_PARSER_SMOKE_ONLY_NOT_RENDER_FIDELITY
 V06: VALIDATED — REAL_ANDROID_APP_FILEPICKER_SAF_SAFE_OPEN_EMULATOR_ONLY_NOT_PHYSICAL_PROVIDER_FIDELITY
-NEXT_ACTION: Sonraki validation turunda yalnız V07'yi başlat — ProCad NO-GO + production graph izolasyonu + precision regression; aynı turda V08'e geçme
-NEXT_IF_TEST_READY: Sonraki turda V07 validation hattını yürüt
+V07: VALIDATED — PROCAD_NO_GO_PRODUCTION_GRAPH_ISOLATION_AND_PRECISION_REGRESSION_ONLY
+NEXT_ACTION: Sonraki validation turunda yalnız V08 Android graph-isolation kontrolünü başlat; tarihsel iOS kapsamını yeniden açma ve aynı turda V09'a geçme
+NEXT_IF_TEST_READY: Sonraki turda V08 Android graph-isolation hattını yürüt
 NEXT_IF_TEST_OFFLINE: BASLA_A10.md ile yalnız ayrı branch'te A10 host-independent taslağını yürüt
 A10_MAIN_MERGE: BLOCKED_UNTIL_V04_V09_CLOSED_AND_A10_ANDROID_GATE
 A11_GATE: BLOCKED_UNTIL_V04_V09_CLOSED_AND_A10_DONE_ON_MAIN_AND_EMULATOR_QUEUE_EMPTY
@@ -182,17 +183,35 @@ Authoritative final:
 
 Üreticiye özgü SAF/fiziksel cihaz farkları `DEFERRED_RELEASE_DEVICE_GATE` kalır. V06 render/engineering fidelity veya release readiness claim'i değildir.
 
-### V07 — ProCad NO-GO ve production graph izolasyonu — `NOT_STARTED`
+### V07 — ProCad NO-GO ve production graph izolasyonu — `VALIDATED`
 
-- ADR 0002 ve pinned source kararı yeniden okunur.
-- ProCad production ProjectReference/PackageReference/native graph'a girmediği otomatik doğrulanır.
-- `5,000,000 + 0.001` precision regresyonu çalışır.
-- Reddedilmiş ProCad adayını emulator üzerinde tekrar kurma.
+Evidence: `docs/evidence/android-validation/V07.md`.
+
+V07 exact rejected ProCad adayının ADR 0002 `Rejected / NO-GO` kararını güncel Android production graph'a karşı yeniden doğruladı; reddedilmiş aday yeniden clone/build/install edilmedi.
+
+Authoritative final:
+
+- PR `#20`
+- tested PR head revision `559c1d033bdacedc6900d9ad126e7ab21fd8aa50`
+- exact checked-out PR synthetic merge revision `bfa728b840f63a5e9db5d5f376d19fb7f32c62f3`
+- main merge commit `4b3b15afe6c95f8393147758b6d16e092ac75a21`
+- run/job `32860034697` / `97841446382` — SUCCESS
+- artifact `9567840490`, 19,293 byte; digest `sha256:bb2de209e3f6aecf74dc0d17dc9cf996a795cbeb8975a418f90d99d0d267d0b7`
+- same-job V02 dependency/lockfile/license/native-boundary prerequisite PASS
+- ADR/source-pin, static production graph, restored lockfile/`project.assets.json`, app package graph ProCad isolation PASS
+- real current `MobilDwg.App` Release APK 30,913,146 byte; SHA-256 `4605ff85da02e4b45e8d4ae523ae9f5e678a8f596fbbaca23cef77edcab7d450`; ProCad APK entry absent
+- rejected direct-float survey-origin blocker reproduced: `5,000,000 + 0.001` → observed single-precision delta `0`
+- current production double scalar delta `0.001`; `STAGE04_RENDER_CONTRACT_TESTS_PASS`, `STAGE09_RENDER_SCENE_TESTS_PASS`, `V07_PRODUCTION_DOUBLE_PRECISION_REGRESSION_PASS`
+- marker `ANDROID_VALIDATION_V07_PASS`
+- claim `PROCAD_NO_GO_PRODUCTION_GRAPH_ISOLATION_AND_PRECISION_REGRESSION_ONLY`
+
+V07 sırasında üç Windows PowerShell validation portability false-negative'i düzeltildi: `String.Contains` overload'u, strict-mode JSON property enumeration ve `double.ToString("R", culture)` evidence formatting. Bunlar production failure değildir.
 
 ### V08 — iOS tarihsel arşiv / Android sınırı — `SCOPE_ARCHIVED / ANDROID_GRAPH_CHECK_PENDING`
 
 - AŞAMA 08 historical evidence korunur; iOS workflow/Mac/simulator/iPhone testi çalıştırılmaz.
 - Android production/CI graph'ında iOS workload/native zorunluluğu olmadığı doğrulanır.
+- Bu V07 kapanış turunda V08 başlatılmadı.
 
 ### V09 — RenderScene, kamera ve diagnostics — `NOT_STARTED`
 
