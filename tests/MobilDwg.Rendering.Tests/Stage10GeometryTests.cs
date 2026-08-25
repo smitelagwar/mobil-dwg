@@ -1,5 +1,6 @@
 using System.Runtime.CompilerServices;
 using MobilDwg.Rendering.Camera;
+using MobilDwg.Rendering.Diagnostics;
 using MobilDwg.Rendering.Geometry;
 using MobilDwg.Rendering.Scene;
 using MobilDwg.Rendering.Skia;
@@ -85,6 +86,7 @@ internal static class Stage10GeometryTests
         Assert(snapshot.Contains("primitive=ARC|0,0|18|0|3.141592653589793", StringComparison.Ordinal), "P0 semantic arc golden");
         Assert(snapshot.Contains("primitive=POLYLINE|0|-28,18,0.5;-10,30,0;8,18,0", StringComparison.Ordinal), "P0 bulge semantic golden");
         Assert(snapshot.Contains("primitive=SPLINE|2|-25,0;-5,35;25,5|0,0,0,1,1,1|1,1,1", StringComparison.Ordinal), "P0 spline semantic golden");
+        Assert(snapshot.Contains("diagnostic=Dropped|P0_INVALID_GEOMETRY_DROPPED||Invalid source geometry is reported instead of silently rendered.", StringComparison.Ordinal), "invalid geometry must have controlled diagnostic golden");
 
         using (var surface = new SkiaBitmapRenderSurface(640, 480))
         {
@@ -101,6 +103,7 @@ internal static class Stage10GeometryTests
         Console.WriteLine("STAGE10_GEOMETRY_PRIMITIVES_TESTS_PASS");
         Console.WriteLine("STAGE10_TESSELLATION_PRECISION_TESTS_PASS");
         Console.WriteLine("STAGE10_P0_SEMANTIC_GOLDEN_PASS");
+        Console.WriteLine("STAGE10_CONTROLLED_INVALID_GEOMETRY_WARNING_PASS");
         Console.WriteLine("STAGE10_SKIA_EXPECTED_CONTENT_HOST_PASS");
     }
 
@@ -134,6 +137,10 @@ internal static class Stage10GeometryTests
 
         var builder = new RenderSceneAssembler(RenderColorContext.Dark);
         foreach (var entity in reverseInsertion ? entities.Reverse() : entities) builder.AddEntity(entity);
+        builder.AddDiagnostic(new SceneDiagnostic(
+            SceneDiagnosticKind.Dropped,
+            "P0_INVALID_GEOMETRY_DROPPED",
+            "Invalid source geometry is reported instead of silently rendered."));
         return builder.Build();
     }
 
