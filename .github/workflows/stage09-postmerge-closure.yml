@@ -32,11 +32,11 @@ jobs:
           $ErrorActionPreference = 'Stop'
           git config user.name 'github-actions[bot]'
           git config user.email '41898282+github-actions[bot]@users.noreply.github.com'
-          git add .github/workflows/stage09-render-scene.yml DEVAM.md Mobil_DWG_DXF_Royalty_Free_Android_iOS_Nihai_Plan.md docs/EXECUTION_LOG.md docs/evidence/STAGE_09.md gecmis.md
+          git add DEVAM.md Mobil_DWG_DXF_Royalty_Free_Android_iOS_Nihai_Plan.md docs/EXECUTION_LOG.md docs/evidence/STAGE_09.md gecmis.md
           git diff --cached --check
           if (-not (git diff --cached --quiet)) {
             git commit -m 'docs(stage09): complete post-merge closure audit'
             git push origin HEAD:stage09-postmerge-closure
           } else {
-            throw 'No Stage09 closure changes produced'
+            throw 'No Stage09 closure documentation changes produced'
           }
