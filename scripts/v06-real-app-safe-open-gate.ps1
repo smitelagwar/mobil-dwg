@@ -34,10 +34,11 @@ function Get-UiXml {
     $ErrorActionPreference = 'Continue'
     & adb -s $Serial shell uiautomator dump $remote 2>$null | Out-Null
     $dumpExit = $LASTEXITCODE
+    $pullExit = 1
     if ($dumpExit -eq 0) {
         & adb -s $Serial pull $remote $local 2>$null | Out-Null
+        $pullExit = $LASTEXITCODE
     }
-    $pullExit = $LASTEXITCODE
     $ErrorActionPreference = $previous
     if ($dumpExit -ne 0 -or $pullExit -ne 0 -or -not (Test-Path $local)) { return $null }
     try { return [xml](Get-Content -Raw $local) } catch { return $null }
@@ -50,8 +51,8 @@ function Find-UiBounds {
         $nodeText = [string]$node.GetAttribute('text')
         $nodeDesc = [string]$node.GetAttribute('content-desc')
         $match = if ($Contains) {
-            $nodeText.Contains($Text, [StringComparison]::OrdinalIgnoreCase) -or
-            $nodeDesc.Contains($Text, [StringComparison]::OrdinalIgnoreCase)
+            $nodeText.IndexOf($Text, [StringComparison]::OrdinalIgnoreCase) -ge 0 -or
+            $nodeDesc.IndexOf($Text, [StringComparison]::OrdinalIgnoreCase) -ge 0
         } else {
             [string]::Equals($nodeText, $Text, [StringComparison]::OrdinalIgnoreCase) -or
             [string]::Equals($nodeDesc, $Text, [StringComparison]::OrdinalIgnoreCase)
@@ -67,8 +68,12 @@ function Find-UiBounds {
 function Click-Bounds {
     param([string]$Serial, [string]$Bounds)
     if ($Bounds -notmatch '^\[(\d+),(\d+)\]\[(\d+),(\d+)\]$') { return $false }
-    $x = [int](($Matches[1] + $Matches[3]) / 2)
-    $y = [int](($Matches[2] + $Matches[4]) / 2)
+    $x1 = [int]$Matches[1]
+    $y1 = [int]$Matches[2]
+    $x2 = [int]$Matches[3]
+    $y2 = [int]$Matches[4]
+    $x = [int](($x1 + $x2) / 2)
+    $y = [int](($y1 + $y2) / 2)
     & adb -s $Serial shell input tap $x $y | Out-Null
     return $LASTEXITCODE -eq 0
 }
@@ -177,7 +182,7 @@ $api = ((& adb -s $Serial shell getprop ro.build.version.sdk) | Out-String).Trim
 if ($api -ne '36') { Fail "expected API 36 emulator, got $api" }
 Write-Host "V06_EMULATOR_API36_PASS serial=$Serial"
 
-# Re-run the historical Stage 06 headless safe-open semantics on the exact revision.
+# Re-run historical Stage 06 safe-copy/open semantics on this exact revision.
 $inputs = Join-Path $ArtifactsFull 'inputs'
 New-Item -ItemType Directory -Force -Path $inputs | Out-Null
 $generatedDwg = Join-Path $inputs 'v06_test.dwg'
@@ -212,7 +217,7 @@ Write-Host "V06_HEADLESS_SAFE_OPEN_REGRESSION_PASS"
 $pickerSource = Get-Content -Raw 'src/MobilDwg.App/Opening/MauiCadFilePickerAdapter.cs'
 if ($pickerSource -notmatch 'FilePicker\.Default\.PickAsync' -or $pickerSource -notmatch 'OpenReadAsync') { Fail "production MAUI picker adapter is not wired to FilePicker/OpenReadAsync" }
 if ($pickerSource -match 'FullPath') { Fail "production picker adapter must not depend on provider FullPath" }
-$appOpeningSource = (Get-ChildItem 'src/MobilDwg.App/Opening' -Filter '*.cs' -Recurse | Get-Content -Raw) -join "`n"
+$appOpeningSource = (@(Get-ChildItem 'src/MobilDwg.App/Opening' -Filter '*.cs' -Recurse | ForEach-Object { Get-Content -Raw $_.FullName })) -join "`n"
 if ($appOpeningSource -match 'TakePersistableUriPermission') { Fail "V06 immediate-copy path must not take persistable URI permission" }
 Write-Host "V06_STREAM_SAF_BRIDGE_STATIC_PASS"
 
@@ -278,21 +283,14 @@ Wait-LogMarker -Serial $Serial -Marker 'V06_REAL_APP_SAFE_OPEN_PASS format=Dwg'
 Wait-UiText -Serial $Serial -Text 'Hazır: Dwg' -Stem 'dwg-ready' -Contains
 Write-Host "V06_REAL_APP_DWG_SAF_PASS"
 
-# Rapid second selection: real picker returns a DXF and the latest generation owns the UI/session.
+# Rapid second selection: real picker returns a DXF and latest state owns the UI/session.
 Wait-ClickUiText -Serial $Serial -Text 'DWG/DXF seç' -Stem 'open-dxf'
 Select-Document -Serial $Serial -FileName 'v06_test.dxf' -Stem 'select-dxf'
 Wait-LogMarker -Serial $Serial -Marker 'V06_REAL_APP_SAFE_OPEN_PASS format=Dxf'
 Wait-UiText -Serial $Serial -Text 'Hazır: Dxf' -Stem 'dxf-ready' -Contains
 Write-Host "V06_REAL_APP_SECOND_SELECTION_PASS"
 
-# Picker cancellation must return safely without changing the active drawing.
-Wait-ClickUiText -Serial $Serial -Text 'DWG/DXF seç' -Stem 'open-cancel'
-Start-Sleep -Seconds 1
-& adb -s $Serial shell input keyevent 4 | Out-Null
-Wait-LogMarker -Serial $Serial -Marker 'V06_PICKER_CANCEL_PASS'
-Write-Host "V06_REAL_APP_PICKER_CANCEL_PASS"
-
-# Rotate configuration change: process stays alive and current safe-open state remains visible.
+# Rotate configuration change while a real safe-open session is current.
 $previousEap = $ErrorActionPreference
 $ErrorActionPreference = 'Continue'
 & adb -s $Serial shell cmd window user-rotation lock 1 2>$null | Out-Null
@@ -324,6 +322,13 @@ $pidForeground = ((& adb -s $Serial shell pidof -s $package 2>$null) | Out-Strin
 if ($pidForeground -ne $pidInitial) { Fail "real app PID changed across background/foreground" }
 Wait-UiText -Serial $Serial -Text 'Hazır: Dxf' -Stem 'foreground-state' -Contains
 Write-Host "V06_REAL_APP_BACKGROUND_FOREGROUND_PASS pid=$pidForeground"
+
+# Picker cancellation must return safely without mutating the selected source/session.
+Wait-ClickUiText -Serial $Serial -Text 'DWG/DXF seç' -Stem 'open-cancel'
+Start-Sleep -Seconds 1
+& adb -s $Serial shell input keyevent 4 | Out-Null
+Wait-LogMarker -Serial $Serial -Marker 'V06_PICKER_CANCEL_PASS'
+Write-Host "V06_REAL_APP_PICKER_CANCEL_PASS"
 
 # Close cleans the private copy/session, then reopen through the real picker again.
 Wait-ClickUiText -Serial $Serial -Text 'Çizimi kapat' -Stem 'close'
