@@ -16,17 +16,18 @@ Bu blok ve aşağıdaki aşama kutuları her çalışma turunun sonunda güncell
 
 ```text
 ACTIVE_PROGRAM: ANDROID_REVALIDATION_01_09
-CURRENT_STAGE: V01 — Toolchain, runner ve emulator altyapısı
-CURRENT_SUBSTEP: V01.ready
-STATUS: FIX_REQUIRED
+CURRENT_STAGE: V02 — Dependency, lockfile ve Android artifact sınırı
+CURRENT_SUBSTEP: V02.ready
+STATUS: NOT_STARTED
 LAST_IMPLEMENTED_STAGE: AŞAMA 09 — DONE
 IMPLEMENTATION_NEXT: AŞAMA 10 — NOT_STARTED; Android doğrulama programının yanında ayrı cursor olarak korunur
-LAST_VERIFIED_REVISION: 3f4023cb637cddb5cf97677cd57dadb0e36814c5 — plan revizyonu öncesi main; her yeni turda gerçek main HEAD yeniden doğrulanır
+LAST_VERIFIED_REVISION: 698c6e901672a736f2803894efb5bda34af08212 — V01 exact Release emulator validation SHA; sonraki kapanış değişiklikleri yalnız dokümantasyon/workflow cleanup niteliğindedir
 LAST_HISTORICAL_EVIDENCE: docs/evidence/STAGE_09.md; run 32815175055/#6; artifact 9551137293; PR #12 merge 0a2dd886bbe59698a6d2eb4c99f66e7f9270063a
+LAST_ANDROID_VALIDATION_EVIDENCE: docs/evidence/android-validation/V01.md; run 32821991333; job 97721878468; artifact 9553530359
 ACTIVE_PLAN: ANDROID_DOGRULAMA_PLANI.md
 PENDING_EMULATOR_QUEUE: EMPTY
 BLOCKERS: Aktif blocker yok. Runner/bilgisayar çevrim dışıysa kod çalışması sürer ve exact test PENDING_EMULATOR_QUEUE'ya alınır; kanıtsız VALIDATED/DONE yazılmaz. Fiziksel Android farkları release öncesi açık kalır. iOS aktif kapsam dışıdır ve Android'i bloke etmez.
-NEXT_ACTION: V01'i başlat; mevcut gate'in executable harness, gerçek APK, screenshot ve crash/ANR kanıt boşluklarını düzeltmeden altyapı PASS sayma.
+NEXT_ACTION: Yalnız V02'yi başlat; locked dependency graph, license/vulnerability policy ve Android artifact sınırını doğrula; aynı turda V03'e geçme.
 LAST_UPDATE: 2026-08-25
 ```
 
