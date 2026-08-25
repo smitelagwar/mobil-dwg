@@ -13,11 +13,16 @@ EVIDENCE: docs/evidence/STAGE_09.md; run 32815175055/#6; artifact 9551137293; sh
 BLOCKERS: AŞAMA 09 blocker yok. AŞAMA 01/AŞAMA 06 gerçek Android ve AŞAMA 08 local Mac/ios-arm64/physical iPhone kapıları DEFERRED_EXTERNAL_GATE olarak açık kalır; AŞAMA 09 bunları kapatmaz.
 NEXT_ACTION: AŞAMA 10 — P0 temel geometri renderer'ı — bir sonraki kullanıcı `devam` turunda başlatılır. Bir turda en fazla bir aşama kuralı gereği bu AŞAMA 09 kapanış turunda AŞAMA 10 başlatılmaz.
 LAST_UPDATE: 2026-08-25
-'@
+'@.TrimEnd()
 
-$checkpointPattern = '(?ms)^CURRENT_STAGE: AŞAMA 09\r?\n.*?^LAST_UPDATE: 2026-08-25\r?$'
-if (-not [regex]::IsMatch($text, $checkpointPattern)) { throw 'Stage 09 checkpoint block not found' }
-$text = [regex]::Replace($text, $checkpointPattern, $checkpoint.TrimEnd())
+$checkpointStartMarker = 'CURRENT_STAGE: AŞAMA 09'
+$checkpointEndMarker = 'LAST_UPDATE: 2026-08-25'
+$checkpointStart = $text.IndexOf($checkpointStartMarker, [System.StringComparison]::Ordinal)
+if ($checkpointStart -lt 0) { throw 'Stage 09 checkpoint start not found' }
+$checkpointEnd = $text.IndexOf($checkpointEndMarker, $checkpointStart, [System.StringComparison]::Ordinal)
+if ($checkpointEnd -lt 0) { throw 'Stage 09 checkpoint end not found' }
+$checkpointEnd += $checkpointEndMarker.Length
+$text = $text.Substring(0, $checkpointStart) + $checkpoint + $text.Substring($checkpointEnd)
 
 $text = $text.Replace(
     '- [ ] AŞAMA 09 — RenderScene, kamera ve diagnostics temeli — `IN_PROGRESS / IMPLEMENTATION_READY / T0_T1_VALIDATION_PENDING_RUNNER`',
@@ -50,9 +55,13 @@ Test: Yetkili kapanış `Stage 09 Self-Hosted Validation` run `32815175055` / #6
 
 '@
 
-$stagePattern = '(?ms)^### AŞAMA 09 — RenderScene, kamera ve diagnostics temeli\r?\n.*?(?=^### AŞAMA 10 — P0 temel geometri renderer’ı)'
-if (-not [regex]::IsMatch($text, $stagePattern)) { throw 'Stage 09 section not found' }
-$text = [regex]::Replace($text, $stagePattern, $stage09)
+$stageStartMarker = '### AŞAMA 09 — RenderScene, kamera ve diagnostics temeli'
+$stageEndMarker = '### AŞAMA 10 — P0 temel geometri renderer’ı'
+$stageStart = $text.IndexOf($stageStartMarker, [System.StringComparison]::Ordinal)
+if ($stageStart -lt 0) { throw 'Stage 09 section start not found' }
+$stageEnd = $text.IndexOf($stageEndMarker, $stageStart, [System.StringComparison]::Ordinal)
+if ($stageEnd -lt 0) { throw 'Stage 09 section end not found' }
+$text = $text.Substring(0, $stageStart) + $stage09 + $text.Substring($stageEnd)
 
 Set-Content -Path $path -Value $text -Encoding UTF8
 Write-Host 'STAGE09_CANONICAL_CLOSURE_PATCH_PASS'
