@@ -56,7 +56,34 @@ dotnet run --project tools/Stage05.ParserProbe/Stage05.ParserProbe.csproj \
   --cache "$CACHE_ROOT" \
   --evidence "$EVIDENCE_PATH"
 
+# Preserve the human-readable graph as evidence, but do not parse localized CLI text.
 dotnet list src/MobilDwg.Cad/MobilDwg.Cad.csproj package --include-transitive | tee "${CACHE_ROOT}/stage05-package-graph.txt"
-grep -E 'ACadSharp[[:space:]]+3\.7\.1' "${CACHE_ROOT}/stage05-package-graph.txt"
+
+python - <<'PY'
+import json
+import xml.etree.ElementTree as ET
+from pathlib import Path
+
+expected = "3.7.1"
+props = ET.parse("Directory.Packages.props").getroot()
+versions = {
+    node.attrib.get("Include"): node.attrib.get("Version")
+    for node in props.iter("PackageVersion")
+}
+actual_range = versions.get("ACadSharp")
+if actual_range != f"[{expected}]":
+    raise SystemExit(f"ACadSharp central exact version mismatch: {actual_range!r}")
+
+lock = json.loads(Path("src/MobilDwg.Cad/packages.lock.json").read_text(encoding="utf-8"))
+dep = lock["dependencies"]["net10.0"]["ACadSharp"]
+if dep.get("type") != "Direct" or dep.get("resolved") != expected:
+    raise SystemExit(f"ACadSharp lock mismatch: {dep!r}")
+
+assets = json.loads(Path("src/MobilDwg.Cad/obj/project.assets.json").read_text(encoding="utf-8"))
+if f"ACadSharp/{expected}" not in assets.get("libraries", {}):
+    raise SystemExit("ACadSharp exact resolved package missing from project.assets.json")
+
+print(f"STAGE05_ACADSHARP_PACKAGE_PASS central=[{expected}] resolved={expected}")
+PY
 
 echo "STAGE05_T3_PASS"
