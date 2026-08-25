@@ -22,10 +22,10 @@ permissions:
 
 jobs:
   render-scene-foundation:
-    # AŞAMA 09 T0/T1 is a lightweight platform-independent net10.0 check.
-    # Use GitHub's separate single-CPU container runner pool while standard
-    # hosted Ubuntu/macOS jobs are failing before runner allocation.
-    runs-on: ubuntu-slim
+    # AŞAMA 09 T0/T1 is platform-independent net10.0 code. Keep the permanent
+    # CI definition on the standard Linux hosted pool. The Stage 09 closure
+    # evidence was independently obtained on the configured self-hosted runner.
+    runs-on: ubuntu-latest
     timeout-minutes: 15
     steps:
       - name: Checkout
