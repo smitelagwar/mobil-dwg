@@ -67,21 +67,21 @@ Bu dosya teknik yürütme geçmişinin kısa indeksidir. Ayrıntılı kanıt `do
 - Production `AcadSharpDocumentReader` V03 redistributable DXF/DWG smoke setiyle gerçek Android `MobilDwg.App` process'i içinde çalıştırıldı.
 - İlk portability false-negative: Git Bash/MSYS `/warnaserror` → path dönüşümü; `-warnaserror` ile düzeltildi.
 - İkinci portability false-negative: localized `dotnet list package` çıktısını parse eden grep; final gate central props + lockfile + `project.assets.json` ile locale-independent yapıldı.
-- final technical head `d1552960d910b1fc6baea00ac14f6971344bd66e`
-- main used for authoritative synthetic merge `b5b6a74ebcc9ea16eff4a423c3ff2e7cbb3e748c`
-- exact tested synthetic merge `3aa365dd92222ec445a589003fc796ee6290f505`
-- authoritative run/job `32836712300` / `97767085940` — SUCCESS
-- artifact `9559245377`, 29,657,586 byte; digest `sha256:2453ac4df3b888c6235f240208b4674b834edc550dd1208ce37e34a6506d2b65`
+- tested PR head revision `de39866f8bd71c20fa51b355748ed79884fbb4e6`
+- main merge commit `9013d52702d1cb44e378aeacda46ee51e53caa65`
+- authoritative run/job `32838507832` / `97772635524` — SUCCESS
+- artifact `9561607163`, 29,656,507 byte; digest `sha256:16359b01f4d3c72847b90227b03b321036495b45f2d65cd34d2c772f14528109`
 - host mini corpus `9` fixture + `2` derived negative PASS
 - `STAGE05_ACADSHARP_PACKAGE_PASS central=[3.7.1] resolved=3.7.1`
-- generated AC1015 DWG 8021 byte + DwgReader read-back PASS; run-specific SHA `44394883546bc115104be2dad50ba158abc0978d57439759d6d4273b88ac2122`; binary golden değil
+- generated AC1015 DWG 8021 byte + DwgReader read-back PASS; run-specific SHA `0cb734fae8a87ca63562ff7b2e056f835c09f08150cc4345e0a1b5a847cf0099`; binary golden değil
 - `V05_PRODUCTION_WRITER_ABSENT_PASS`
-- validation APK 30,876,566 byte; SHA-256 `a270689a6bda814b9145601498b075b8a3638dd03d6ed6d9026e293c5e0738b5`
-- package install/cold-launch/UI parse/stability PASS; PID `3803`
+- validation APK 30,876,566 byte; SHA-256 `1c0dc516b9e1db6270b4f9d8818c3dff09efb98ebc63b085d914358dc11a12ac`
+- package install/cold-launch/UI parse/stability PASS; PID `3835`
 - marker `ANDROID_VALIDATION_V05_PASS`
 - claim `REAL_ANDROID_APP_PARSER_SMOKE_ONLY_NOT_RENDER_FIDELITY`
-- same-head V04 regression `32836712245 / 97767085274` — SUCCESS
-- same-head V02 regression `32836712385 / 97767086999` — SUCCESS; artifact `9559261198`, digest `sha256:e3d9dafeb576b20b63b06b96ba5b1729c15bece13f7d8426d0967d615841500a`
+- same-head V04 regression `32838507889 / 97772635962` — SUCCESS; artifact `9561764023`, digest `sha256:b5f8581c4c4290adb83fb243968bb93b7a3991ca14c6658e418468acf76288e8`
+- same-head V02 regression `32838507864 / 97775556718` — SUCCESS
+- same-head V03 regression `32838507809 / 97775415411` — SUCCESS
 - evidence `docs/evidence/android-validation/V05.md`
 
 ## Sonraki iş

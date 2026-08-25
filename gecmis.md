@@ -34,7 +34,7 @@ V01_EVIDENCE: docs/evidence/android-validation/V01.md; run 32821991333; job 9772
 V02_EVIDENCE: docs/evidence/android-validation/V02.md; run 32824397251; job 97729154385; artifact 9554326162
 V03_EVIDENCE: docs/evidence/android-validation/V03.md; tested head 69e4e842b5426d71453f5f69a01ebba5948d6b9c; tested merge 1171807016e2deacc4f575b7980400b4f8b4708c; run 32827625875; job 97739039060; artifact 9555501552
 V04_EVIDENCE: docs/evidence/android-validation/V04.md; tested head 227ffa49c3095c4328f146acf1a2d9ecc07eb62d; tested merge 6201be929a636b963235f7da8ee72b0bbf9decf2; run 32832142832; job 97752997848; artifact 9557331919
-V05_EVIDENCE: docs/evidence/android-validation/V05.md; technical head d1552960d910b1fc6baea00ac14f6971344bd66e; tested merge 3aa365dd92222ec445a589003fc796ee6290f505; run 32836712300; job 97767085940; artifact 9559245377
+V05_EVIDENCE: docs/evidence/android-validation/V05.md; tested head de39866f8bd71c20fa51b355748ed79884fbb4e6; main merge 9013d52702d1cb44e378aeacda46ee51e53caa65; run 32838507832; job 97772635524; artifact 9561607163
 PHYSICAL_ANDROID: DEFERRED_RELEASE_DEVICE_GATE
 NEXT_ACTION: Yalnız V06'yı başlat — real MobilDwg.App FilePicker/SAF + safe-open/document-service bridge; aynı turda V07'ye geçme.
 NEXT_IF_TEST_READY: BASLA.md hattında V06.
@@ -114,21 +114,22 @@ Gate hardening sırasında iki ürün-dışı false-negative bulundu ve düzelti
 
 Authoritative final:
 
-- technical branch head `d1552960d910b1fc6baea00ac14f6971344bd66e`
-- exact tested PR synthetic merge `3aa365dd92222ec445a589003fc796ee6290f505` (`main=b5b6a74ebcc9ea16eff4a423c3ff2e7cbb3e748c` ile)
-- run/job `32836712300` / `97767085940` — SUCCESS
-- artifact `9559245377`, 29,657,586 byte
-- digest `sha256:2453ac4df3b888c6235f240208b4674b834edc550dd1208ce37e34a6506d2b65`
+- tested PR head revision `de39866f8bd71c20fa51b355748ed79884fbb4e6`
+- main merge `9013d52702d1cb44e378aeacda46ee51e53caa65`
+- run/job `32838507832` / `97772635524` — SUCCESS
+- artifact `9561607163`, 29,656,507 byte
+- digest `sha256:16359b01f4d3c72847b90227b03b321036495b45f2d65cd34d2c772f14528109`
 - host mini-corpus `9` fixture + `2` derived negative PASS
 - `STAGE05_ACADSHARP_PACKAGE_PASS central=[3.7.1] resolved=3.7.1`
-- generated AC1015 DWG 8021 byte, DwgReader read-back PASS; run-specific hash `44394883546bc115104be2dad50ba158abc0978d57439759d6d4273b88ac2122`; binary golden değildir
+- generated AC1015 DWG 8021 byte, DwgReader read-back PASS; run-specific hash `0cb734fae8a87ca63562ff7b2e056f835c09f08150cc4345e0a1b5a847cf0099`; binary golden değildir
 - `V05_PRODUCTION_WRITER_ABSENT_PASS`
-- validation APK 30,876,566 byte; SHA-256 `a270689a6bda814b9145601498b075b8a3638dd03d6ed6d9026e293c5e0738b5`
-- real app install/cold-launch/UI parse/stability PASS; PID `3803`
+- validation APK 30,876,566 byte; SHA-256 `1c0dc516b9e1db6270b4f9d8818c3dff09efb98ebc63b085d914358dc11a12ac`
+- real app install/cold-launch/UI parse/stability PASS; PID `3835`
 - marker `ANDROID_VALIDATION_V05_PASS`
 - claim `REAL_ANDROID_APP_PARSER_SMOKE_ONLY_NOT_RENDER_FIDELITY`
-- same-head V04 regression `32836712245 / 97767085274` SUCCESS
-- same-head V02 regression `32836712385 / 97767086999` SUCCESS; artifact `9559261198`, digest `sha256:e3d9dafeb576b20b63b06b96ba5b1729c15bece13f7d8426d0967d615841500a`
+- same-head V04 regression `32838507889 / 97772635962` SUCCESS; artifact `9561764023`, digest `sha256:b5f8581c4c4290adb83fb243968bb93b7a3991ca14c6658e418468acf76288e8`
+- same-head V02 regression `32838507864 / 97775556718` SUCCESS
+- same-head V03 regression `32838507809 / 97775415411` SUCCESS
 
 Ayrıntı `docs/evidence/android-validation/V05.md`.
 
