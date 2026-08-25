@@ -1,0 +1,3 @@
+# CAD fixture bytes are validation evidence; never normalize line endings.
+*.dwg binary
+*.dxf -text
