@@ -28,7 +28,7 @@ IOS_STATUS: DEFERRED_FUTURE_OPTION
 IMPLEMENTATION_BASELINE: AŞAMA 09 — DONE
 IMPLEMENTATION_CURSOR: AŞAMA 10 — MAIN'E HENÜZ MERGE EDİLMEDİ
 IMPLEMENTATION_WORKSTREAM: docs/A10_WORKSTREAM.md + varsa açık A10 branch/PR
-ANDROID_VALIDATION_CURRENT: V07 — NOT_STARTED
+ANDROID_VALIDATION_CURRENT: V08 — SCOPE_ARCHIVED / ANDROID_GRAPH_CHECK_PENDING — NOT_STARTED
 PENDING_EMULATOR_QUEUE: EMPTY
 V01_EVIDENCE: docs/evidence/android-validation/V01.md; run 32821991333; job 97721878468; artifact 9553530359
 V02_EVIDENCE: docs/evidence/android-validation/V02.md; run 32824397251; job 97729154385; artifact 9554326162
@@ -36,9 +36,10 @@ V03_EVIDENCE: docs/evidence/android-validation/V03.md; tested head 69e4e842b5426
 V04_EVIDENCE: docs/evidence/android-validation/V04.md; tested head 227ffa49c3095c4328f146acf1a2d9ecc07eb62d; tested merge 6201be929a636b963235f7da8ee72b0bbf9decf2; run 32832142832; job 97752997848; artifact 9557331919
 V05_EVIDENCE: docs/evidence/android-validation/V05.md; tested head de39866f8bd71c20fa51b355748ed79884fbb4e6; main merge 9013d52702d1cb44e378aeacda46ee51e53caa65; run 32838507832; job 97772635524; artifact 9561607163
 V06_EVIDENCE: docs/evidence/android-validation/V06.md; tested head ae8682875524157285946724bd70d6ff010f3917; tested merge 26b3cdd6ca50d34b98a4806d92f50d4828077d41; main merge e17e2472f38557552698b8cf9526d6cbf8b25580; run 32849725110; job 97807551403; artifact 9564837027
+V07_EVIDENCE: docs/evidence/android-validation/V07.md; tested head 559c1d033bdacedc6900d9ad126e7ab21fd8aa50; tested merge bfa728b840f63a5e9db5d5f376d19fb7f32c62f3; main merge 4b3b15afe6c95f8393147758b6d16e092ac75a21; run 32860034697; job 97841446382; artifact 9567840490
 PHYSICAL_ANDROID: DEFERRED_RELEASE_DEVICE_GATE
-NEXT_ACTION: Sonraki validation turunda yalnız V07'yi başlat — ProCad NO-GO + production graph izolasyonu + precision regression; aynı turda V08'e geçme.
-NEXT_IF_TEST_READY: BASLA.md hattında sonraki tur V07.
+NEXT_ACTION: Sonraki validation turunda yalnız V08 Android graph-isolation kontrolünü başlat; tarihsel iOS kapsamını yeniden açma ve aynı turda V09'a geçme.
+NEXT_IF_TEST_READY: BASLA.md hattında sonraki tur V08 Android graph-isolation kontrolü.
 NEXT_IF_TEST_OFFLINE: Ayrı BASLA_A10.md sohbetinde yalnız A10 draft branch'i.
 A10_MAIN_MERGE: BLOCKED_UNTIL_V04_V09_CLOSED_AND_A10_ANDROID_GATE
 A11_GATE: BLOCKED_UNTIL_V04_V09_CLOSED_AND_A10_DONE_ON_MAIN_AND_EMULATOR_QUEUE_EMPTY
@@ -58,8 +59,8 @@ Android V01–V09 validation cursor'ı implementation cursor'dan ayrıdır. Norm
 - AŞAMA 04 — minimal solution/mimari sınırlar — `DONE`.
 - AŞAMA 05 — ACadSharp parser spike — `DONE`; ADR 0001 `GO`.
 - AŞAMA 06 — safe-open implementation; physical provider/device fidelity release gate'e deferred; real-app emulator bridge V06'da ayrıca doğrulandı.
-- AŞAMA 07 — ProCad exact source spike — `DONE / NO-GO`; ADR 0002.
-- AŞAMA 08 — iOS characterization — historical/future; iOS PASS iddiası yok.
+- AŞAMA 07 — ProCad exact source spike — `DONE / NO-GO`; ADR 0002; current production isolation/precision decision V07'de ayrıca doğrulandı.
+- AŞAMA 08 — iOS characterization — historical/future; iOS PASS iddiası yok; Android graph-isolation revalidation V08 cursor'ında bekliyor.
 - AŞAMA 09 — immutable RenderScene/kamera/diagnostics foundation — `DONE`; authoritative run `32815175055`, artifact `9551137293`, merge `0a2dd886bbe59698a6d2eb4c99f66e7f9270063a`.
 - AŞAMA 10 — P0 geometri renderer — `MAIN'E HENÜZ MERGE EDİLMEDİ`; paralel draft yalnız `docs/A10_WORKSTREAM.md` kurallarıyla.
 - AŞAMA 11–22 — Android viewer/release hattı; A11, V04–V09 + A10 `DONE ON MAIN` tamamlanana kadar kilitli.
@@ -162,18 +163,41 @@ Authoritative final:
 
 Physical Android/provider-specific behavior `DEFERRED_RELEASE_DEVICE_GATE` olarak açık kalır. Ayrıntı `docs/evidence/android-validation/V06.md`.
 
+### V07 — VALIDATED
+
+Exact rejected ProCad candidate'ın ADR 0002 NO-GO kararı güncel Android production/resolved graph ve precision sınırına karşı yeniden doğrulandı; candidate yeniden production dependency yapılmadı veya emulator'a kurulmadı.
+
+Authoritative final:
+
+- PR `#20`
+- tested PR head `559c1d033bdacedc6900d9ad126e7ab21fd8aa50`
+- exact checked-out PR synthetic merge `bfa728b840f63a5e9db5d5f376d19fb7f32c62f3`
+- main merge `4b3b15afe6c95f8393147758b6d16e092ac75a21`
+- run/job `32860034697` / `97841446382` — SUCCESS
+- artifact `9567840490`, 19,293 byte
+- digest `sha256:bb2de209e3f6aecf74dc0d17dc9cf996a795cbeb8975a418f90d99d0d267d0b7`
+- same-job V02 dependency boundary prerequisite PASS
+- production static graph, lockfiles/resolved assets, app package graph and Release APK ProCad/ProCadSharp absence PASS
+- Release APK 30,913,146 byte; SHA-256 `4605ff85da02e4b45e8d4ae523ae9f5e678a8f596fbbaca23cef77edcab7d450`
+- rejected `5,000,000 + 0.001` direct-float observed delta `0`
+- production double observed delta `0.001`; `STAGE04_RENDER_CONTRACT_TESTS_PASS`, `STAGE09_RENDER_SCENE_TESTS_PASS`, `V07_PRODUCTION_DOUBLE_PRECISION_REGRESSION_PASS`
+- marker `ANDROID_VALIDATION_V07_PASS`
+- claim `PROCAD_NO_GO_PRODUCTION_GRAPH_ISOLATION_AND_PRECISION_REGRESSION_ONLY`
+
+Üç validation-script Windows PowerShell portability false-negative'i düzeltildi; ayrıntı `docs/evidence/android-validation/V07.md`. Historical Stage01/Stage06/Stage07 same-head `steps=null` failures allocation/non-execution olarak sınıflandırıldı.
+
 ## Kalıcı teknik kararlar
 
 - Original CAD immutable; production writer/save yok.
 - ACadSharp `3.7.1` read-only parser baseline `GO` ve gerçek Android V05 smoke ile doğrulandı.
 - Gerçek FilePicker/SAF stream → immediate app-private safe-copy → parser zinciri V06 API36 emulator'da doğrulandı; physical provider/device fidelity ayrı release gate'tir.
-- Exact unpatched ProCad production reuse `NO-GO`.
+- Exact unpatched ProCad production reuse `NO-GO`; V07 current production/resolved graph ve Release APK izolasyonunu yeniden kanıtladı.
 - UI parser entity'lerine doğrudan bağlanmaz.
-- World/document coordinate hattı `double` precision.
+- World/document coordinate hattı `double` precision; V07 survey-origin 1 mm regression yeniden PASS.
 - Unsupported/proxy/font/XREF/raster sessiz kayıp olmaz.
 - Runtime license allowlist varsayılanı MIT/Apache/BSD/ISC/0BSD; unknown/policy-RED release blocker.
 - Production dependency strict exact range + lockfile/locked restore kullanır.
 - Fixture hash evidence Git blob bytes'a dayanır; platform line-ending dönüşümü manifesti değiştirmez.
 - Gerçek Android app shell repository `MobilDwg.App` projesidir; Stage01Smoke yalnız infrastructure prerequisite'tir.
 - Fiziksel Android release öncesi yeniden zorunlu.
-- iOS yalnız açık yeni kullanıcı kararıyla etkinleşir.
+- iOS yalnız açık yeni kullanıcı kararıyla etkinleşir; V08 yalnız Android graph isolation kontrolünü bekler.
