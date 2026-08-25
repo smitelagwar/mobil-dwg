@@ -1,0 +1,49 @@
+name: Android V08 iOS Isolation
+
+on:
+  workflow_dispatch:
+  pull_request:
+    branches: [main]
+    paths:
+      - src/**
+      - Directory.Packages.props
+      - MobilDwg.sln
+      - .github/workflows/**
+      - docs/evidence/STAGE_08.md
+      - scripts/v02-dependency-gate.ps1
+      - scripts/v08-android-ios-isolation-gate.ps1
+      - docs/evidence/android-validation/V08.md
+
+permissions:
+  contents: read
+
+jobs:
+  android-ios-isolation:
+    runs-on: [self-hosted, windows, android-test, mobil-dwg]
+    timeout-minutes: 35
+
+    steps:
+      - name: Checkout exact revision
+        uses: actions/checkout@v5
+        with:
+          persist-credentials: false
+          clean: true
+
+      - name: Revalidate V02 dependency boundary prerequisite
+        shell: powershell
+        run: .\scripts\v02-dependency-gate.ps1 -ArtifactsDir artifacts/v08-v02-prerequisite
+
+      - name: Validate Android production and CI isolation from iOS
+        shell: powershell
+        run: .\scripts\v08-android-ios-isolation-gate.ps1 -ArtifactsDir artifacts/v08-android-ios-isolation
+
+      - name: Upload V08 evidence
+        if: always()
+        uses: actions/upload-artifact@v4
+        with:
+          name: android-v08-ios-isolation-evidence
+          path: |
+            artifacts/v08-android-ios-isolation
+            artifacts/v08-v02-prerequisite
+          if-no-files-found: warn
+          retention-days: 14
