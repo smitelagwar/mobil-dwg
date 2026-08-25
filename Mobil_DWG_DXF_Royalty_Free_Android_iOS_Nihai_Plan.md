@@ -1,6 +1,6 @@
 # Mobil DWG/DXF Görüntüleyici — Nihai Uygulama ve Yürütme Planı
 
-**Plan sürümü:** 1.5  
+**Plan sürümü:** 1.6  
 **Son checkpoint:** 25 Ağustos 2026  
 **Aktif ürün:** Android-only, local/offline, read-only 2D DWG/DXF viewer  
 **iOS:** future option; aktif Android DoD ve sıranın dışında  
@@ -13,13 +13,14 @@
 ## 1. Tek yetkili yürütme checkpoint'i
 
 ```text
-ACTIVE_PROGRAM: ANDROID_REVALIDATION_01_09
-CURRENT_STAGE: V09 — RenderScene, kamera ve diagnostics revalidation
-CURRENT_SUBSTEP: V09.ready
-STATUS: NOT_STARTED
+ACTIVE_PRODUCT_TARGET: ANDROID_ONLY
+IOS_STATUS: DEFERRED_FUTURE_OPTION
+ANDROID_REVALIDATION_01_09: CLOSED / VALIDATED_WITH_CLAIM_LIMITS
+LAST_VALIDATION_STAGE: V09 — VALIDATED
+LAST_VALIDATION_EVIDENCE: docs/evidence/android-validation/V09.md
 LAST_IMPLEMENTED_STAGE: AŞAMA 09 — DONE
-IMPLEMENTATION_CURSOR: AŞAMA 10 — MAIN'E HENÜZ MERGE EDİLMEDİ
-IMPLEMENTATION_WORKSTREAM: docs/A10_WORKSTREAM.md + varsa açık A10 branch/PR
+IMPLEMENTATION_CURSOR: AŞAMA 10 — NOT_STARTED
+IMPLEMENTATION_WORKSTREAM: docs/A10_WORKSTREAM.md + live A10 branch/PR state
 V01: VALIDATED — INFRASTRUCTURE_SMOKE_ONLY
 V02: VALIDATED — DEPENDENCY/LOCKFILE/LICENSE/HASH/VULNERABILITY/ANDROID-NATIVE BOUNDARY
 V03: VALIDATED — FIXTURE/PROVENANCE/GOLDEN/ANDROID-SMOKE-SET CONTRACT
@@ -28,35 +29,31 @@ V05: VALIDATED — REAL_ANDROID_APP_PARSER_SMOKE_ONLY_NOT_RENDER_FIDELITY
 V06: VALIDATED — REAL_ANDROID_APP_FILEPICKER_SAF_SAFE_OPEN_EMULATOR_ONLY_NOT_PHYSICAL_PROVIDER_FIDELITY
 V07: VALIDATED — PROCAD_NO_GO_PRODUCTION_GRAPH_ISOLATION_AND_PRECISION_REGRESSION_ONLY
 V08: VALIDATED — ANDROID_PRODUCTION_CI_GRAPH_IOS_ISOLATION_ONLY_HISTORICAL_IOS_SCOPE_ARCHIVED
-LAST_ANDROID_VALIDATION_EVIDENCE: docs/evidence/android-validation/V08.md
-LAST_V08_TESTED_HEAD: 08abd4a1a953e62a2c0cdc3e48329de90e870195
-LAST_V08_TESTED_PR_MERGE_REVISION: 8cd31f3d9f5f507108e5b91ddd3577748df5c952
-LAST_V08_MAIN_MERGE_COMMIT: 829fd503ba3cd72950b2ec89cfde57f98a1b2417
-LAST_V08_RUN_JOB: 32862330823 / 97849123497
-LAST_V08_ARTIFACT: 9568747271; sha256:6b5172553b65973af7fc3eac4f52f7c14a36048b6861368435bcd2355c062ebd
+V09: VALIDATED — RENDER_SCENE_CAMERA_DIAGNOSTICS_FOUNDATION_AND_ANDROID_COMPOSITION_REVALIDATION_ONLY_NOT_GEOMETRY_RENDER_FIDELITY
+LAST_V09_TESTED_HEAD: 892315966f895729e866947a838df93350fdfd97
+LAST_V09_SYNTHETIC_MERGE: 6fea8ba9d1de6811afd0dcace7a2c8b5b6ec573a
+LAST_V09_MAIN_MERGE: 143ce1a79448f53af81faee9c6e650321047dd37
+LAST_V09_RUN_JOB: 32864617493 / 97856686115
+LAST_V09_ARTIFACT: 9569686660; sha256:97e55129367ea5b778edf99a6d84939e95f74902db655144d32dbf24ba8aa375
 PENDING_EMULATOR_QUEUE: EMPTY
 PHYSICAL_ANDROID: DEFERRED_RELEASE_DEVICE_GATE
-BLOCKERS: Aktif V09 blocker'ı yok; tarihsel iOS kapsamı arşivde; fiziksel Android release öncesi ayrıca zorunlu.
-NEXT_ACTION: Sonraki validation turunda yalnız V09 RenderScene/kamera/diagnostics revalidation hattını başlat; aynı turda A10 merge/DONE veya A11 başlatma.
-NEXT_IF_TEST_OFFLINE: BASLA_A10.md ile yalnız izole A10 draft branch'inde host-independent kod/test işi yap.
-A10_MAIN_MERGE: BLOCKED_UNTIL_V04_V09_CLOSED_AND_A10_ANDROID_GATE
-A11_GATE: BLOCKED_UNTIL_V04_V09_CLOSED_AND_A10_DONE_ON_MAIN_AND_EMULATOR_QUEUE_EMPTY
+NEXT_ACTION: Sonraki normal BASLA/devam turunda yalnız AŞAMA 10 P0 temel geometri renderer'ını güncel validated main'den başlat.
+A10_MAIN_MERGE: BLOCKED_UNTIL_EXACT_INTEGRATION + REQUIRED_REGRESSIONS + REAL_ANDROID_RENDER_GATE
+A11_GATE: BLOCKED_UNTIL_A10_DONE_ON_MAIN_AND_EMULATOR_QUEUE_EMPTY
 ```
 
 ### `devam` protokolü
 
-1. Gerçek `main` HEAD, açık PR, checkpoint ve kullanıcı değişiklikleri doğrulanır.
-2. `ANDROID_DOGRULAMA_PLANI.md` V01–V09 bitmediyse açık VXX birinci cursor'dır.
-3. Implementation cursor AŞAMA 10'da validation cursor'dan ayrı korunur.
-4. Bir kullanıcı turunda en fazla bir validation veya implementation aşaması kapatılır; sonraki aşama aynı turda başlatılmaz.
-5. Test/evidence olmadan PASS/DONE yoktur.
-6. Emulator fiziksel cihaz değildir; Stage01Smoke real viewer değildir; queued/zero-step workflow PASS değildir.
-7. Dependency kendiliğinden yükseltilmez; version/license/hash/transitive/native graph tekrar kanıtlanır.
-8. Destructive/force Git işlemi yapılmaz; kullanıcı değişiklikleri korunur.
-9. Her kapanışta validation planı, evidence, `DEVAM.md`, `gecmis.md`, execution log ve bu checkpoint güncellenir.
-10. Kullanıcı iOS'u yeniden etkinleştirmedikçe iOS build/spike/signing işi yapılmaz.
-11. Genel `BASLA.md` açık VXX'i yürütür. Yalnız açık `BASLA_A10.md` komutu A10'u ayrı `stage10-p0-geometry-draft` branch'inde başlatabilir.
-12. Erken A10 host/GitHub-hosted kontrolü sonuçsuzsa `CODED_PENDING_HOST_TESTS`, actual FAIL ise `FIX_REQUIRED/FIX_IN_PROGRESS`, hepsi actual non-zero-step PASS olduğunda V04–V09 uzlaştırması + Android gate bekleyen `CODED_PENDING_EMULATOR` olur. V04–V09 kapanmadan `main` merge/DONE yoktur ve A11 açılmaz.
+1. Gerçek `main` HEAD, açık PR/branch, Actions ve checkpoint doğrulanır.
+2. Açık bir claim-invalidating regression yoksa V01–V09 programı yeniden çalıştırılmaz; normal cursor AŞAMA 10'dur.
+3. Bir kullanıcı turunda en fazla bir validation veya implementation aşaması kapatılır; sonraki aşama aynı turda başlatılmaz.
+4. Test/evidence olmadan PASS/DONE/READY_TO_MERGE yoktur.
+5. Emulator fiziksel cihaz değildir; Stage01Smoke gerçek viewer değildir; queued/zero-step workflow PASS değildir.
+6. Dependency kendiliğinden yükseltilmez; exact version/license/hash/transitive/native graph tekrar kanıtlanır.
+7. Force/destructive Git işlemi yapılmaz; kullanıcı değişiklikleri korunur.
+8. Kullanıcı iOS'u yeniden etkinleştirmedikçe iOS build/spike/signing işi yapılmaz.
+9. A10 exact integration SHA gerekli regresyonları ve gerçek Android expected-content render gate'ini geçmeden `main` merge edilmez.
+10. A10 `DONE ON MAIN` olmadan A11 açılmaz.
 
 ---
 
@@ -111,11 +108,12 @@ Kullanıcı açıkça değiştirmedikçe:
 - OpenJDK baseline `21.0.12`, Build-Tools `36.0.0`, Platform-Tools/ADB `37.0.1`.
 - ACadSharp `3.7.1`: read-only parser baseline `GO` — ADR 0001; V05 gerçek Android parser smoke PASS; render fidelity garantisi değil.
 - SkiaSharp `4.151.1`: renderer dependency; Android native inventory V02'de doğrulandı.
-- Microsoft.Maui.Controls `10.0.100`: gerçek Android app direct dependency; exact `[10.0.100]`, MIT; V04'te doğrulandı.
-- Exact unpatched ProCad source reuse `NO-GO` — ADR 0002; V07 güncel production/resolved graph ve APK izolasyonunu doğruladı; survey-origin `5,000,000 + 0.001` direct-float blocker yeniden üretildi.
+- Microsoft.Maui.Controls `10.0.100`: gerçek Android app direct dependency; exact `[10.0.100]`, MIT.
+- Exact unpatched ProCad source reuse `NO-GO` — ADR 0002; V07 production/resolved graph ve APK izolasyonunu doğruladı; survey-origin `5,000,000 + 0.001` direct-float blocker yeniden üretildi.
 - IxMilia.Dxf `[0.8.4]`: test/fallback scope; production runtime'a otomatik alınmaz.
 - Production direct NuGet versions strict exact range; lockfile + locked restore zorunlu.
 - V08: active Android production/CI graph iOS-specific TFM/RID/native/toolchain zorunluluğundan izole; historical iOS characterization future-only arşivdir.
+- V09: immutable RenderScene/camera/OCS/diagnostics sözleşmesi current exact Android composition üzerinde yeniden PASS; deterministic `render-scene/v1` ve survey-origin `0.001` double precision korunuyor.
 
 ---
 
@@ -151,21 +149,14 @@ Kurallar:
 - ProCad production ProjectReference/PackageReference/native graph'a girmez.
 - Future iOS dönüşü shared Core/Cad/Rendering katmanlarını fork etmeden adapter sınırından yapılabilmelidir.
 
-V04 itibarıyla gerçek repository app shell:
+Doğrulanmış katmanlar:
 
-- `src/MobilDwg.App`
-- `net10.0-android36.0`
-- package `com.smitelagwar.mobildwg`
-- gerçek `MainActivity` / `MainApplication`
-- API36 emulator build/install/cold-launch/UI/liveness PASS
-
-V05 itibarıyla gerçek app validation build'i production `AcadSharpDocumentReader` ile V03 redistributable DXF/DWG smoke inputs'ı Android process içinde parse eder; validation asset/gate'i production writer/save özelliği değildir.
-
-V06 itibarıyla gerçek `MainPage` MAUI FilePicker'ı production `MauiCadFilePickerAdapter` üzerinden stream olarak safe-open coordinator'a bağlar. Seçilen provider içeriği app-private cache'e bounded/atomic kopyalanır, production parser yalnız private copy üzerinde çalışır ve original external CAD immutable kalır. API36 emulator üzerinde DWG/DXF selection, second selection, cancel, rotate, background/foreground, close-cleanup ve reopen akışları PASS aldı; physical provider/device fidelity release gate'e deferred'dır.
-
-V07 itibarıyla exact rejected ProCad candidate production graph dışında tutulmaya devam eder. Current production `src`, lockfile/resolved assets, app package graph ve Release APK üzerinde ProCad/ProCadSharp yokluğu doğrulanmış; world/document precision hattının `double` survey-origin regresyonu yeniden geçmiştir.
-
-V08 itibarıyla historical iOS spike/characterization production solution ve aktif Android CI hattının dışında kalır. Windows Android validation hostunda yalnız `maui-android` workload ile locked restore + Release build PASS alınmış, resolved Android target/library graph ve APK içinde iOS-specific dependency/native/framework girdisi bulunmamıştır.
+- V04: gerçek repository app shell `src/MobilDwg.App`, `net10.0-android36.0`, package `com.smitelagwar.mobildwg`, API36 install/launch/liveness.
+- V05: production `AcadSharpDocumentReader` gerçek Android process içinde DWG/DXF smoke.
+- V06: MAUI FilePicker → DocumentsUI/SAF → stream → bounded app-private safe-copy → production parser; external original immutable.
+- V07: ProCad production graph dışında; world/document precision `double`.
+- V08: historical iOS spike production solution/aktif Android CI dışında.
+- V09: RenderScene/camera/OCS/diagnostics deterministic foundation + Android app composition build current exact revision üzerinde PASS.
 
 ---
 
@@ -225,7 +216,7 @@ Authoritative contract: `fixtures/manifest/stage03-mini.json`, `docs/GOLDEN_CONT
 - Private/customer drawing Git'e commit edilmez.
 - CAD committed hash evidence `HEAD:<path>` Git blob bytes'a dayanır.
 - `.gitattributes`: `*.dwg binary`, `*.dxf -text`.
-- V04–V09 redistributable smoke set: committed 0BSD DXF + exact ACadSharp 3.7.1 generator ile validation-time AC1015 DWG + missing-font/missing-XREF negatif DXF.
+- Validation smoke set: committed 0BSD DXF + exact ACadSharp 3.7.1 generator ile validation-time AC1015 DWG + missing-font/missing-XREF negatif DXF.
 - Generated DWG magic + DwgReader read-back zorunlu; output binary golden değildir.
 - Image golden yalnız deterministic viewport/theme/font + açık redistribution evidence ile commit edilir.
 
@@ -244,89 +235,81 @@ Zorunlu:
 - proprietary AutoCAD SHX/font bundle edilmez
 - Android RC'de APK/AAB extraction + SBOM + notices + compliance snapshot zorunlu
 
-V02 probe graph: ACadSharp 3.7.1, SkiaSharp 4.151.1, SkiaSharp.NativeAssets.Android 4.151.1. V04 gerçek app direct graph'e Microsoft.Maui.Controls 10.0.100 exact/MIT ekledi. V05 final technical head'de dependency/corpus regresyonları ayrıca PASS aldı. V06 production dependency baseline'ını değiştirmedi; FilePicker/safe-open doğrulaması mevcut MAUI + ACadSharp graph'ı üzerinde yapıldı. V07 aynı exact production graph'ı yeniden restore edip ProCad/ProCadSharp'ın static source/project, lockfile/resolved assets, app package graph ve Release APK'da bulunmadığını doğruladı. V08 Android resolved target/library graph, active CI ve Release APK'nın iOS-specific dependency/native/toolchain gerektirmediğini doğruladı; cross-platform NuGet paketlerinin kullanılmayan package-file inventory'si resolved Android dependency olarak yorumlanmaz.
+Validated dependency baseline: ACadSharp 3.7.1, SkiaSharp 4.151.1, SkiaSharp.NativeAssets.Android 4.151.1, Microsoft.Maui.Controls 10.0.100 exact/MIT. V07 ProCad absence; V08 iOS-specific resolved graph/native absence; V09 same-job V02 prerequisite bu sınırları current exact revision üzerinde yeniden doğruladı.
 
 ---
 
-## 8. Android geriye dönük validation programı
+## 8. Android geriye dönük validation programı — `CLOSED`
 
 Yetkili ayrıntı: `ANDROID_DOGRULAMA_PLANI.md`.
 
-- V01 `VALIDATED`: toolchain/self-hosted/emulator/Stage01Smoke infrastructure; real viewer değil.
+- V01 `VALIDATED`: infrastructure smoke; real viewer değil.
 - V02 `VALIDATED`: dependency/lockfile/license/hash/vulnerability/Android-native boundary.
-- V03 `VALIDATED`: fixture/provenance/golden/redistributable Android smoke-set/device matrix.
-- V04 `VALIDATED`: gerçek installable `MobilDwg.App` MAUI shell; API36 build/install/cold-launch/PID/UI/PNG/crash-ANR/liveness PASS; viewer fidelity değil.
-- V05 `VALIDATED`: production ACadSharp reader real Android app process içinde V03 DXF/DWG smoke setiyle PASS; render fidelity değil.
-- V06 `VALIDATED`: real-app FilePicker/DocumentsUI/SAF → stream → app-private safe-copy → production parser; lifecycle/cleanup/immutability PASS; claim emulator-only, physical provider fidelity değil.
-- V07 `VALIDATED`: exact rejected ProCad NO-GO; current production/resolved graph + APK isolation; deterministic direct-float precision blocker and production double regression PASS.
-- V08 `VALIDATED`: historical iOS scope archive + Android production/CI graph isolation; no Mac/Xcode/simulator/iPhone rerun.
-- **V09 `NOT_STARTED`: RenderScene/camera/diagnostics revalidation.**
+- V03 `VALIDATED`: fixture/provenance/golden/Android smoke-set contract.
+- V04 `VALIDATED`: real installable Android app shell runtime; viewer fidelity değil.
+- V05 `VALIDATED`: production ACadSharp reader real Android process smoke; render fidelity değil.
+- V06 `VALIDATED`: real FilePicker/SAF safe-open emulator; physical provider fidelity değil.
+- V07 `VALIDATED`: ProCad NO-GO production graph isolation + precision regression.
+- V08 `VALIDATED`: Android production/CI graph iOS isolation; historical iOS future-only.
+- V09 `VALIDATED`: RenderScene/camera/OCS/diagnostics + Android composition revalidation; geometry renderer fidelity değil.
 
-V06 authoritative:
+### V09 authoritative closure
 
-- PR `#19`
-- tested PR head `ae8682875524157285946724bd70d6ff010f3917`
-- tested PR synthetic merge `26b3cdd6ca50d34b98a4806d92f50d4828077d41`
-- main merge `e17e2472f38557552698b8cf9526d6cbf8b25580`
-- run/job `32849725110` / `97807551403` — SUCCESS
-- artifact `9564837027`, 29,743,234 bytes; digest `sha256:a88eaf46d7cc2090111cb18ce81c3a1d9b56eaed08bdfd070fb0a22be74194a0`
-- validation APK `30,917,242` bytes; SHA-256 `4bcd819def4483fbc076865dd70b10026eb2eae7515c07561a9cdfe02ff9c9a5`
-- real DWG SAF open + second-selection DXF + rotate/background-foreground/picker-cancel/close-cleanup/reopen + original input immutability PASS
-- same-head V04 run/job `32849725215 / 97807552081` SUCCESS; artifact `9565016182`, digest `sha256:6922f2168334e8312debc2c90cb7905d9db5da58eb8cb10da3f8aadf6e53bb3f`
-- same-head V05 run/job `32849725272 / 97807552194` SUCCESS; artifact `9565243977`, digest `sha256:36ada98dd79f7f70e2ef7e63d6d2cb6cec191141421c07bcf41673dded23b492`
-- marker `ANDROID_VALIDATION_V06_PASS`
-- claim `REAL_ANDROID_APP_FILEPICKER_SAF_SAFE_OPEN_EMULATOR_ONLY_NOT_PHYSICAL_PROVIDER_FIDELITY`
+- PR `#22`
+- tested head `892315966f895729e866947a838df93350fdfd97`
+- synthetic merge `6fea8ba9d1de6811afd0dcace7a2c8b5b6ec573a`; tested head'e göre file diff yok
+- main merge `143ce1a79448f53af81faee9c6e650321047dd37`
+- run/job `32864617493 / 97856686115` — SUCCESS
+- artifact `9569686660`, 11,544 byte; digest `sha256:97e55129367ea5b778edf99a6d84939e95f74902db655144d32dbf24ba8aa375`
+- same-job V02 prerequisite PASS
+- exact .NET `10.0.400`
+- targeted RenderScene/Core/Architecture Release builds PASS, zero warnings/errors
+- `STAGE04_RENDER_CONTRACT_TESTS_PASS`
+- `STAGE09_RENDER_SCENE_TESTS_PASS`
+- deterministic `render-scene/v1`
+- snapshot survey line `5000000.001`
+- `V09_SURVEY_ORIGIN_DOUBLE_PRECISION_PASS delta=0.001`
+- full solution Release build `0 Warning / 0 Error`
+- real Android Release APK `30,913,146` byte; SHA-256 `a0080fb4826cbd6f7fee1d84cac3465c8ebda766bfba245167d73233ab1a40f5`
+- marker `ANDROID_VALIDATION_V09_PASS`
+- claim `RENDER_SCENE_CAMERA_DIAGNOSTICS_FOUNDATION_AND_ANDROID_COMPOSITION_REVALIDATION_ONLY_NOT_GEOMETRY_RENDER_FIDELITY`
 
-V07 authoritative:
-
-- PR `#20`
-- tested PR head `559c1d033bdacedc6900d9ad126e7ab21fd8aa50`
-- exact checked-out PR synthetic merge `bfa728b840f63a5e9db5d5f376d19fb7f32c62f3`
-- main merge `4b3b15afe6c95f8393147758b6d16e092ac75a21`
-- run/job `32860034697` / `97841446382` — SUCCESS
-- artifact `9567840490`, 19,293 bytes; digest `sha256:bb2de209e3f6aecf74dc0d17dc9cf996a795cbeb8975a418f90d99d0d267d0b7`
-- Release APK `30,913,146` bytes; SHA-256 `4605ff85da02e4b45e8d4ae523ae9f5e678a8f596fbbaca23cef77edcab7d450`; ProCad entry absent
-- rejected direct-float survey delta `0`; production double survey delta `0.001`
-- `STAGE04_RENDER_CONTRACT_TESTS_PASS`, `STAGE09_RENDER_SCENE_TESTS_PASS`, `V07_PRODUCTION_DOUBLE_PRECISION_REGRESSION_PASS`
-- marker `ANDROID_VALIDATION_V07_PASS`
-- claim `PROCAD_NO_GO_PRODUCTION_GRAPH_ISOLATION_AND_PRECISION_REGRESSION_ONLY`
-
-V08 authoritative:
-
-- PR `#21`
-- tested PR head `08abd4a1a953e62a2c0cdc3e48329de90e870195`
-- exact checked-out PR synthetic merge `8cd31f3d9f5f507108e5b91ddd3577748df5c952`
-- main merge `829fd503ba3cd72950b2ec89cfde57f98a1b2417`
-- run/job `32862330823` / `97849123497` — SUCCESS
-- artifact `9568747271`, 19,064 bytes; digest `sha256:6b5172553b65973af7fc3eac4f52f7c14a36048b6861368435bcd2355c062ebd`
-- Windows .NET SDK `10.0.400`; recorded workload list only `maui-android`
-- locked Android restore + resolved target/library graph + Release build without Xcode PASS
-- Release APK `30,913,146` bytes; SHA-256 `7adf8b2495b2eb7389adf48a1f92d9b57f7a0dade56758a0bbefc1b966075f1b`; iOS native/framework entry absent
-- marker `ANDROID_VALIDATION_V08_PASS`
-- claim `ANDROID_PRODUCTION_CI_GRAPH_IOS_ISOLATION_ONLY_HISTORICAL_IOS_SCOPE_ARCHIVED`
-- diagnostic run/job `32862117992 / 97848411995`; raw cross-platform NuGet package-file inventory false-positive; artifact `9568592189`, digest `sha256:98bfa8c20530579ada137f3c1dda0d6244a93f3d7ea1b1360a9e8f302fbde9fd`
+İlk V09 diagnostic run/job `32864458158 / 97856153440`, PowerShell 5.1 validation portability false-negative'i nedeniyle ürün testlerinden önce durdu; production/test failure değildir. Diagnostic artifact `9569504762`, digest `sha256:7eda4ec7db3d423cdbd476bc4769eebac54ef0527c18656c0fc2bbd0b2eb90f8`.
 
 ---
 
 ## 9. Implementation aşamaları
 
-AŞAMA 00–09 tarihsel implementation evidence `docs/evidence/STAGE_XX.md` ve ADR'lerde korunur. Implementation cursor AŞAMA 10'dadır fakat `main`e henüz merge edilmemiştir. V04–V09 validation hattı ana/öncelikli sıradır; bilgisayar veya runner kapalıyken yalnız `BASLA_A10.md` protokolüyle izole branch'te sınırlı A10 taslağı hazırlanabilir. Bu taslak validation sonucu, `main` revision veya tamamlanmış aşama sayılmaz.
+AŞAMA 00–09 tarihsel implementation evidence `docs/evidence/STAGE_XX.md` ve ADR'lerde korunur. V01–V09 validation programı kapandığı için normal implementation cursor artık AŞAMA 10'dur. V09 kapanış turunda A10 başlatılmamıştır.
 
-### AŞAMA 10 — P0 temel geometri renderer'ı — `MAIN'E HENÜZ MERGE EDİLMEDİ`
+### AŞAMA 10 — P0 temel geometri renderer'ı — `NOT_STARTED`
 
-LINE/ARC/CIRCLE/ELLIPSE/POINT, polyline+bulge, SPLINE, SOLID/TRACE/3DFACE 2D; OCS/extrusion/mirror/large-coordinate; draw-order/clipping/AA baseline. Önce correctness; GPU/batching/tiling yok.
+Amaç: LINE/ARC/CIRCLE/ELLIPSE/POINT, polyline+bulge, SPLINE, SOLID/TRACE/3DFACE 2D görünümü için correctness-first renderer temelini kurmak.
 
-Paralel erken çalışma sınırı:
+Zorunlu sınırlar:
 
-- Ayrı branch: `stage10-p0-geometry-draft`; `android-test` geliştirme branch'i değildir.
-- V04–V09 sürerken yalnız yeni/internal platform-neutral primitive-tessellator matematiği ve saf testler yapılır. V09 kapanana kadar mevcut RenderScene/interface/snapshot, architecture, `.csproj`/Skia ve fixture/image-golden sözleşmeleri dondurulur; A11, MAUI/FilePicker/lifecycle ve ProCad kapsam dışıdır.
-- Host/hosted build-harness yoksa `CODED_PENDING_HOST_TESTS`; bu kontroller gerçekten geçse bile Android gate öncesi en ileri durum `CODED_PENDING_EMULATOR`dır. `main` merge/DONE yasaktır.
-- V09 sonrasında güncel validated `main` branch'e alınır. Etkilenen V02/V03, V04–V07, V08 Android graph-isolation, V09 ve A10 T1/semantic-golden/C3 exact integration SHA üzerinde geçer; iOS workflow açılmaz. Gerçek `MobilDwg.App` API36 render kanıtı PID/PNG/crash/ANR yanında expected-content pixel probe, Android golden veya kayıtlı görsel incelemeden en az birini içerir.
-- A10 yalnız doğrulanmış PR main'e merge, post-merge kontrol ve `docs/evidence/STAGE_10.md` kapanışı sonrasında `DONE` olur.
+- world/document coordinate `double` kalır;
+- OCS/extrusion/mirror/large-coordinate doğru transform edilir;
+- draw-order/clipping/antialias baseline açıkça test edilir;
+- GPU/batching/tiling erken optimizasyon yok;
+- ProCad yok;
+- original CAD immutable ve renderer scene-derived çalışır;
+- mevcut `render-scene/v1`/architecture sözleşmesi ancak açık gerekçe + regression evidence ile değiştirilir.
+
+A10 merge kapısı:
+
+1. Güncel validated `main` baz alınır.
+2. Platform-neutral primitive/tessellator unit/executable testleri PASS.
+3. Etkilenen V02/V03, architecture ve V09 regresyonları exact integration SHA'da PASS.
+4. Gerçek `MobilDwg.App` API36 renderer integration build/install/launch çalışır.
+5. Android render kanıtı PID/PNG/crash/ANR yanında **expected-content** kanıtı içerir: pixel probe, deterministic Android golden veya kayıtlı görsel inceleme.
+6. Geometri kabulü C3 hedefiyle fixture bazlı yapılır; yalnız non-blank ekran PASS değildir.
+7. PR normal merge commit ile `main`e alınır; post-merge evidence/checkpoint kapanır.
+8. Ancak bundan sonra A10 `DONE ON MAIN` olur.
 
 ### AŞAMA 11 — Mobil viewport ve gesture
 
-Giriş kapısı: `V04–V09 PROGRAM CLOSED` + `AŞAMA 10 DONE ON MAIN` + `PENDING_EMULATOR_QUEUE EMPTY`. AŞAMA 11, A10 kapanış turunda başlatılmaz.
+Giriş kapısı: `AŞAMA 10 DONE ON MAIN` + `PENDING_EMULATOR_QUEUE EMPTY`. AŞAMA 11, A10 kapanış turunda başlatılmaz.
 
 - pan, pinch zoom, fit extents, gerekirse double-tap fit
 - pinch focal point preservation
@@ -334,8 +317,6 @@ Giriş kapısı: `V04–V09 PROGRAM CLOSED` + `AŞAMA 10 DONE ON MAIN` + `PENDIN
 - portrait/landscape/safe area
 - rotation reparse yapmaz
 - debug-only frame timing
-
-Çıkış: küçük/orta fixture navigation stabil; gerçek Android frame baseline kaydedilir.
 
 ### AŞAMA 12 — Block/INSERT/attribute
 
@@ -371,7 +352,7 @@ Magic/version preflight, size/entity/depth/scene/text/hatch/raster/XREF budgets,
 
 ### AŞAMA 20 — Ölçümlü performance/memory
 
-Physical Android Release TTFUP/frame p50/p95/PSS/GC/artifact size; small/medium/large corpus; yalnız profiler/AB evidence ile optimization.
+Physical Android Release TTFUP/frame p50/p95/PSS/GC/artifact size; small/medium/large corpus; yalnız profiler/A-B evidence ile optimization.
 
 ### AŞAMA 21 — Android full corpus regression / beta gate
 
@@ -409,7 +390,7 @@ Final APK/AAB/checksums/build instructions, store-ready/submission, clean reprod
 | SHX/font farklılığı | visible substitution + audited fallback; proprietary bundle yok |
 | OOM/ANR | controlled resource guard; profiler tabanlı optimization; largeHeap son çare |
 | Corpus rights belirsiz | redistribution durur; evidence çözülmeden commit/bundle yok |
-| Emulator fazla yorumlanır | real app/process/artifact marker olmadan viewer PASS yok |
+| Emulator fazla yorumlanır | real app/process/artifact + expected-content marker olmadan renderer PASS yok |
 | Self-hosted runner offline | exact SHA queue; aynı işi spamleme; kanıtsız PASS yok |
 | Unknown native/transitive asset | release NO-GO |
 | Dependency terk edilir | pinned source archive + adapter sayesinde controlled alternative spike |
