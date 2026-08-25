@@ -90,7 +90,6 @@ $Abi = ((& adb -s $Serial shell getprop ro.product.cpu.abi) | Out-String).Trim()
 if ($AndroidApi -ne '36') { Fail "expected emulator API 36, got API $AndroidApi" }
 Write-Host "V04_EMULATOR_API36_PASS serial=$Serial android=$AndroidRelease abi=$Abi"
 
-# Strict direct MAUI pin and real app dependency evidence.
 $Cpm = [xml](Get-Content -Raw 'Directory.Packages.props')
 $mauiVersionNodes = @(@($Cpm.Project.ItemGroup.PackageVersion) | Where-Object { $_.Include -eq 'Microsoft.Maui.Controls' })
 if ($mauiVersionNodes.Count -ne 1 -or $mauiVersionNodes[0].Version -ne '[10.0.100]') {
@@ -132,7 +131,6 @@ Set-Content -Path (Join-Path $ArtifactsFullPath 'maui-controls-direct-package.tx
 )
 Write-Host "V04_MAUI_EXACT_LICENSE_PASS sha256=$MauiNupkgHash"
 
-# Build the repository's real Android app.
 & dotnet build $AppProject -f net10.0-android36.0 -c $Configuration --nologo | Out-Host
 Require-ExitCode "real MobilDwg.App build"
 $BinDir = Join-Path $RepoRoot "src/MobilDwg.App/bin/$Configuration/net10.0-android36.0"
@@ -144,7 +142,6 @@ $EvidenceApk = Join-Path $ArtifactsFullPath 'MobilDwg.App-Signed.apk'
 Copy-Item -LiteralPath $Apk.FullName -Destination $EvidenceApk -Force
 Write-Host "V04_REAL_APP_APK_PASS file=$($Apk.Name) bytes=$($Apk.Length) sha256=$ApkHash"
 
-# Clean install and resolve real launcher.
 $PackageName = 'com.smitelagwar.mobildwg'
 $previousEap = $ErrorActionPreference
 $ErrorActionPreference = 'Continue'
@@ -160,7 +157,6 @@ if (-not $Launcher) { Fail "launcher activity could not be resolved for $Package
 $Launcher = $Launcher.Trim()
 Write-Host "V04_REAL_APP_INSTALL_PASS package=$PackageName launcher=$Launcher"
 
-# Cold launch and require live numeric PID.
 & adb -s $Serial shell am force-stop $PackageName | Out-Null
 & adb -s $Serial logcat -c | Out-Null
 & adb -s $Serial logcat -b crash -c | Out-Null
@@ -170,11 +166,10 @@ Set-Content -Path (Join-Path $ArtifactsFullPath 'launch.txt') -Value $LaunchOutp
 Write-Host $LaunchOutput
 if ($LaunchOutput -notmatch 'Status:\s+ok') { Fail "real app activity launch did not report Status: ok" }
 Start-Sleep -Seconds 6
-$Pid = ((& adb -s $Serial shell pidof -s $PackageName 2>$null) | Out-String).Trim()
-if ($Pid -notmatch '^\d+$') { Fail "real app PID not found after launch" }
-Write-Host "V04_REAL_APP_LAUNCH_PASS pid=$Pid"
+$AppPid = ((& adb -s $Serial shell pidof -s $PackageName 2>$null) | Out-String).Trim()
+if ($AppPid -notmatch '^\d+$') { Fail "real app PID not found after launch" }
+Write-Host "V04_REAL_APP_LAUNCH_PASS pid=$AppPid"
 
-# Prove the visible window is the real shell, not Stage01Smoke.
 $UiRemote = '/sdcard/v04-window.xml'
 $UiLocal = Join-Path $ArtifactsFullPath 'window.xml'
 & adb -s $Serial shell uiautomator dump $UiRemote | Out-Null
@@ -190,7 +185,6 @@ Set-Content -Path (Join-Path $ArtifactsFullPath 'window-state.txt') -Value $Wind
 if ($WindowState -notmatch [regex]::Escape($PackageName)) { Fail "window manager evidence does not contain the real package name" }
 Write-Host "V04_REAL_APP_UI_PASS"
 
-# Byte-safe screenshot, package/PID-scoped crash/ANR and liveness.
 $Screenshot = Join-Path $ArtifactsFullPath 'real-app-launch.png'
 Invoke-AdbBinaryToFile -AdbPath $AdbExe -Serial $Serial -OutputPath $Screenshot
 Assert-PngSignature $Screenshot
@@ -203,13 +197,13 @@ Set-Content -Path (Join-Path $ArtifactsFullPath 'events-logcat.txt') -Value $Raw
 Set-Content -Path (Join-Path $ArtifactsFullPath 'logcat.txt') -Value ($RawLogcat -replace '(?i)(token|secret|authorization|bearer)\s*[:=]\s*[^\s]+', '$1=[REDACTED]') -Encoding utf8
 Set-Content -Path (Join-Path $ArtifactsFullPath 'meminfo.txt') -Value $Meminfo -Encoding utf8
 $PackagePattern = [regex]::Escape($PackageName)
-$PidPattern = "(?<!\d)$Pid(?!\d)"
-$HasCrash = ($RawCrash -match '(?i)FATAL EXCEPTION|Fatal signal|Process .* has died') -and (($RawCrash -match $PackagePattern) -or ($RawCrash -match $PidPattern))
+$AppPidPattern = "(?<!\d)$AppPid(?!\d)"
+$HasCrash = ($RawCrash -match '(?i)FATAL EXCEPTION|Fatal signal|Process .* has died') -and (($RawCrash -match $PackagePattern) -or ($RawCrash -match $AppPidPattern))
 if ($HasCrash) { Fail "package/PID scoped crash evidence detected for real app" }
-$HasAnr = ($RawEvents -match '(?i)am_anr') -and (($RawEvents -match $PackagePattern) -or ($RawEvents -match $PidPattern))
+$HasAnr = ($RawEvents -match '(?i)am_anr') -and (($RawEvents -match $PackagePattern) -or ($RawEvents -match $AppPidPattern))
 if ($HasAnr) { Fail "post-launch ANR evidence detected for real app" }
-$PidStillAlive = ((& adb -s $Serial shell pidof -s $PackageName 2>$null) | Out-String).Trim()
-if ($PidStillAlive -ne $Pid) { Fail "real app process did not remain alive with PID $Pid" }
+$AppPidStillAlive = ((& adb -s $Serial shell pidof -s $PackageName 2>$null) | Out-String).Trim()
+if ($AppPidStillAlive -ne $AppPid) { Fail "real app process did not remain alive with PID $AppPid" }
 Write-Host "V04_REAL_APP_STABILITY_PASS"
 
 $HeadSha = (& git rev-parse HEAD | Out-String).Trim()
@@ -222,7 +216,7 @@ Target: net10.0-android36.0
 Emulator: $Serial / Android $AndroidRelease / API $AndroidApi / $Abi
 Package: $PackageName
 Launcher: $Launcher
-PID: $Pid
+PID: $AppPid
 APK: $($Apk.Name)
 APK SHA-256: $ApkHash
 Microsoft.Maui.Controls: 10.0.100 exact / MIT / nupkg $MauiNupkgHash
