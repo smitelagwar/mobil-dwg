@@ -3,6 +3,7 @@ name: Stage 09 Render Scene Foundation
 on:
   push:
     branches:
+      - main
       - stage09-render-scene-camera
     paths:
       - 'src/MobilDwg.Core/Rendering/**'
