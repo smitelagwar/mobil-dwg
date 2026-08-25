@@ -57,15 +57,28 @@ jobs:
           Write-Host 'STAGE09_T1_SCENE_PASS'
 
       - name: Run Stage 04 regression suite
-        shell: bash
+        shell: powershell
         run: |
-          set -euo pipefail
-          bash scripts/stage04-test.sh | tee stage09-stage04-regression.log
-          grep -q '^STAGE04_CORE_CONTRACT_TESTS_PASS$' stage09-stage04-regression.log
-          grep -q '^STAGE04_RENDER_CONTRACT_TESTS_PASS$' stage09-stage04-regression.log
-          grep -q '^STAGE04_ARCHITECTURE_TESTS_PASS$' stage09-stage04-regression.log
-          grep -q '^STAGE04_T0_PASS$' stage09-stage04-regression.log
-          echo 'STAGE09_STAGE04_REGRESSION_PASS'
+          $ErrorActionPreference = 'Stop'
+          Remove-Item stage09-stage04-regression.log -ErrorAction SilentlyContinue
+          & dotnet restore MobilDwg.sln 2>&1 | Tee-Object -FilePath stage09-stage04-regression.log
+          if ($LASTEXITCODE -ne 0) { exit $LASTEXITCODE }
+          & dotnet build MobilDwg.sln -c Release --no-restore /warnaserror 2>&1 | Tee-Object -FilePath stage09-stage04-regression.log -Append
+          if ($LASTEXITCODE -ne 0) { exit $LASTEXITCODE }
+          foreach ($project in @(
+            'tests/MobilDwg.Core.Tests/MobilDwg.Core.Tests.csproj',
+            'tests/MobilDwg.Rendering.Tests/MobilDwg.Rendering.Tests.csproj',
+            'tests/MobilDwg.Architecture.Tests/MobilDwg.Architecture.Tests.csproj'
+          )) {
+            & dotnet run --project $project -c Release --no-build 2>&1 | Tee-Object -FilePath stage09-stage04-regression.log -Append
+            if ($LASTEXITCODE -ne 0) { exit $LASTEXITCODE }
+          }
+          Add-Content stage09-stage04-regression.log 'STAGE04_T0_PASS'
+          $regression = Get-Content -Raw stage09-stage04-regression.log
+          foreach ($marker in @('STAGE04_CORE_CONTRACT_TESTS_PASS','STAGE04_RENDER_CONTRACT_TESTS_PASS','STAGE04_ARCHITECTURE_TESTS_PASS','STAGE04_T0_PASS')) {
+            if ($regression -notmatch [regex]::Escape($marker)) { throw "Missing regression marker: $marker" }
+          }
+          Write-Host 'STAGE09_STAGE04_REGRESSION_PASS'
 
       - name: Upload Stage 09 evidence
         uses: actions/upload-artifact@v4
