@@ -1,9 +1,6 @@
 name: A10 P0 Geometry Host Validation
 
 on:
-  push:
-    branches:
-      - stage10-p0-geometry-draft
   pull_request:
     branches: [main]
     paths:
@@ -36,6 +33,7 @@ jobs:
         shell: powershell
         run: |
           if ((dotnet --version).Trim() -ne '10.0.400') { throw 'A10 requires exact .NET SDK 10.0.400.' }
+          New-Item -ItemType Directory -Path artifacts -Force | Out-Null
           dotnet restore tests/MobilDwg.Rendering.Tests/MobilDwg.Rendering.Tests.csproj
           if ($LASTEXITCODE -ne 0) { exit $LASTEXITCODE }
           dotnet build tests/MobilDwg.Rendering.Tests/MobilDwg.Rendering.Tests.csproj -c Release --no-restore -warnaserror
@@ -45,6 +43,8 @@ jobs:
           $log = Get-Content artifacts/a10-rendering-tests.log
           if ($log -notcontains 'STAGE10_GEOMETRY_PRIMITIVES_TESTS_PASS') { throw 'A10 geometry primitive marker missing.' }
           if ($log -notcontains 'STAGE10_TESSELLATION_PRECISION_TESTS_PASS') { throw 'A10 tessellation marker missing.' }
+          if ($log -notcontains 'STAGE10_P0_SEMANTIC_GOLDEN_PASS') { throw 'A10 semantic golden marker missing.' }
+          if ($log -notcontains 'STAGE10_SKIA_EXPECTED_CONTENT_HOST_PASS') { throw 'A10 Skia expected-content marker missing.' }
           if ($log -notcontains 'STAGE09_RENDER_SCENE_TESTS_PASS') { throw 'Stage09 regression marker missing.' }
           Write-Host 'A10_T1_GEOMETRY_HOST_PASS'
 
