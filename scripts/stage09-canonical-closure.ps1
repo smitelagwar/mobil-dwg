@@ -15,22 +15,35 @@ NEXT_ACTION: AŞAMA 10 — P0 temel geometri renderer'ı — bir sonraki kullan�
 LAST_UPDATE: 2026-08-25
 '@.TrimEnd()
 
-$checkpointStartMarker = 'CURRENT_STAGE: AŞAMA 09'
-$checkpointEndMarker = 'LAST_UPDATE: 2026-08-25'
+$checkpointStartMarker = 'CURRENT_STAGE:'
+$checkpointEndMarker = 'LAST_UPDATE:'
 $checkpointStart = $text.IndexOf($checkpointStartMarker, [System.StringComparison]::Ordinal)
-if ($checkpointStart -lt 0) { throw 'Stage 09 checkpoint start not found' }
-$checkpointEnd = $text.IndexOf($checkpointEndMarker, $checkpointStart, [System.StringComparison]::Ordinal)
-if ($checkpointEnd -lt 0) { throw 'Stage 09 checkpoint end not found' }
-$checkpointEnd += $checkpointEndMarker.Length
-$text = $text.Substring(0, $checkpointStart) + $checkpoint + $text.Substring($checkpointEnd)
+if ($checkpointStart -lt 0) { throw 'Checkpoint start not found' }
+$checkpointEndLineStart = $text.IndexOf($checkpointEndMarker, $checkpointStart, [System.StringComparison]::Ordinal)
+if ($checkpointEndLineStart -lt 0) { throw 'Checkpoint end not found' }
+$checkpointEnd = $text.IndexOf("`n", $checkpointEndLineStart, [System.StringComparison]::Ordinal)
+if ($checkpointEnd -lt 0) { $checkpointEnd = $text.Length } else { $checkpointEnd += 1 }
+$text = $text.Substring(0, $checkpointStart) + $checkpoint + "`r`n" + $text.Substring($checkpointEnd)
 
-$text = $text.Replace(
-    '- [ ] AŞAMA 09 — RenderScene, kamera ve diagnostics temeli — `IN_PROGRESS / IMPLEMENTATION_READY / T0_T1_VALIDATION_PENDING_RUNNER`',
-    '- [x] AŞAMA 09 — RenderScene, kamera ve diagnostics temeli — `DONE`')
+$lines = $text -split "`r?`n"
+for ($i = 0; $i -lt $lines.Length; $i++) {
+    if ($lines[$i].Contains('RenderScene, kamera ve diagnostics temeli') -and $lines[$i].StartsWith('- [ ] ')) {
+        $lines[$i] = '- [x] AŞAMA 09 — RenderScene, kamera ve diagnostics temeli — `DONE`'
+        break
+    }
+}
+$text = [string]::Join("`r`n", $lines)
 
-$text = $text.Replace(
-    "AŞAMA 09 özel renderer implementation'ı için ADR 0002'de istenen kullanıcı GO kararı verilmiştir; GO yeniden istenmez. Ancak bu karar AŞAMA 09 T0/T1 çıkış kapısını kaldırmaz.",
-    "AŞAMA 09 özel renderer implementation'ı için ADR 0002'de istenen kullanıcı GO kararı verilmiş ve stage gerçek T0/T1 kanıtıyla tamamlanmıştır; GO yeniden istenmez.")
+$stageNeedle = 'RenderScene, kamera ve diagnostics temeli'
+$lastNeedle = $text.LastIndexOf($stageNeedle, [System.StringComparison]::Ordinal)
+if ($lastNeedle -lt 0) { throw 'Stage 09 title text not found' }
+$stageStart = $text.LastIndexOf('### ', $lastNeedle, [System.StringComparison]::Ordinal)
+if ($stageStart -lt 0) { throw 'Stage 09 section start not found' }
+$stage10Needle = 'P0 temel geometri renderer'
+$stage10Title = $text.IndexOf($stage10Needle, $lastNeedle, [System.StringComparison]::Ordinal)
+if ($stage10Title -lt 0) { throw 'Stage 10 title text not found' }
+$stageEnd = $text.LastIndexOf('### ', $stage10Title, [System.StringComparison]::Ordinal)
+if ($stageEnd -lt 0 -or $stageEnd -le $stageStart) { throw 'Stage 10 section start not found' }
 
 $stage09 = @'
 ### AŞAMA 09 — RenderScene, kamera ve diagnostics temeli
@@ -55,13 +68,6 @@ Test: Yetkili kapanış `Stage 09 Self-Hosted Validation` run `32815175055` / #6
 
 '@
 
-$stageStartMarker = '### AŞAMA 09 — RenderScene, kamera ve diagnostics temeli'
-$stageEndMarker = '### AŞAMA 10 — P0 temel geometri renderer’ı'
-$stageStart = $text.IndexOf($stageStartMarker, [System.StringComparison]::Ordinal)
-if ($stageStart -lt 0) { throw 'Stage 09 section start not found' }
-$stageEnd = $text.IndexOf($stageEndMarker, $stageStart, [System.StringComparison]::Ordinal)
-if ($stageEnd -lt 0) { throw 'Stage 09 section end not found' }
 $text = $text.Substring(0, $stageStart) + $stage09 + $text.Substring($stageEnd)
-
 Set-Content -Path $path -Value $text -Encoding UTF8
 Write-Host 'STAGE09_CANONICAL_CLOSURE_PATCH_PASS'
