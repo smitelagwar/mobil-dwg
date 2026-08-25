@@ -1,5 +1,7 @@
 # AŞAMA 01 — iOS Erişim Envanteri
 
+> **Future option / aktif değil:** Bu envanter Android-only v1'in AŞAMA 01, V01, beta veya release kapısı değildir. Kullanıcı iOS'u açıkça yeniden etkinleştirirse gerçek değerlerle güncellenir; o zamana kadar komut çalıştırılmaz.
+
 Bu kayıt AŞAMA 01 için yalnız erişim durumunu belgeler. iOS toolchain kurulumu, build, signing veya gerçek cihaz smoke bu aşamada yapılmaz; bunlar AŞAMA 08 ve AŞAMA 23 kapsamındadır.
 
 ## Gizlilik kuralı

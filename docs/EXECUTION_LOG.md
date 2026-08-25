@@ -123,8 +123,17 @@ Cleanup:
 
 Ayrıntı: `docs/evidence/STAGE_09.md`.
 
+## 2026-08-25 — Android-only kapsam ve V01–V09 revalidation başlangıcı
+
+- Kullanıcı aktif v1 hedefini Android-only yaptı; iOS evidence/adapter sınırları future option olarak korundu, AŞAMA 23–24 aktif sıradan çıkarıldı.
+- `ANDROID_DOGRULAMA_PLANI.md` oluşturuldu. Tarihsel implementation AŞAMA 09'da, normal implementation cursor'ı AŞAMA 10'da kalır; yeni Android validation cursor'ı V01'dir.
+- Runner çevrim dışıyken exact SHA test kuyruğuna alınır; güvenli kod/host test işi devam eder ve kanıtsız `VALIDATED/DONE` yazılmaz.
+- Repo denetimi mevcut emulator gate'te dört doğruluk açığı buldu: executable test harness gövdeleri `dotnet test` ile çalışmıyor; kurulan APK geçici `Stage01Smoke`; screenshot byte-safe değil; PID/crash/ANR kontrolü stability iddiasını karşılamıyor.
+- Stage 08 iOS workflow'u Android/Core değişikliklerinde macOS kaynağı tüketmemesi için manual `workflow_dispatch`-only yapıldı.
+- Bu tur plan/dokümantasyon ve trigger policy turudur; V01 teknik düzeltmeleri/koşusu başlatılmadı ve eski emulator sonucu viewer PASS sayılmadı.
+
 ## Sonraki iş
 
-`NEXT_WORK_STAGE = AŞAMA 10 — P0 temel geometri renderer'ı`.
+`NEXT_VALIDATION_STAGE = V01 — Toolchain, runner ve emulator altyapısı (FIX_REQUIRED)`.
 
-Kullanıcı `devam` dediğinde yalnız AŞAMA 10 başlatılır. LINE/ARC/CIRCLE/ELLIPSE/POINT, LW/POLYLINE+bulge, SPLINE tessellation, SOLID/TRACE/3DFACE 2D görünümü, OCS/extrusion/mirror/large-coordinate fixture'ları, draw order/clipping/antialias baseline ele alınır. Batching/GPU/tiling eklenmez; önce doğruluk ve T1 + küçük golden/semantic diff.
+Kullanıcı `devam` veya `BASLA.md dosyasını oku` dediğinde V01 açılır. Önce gate executable harness çalıştırma, gerçek kapsam marker'ı, byte-safe PNG, exact AVD/API, numeric PID ve crash/ANR kontrolleriyle düzeltilir; ardından exact Release emulator koşusu alınır. Implementation cursor'ı AŞAMA 10'da korunur ve yalnız runner-offline güvenli devam kuralı gerektiğinde kullanılır.

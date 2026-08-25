@@ -1,21 +1,23 @@
 # Fiziksel cihaz matrisi ve provisional benchmark profilleri
 
-Tarih: 2026-08-24  
+İlk kayıt: 2026-08-24
+Android kapsam güncellemesi: 2026-08-25
 Aşama: AŞAMA 03
 
-Bu belge cihaz varmış gibi kanıt üretmez. Kullanıcının mevcut fiziksel Android/iOS erişimi AŞAMA 01'de `DEFERRED_EXTERNAL_GATE` durumundadır. Buradaki satırlar test slotu ve ölçüm sözleşmesidir; gerçek model/OS bilgisi ancak cihaz erişimi olduğunda doldurulur.
+Bu belge emulator ile fiziksel cihaz kanıtını birbirine karıştırmaz. Android Emulator kuruludur; fiziksel Android slotları release çeşitliliği için açıktır. iOS slotları aktif v1 dışında future option olarak korunur.
 
 ## Cihaz slotları
 
 | Slot | Platform | Amaç | Minimum özellik | Gerçek cihaz | Durum |
 |---|---|---|---|---|---|
+| E-API36 | Android Emulator | GitHub/self-hosted sürekli build-install-launch ve hedefli runtime smoke | `mobil-dwg-api36`, Pixel 7 profile, API 36, x86_64 | AVD mevcut | `AVAILABLE / V01_FIX_REQUIRED` |
 | A-LOW | Android | düşük kaynak / min-supported doğrulama | Android API 24+, arm64 tercih, 3-4 GiB RAM sınıfı | UNKNOWN | DEFERRED_EXTERNAL_GATE |
 | A-CURRENT | Android | güncel orta sınıf ana regresyon | target API 36 sınıfı, arm64, 6+ GiB RAM sınıfı | UNKNOWN | DEFERRED_EXTERNAL_GATE |
 | A-LARGE | Android | büyük corpus/perf karşılaştırma | arm64, 8+ GiB RAM sınıfı | UNKNOWN | OPTIONAL / NOT_ASSIGNED |
-| I-OLDEST | iOS | desteklenecek en eski gerçek iPhone sınıfı | exact minimum iOS Stage 23'te toolchain ile pinlenecek | UNKNOWN | DEFERRED_EXTERNAL_GATE |
-| I-CURRENT | iOS | güncel gerçek cihaz regresyonu | güncel supported iOS, arm64 | UNKNOWN | DEFERRED_EXTERNAL_GATE |
+| I-OLDEST | Future iOS | yeniden etkinleştirilirse en eski gerçek iPhone sınıfı | future Stage 23'te pinlenecek | UNKNOWN | DEFERRED_FUTURE_IOS |
+| I-CURRENT | Future iOS | yeniden etkinleştirilirse güncel cihaz regresyonu | future supported iOS, arm64 | UNKNOWN | DEFERRED_FUTURE_IOS |
 
-Emulator/simulator ilgili platform smoke için yardımcı olabilir; fiziksel slotun PASS kanıtı yerine geçmez.
+Android emulator smoke için aktiftir fakat fiziksel slotun PASS kanıtı yerine geçmez. iOS simulator/cihaz işi active değildir.
 
 ## Provisional corpus profilleri
 
@@ -50,4 +52,4 @@ Seri numarası, UDID, Apple ID, kullanıcı yolu veya müşteri dosya adı kayde
 
 ## Şimdiki durum
 
-AŞAMA 03 için cihaz matrisi tasarımı tamamdır; fiziksel cihaz ataması kullanıcı erişimi olmadığı için bilinçli olarak boş bırakılmıştır. Bu boşluk AŞAMA 03 corpus/golden sözleşmesini bloke etmez fakat gerçek cihaz gerektiren Stage 05/07/08/21+ kapılarında yeniden zorunlu hale gelir.
+AŞAMA 03 için cihaz matrisi tasarımı tamamdır. E-API36 V01 sertleştirmesinden sonra otomatik smoke slotu olur. Fiziksel Android ataması bilinçli olarak açık kalır ve AŞAMA 20–22/final kapılarında zorunludur. Future iOS slotları Android release'i bloke etmez.

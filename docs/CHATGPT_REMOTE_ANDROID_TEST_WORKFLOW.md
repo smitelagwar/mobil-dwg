@@ -2,6 +2,8 @@
 
 > **OKUMA KURALI:** Bu dosya, yalnız çalışma bağlamı aşağıdaki `CHATGPT_REMOTE_GITHUB` tanımına uyuyorsa okunması zorunlu bir yürütme bağlamı belgesidir. Dosyanın okunması zorunludur; içindeki batching, test zamanlaması ve 25 dakikalık zaman kullanım önerileri **zorunlu yürütme kuralları değildir**. Ajan gerçek ihtiyaca göre farklı bir sıra seçebilir.
 
+Aktif AŞAMA 01–09 tekrar turu ve iki-cursor/offline kuralları `ANDROID_DOGRULAMA_PLANI.md` içindedir. Bu dosya o planın taşıma ve test yorumlama biçimini açıklar.
+
 ## 1. Bu belge ne zaman geçerli?
 
 Ajan önce içinde çalıştığı ortamı araç erişiminden ve gerçek çalışma biçiminden belirler. Kullanıcıya gereksiz soru sormaz.
@@ -52,6 +54,14 @@ Repo, ChatGPT sohbetinden yapılan GitHub değişikliklerini gerektiğinde kulla
 - Test hattı `android-test` branch'ine push ile veya mevcut workflow'un manuel dispatch yolu ile çalışabilir.
 - Workflow diagnostik artifact olarak özet, logcat, meminfo, cihaz bilgisi ve screenshot çıktıları yükleyebilir.
 
+Mevcut gerçek sınırlar:
+
+- `src/MobilDwg.App` bugün installable MAUI app değil, `net10.0` composition class library'dir.
+- Gate geçici `Stage01Smoke` APK üretip kurar.
+- Test projeleri executable harness'tır; yalnız `dotnet test MobilDwg.sln` kullanılması test gövdelerini çalıştırmaz.
+- Mevcut PowerShell `adb ... > screenshot.png` yolu byte-safe değildir ve eldeki PNG artifact'leri geçersizdir.
+- PID bulunamaması, multiline crash ve ANR kontrolleri V01'de sertleştirilmeden stability PASS güçlü yorumlanmaz.
+
 Bu altyapının gerçek güncel durumu gerektiğinde repo/workflow/run sonuçlarından doğrulanır; bu belge geçmiş bir PASS sonucunu gelecekte otomatik PASS saydırmaz.
 
 ## 3. Kritik ayrım: her dosya değişikliğinde test tetikleme
@@ -74,6 +84,16 @@ Aynı şekilde ajan beş küçük değişikliği tek test döngüsünde doğrula
 
 Test tetikleme sıklığı **ajanın teknik muhakemesine bırakılmıştır**. Amaç, gereksiz GitHub → PC → emulator → artifact round-trip'lerinden kaçınırken hatayı çok geç yakalamamaktır.
 
+### Runner çevrim dışıysa
+
+PC'nin açık olması tek başına yeterli değildir; interaktif Windows oturumunda `C:\actions-runner\run.cmd` dinliyor olmalıdır. Runner hazır değilse:
+
+1. Yeni emulator workflow'larını art arda kuyruğa sokma.
+2. Exact test SHA'sını, gerekli gate/configuration ve beklenen marker'ı `PENDING_EMULATOR_QUEUE` olarak kaydet.
+3. Aynı ihtiyacı daha yeni bir SHA karşılıyorsa eski bekleyen kaydı superseded olarak kapat.
+4. Kod inceleme, host/hosted test ve güvenli implementation işine devam et.
+5. Runner dönünce en eski hâlâ geçerli riskli checkpoint'i çalıştır; kanıt gelmeden PASS yazma.
+
 ## 4. 25 dakikalık High çalışma süresini verimli kullanma önerisi
 
 Kullanıcı ChatGPT High modunda yaklaşık 25 dakikalık aktif çalışma pencereleriyle ilerleyebilir. Bu yüzden remote GitHub bağlamında ağır Android testini her küçük edit sonrası çağırmak zaman kaybına dönüşebilir.
@@ -90,6 +110,8 @@ Kullanıcı ChatGPT High modunda yaklaşık 25 dakikalık aktif çalışma pence
 Ajan isterse daha erken veya daha geç test edebilir. Bu bölüm performans/iş akışı tavsiyesidir; Definition of Done veya aşama çıkış kriterlerini değiştirmez.
 
 ## 5. `devam` ve aşamalı çalışma ile ilişkisi
+
+V01–V09 açıkken birinci cursor `ANDROID_DOGRULAMA_PLANI.md` içindeki doğrulamadır; normal implementation cursor'ı AŞAMA 10'da ayrıca korunur. Runner çevrim dışıyken VXX için güvenli iş bittiyse host-independent implementation devam edebilir. Bir turda iki cursor birden kapatılmaz ve Android test borcu beta/release'e taşınmaz.
 
 Projenin canonical aşama kuralı değişmez:
 
@@ -148,10 +170,16 @@ Mevcut workflow:
 - normal feature branch push: self-hosted Android testi **tetiklemez**.
 - `android-test` branch push: Android emulator workflow'unu tetikler.
 - `workflow_dispatch`: kullanıcı/uygun araç üzerinden manuel test yolu olarak bulunabilir.
+- Yalnız Markdown değişikliklerinden oluşan `android-test` push'u ağır gate'i tetiklemez.
+- Aynı repo için workflow concurrency yalnız bir aktif ve en güncel bekleyen checkpoint'i tutarak stale iş birikimini sınırlar; çalışan emulator işi yarıda kesilmez.
+
+Normal “GitHub ile senkronize et” işlemi yalnız `main`i günceller; `android-test` branch'i her senkronizasyonda oynatılmaz. Bu branch yalnız anlamlı emulator checkpoint'i içindir. Dokümantasyon-only değişikliklerin ağır gate'i tetiklemesi gerekmez.
 
 Ajan test istediğinde, test edilecek **tam commit SHA** belirgin olmalıdır. `android-test` branch'i yalnız test taşıyıcısıdır; normal geliştirme branch'i olarak kullanılmaz.
 
 Branch/ref güncellemesi destructive biçimde yapılmaz. Test edilecek commit ile branch geçmişi fast-forward uyumlu değilse zorla ref hareketi yapmak yerine güvenli bir tetikleme yolu seç veya durumu açıkça değerlendir.
+
+Self-hosted runner yalnız repo sahibinin kontrol ettiği commit'i çalıştırır. Workflow read-only contents izni ve credentials persist etmeyen checkout kullanır; üçüncü taraf PR/ref'i Windows kullanıcısı üzerinde çalıştırılmaz.
 
 ## 8. Workflow sonucunu nasıl yorumlamalı?
 
@@ -161,6 +189,8 @@ Android workflow'un `SUCCESS` olması yalnız gerçekten çalıştırdığı gat
 
 - `runner PASS`, `emulator PASS`, `build/install/launch PASS` altyapının çalıştığını kanıtlayabilir;
 - fakat gerçek `MobilDwg.App` viewer APK'sı test edilmediyse bunu **gerçek viewer işlevi PASS** diye yorumlama.
+
+Ek olarak mevcut sürümde `dotnet test MobilDwg.sln`, executable Core/Rendering/Architecture harness gövdelerini çalıştırmaz. İlgili `dotnet run --project ...` marker'ları görülmeden “solution tests passed” iddiası kabul edilmez. Screenshot ancak PNG magic bytes/decode doğrulamasıyla; stability ancak numeric PID, yeterli crash taraması ve gerçek ANR kontrolüyle kanıttır.
 
 Proje ilerledikçe gate gerçek `MobilDwg.App` artifact'ini kuracak şekilde geliştirilirse o günkü script/workflow içeriği esas alınır.
 

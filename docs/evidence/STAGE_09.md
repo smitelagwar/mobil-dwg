@@ -1,5 +1,7 @@
 # AŞAMA 09 Kanıtı — RenderScene, kamera ve diagnostics temeli
 
+> **Tarihsel kapanış:** AŞAMA 09 `DONE` kaydı korunur. 25.08.2026 kullanıcı kararıyla güncel sonraki iş AŞAMA 10 değil, `ANDROID_DOGRULAMA_PLANI.md` içindeki V01'dir; V09 yeni doğrulama sonucu ayrı evidence üretir.
+
 ## Durum
 
 `DONE`

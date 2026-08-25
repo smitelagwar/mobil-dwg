@@ -11,11 +11,11 @@ GitHub Actions / Dispatch Request
 Self-Hosted Runner (Windows Node: C:\actions-runner)
   │
   ├─► .\scripts\doctor-local-environment.ps1 (Validates environment)
-  ├─► dotnet test MobilDwg.sln (Unit, Contract & Architecture Gates)
+  ├─► solution build + executable harness run (V01 hardening target)
   ├─► .\scripts\start-emulator.ps1 (Launches AVD 'mobil-dwg-api36')
-  ├─► dotnet build -f net10.0-android (Generates Debug/Release APK)
-  ├─► adb install & launch (Verifies crash-free activity on API 36)
-  ├─► adb screencap & logcat (Saves test evidence artifacts)
+  ├─► dotnet build -f net10.0-android (Currently temporary Stage01Smoke APK)
+  ├─► adb install & launch (Infrastructure smoke on API 36)
+  ├─► byte-safe screencap & stability evidence (Pending V01 hardening)
   │
   ▼
 GitHub Actions Artifacts (Screenshots & Logs)
@@ -28,7 +28,7 @@ GitHub Actions Artifacts (Screenshots & Logs)
 | Component | Verified Version | Installation Path / Identifier |
 |---|---|---|
 | **Operating System** | Windows 11 Home 64-bit | Build 26100 (AMD Ryzen 5 7640HS, NVIDIA RTX 4060) |
-| **Hypervisor / Accel** | Windows Hypervisor Platform (WHPX) | Firmware Virtualization Enabled (`SVM`), GPU Host Direct |
+| **Hypervisor / Accel** | Windows Hypervisor Platform (WHPX) | Firmware Virtualization Enabled (`SVM`); current AVD has `hw.gpu.enabled=no`, GPU Host Direct is not claimed |
 | **.NET SDK** | `10.0.400` (Pinned) | `C:\Program Files\dotnet\sdk\10.0.400` |
 | **.NET MAUI Workload** | `maui-android` (`10.0.20/10.0.100`) | Workload set `10.0.400` |
 | **Java JDK** | `Microsoft OpenJDK 21.0.12.1` | `C:\Program Files\Microsoft\jdk-21.0.12.101-hotspot` (`JAVA_HOME`) |
@@ -38,7 +38,7 @@ GitHub Actions Artifacts (Screenshots & Logs)
 | **Android Emulator** | `37.1.11.0` | `$ANDROID_SDK_ROOT\emulator` |
 | **Android Virtual Device** | `mobil-dwg-api36` | Google APIs x86_64, Pixel 7 Profile, Target API 36 |
 | **Android Studio** | `2026.1.3.7` | `C:\Program Files\Android\Android Studio` |
-| **GitHub Actions Runner** | `v2.322.0` | `C:\actions-runner` |
+| **GitHub Actions Runner** | `v2.336.0` | `C:\actions-runner` |
 
 ---
 
@@ -68,7 +68,7 @@ Gracefully shuts down running emulator instances.
 ```powershell
 .\scripts\android-emulator-gate.ps1 -Configuration Release
 ```
-Standalone gate executing prerequisite checks, boots/reuses `mobil-dwg-api36`, runs solution tests, builds MAUI Android APK, installs & launches on emulator, verifies activity stability (no crash/ANR), collects diagnostic artifacts into `artifacts/android-emulator-result/`, and outputs `ANDROID_EMULATOR_GATE_PASS`.
+Current gate executes prerequisite checks, boots/reuses an emulator and builds/installs a temporary `Stage01Smoke` MAUI APK. It does **not** install the real `MobilDwg.App`. Its `dotnet test` call also does not execute this repository's custom executable harness bodies, current screenshot redirection is not byte-safe, and PID/crash/ANR evidence needs V01 hardening. Until then `ANDROID_EMULATOR_GATE_PASS` means infrastructure smoke only.
 
 ---
 
@@ -94,7 +94,7 @@ The runner binaries are installed in `C:\actions-runner`.
 ### Runner Execution Mode (Interactive vs Service)
 > [!IMPORTANT]
 > **Recommended Execution Model: Interactive User Session (`.\run.cmd`)**
-> Android Emulator relies on WHPX/GPU hardware acceleration and desktop display subsystems. Windows Services run under Session 0 isolation without an interactive desktop, which causes GPU initialization failure or emulator crashes. For reliable automated runs, keep the runner active in an interactive desktop session (`C:\actions-runner\run.cmd`) or configured via user startup.
+> Android Emulator and the runner are operated in the interactive desktop session. Keep `C:\actions-runner\run.cmd` active or configure it via user startup. A powered-on PC without a connected listener is not test-ready.
 
 ---
 
@@ -106,4 +106,6 @@ The runner binaries are installed in `C:\actions-runner`.
    - Manually dispatched via GitHub Actions (`workflow_dispatch`).
 3. **Physical Device Integrity**: Emulator automation is an additional automated gate in `scripts/android-emulator-gate.ps1`. It does not replace or modify the mandatory physical device gate defined in `scripts/stage01-device-gate.ps1`.
 4. **Zero Secrets in Code**: No authentication tokens, PATs, or signing keys are stored in files or commit history.
+5. **Offline Queue**: When the listener is offline, do not accumulate repeated workflow runs. Record the exact SHA in `PENDING_EMULATOR_QUEUE`, continue safe host-side work, and trigger only the latest still-required checkpoint after the runner returns.
+6. **Trusted Refs Only**: Never execute an untrusted third-party PR/ref on this self-hosted Windows runner.
 

@@ -26,7 +26,9 @@ Tam olarak dört production projesi vardır:
    - Composition/UI boundary.
    - `Core`, `Cad`, `Rendering` referansları.
    - Parser entity veya Skia type'ına doğrudan bağlanmaz.
-   - AŞAMA 04'te platform bağımsız class library olarak başlar. AŞAMA 06'da aynı proje MAUI/Android shell'e dönüştürülür; beşinci production proje açılmaz.
+   - **Gerçek mevcut durum:** hâlâ `net10.0` platform-bağımsız class library'dir; installable MAUI/Android uygulaması değildir. AŞAMA 06 source spike'ı ayrı temporary proje üretmiş, bu production projeyi dönüştürmemiştir.
+   - Android V04 doğrulamasında aynı production boundary gerçek Android MAUI shell'e dönüştürülecek; beşinci production proje açılmayacaktır.
+   - Shared Core/Cad/Rendering katmanları future iOS dönüşü için platform-neutral kalır; aktif Android döneminde iOS implementasyonu veya workload zorunluluğu eklenmez.
 
 Dependency yönü:
 

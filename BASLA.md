@@ -11,7 +11,7 @@
 - GitHub repo: `smitelagwar/mobil-dwg`
 - Default branch: `main`
 - Repo private.
-- Ürün: Android-first, iOS zorunlu ikinci platform, local/offline 2D DWG/DXF viewer.
+- Aktif ürün: Android-only local/offline 2D DWG/DXF viewer. iOS yalnız future option; shared mimari geri dönüşe açık tutulur.
 - v1: viewer-only. Edit/write/save/export/cloud/account kapsam dışıdır.
 
 GitHub connector kullanılabiliyorsa gerçek repo durumunu mutlaka connector üzerinden oku. Sohbet/model belleğini proje durumu için kaynak kabul etme.
@@ -22,15 +22,18 @@ GitHub connector kullanılabiliyorsa gerçek repo durumunu mutlaka connector üz
 
 1. `smitelagwar/mobil-dwg` reposunun gerçek `main` HEAD’ini doğrula.
 2. `Mobil_DWG_DXF_Royalty_Free_Android_iOS_Nihai_Plan.md` dosyasını oku. Bu **canonical/yetkili plandır**.
-3. `gecmis.md` dosyasını oku. Buradaki aktif checkpoint, son tamamlanan aşama, `NEXT_WORK_STAGE`, açık blocker’lar ve son CI/merge kanıtlarını doğrula.
-4. `docs/USER_APPROVED_EXECUTION_OVERRIDE.md` dosyasını oku ve dış cihaz/hesap kapılarının yürütme kuralını uygula.
-5. **Gerçek çalışma bağlamını otomatik sınıflandır:** Kod değişiklikleri ChatGPT sohbetinden GitHub connector/API üzerinden yapılıyor ve ajan kullanıcının yerel repo/terminal/ADB ortamında doğrudan çalışmıyorsa bağlam `CHATGPT_REMOTE_GITHUB` sayılır. Bu bağlamda `docs/CHATGPT_REMOTE_ANDROID_TEST_WORKFLOW.md` dosyasını **okumadan implementasyona başlama**. Bu dosyanın okunması zorunludur; dosya içindeki batching, test tetikleme sıklığı ve 25 dakikalık zaman kullanımı önerileri zorunlu yürütme kuralları değildir. AntiGravity, Visual Studio + Codex, Codex IDE veya başka bir yerel ajan gerçek yerel çalışma ağacı + terminal/ADB erişimiyle çalışıyorsa bağlam `LOCAL_IDE` sayılır ve remote test dosyası yürütme modeli olarak uygulanmaz.
-6. Eğer `gecmis.md` veya canonical plan bir `IN_PROGRESS` aşama gösteriyorsa **o aşamadan devam et**. Yeni aşama başlatma.
-7. Aşama `DONE` ve bir `NEXT_WORK_STAGE` varsa, **NEXT_WORK_STAGE’i doğrudan başlat**.
-8. Aktif aşama için ilgili `docs/evidence/STAGE_XX.md`, mimari/compliance/fixture dosyaları, açık PR’lar ve GitHub Actions koşularını gerektiği kadar oku.
-9. Açık PR veya yarım CI run varsa yeni iş açmadan önce onların gerçek durumunu kontrol et ve kaldığı yerden devam et.
-10. Kullanıcıdan daha önce verilmiş bilgiyi tekrar isteme. Fiziksel erişim gerektirmeyen işi mümkün olduğunca tamamla.
-11. Bir kullanıcı turunda en fazla **bir aşama** tamamla. Aynı turda sonraki aşamaya başlama.
+3. `ANDROID_DOGRULAMA_PLANI.md` dosyasını oku. V01–V09 Android geriye dönük doğrulama programı tamamlanmadıysa bu dosyadaki test cursor'ı birinci iş sırasıdır.
+4. `gecmis.md` dosyasını oku. Buradaki ayrı implementation/doğrulama cursor'larını, açık blocker/test kuyruğunu ve son CI/merge kanıtlarını doğrula.
+5. `docs/USER_APPROVED_EXECUTION_OVERRIDE.md` dosyasını oku ve dış cihaz/runner kapılarının yürütme kuralını uygula.
+6. **Gerçek çalışma bağlamını otomatik sınıflandır:** Kod değişiklikleri ChatGPT sohbetinden GitHub connector/API üzerinden yapılıyor ve ajan kullanıcının yerel repo/terminal/ADB ortamında doğrudan çalışmıyorsa bağlam `CHATGPT_REMOTE_GITHUB` sayılır. Bu bağlamda `docs/CHATGPT_REMOTE_ANDROID_TEST_WORKFLOW.md` dosyasını **okumadan implementasyona başlama**. AntiGravity, Visual Studio + Codex, Codex IDE veya başka bir yerel ajan gerçek yerel çalışma ağacı + terminal/ADB erişimiyle çalışıyorsa bağlam `LOCAL_IDE` sayılır.
+7. Açık V01–V09 doğrulaması varsa onu doğrudan sürdür. Runner çevrim dışıysa exact test SHA'sını kuyruğa al; kanıt beklerken güvenli kod/host-test işi varsa implementation cursor'ında devam et.
+8. Doğrulama programı bittiyse açık normal `IN_PROGRESS` aşamayı, yoksa `NEXT_IMPLEMENTATION_STAGE` işini başlat.
+9. Aktif iş için ilgili `docs/evidence/android-validation/VXX.md` veya tarihsel `docs/evidence/STAGE_XX.md`, mimari/compliance/fixture dosyaları, açık PR’lar ve GitHub Actions koşularını gerektiği kadar oku.
+10. Açık PR veya yarım CI run varsa yeni iş açmadan önce gerçek durumunu kontrol et. Runner-offline queued işi implementation failure sayma ve aynı koşuyu çoğaltma.
+11. Kullanıcıdan daha önce verilmiş bilgiyi tekrar isteme. Fiziksel erişim gerektirmeyen işi mümkün olduğunca tamamla.
+12. Bir kullanıcı turunda en fazla **bir doğrulama veya implementation aşaması** tamamla. Aynı turda sonraki aşamaya başlama.
+
+Aktif Android işinde `docs/evidence/STAGE_08.md`, `docs/STAGE_01_IOS_ACCESS_INVENTORY.md`, iOS spike/script ve AŞAMA 23–24 ayrıntılarını rutin olarak yükleme. Bunlar yalnız V08 graph-isolation kontrolünde gerektiği kadar veya kullanıcı future iOS'u açıkça yeniden etkinleştirirse okunur.
 
 ### 2.1 Çalışma bağlamı nasıl anlaşılır?
 
@@ -51,9 +54,9 @@ dediğinde cevap davranışı şu olmalıdır:
 
 - Dosyayı oku.
 - GitHub `main` durumunu doğrula.
-- Canonical plan + `gecmis.md` checkpoint’ini çöz.
+- Canonical plan + `ANDROID_DOGRULAMA_PLANI.md` + `gecmis.md` iki-cursor checkpoint’ini çöz.
 - Çalışma bağlamını sınıflandır; `CHATGPT_REMOTE_GITHUB` ise `docs/CHATGPT_REMOTE_ANDROID_TEST_WORKFLOW.md` dosyasını da zorunlu olarak oku.
-- Mevcut/sonraki aşamayı belirle.
+- Açık VXX doğrulamasını; yoksa mevcut/sonraki implementation aşamasını belirle.
 - **Doğrudan uygulamaya başla.**
 
 Yalnız “dosyayı okudum”, “AŞAMA X’te kalmışız” veya “devam etmemi ister misin?” şeklinde durma.
@@ -66,27 +69,28 @@ Kaynaklar arasında çelişki varsa sessizce tahmin etme.
 
 1. Gerçek GitHub `main` üzerindeki kod/commit/PR/CI durumu.
 2. Canonical plan: `Mobil_DWG_DXF_Royalty_Free_Android_iOS_Nihai_Plan.md`.
-3. `gecmis.md` aktif checkpoint/handoff.
-4. İlgili `docs/evidence/STAGE_XX.md` ve compliance/test kayıtları.
-5. `DEVAM.md` yalnız yardımcı snapshot olabilir; daha güncel gerçek repo kayıtlarının önüne geçmez.
+3. Aktif Android doğrulaması için `ANDROID_DOGRULAMA_PLANI.md`.
+4. `gecmis.md` aktif checkpoint/handoff.
+5. İlgili yeni/tarihsel evidence ve compliance/test kayıtları.
+6. `DEVAM.md` yalnız yardımcı snapshot olabilir; daha güncel gerçek repo kayıtlarının önüne geçmez.
 
 `docs/CHATGPT_REMOTE_ANDROID_TEST_WORKFLOW.md` ürün kapsamını, stage çıkış kriterlerini veya canonical planı değiştirmez. Yalnız `CHATGPT_REMOTE_GITHUB` bağlamındaki mevcut test altyapısını ve verimli kullanım seçeneklerini açıklar.
 
 Çelişki güvenli biçimde çözülebiliyorsa aynı turda kayıtları senkronize et ve çalışmaya devam et. Gerçek bir blocker değilse kullanıcıya karar yükleme.
 
-## 5. Kullanıcının mevcut dış erişim kısıtı
+## 5. Kullanıcının mevcut test ortamı ve dış erişim kısıtı
 
-AŞAMA 01’de kalan gerçek fiziksel kapılar kullanıcı tarafından şimdilik sağlanamıyor:
+Aşağıdaki gerçekler ayrı tutulur:
 
-- fiziksel Android cihazda install/launch,
-- `STAGE01_DEVICE_GATE_PASS`,
-- gerçek Mac/Xcode/iPhone/Apple Developer erişim envanteri.
+- Windows Android Emulator ve self-hosted runner kuruludur; test için bilgisayar açık, interaktif oturum aktif ve `C:\actions-runner\run.cmd` dinliyor olmalıdır.
+- Fiziksel Android cihaz `STAGE01_DEVICE_GATE_PASS` henüz açık release/cihaz farkı kanıtıdır.
+- iOS/Mac/Xcode/iPhone/Apple Developer işi aktif Android kapsamından çıkarılmış, future option olarak dondurulmuştur.
 
-Bunları **sahte PASS/DONE yapma**. `BLOCKED / DEFERRED_EXTERNAL_GATE` olarak açık tut.
+Emulatoru fiziksel telefon; geçici `Stage01Smoke` APK'sını gerçek viewer; queued/offline runner'ı PASS sayma.
 
-Ancak bu dış kapılar, fiziksel erişime bağımlı olmayan sonraki aşamaları engellemez. Kullanıcı daha önce bağımsız aşamalara devam edilmesini açıkça onaylamıştır.
+Runner veya bilgisayar çevrim dışıysa test SHA'sını `PENDING_EMULATOR_QUEUE` olarak kaydet ve güvenli kod/host-test işine devam et. Aynı test işini tekrar tekrar kuyruğa sokma.
 
-Release/beta/final aşamalarında plan bu kanıtları yeniden zorunlu kılıyorsa o zaman gerçek blocker olarak ele al.
+Release/beta/final Android aşamalarında fiziksel cihaz ve boş test kuyruğu yeniden zorunludur. iOS yalnız kullanıcı açıkça yeniden etkinleştirirse ayrı blocker olur.
 
 ## 6. Değiştirilemez proje ilkeleri
 
@@ -111,19 +115,19 @@ Release/beta/final aşamalarında plan bu kanıtları yeniden zorunlu kılıyors
 - Public/synthetic fixture yalnız provenance/lisans politikasıyla uyumluysa eklenebilir.
 - PR/CI kullanılıyorsa doğrulanmamış head’i merge etme.
 
-## 8. Her aşama sonunda zorunlu kapanış
+## 8. Her doğrulama/implementation aşaması sonunda zorunlu kapanış
 
 Aşama gerçekten tamamlandığında aynı turda:
 
-1. İlgili `docs/evidence/STAGE_XX.md` dosyasını gerçek run/commit/artifact sonuçlarıyla güncelle.
-2. `gecmis.md` içindeki `LAST_COMPLETED_STAGE`, `NEXT_WORK_STAGE`, CI/merge ve blocker kayıtlarını güncelle.
-3. Canonical plan checkpoint’ini ve ilgili aşama checkbox’larını gerçek durumla güncelle.
+1. Yeni doğrulama için `docs/evidence/android-validation/VXX.md`; normal iş için ilgili `docs/evidence/STAGE_XX.md` dosyasını gerçek run/commit/artifact sonuçlarıyla güncelle. Tarihsel evidence geriye dönük yeniden yazılmaz.
+2. `gecmis.md` içindeki ayrı validation/implementation cursor'larını, test kuyruğunu, CI/merge ve blocker kayıtlarını güncelle.
+3. `ANDROID_DOGRULAMA_PLANI.md` ile canonical plan checkpoint'ini gerçek durumla güncelle.
 4. README/handoff girişinde eski aşama bilgisi varsa düzelt.
 5. `docs/EXECUTION_LOG.md` teknik geçmişini güncelle.
 6. `DEVAM.md` tutuluyorsa checkpoint snapshot’ını güncelle; ancak `BASLA.md` genel bootstrap protokolüdür ve aşama numarası içermez, normalde değiştirilmesi gerekmez.
 7. O turda sonraki aşamaya başlama.
 
-Aşama tamamlanmamışsa `DONE` yazma; gerçek `IN_PROGRESS` veya `BLOCKED` durumunu ve tam sonraki eylemi kalıcı kayıtlara geçir.
+Aşama tamamlanmamışsa `DONE/VALIDATED` yazma; gerçek `FIX_IN_PROGRESS`, `READY_FOR_EMULATOR`, `WAITING_RUNNER`, `IN_PROGRESS` veya `BLOCKED` durumunu ve tam sonraki eylemi kalıcı kayıtlara geçir.
 
 ## 9. Toolchain/dependency gerçekliği
 

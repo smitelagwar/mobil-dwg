@@ -1,9 +1,9 @@
 # Mobil DWG/DXF Görüntüleyici — Nihai Uygulama ve Yürütme Planı
 
-**Plan sürümü:** 1.0  
-**Hazırlanma/doğrulama tarihi:** 24 Ağustos 2026  
-**Ürün yönü:** Android-first, iOS zorunlu ikinci platform, preview-first, local/offline  
-**Hedef:** Kullanıcıya ücretsiz sunulabilen; CAD dosyası başına, kullanıcı başına veya çalışma zamanı başına CAD SDK/API royalty’si doğurmayan; 2D DWG/DXF dosyalarını güvenli ve teknik olarak güvenilir biçimde görüntüleyen çalışan mobil uygulama  
+**Plan sürümü:** 1.1
+**Hazırlanma/doğrulama tarihi:** 25 Ağustos 2026
+**Ürün yönü:** Aktif hedef Android-only; iOS future option olarak korunur; preview-first, local/offline
+**Hedef:** Kullanıcıya ücretsiz sunulabilen; CAD dosyası başına, kullanıcı başına veya çalışma zamanı başına CAD SDK/API royalty’si doğurmayan; 2D DWG/DXF dosyalarını Android üzerinde güvenli ve teknik olarak güvenilir biçimde görüntüleyen çalışan mobil uygulama
 **Kaynak belgeler:** `Mobil_DWG_DXF_Royalty_Free_Android_iOS_Master_Plan.md`, `chatgpt_oneriler.md`, `claude_oneriler.md`, `gemini_oneriler.md`, `sonnet_5.md`
 
 > Bu belge bir fikir listesi değil, yürütme sırasıdır. Aşağıdaki aşamalar tamamlanmadan ürün “bitti” sayılmaz. “Royalty-free” bir hukuki garanti olarak değil, her release’in gerçek dependency ve dağıtım artifact’leri üzerinde yeniden kanıtlanan teknik/politika kriteri olarak kullanılır.
@@ -15,14 +15,18 @@
 Bu blok ve aşağıdaki aşama kutuları her çalışma turunun sonunda güncellenir.
 
 ```text
-CURRENT_STAGE: AŞAMA 09
-CURRENT_SUBSTEP: 09.complete
-STATUS: DONE
-LAST_VERIFIED_REVISION: 0a2dd886bbe59698a6d2eb4c99f66e7f9270063a — PR #12 merge commit; yetkili exact .NET 10.0.400 validation head 7bba0b7a6da30dc4b23050872a7a1ef4e90ca087 ve validation→merge compare'ında AŞAMA 09 production source/test farkı yok
-LAST_SUCCESSFUL_COMMAND: Stage 09 Self-Hosted Validation run 32815175055 / #6, job 97701882792 SUCCESS — targeted + full solution Release build 0 warning / 0 error
-EVIDENCE: docs/evidence/STAGE_09.md; run 32815175055/#6; artifact 9551137293; sha256:486c9d0b5a2a35cd4fbb402d9c56ab226a5b6175b8920da95298d18199054ddd; PR #12 MERGED; merge 0a2dd886bbe59698a6d2eb4c99f66e7f9270063a; validation→merge source/test delta NONE; STAGE09_DOTNET_PIN_PASS; STAGE09_T0_BUILD_PASS; STAGE09_RENDER_SCENE_TESTS_PASS; STAGE09_T1_SCENE_PASS; STAGE09_STAGE04_REGRESSION_PASS; render-scene/v1
-BLOCKERS: AŞAMA 09 blocker yok. AŞAMA 01/AŞAMA 06 gerçek Android ve AŞAMA 08 local Mac/ios-arm64/physical iPhone kapıları DEFERRED_EXTERNAL_GATE olarak açık kalır; AŞAMA 09 bunları kapatmaz.
-NEXT_ACTION: AŞAMA 10 — P0 temel geometri renderer'ı — bir sonraki kullanıcı `devam` turunda başlatılır. Bir turda en fazla bir aşama kuralı gereği bu AŞAMA 09 kapanış turunda AŞAMA 10 başlatılmaz.
+ACTIVE_PROGRAM: ANDROID_REVALIDATION_01_09
+CURRENT_STAGE: V01 — Toolchain, runner ve emulator altyapısı
+CURRENT_SUBSTEP: V01.ready
+STATUS: FIX_REQUIRED
+LAST_IMPLEMENTED_STAGE: AŞAMA 09 — DONE
+IMPLEMENTATION_NEXT: AŞAMA 10 — NOT_STARTED; Android doğrulama programının yanında ayrı cursor olarak korunur
+LAST_VERIFIED_REVISION: 3f4023cb637cddb5cf97677cd57dadb0e36814c5 — plan revizyonu öncesi main; her yeni turda gerçek main HEAD yeniden doğrulanır
+LAST_HISTORICAL_EVIDENCE: docs/evidence/STAGE_09.md; run 32815175055/#6; artifact 9551137293; PR #12 merge 0a2dd886bbe59698a6d2eb4c99f66e7f9270063a
+ACTIVE_PLAN: ANDROID_DOGRULAMA_PLANI.md
+PENDING_EMULATOR_QUEUE: EMPTY
+BLOCKERS: Aktif blocker yok. Runner/bilgisayar çevrim dışıysa kod çalışması sürer ve exact test PENDING_EMULATOR_QUEUE'ya alınır; kanıtsız VALIDATED/DONE yazılmaz. Fiziksel Android farkları release öncesi açık kalır. iOS aktif kapsam dışıdır ve Android'i bloke etmez.
+NEXT_ACTION: V01'i başlat; mevcut gate'in executable harness, gerçek APK, screenshot ve crash/ANR kanıt boşluklarını düzeltmeden altyapı PASS sayma.
 LAST_UPDATE: 2026-08-25
 ```
 
@@ -38,8 +42,8 @@ Durum değerleri yalnızca şunlardır:
 Kullanıcı `devam` dediğinde veya projeyi sürdürmeyi istediğinde ajan şu kurallara uyar:
 
 1. Önce bu checkpoint, gerçek dosya ağacı, Git durumu ve kullanıcı değişiklikleri kontrol edilir.
-2. `IN_PROGRESS` aşama varsa yalnız o aşamadan devam edilir.
-3. Aktif aşama `DONE` ise ilk tamamlanmamış aşama başlatılır.
+2. `ANDROID_DOGRULAMA_PLANI.md` içindeki V01–V09 programı tamamlanmadıysa açık VXX doğrulaması birinci iş cursor'ıdır.
+3. Normal geliştirme cursor'ı AŞAMA 10'da ayrıca korunur. Runner çevrim dışıyken VXX için yapılabilecek güvenli kod/audit işi bittiyse host-independent geliştirme devam edebilir; fakat bekleyen Android kanıtı PASS/DONE sayılmaz ve yüksek-riskli runtime değişiklikleri yığılmaz.
 4. Bir kullanıcı turunda **en fazla bir aşama tamamlanır**. Aşama biterse sonraki aşama aynı turda başlatılmaz.
 5. Bir aşama bir turda bitmek zorunda değildir. Bitmezse tamamlanan alt adımlar işaretlenir, durum `IN_PROGRESS` kalır ve tek bir somut `NEXT_ACTION` yazılır.
 6. Çıkış kriteri dosya, komut, test veya gerçek cihaz kanıtı olmadan işaretlenmez.
@@ -49,10 +53,12 @@ Kullanıcı `devam` dediğinde veya projeyi sürdürmeyi istediğinde ajan şu k
 10. Dependency kendiliğinden yükseltilmez. Her yükseltme ayrı doğruluk, lisans ve artifact kontrolü gerektirir.
 11. Kullanıcıya ait değişiklikler korunur; destructive Git veya dosya işlemi yapılmaz.
 12. Her turun sonunda yalnız kısa sonuç, çalıştırılan testler, kalan risk ve sonraki eylem raporlanır.
+13. Self-hosted runner/bilgisayar çevrim dışıysa exact SHA ve gerekli test `PENDING_EMULATOR_QUEUE` olarak kaydedilir; aynı queued koşu gereksiz yere çoğaltılmaz.
+14. Kullanıcı iOS'u yeniden etkinleştirmedikçe iOS workflow/build/spike/signing işi yapılmaz.
 
-### Aktif yürütme istisnası — dış erişim kapıları
+### Aktif kapsam ve dış erişim kapıları
 
-2026-08-24 kullanıcı onayıyla `docs/USER_APPROVED_EXECUTION_OVERRIDE.md` yürürlüktedir. AŞAMA 01'in gerçek Android cihaz install/launch ve iOS erişim envanteri kapıları `DEFERRED_EXTERNAL_GATE` olarak açık kalır; bunlar sahte PASS/DONE yapılmaz. Buna rağmen fiziksel cihaz/hesap erişimine bağımlı olmayan sonraki aşamalar `gecmis.md` içindeki `NEXT_WORK_STAGE` sırasıyla yürütülebilir. Bir turda en fazla bir aşama tamamlama kuralı değişmez. Release/beta/final cihaz kapılarında ertelenen dış kanıtlar yeniden zorunlu olarak açılır.
+2026-08-25 kullanıcı kararıyla aktif ürün ve test hedefi Android-only olarak revize edilmiştir. AŞAMA 01–09, `ANDROID_DOGRULAMA_PLANI.md` içindeki V01–V09 turuyla kod + host test + gerektiğinde gerçek app emulator kanıtı üzerinden yeniden incelenir. Fiziksel Android farkları sahte PASS yapılmadan release/beta kapılarına taşınabilir. iOS geçmiş kayıtları ve taşınabilir mimari korunur fakat Mac/Xcode/iPhone/iOS workload/signing işi future option'dır; Android sırasını ve Android Definition of Done'ı bloke etmez.
 
 AŞAMA 09 özel renderer implementation'ı için ADR 0002'de istenen kullanıcı GO kararı verilmiş ve stage gerçek T0/T1 kanıtıyla tamamlanmıştır; GO yeniden istenmez.
 
@@ -73,7 +79,7 @@ Test seviyeleri:
 | T1 | Değişen modülün unit testleri | Her uygulama turunda |
 | T2 | 1 küçük DWG + 1 küçük DXF smoke | Parser/render/mobil akışı değişince |
 | T3 | Mini corpus + gerçek Android Release cihaz testi | Aşama 05, 07, 15, 20 |
-| T4 | Tam private/public corpus + iki platform Release + artifact audit | Aşama 21, 26 |
+| T4 | Tam private/public corpus + Android Release + artifact audit | Aşama 21, 26 |
 
 ---
 
@@ -82,6 +88,7 @@ Test seviyeleri:
 Kullanıcı açıkça değiştirmedikçe:
 
 - v1 bir **2D viewer** olacaktır; editor veya writer olmayacaktır.
+- Aktif v1 teslim hedefi yalnız **Android**'dir. iOS, kullanıcı yeniden etkinleştirene kadar future option'dır ve Android release kapısı değildir.
 - DWG ve DXF doğrudan cihazda okunur; zorunlu DWG→DXF bulut/ara dönüşümü yoktur.
 - Temel açma/render akışı local ve offline’dır; hesap, giriş veya sunucu gerekmez.
 - v1 kullanıcı için ücretsizdir; reklam, abonelik, ücretli CAD özelliği veya dosya başına ödeme yoktur.
@@ -93,14 +100,14 @@ Kullanıcı açıkça değiştirmedikçe:
 - Orijinal kullanıcı dosyası değiştirilmez; v1’de save/overwrite yoktur.
 - Unsupported/proxy entity, eksik font, XREF veya raster sessizce yok olmaz; compatibility özeti kullanıcıya gösterilir.
 - Uygulama adı ve ikonu Autodesk/AutoCAD/DWG markasını ürün markası gibi kullanmaz. Format uyumluluğu açıklama metninde, release tarihindeki güncel marka kılavuzuna göre ifade edilir.
-- Google Play/Apple geliştirici hesabı, Mac/Xcode, cihaz ve bakım maliyetleri “ücretsiz CAD teknolojisi” iddiasının kapsamı dışındadır.
+- Google Play geliştirici hesabı, Android cihaz ve bakım maliyetleri “ücretsiz CAD teknolojisi” iddiasının kapsamı dışındadır. Apple/Mac/iPhone maliyetleri yalnız future iOS track yeniden açılırsa değerlendirilir.
 
 ### v1 kapsamı
 
 Zorunlu:
 
 - Yerel `.dwg` ve `.dxf` açma
-- Android ve iOS gerçek cihaz
+- Android emulator ile sürekli smoke; beta/release için gerçek Android cihaz
 - Model space; corpus gerektiriyorsa standart paper space/layout/viewport
 - Pan, pinch zoom, fit extents, orientation
 - Layer listesi ve show/hide
@@ -109,6 +116,8 @@ Zorunlu:
 - Türkçe metin/encoding ve görünür font substitution
 - Loading/progress/cancel talebi, kontrollü hata ve compatibility raporu
 - Local/offline/privacy, close/reopen ve lifecycle güvenilirliği
+
+Future iOS uyumluluğu için shared Core/Cad/Rendering katmanları platformdan bağımsız ve adapter sınırları temiz tutulur. Bu taşınabilirlik kuralı, aktif turda iOS build/test yapılacağı anlamına gelmez.
 
 v1 dışı:
 
@@ -177,7 +186,8 @@ Read-only document handle / metadata
 IRenderSceneBuilder ──► immutable RenderScene + CompatibilityReport
         │
         ▼
-ICadRenderer ──► Skia renderer ──► Android / iOS canvas
+ICadRenderer ──► Skia renderer ──► Android canvas
+                                  └── future iOS adapter boundary (inactive)
 ```
 
 Kurallar:
@@ -204,7 +214,7 @@ src/
   MobileCad.Core/                 # session, scene, geometry, diagnostics contracts
   MobileCad.IO.ACadSharp/         # parser adapter; başka katmanlara sızmaz
   MobileCad.Rendering.Skia/       # renderer ve platformdan bağımsız kamera
-  MobileCad.App/                  # .NET MAUI Android/iOS kabuğu
+  MobileCad.App/                  # bugün composition class library; V04'te Android MAUI shell, future iOS adapter'a açık
 tests/
   MobileCad.UnitTests/
   MobileCad.IntegrationTests/
@@ -312,7 +322,7 @@ Corpus ilk benchmarkından sonra hedefler cihaz bazında bir kez sabitlenir. Ba�
 | Extreme: >500 bin | Ürün garantisi yok | Crash yerine kontrollü uyarı/ret |
 
 - Debug performansı release kararı değildir.
-- Referans: kullanıcının ana telefonu + mümkünse en az bir 4–6 GB RAM orta/alt segment fiziksel Android; iOS için en az bir desteklenen gerçek iPhone.
+- Referans: kullanıcının ana telefonu + mümkünse en az bir 4–6 GB RAM orta/alt segment fiziksel Android. Future iOS track yeniden açılırsa ayrı gerçek iPhone matrisi eklenir.
 - Repeat-open testinde kapanıştan sonra PSS/native bellek monoton büyümemeli; ilk kapanış baseline’ına göre beş döngü sonrası provisional tolerans +%15’tir ve Aşama 20’de cihaz bazında kesinleştirilir.
 - `largeHeap` varsayılan kapalıdır. Cache bütçesi ve hard guard değerleri gerçek `memoryClass`/profiler sonucuyla belirlenir.
 
@@ -356,12 +366,16 @@ Kurallar:
 - Açık internette bulunan DWG/DXF, font veya screenshot yeniden dağıtılabilir sayılmaz.
 - Müşteri/kullanıcı çizimleri yalnız izinli private corpus’ta, Git dışında ve hassas yol/metin loglanmadan tutulur.
 - Uygulamaya yalnız açık redistribution izni kanıtlanmış fontlar gömülür. AutoCAD kurulumundan alınan SHX dosyaları bundle edilmez. Kullanıcının kendi fontunu lokal seçmesi dağıtım sayılmaz.
-- RC’de gerçek APK/AAB/IPA içeriği çıkarılır; kaynak/license evidence ile karşılaştırılır.
+- Android RC’de gerçek APK/AAB içeriği çıkarılır; kaynak/license evidence ile karşılaştırılır. IPA yalnız future iOS reactivation planında ele alınır.
 - Release için CycloneDX veya SPDX SBOM, notices ve immutable compliance snapshot oluşturulur.
 
 ---
 
 ## 7. Aşamalı uygulama planı
+
+Aktif yürütmede iki cursor vardır: AŞAMA 01–09 implementation geçmişi AŞAMA 09'da kalır; Android geriye dönük test cursor'ı `ANDROID_DOGRULAMA_PLANI.md` içindeki V01'den başlar. Normal implementation cursor'ı AŞAMA 10'dur. V01–V09 bir eski aşamayı sahte biçimde yeniden `DONE` yapmaz; mevcut kodu denetler, bulunan hatayı yeni commit/evidence ile düzeltir.
+
+Aktif Android sıra AŞAMA 10–22 ve ardından AŞAMA 25–27'dir. AŞAMA 23–24 korunmuş future iOS track'tir; atlanması Android planında sıra ihlali değildir.
 
 ### Aşama indeksi
 
@@ -388,11 +402,11 @@ Kurallar:
 - [ ] AŞAMA 20 — Ölçümlü performans ve bellek optimizasyonu
 - [ ] AŞAMA 21 — Android tam corpus regresyon ve beta kapısı
 - [ ] AŞAMA 22 — Android Release/AAB/compliance RC
-- [ ] AŞAMA 23 — iOS toolchain, shared core ve ilk gerçek cihaz
-- [ ] AŞAMA 24 — iOS fidelity, lifecycle ve Release archive
-- [ ] AŞAMA 25 — Cross-platform beta ve yalnız blocker düzeltmeleri
-- [ ] AŞAMA 26 — Dependency freeze, final audit ve RC onayı
-- [ ] AŞAMA 27 — v1 artifact, yayın/handoff ve kapanış
+- [ ] AŞAMA 23 — iOS toolchain, shared core ve ilk gerçek cihaz — `DEFERRED_FUTURE_IOS / ACTIVE_ANDROID_SEQUENCE_OUT`
+- [ ] AŞAMA 24 — iOS fidelity, lifecycle ve Release archive — `DEFERRED_FUTURE_IOS / ACTIVE_ANDROID_SEQUENCE_OUT`
+- [ ] AŞAMA 25 — Android beta ve yalnız blocker düzeltmeleri
+- [ ] AŞAMA 26 — Android dependency freeze, final audit ve RC onayı
+- [ ] AŞAMA 27 — Android v1 artifact, yayın/handoff ve kapanış
 
 ### AŞAMA 00 — Çalışma alanı ve yürütme zemini
 
@@ -421,10 +435,10 @@ Test: Git status ve ignore dry-run.
 - [x] Temiz MAUI smoke app `net10.0-android` Debug ve Release derlendi; güncel CI run `32739952628` exact toolchain/workload, pinned `ApplicationId=com.smitelagwar.mobildwg.stage01smoke`, Debug/Release, manifest `minSdk=24 / targetSdk=36` ve APK artifact kapılarını geçti.
 - [x] Fiziksel cihaz kapısı için Windows PowerShell ve Bash gate scriptleri eklendi; CI üzerinde syntax/parse doğrulaması PASS oldu. Scriptler exact toolchain/workload, fiziksel `state=device`, emulator dışlama, Debug/Release build, manifest 24/36, install ve launcher `Status: ok` koşullarını zorunlu kılar.
 - [ ] `adb` ile kullanıcının gerçek telefonuna yüklenir ve açılır; gerçek geliştirme makinesinde `STAGE01_DEVICE_GATE_PASS` alınır.
-- [ ] iOS için Mac/Xcode/iPhone/Apple Developer erişimi yalnız envanterlenir; henüz kurulum yapılmaz.
+- [ ] Tarihsel iOS erişim envanteri tamamlanmadı; 25.08.2026 Android-only kapsam kararıyla bu madde aktif AŞAMA 01/Android V01 çıkışından çıkarıldı ve future iOS track'e taşındı.
 
 Test: `dotnet --info`, workload list, Android Debug/Release build, manifest/API/package baseline ve device-gate script syntax kontrolü en güncel AŞAMA 05 implementation-head regresyonu `Stage 01 Toolchain Smoke` run `32759095888` / #44 üzerinde PASS. Root Central Package Management etkisinden kaçınmak için temiz MAUI smoke projesi `$RUNNER_TEMP` altında izole edildi. Fiziksel Android install/launch ancak gerçek cihazdaki `STAGE01_DEVICE_GATE_PASS` ile kapanır.  
-Çıkış: Gerçek telefonda boş MAUI uygulaması çalışır; exact toolchain kanıtı vardır. Telefon/iOS erişimi olmadığından aşama `BLOCKED / DEFERRED_EXTERNAL_GATE` kalır; `docs/USER_APPROVED_EXECUTION_OVERRIDE.md` bağımsız sonraki aşamaların ilerlemesine izin verir.
+Çıkış (tarihsel): Gerçek telefonda boş MAUI uygulaması şartı tamamlanmadığı için kayıt `BLOCKED / DEFERRED_EXTERNAL_GATE` kaldı. Aktif Android V01, emulator altyapısını ayrı kanıtlar; fiziksel Android açığı release cihaz matrisine taşınır. iOS envanteri future track'tir ve Android V01'i engellemez.
 
 ### AŞAMA 02 — Canlı dependency/lisans kanıtı ve kilitler
 
@@ -454,7 +468,7 @@ Test: GitHub Actions `Stage 02 Dependency Audit` run `32747785867` / #9 SUCCESS;
 - [x] Set basic geometry, Turkish text, nested block, dimension, hatch ve paper-space/layout feature coverage içeriyor.
 - [x] CI-derived truncated/corrupt DWG ile committed missing-font/missing-XREF negatif fixture'ları eklendi.
 - [x] Golden görüntü redistribution sözleşmesi `docs/GOLDEN_CONTRACT.md` içinde tanımlandı; izin kanıtı olmadan image golden repoya giremez.
-- [x] Android/iOS fiziksel cihaz matrisi ve provisional benchmark profilleri `docs/DEVICE_MATRIX.md` içinde yazıldı; gerçek cihaz slotları erişim yokluğu nedeniyle UNKNOWN/DEFERRED_EXTERNAL_GATE.
+- [x] Android fiziksel cihaz matrisi, API 36 emulator slotu ve provisional benchmark profilleri `docs/DEVICE_MATRIX.md` içinde yazıldı; gerçek cihaz slotları erişim yokluğu nedeniyle UNKNOWN/DEFERRED_EXTERNAL_GATE, iOS slotları future/inactive'dir.
 
 Test: GitHub Actions `Stage 03 Corpus Audit` run `32752374980` / #4 SUCCESS; `STAGE03_FIXTURE_AUDIT_PASS fixtures=9 derived_negatives=2`, `STAGE03_DUAL_HASH_PASS fixtures=6`, private-ignore/coverage/version/hash/provenance ve evidence artifact upload PASS. Aynı final head üzerinde Stage 02 run #15 ve Stage 01 run #34 SUCCESS.  
 Çıkış: Sağlandı. Mini corpus + beklenen sonuç manifest’i, dual-hash source integrity kaydı, golden contract ve cihaz matrisi mevcut. PR #5 merge commit `fb2d0982efeab8f78bc78dc82a7a8deb688190f8`. AŞAMA 01 dış cihaz kapıları ertelenmiş olarak açık kalır.
@@ -528,6 +542,8 @@ Test: Final CI `Stage 07 ProCad Source Spike` run `32766501837` / #5 `SUCCESS`; 
 
 ### AŞAMA 08 — Erken iOS AOT/native fizibilite smoke
 
+**Aktif kapsam notu (25.08.2026):** Bu aşama tarihsel karakterizasyon olarak korunur. Android-only v1 sırasında yeniden açılmaz; workflow yalnız manuel future reactivation içindir. V08'de yalnız Android graph izolasyonu kontrol edilir, iOS build/test yapılmaz.
+
 **Amaç:** Android’e aylarca yatırım yapmadan seçilen dependency hattının iOS Release/AOT’ta temel olarak çalışabildiğini kanıtlamak.
 
 İşler:
@@ -541,7 +557,7 @@ Test: Final CI `Stage 07 ProCad Source Spike` run `32766501837` / #5 `SUCCESS`; 
 - [x] Planın dış blocker/risk seçeneği uygulandı: mevcut kullanıcı-approved execution override ile iOS riskleri açıkça kaydedilip bağımsız sonraki işlerin ilerlemesine izin verildi. Bu risk kabulü iOS'u tamamlanmış/PASS saymaz.
 
 Test: Yetkili karakterizasyon `Stage 08 iOS Feasibility` run `32781026946` / #18 `SUCCESS`; artifact `9540018558`, digest `sha256:1414e3bf5a9800e150019c48f620c64efcd3d5282ac7322ef9a5e5746ab746f7`. Evidence JSON `BLOCKED_PARTIAL_EVIDENCE`. Workflow success, üç probe'un PASS olduğu anlamına gelmez; gerçek blocker'ları deterministik kaydettiği anlamına gelir.  
-Çıkış: **Sağlandı — dış blocker/risk kabulü açıkça kaydedildi; iOS fizibilitesi kanıtlanmış değildir.** Complete local/managed Mac, `ios-arm64` AOT ve fiziksel iPhone kapıları `docs/LOCAL_DEVICE_REVALIDATION.md` ve AŞAMA 23/24 için açık kalır. AŞAMA 09 için gerekli kullanıcı GO kararı daha sonra verilmiş ve implementation başlamıştır.
+Çıkış: **Sağlandı — dış blocker/risk kabulü açıkça kaydedildi; iOS fizibilitesi kanıtlanmış değildir.** Complete local/managed Mac, `ios-arm64` AOT ve fiziksel iPhone kapıları yalnız future AŞAMA 23/24 yeniden açılırsa geçerlidir. AŞAMA 09 için gerekli kullanıcı GO kararı daha sonra verilmiş ve implementation tamamlanmıştır.
 
 ### AŞAMA 09 — RenderScene, kamera ve diagnostics temeli
 
@@ -780,44 +796,23 @@ Test: Signed Release smoke + artifact audit.
 
 ### AŞAMA 23 — iOS toolchain, shared core ve ilk gerçek cihaz
 
-**Amaç:** Windows’ta varsayım üretmeden iOS hattını gerçekten kurmak.
+**Durum:** `DEFERRED_FUTURE_IOS / ACTIVE_ANDROID_SEQUENCE_OUT`. Kullanıcı iOS'u açıkça yeniden etkinleştirene kadar bu bölüm okunup uygulanmaz, Android AŞAMA 25'i bloke etmez.
 
-İşler:
-
-- [ ] Mac, desteklenen Xcode/.NET workload ve exact sürümler hazırlanır.
-- [ ] iPhone erişimi/signing yöntemi kaydedilir; App Store üyeliği gerekiyorsa açık blocker olur.
-- [ ] Shared core/tests Mac’te build edilir; platform fork’u minimum tutulur.
-- [ ] iOS file importer/security-scoped URL/app-private cache akışı uygulanır.
-- [ ] Skia render, gestures ve küçük DWG/DXF gerçek iPhone’da çalışır.
-- [ ] Release AOT/trimming/reflection/resource loading problemleri erken test edilir.
-
-Test: iOS Debug + Release gerçek device smoke.  
-Çıkış: Gerçek iPhone DWG/DXF açar ve gezilir. Mac/iPhone yoksa aşama `BLOCKED`; simülatör başarı sayılmaz.
+Future reactivation olduğunda bu aşama sıfır varsayımla yeniden planlanır. Başlangıç kaynakları: `docs/evidence/STAGE_08.md`, `docs/STAGE_01_IOS_ACCESS_INVENTORY.md`, `docs/LOCAL_DEVICE_REVALIDATION.md` ve planın Git geçmişindeki 1.0 sürümü. Active Android turlarında bu kaynaklar yüklenmez veya güncellenmez.
 
 ### AŞAMA 24 — iOS fidelity, lifecycle ve Release archive
 
-**Amaç:** Android’de kanıtlanan ürünü iOS’ta eşdeğer güvenilirliğe taşımak.
+**Durum:** `DEFERRED_FUTURE_IOS / ACTIVE_ANDROID_SEQUENCE_OUT`. AŞAMA 23 yeniden etkinleştirilmeden bu bölüm çalıştırılmaz.
 
-İşler:
+Future reactivation planı gerçek iPhone lifecycle/fidelity/corpus/performance ve signed archive kapılarını yeniden tanımlar. Android eşikleri kör kopyalanmaz; gerçek cihaz olmadan PASS yazılmaz. Bu kısa placeholder Android v1 için iş veya blocker üretmez.
 
-- [ ] Font/encoding, file URI, native Skia, memory ve AOT platform farkları giderilir.
-- [ ] Background/foreground, orientation, memory warning, safe area, dark/light.
-- [ ] Imported drawing/cache dosyaları iCloud backup dışında tutulur; security-scoped bookmark erişilemezse kullanıcıdan yeniden seçim istenir.
-- [ ] Mini ardından tam corpus’un uygulanabilir kısmı gerçek iPhone’da çalışır.
-- [ ] Performance ve repeat-open ölçülür; Android eşikleri kör kopyalanmaz.
-- [ ] Signed archive/IPA süreci, privacy ve open-source notices doğrulanır.
-- [ ] iPad mevcutsa layout/tablet smoke; yoksa açık test boşluğu.
-
-Test: iOS Release corpus + lifecycle + artifact inventory.  
-Çıkış: iOS RC gerçek cihazda blocker’sız; signed archive ve compliance snapshot vardır.
-
-### AŞAMA 25 — Cross-platform beta ve yalnız blocker düzeltmeleri
+### AŞAMA 25 — Android beta ve yalnız blocker düzeltmeleri
 
 **Amaç:** Scope creep olmadan gerçek kullanım geri bildirimiyle release’i sertleştirmek.
 
 İşler:
 
-- [ ] İzinli küçük beta grubu veya kullanıcı cihazlarında günlük mimari/statik dosyalar denenir.
+- [ ] İzinli küçük beta grubu veya Android kullanıcı cihazlarında günlük mimari/statik dosyalar denenir.
 - [ ] Geri bildirim formatı: fixture hash, platform/build, reproduce, compatibility report, beklenen/gerçek.
 - [ ] Yalnız crash, veri gizliliği, P0 fidelity, açma/lifecycle ve ciddi performans blocker’ları düzeltilir.
 - [ ] Yeni özellik/edit/export/XREF crawler bu aşamaya alınmaz.
@@ -826,29 +821,29 @@ Test: iOS Release corpus + lifecycle + artifact inventory.
 Test: Fix bazlı T1/T2; kapanışta T4.  
 Çıkış: Açık release blocker yok; bilinen sınırlamalar güncel.
 
-### AŞAMA 26 — Dependency freeze, final audit ve RC onayı
+### AŞAMA 26 — Android dependency freeze, final audit ve RC onayı
 
-**Amaç:** Store’a/sunuma gidecek exact iki artifact’i dondurmak.
+**Amaç:** Store’a/sunuma gidecek exact Android artifact'lerini dondurmak.
 
 İşler:
 
 - [ ] Dependency/toolchain freeze; lockfile ve resolved graph diff sıfır.
-- [ ] Android+iOS full corpus, lifecycle, performance ve signed artifact smoke son kez çalışır.
-- [ ] Gerçek APK/AAB/IPA/archive inventory; SBOM; license/source/native/font/asset evidence karşılaştırılır.
+- [ ] Android full corpus, lifecycle, performance ve signed artifact smoke son kez çalışır.
+- [ ] Gerçek APK/AAB inventory; SBOM; license/source/native/font/asset evidence karşılaştırılır.
 - [ ] Unknown/rejected dependency, analytics/upload, debug endpoint, secret veya proprietary asset aranır.
 - [ ] Privacy, store, target SDK/Xcode ve Autodesk trademark yönergeleri `[LIVE-VERIFY]` edilir.
 - [ ] Release notes, compatibility matrix, privacy policy ve support metni final olur.
 
 Test: T4 tam final gate.  
-Çıkış: İki platform RC `GREEN`; herhangi bir unknown = NO-GO.
+Çıkış: Android RC `GREEN`; herhangi bir unknown = NO-GO.
 
-### AŞAMA 27 — v1 artifact, yayın/handoff ve kapanış
+### AŞAMA 27 — Android v1 artifact, yayın/handoff ve kapanış
 
 **Amaç:** Çalışan uygulamayı tekrar üretilebilir biçimde teslim etmek.
 
 İşler:
 
-- [ ] Final Android APK/AAB ve iOS archive/IPA, checksum ve build talimatları üretilir.
+- [ ] Final Android APK/AAB, checksum ve build talimatları üretilir.
 - [ ] Kullanıcı store hesaplarını sağladıysa submission yapılır; sağlamadıysa store-ready paket/checklist teslim edilir ve yayın alt hedefi açıkça blokeli kalır.
 - [ ] Clean machine/CI locked restore + build/test yolu doğrulanır.
 - [ ] Version/tag/release snapshot yöntemi kullanıcı onayıyla uygulanır; otomatik push yapılmaz.
@@ -856,7 +851,7 @@ Test: T4 tam final gate.
 - [ ] Bu plan checkpoint’i `DONE`; aşağıdaki Definition of Done tek tek işaretlenir.
 
 Test: Final install/open/close smoke ve checksum doğrulaması.  
-Çıkış: Gerçek Android ve iOS cihazda çalışan, exact kaynaklardan yeniden üretilebilen, denetlenmiş ücretsiz viewer v1 teslim edilmiştir.
+Çıkış: Gerçek Android cihazda çalışan, exact kaynaklardan yeniden üretilebilen, denetlenmiş ücretsiz Android viewer v1 teslim edilmiştir. iOS future option bu teslimi bloke etmez.
 
 ---
 
@@ -870,8 +865,10 @@ Test: Final install/open/close smoke ve checksum doğrulaması.
 | SHX/font yerleşimi bozulur | Missing/substitution ve text extents diff | Görünür uyarı, kullanıcı font importu, audited fallback; proprietary bundle yok |
 | Büyük çizimde OOM/ANR | PSS/frame/primitive artışı | Guard + controlled ret; profiler tabanlı culling/cache; largeHeap son çare |
 | Test corpus lisans/gizlilik sorunu | Provenance yok | Repodan çıkarma değil önce dağıtımı durdurma; private/ignored taşıma kullanıcı onayıyla; evidence düzeltme |
-| Android/iOS platform farkı | AOT/font/URI/native crash | Platform adapter; shared core’u fork etmeme; ayrı release gate |
-| Mac/iPhone/store hesabı yok | Aşama 08/23’te erişim yok | `BLOCKED`; Android’i bozma veya iOS’u simülatörle tamamlandı sayma; erteleme ancak kullanıcının açık risk kabulüyle plan revizyonudur |
+| Android emulator kanıtının fazla yorumlanması | Geçici smoke APK, çalışmayan harness veya bozuk screenshot | Scriptin gerçekten yaptığı işi oku; gerçek app/executable marker/geçerli artifact olmadan viewer PASS yazma |
+| Self-hosted runner çevrim dışı | Job queued/runner yok | Kod ve host testine devam et; exact SHA'yı test kuyruğuna al; aynı işi tekrarlama; kanıtsız VALIDATED yazma |
+| Future Android/iOS platform farkı | AOT/font/URI/native crash | Shared core’u fork etme; platform adapter sınırını koru; iOS ancak açık reactivation ile ayrı gate alır |
+| Mac/iPhone/store hesabı yok | Future iOS yeniden açıldığında erişim yok | Android release'i bloke etme; future iOS track'i `BLOCKED` bırak ve simülatörü gerçek iPhone PASS sayma |
 | Unknown native/transitive asset | Artifact inventory eşleşmiyor | Release NO-GO; kaynak/lisans bulunana veya bileşen çıkarılana kadar dur |
 | Dependency terk edilir | Release/issue activity düşer | Pinned sürüm + source archive; adapter sayesinde kontrollü fork/alternatif spike |
 | Marka/policy değişir | Store review veya yeni guideline | Release gününde yalnız resmi kaynakla yeniden doğrula |
@@ -881,24 +878,26 @@ Test: Final install/open/close smoke ve checksum doğrulaması.
 
 ## 9. Definition of Done — uygulama ne zaman gerçekten bitti?
 
-Plan yalnız aşağıdakilerin tamamı gerçek kanıtla sağlandığında tamamlanır:
+Aktif Android v1 planı yalnız aşağıdakilerin tamamı gerçek kanıtla sağlandığında tamamlanır:
 
-- [ ] Android ve iOS gerçek cihazda local DWG ve DXF açıyor.
+- [ ] Gerçek Android cihazda local DWG ve DXF açılıyor; emulator sürekli smoke kanıtı ayrıca mevcut.
 - [ ] P0 geometry/block/text/dimension/hatch kabul matrisi geçiyor.
 - [ ] Pan/pinch/fit/layer toggle ve lifecycle stabil.
 - [ ] Unsupported/proxy/font/XREF/raster sorunları sessiz değil.
 - [ ] Sertifikalı corrupt/adversarial corpus crash/ANR yerine kontrollü davranıyor; yakalanamayan process-fatal runtime sınırları belgelenmiş.
 - [ ] Final performans/bellek hedefleri referans cihazlarda kaydedilmiş ve geçilmiş veya dürüst kontrollü limit uygulanmış.
-- [ ] Full corpus regresyonu iki platform Release artifact’i için geçiyor.
+- [ ] Full corpus regresyonu Android Release artifact'i için geçiyor.
 - [ ] Original drawing immutable; cloud/upload/account zorunluluğu yok.
 - [ ] Runtime dependency/native/font/asset zincirinde unknown veya policy-RED bileşen yok.
-- [ ] APK/AAB/IPA inventory, SBOM, notices ve release evidence eşleşiyor.
+- [ ] APK/AAB inventory, SBOM, notices ve release evidence eşleşiyor.
 - [ ] CAD SDK/API için per-user/per-file/runtime royalty veya zorunlu servis ücreti saptanmamış.
 - [ ] Uygulama v1’de kullanıcı için ücretsiz; core özellik paywall arkasında değil.
 - [ ] Signed/store-ready artifact, checksum, build ve kullanım belgeleri teslim edilmiş.
 - [ ] Bilinen compatibility sınırları yayımlanabilir metinde dürüstçe belirtilmiş.
 
 “Tüm DWG’leri AutoCAD ile piksel piksel aynı gösterir” bir DoD değildir ve vaat edilmez.
+
+iOS dönüşü ayrı bir ürün/plan reactivation kararıdır. O gün iOS gerçek cihaz, AOT, lifecycle, corpus ve archive DoD maddeleri yeniden eklenir; bugünkü Android v1 teslimi geriye dönük olarak geçersiz sayılmaz.
 
 ---
 

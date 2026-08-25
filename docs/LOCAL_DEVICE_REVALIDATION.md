@@ -1,16 +1,33 @@
 # Local / Real-Device Revalidation Checklist
 
-Bu belge mevcut GitHub/CI geliştirme geçmişini yeniden yazmak için değil, daha sonra tam yerel geliştirme ortamı ve gerçek cihazlar hazır olduğunda ikinci kabul turunu sistematik yürütmek için tutulur.
+Bu belge emulator ve fiziksel Android kanıtını birbirinden ayırır. Aktif V01–V09 ayrıntısı `ANDROID_DOGRULAMA_PLANI.md` içindedir; buradaki fiziksel cihaz satırları emulator PASS ile kapanmaz.
 
 Temel kural: **CI kanıtı cihaz kanıtı değildir.** Daha önce CI ile doğrulanan implementation tekrar sıfırdan yazılmaz; ilgili commit/artifact checkout edilip gerçek ortamda yeniden doğrulanır. Audit sırasında hata bulunursa tarihsel evidence silinmez; düzeltme yeni commit ve yeni kanıtla kaydedilir.
 
 ## Durum değerleri
 
 - `PENDING_LOCAL`: Yerel/gerçek cihaz doğrulaması henüz yapılmadı.
+- `FIX_REQUIRED`: Güvenilir testten önce kapatılması gereken otomasyon/kanıt açığı bulundu.
 - `CONFIRMED`: Mevcut implementation ilgili gerçek ortamda aynen doğrulandı.
 - `FIXED_AND_CONFIRMED`: Revalidation sırasında hata bulundu, düzeltildi ve tekrar doğrulandı.
 - `STILL_DEFERRED`: Gerekli cihaz/hesap/ortam hâlâ yok.
 - `NOT_APPLICABLE`: Aday daha önce deterministic hard blocker ile reddedildiği için ilgili cihaz testi artık karar için gerekli değil; aday yeniden açılırsa tekrar zorunlu olur.
+
+## E0 — Aktif Android emulator revalidation lane
+
+| V aşaması | Kapsam | Emulator gereksinimi | Başlangıç durumu |
+|---|---|---|---|
+| V01 | Toolchain, runner, gate ve kanıt altyapısı | Zorunlu | `FIX_REQUIRED` |
+| V02 | Dependency/license/lockfile | Gereksiz | `NOT_STARTED` |
+| V03 | Fixture/hash/golden sözleşmesi | Gereksiz | `NOT_STARTED` |
+| V04 | Mimari + gerçek installable Android app shell | Zorunlu | `NOT_STARTED` |
+| V05 | ACadSharp parser/corpus | Headless + gerçek app linkage | `NOT_STARTED` |
+| V06 | FilePicker/SAF/safe-open/lifecycle/cache | Zorunlu | `NOT_STARTED` |
+| V07 | ProCad NO-GO ve graph izolasyonu | Uygulanmaz | `NOT_STARTED` |
+| V08 | Tarihsel iOS kaydı / Android graph izolasyonu | iOS testi çalıştırılmaz | `SCOPE_ARCHIVED` hedefi |
+| V09 | RenderScene/kamera/diagnostics | Host harness; Android linkage gerekirse | `NOT_STARTED` |
+
+Mevcut V01 açığı: gate geçici `Stage01Smoke` kuruyor, executable test harness gövdelerini çalıştırmıyor, byte-safe PNG üretmiyor ve PID/crash/ANR kanıtı yetersiz. Bunlar düzelmeden eski emulator koşusu `VALIDATED` sayılmaz.
 
 ## R0 — Temiz geliştirme ortamı
 
@@ -37,7 +54,9 @@ Temel kural: **CI kanıtı cihaz kanıtı değildir.** Daha önce CI ile doğrul
 - Orijinal DWG/DXF hash'i önce/sonra değişmemelidir.
 - Uygulama restart/process recreation sonrası stale cache/session kontrol edilir.
 
-## R3 — AŞAMA 08 Mac/iOS erken feasibility kapısı
+## R3 — Future iOS erken feasibility kapısı — aktif değil
+
+Bu bölüm yalnız kullanıcı iOS'u açıkça yeniden etkinleştirirse uygulanır; Android V01–V09 veya Android release'i bloke etmez.
 
 - Complete local/managed Mac üzerinde exact .NET `10.0.400` ve pinned iOS workload doğrulanır.
 - Workload'un gerçek Xcode requirement'ı ile seçili Xcode eşleştirilir; hosted CI bundle workaround'u kullanılmaz.
@@ -60,7 +79,7 @@ AŞAMA 09 ve sonrasında ertelenen her fiziksel/device-dependent kriter bu belge
 - eksik font/XREF/raster/proxy diagnostics,
 - full corpus ve gerçek cihaz Release performansı.
 
-## R5 — iOS tam kabul
+## R5 — Future iOS tam kabul — aktif değil
 
 AŞAMA 23/24 sırasında:
 
@@ -78,12 +97,12 @@ ayrı gerçek cihaz kanıtıyla kapanır.
 | Aşama | Ertelenen kriter | Gerekli ortam/donanım | Beklenen kanıt | Durum |
 |---|---|---|---|---|
 | 01 | Fiziksel Android install/launch | Gerçek Android + adb + pinned toolchain | `STAGE01_DEVICE_GATE_PASS`, cihaz/tool/version kaydı | `PENDING_LOCAL` |
-| 01 | iOS erişim envanteri | Mac/Xcode/iPhone/Apple Developer durumu | `docs/STAGE_01_IOS_ACCESS_INVENTORY.md` gerçek YES/NO/N/A | `PENDING_LOCAL` |
+| 01 | Future iOS erişim envanteri | Mac/Xcode/iPhone/Apple Developer durumu | Future reactivation kaydı | `DEFERRED_FUTURE_IOS` |
 | 06 | FilePicker/SAF + lifecycle/cache | Gerçek Android | DWG/DXF open, cancel/race/rotate/background/close/cache evidence | `PENDING_LOCAL` |
 | 07 | ProCad physical T3 | Gerçek Android | Exact candidate A/B | `NOT_APPLICABLE` — candidate deterministic precision blocker ile reddedildi; yeniden açılırsa zorunlu |
-| 08 | Baseline iOS Release + parse + Skia | Complete Mac + simulator | Stage08 parse/Skia markers | `PENDING_LOCAL` |
-| 08 | Trimming/AOT | Complete Mac + `ios-arm64` | linker evidence + Release/AOT publish | `PENDING_LOCAL` |
-| 08 | Fiziksel iPhone smoke | Gerçek iPhone + signing | install/launch/parse/render evidence | `PENDING_LOCAL` |
+| 08 | Baseline iOS Release + parse + Skia | Complete Mac + simulator | Stage08 parse/Skia markers | `DEFERRED_FUTURE_IOS` |
+| 08 | Trimming/AOT | Complete Mac + `ios-arm64` | linker evidence + Release/AOT publish | `DEFERRED_FUTURE_IOS` |
+| 08 | Fiziksel iPhone smoke | Gerçek iPhone + signing | install/launch/parse/render evidence | `DEFERRED_FUTURE_IOS` |
 
 ## Audit kayıt formatı
 

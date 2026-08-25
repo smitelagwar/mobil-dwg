@@ -1,11 +1,14 @@
 name: Android Emulator Automated Test Gate
 
 # Bu workflow normal main veya feature branch push'larında ÇALIŞMAZ.
-# Yalnızca 'android-test' branch'ine push yapıldığında veya manuel (workflow_dispatch) tetiklenir.
+# Yalnızca 'android-test' branch'ine anlamlı (Markdown-only olmayan) push yapıldığında
+# veya manuel (workflow_dispatch) tetiklenir.
 on:
   push:
     branches:
       - android-test
+    paths-ignore:
+      - '**/*.md'
   workflow_dispatch:
     inputs:
       configuration:
@@ -17,6 +20,13 @@ on:
           - Release
           - Debug
 
+permissions:
+  contents: read
+
+concurrency:
+  group: android-emulator-${{ github.repository }}
+  cancel-in-progress: false
+
 jobs:
   android-emulator-gate:
     name: Run Android Emulator Gate on Windows Runner
@@ -25,7 +35,9 @@ jobs:
 
     steps:
       - name: Checkout Repository
-        uses: actions/checkout@v4
+        uses: actions/checkout@v5
+        with:
+          persist-credentials: false
 
       - name: Run Android Emulator Gate Script
         shell: powershell

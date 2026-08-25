@@ -1,5 +1,7 @@
 # AŞAMA 08 Kanıtı — Erken iOS AOT/native fizibilite karakterizasyonu
 
+> **Aktif değil:** 25.08.2026 Android-only kapsam kararıyla bu belge future iOS reactivation kaydıdır. Android V08 yalnız graph/sınır izolasyonunu kontrol eder; Mac/iOS workflow veya yeni iOS araştırması çalıştırmaz.
+
 ## Durum
 
 `DONE — CHARACTERIZATION / RISK_ACCEPTED_FOR_CONTINUATION`

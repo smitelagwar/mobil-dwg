@@ -1,5 +1,7 @@
 # AŞAMA 06 Evidence — Android güvenli dosya alma ve parse spike
 
+> **Tarihsel kayıt:** Yeni Android emulator doğrulaması `ANDROID_DOGRULAMA_PLANI.md` V06 altında ayrı evidence üretir. Emulator sonucu fiziksel telefon gate'ini geriye dönük kapatmaz; bu dosyadaki eski commit/run gerçekleri değiştirilmez.
+
 ## Kimlik
 
 - Tarih: 2026-08-24

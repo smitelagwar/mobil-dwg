@@ -7,9 +7,9 @@ Bu dosya yeni sohbet veya yeni bir yapay zeka oturumu başladığında projenin 
 1. `gecmis.md`
 2. `DEVAM.md`
 3. `Mobil_DWG_DXF_Royalty_Free_Android_iOS_Nihai_Plan.md`
-4. `docs/evidence/STAGE_09.md` ve `docs/ADR/0002-procad-pinned-source-no-go.md`
-5. `docs/USER_APPROVED_EXECUTION_OVERRIDE.md`
-6. `docs/evidence/STAGE_08.md` ve `docs/LOCAL_DEVICE_REVALIDATION.md`
+4. `ANDROID_DOGRULAMA_PLANI.md`
+5. `docs/USER_APPROVED_EXECUTION_OVERRIDE.md` ve çalışma bağlamına göre `docs/CHATGPT_REMOTE_ANDROID_TEST_WORKFLOW.md`
+6. `docs/evidence/STAGE_09.md`, `docs/ADR/0002-procad-pinned-source-no-go.md` ve `docs/LOCAL_DEVICE_REVALIDATION.md`
 7. `docs/evidence/STAGE_06.md`
 8. `docs/evidence/STAGE_05.md` ve `docs/ADR/0001-acadsharp-3.7.1-parser-baseline.md`
 9. `docs/ARCHITECTURE.md`, `MobilDwg.sln`, `docs/EXECUTION_LOG.md`
@@ -20,47 +20,32 @@ Bu dosya yeni sohbet veya yeni bir yapay zeka oturumu başladığında projenin 
 - GitHub: `smitelagwar/mobil-dwg`
 - Default branch: `main`
 - Private repo
-- Ürün: Android-first, iOS zorunlu ikinci platform, local/offline 2D DWG/DXF viewer
+- Aktif ürün: Android-only local/offline 2D DWG/DXF viewer; iOS future option
 - v1: viewer-only; edit/save/export/cloud/account kapsam dışında
 
 ## Aktif checkpoint
 
 ```text
-LAST_COMPLETED_STAGE: AŞAMA 09 — DONE
-DEFERRED_STAGES: AŞAMA 01; AŞAMA 06; AŞAMA 08 iOS local/device gates
-STAGE01_STATUS: BLOCKED / DEFERRED_EXTERNAL_GATE — fiziksel Android install/launch ve iOS erişim envanteri açık, DONE değil
-STAGE06_STATUS: BLOCKED / DEFERRED_EXTERNAL_GATE — safe-open implementation/CI PASS, fiziksel Android FilePicker/SAF+lifecycle/cache gate açık, DONE değil
-STAGE07_STATUS: DONE / NO-GO — exact unpatched ProCad source candidate deterministic precision blocker nedeniyle production reuse için reddedildi
-STAGE08_STATUS: DONE — CHARACTERIZATION / BLOCKED_PARTIAL_EVIDENCE / RISK_ACCEPTED_FOR_CONTINUATION; iOS runtime/device feasibility NOT PROVEN
-STAGE08_DECISION_HEAD: 4987fa3e5fadfb113aa3b27ac443da9776864ad5
-STAGE08_CI: run 32781026946 / #18 SUCCESS characterization; artifact 9540018558; sha256:1414e3bf5a9800e150019c48f620c64efcd3d5282ac7322ef9a5e5746ab746f7
-STAGE08_PHYSICAL_IPHONE: NOT_RUN_DEFERRED_EXTERNAL_GATE
-STAGE09_STATUS: DONE
-STAGE09_USER_GO: GRANTED / CONSUMED — yeniden istenmez
-STAGE09_SOURCE_TEST_HEAD: 9a17d333afc0a3df1de856a9a53fae0e74617c29
-STAGE09_PR: #12 — MERGED
-STAGE09_FINAL_PR_HEAD: 68d08bd3984ef4d1fcca027acb788c4bfcc5e43a
-STAGE09_MERGE_COMMIT: 0a2dd886bbe59698a6d2eb4c99f66e7f9270063a
-STAGE09_VALIDATION_HEAD: 7bba0b7a6da30dc4b23050872a7a1ef4e90ca087
-STAGE09_POST_VALIDATION_DELTA: validation head -> merge commit yalnız workflow/docs/handoff; AŞAMA 09 production source/test dosyalarında değişiklik yok
-STAGE09_VALIDATION_RUN: 32815175055 / #6 SUCCESS
-STAGE09_VALIDATION_JOB: 97701882792 SUCCESS
-STAGE09_BUILD: targeted Release + full solution Release = 0 warning / 0 error
-STAGE09_MARKERS: STAGE09_DOTNET_PIN_PASS; STAGE09_T0_BUILD_PASS; STAGE04_CORE_CONTRACT_TESTS_PASS; STAGE04_RENDER_CONTRACT_TESTS_PASS; STAGE09_RENDER_SCENE_TESTS_PASS; render-scene/v1; STAGE09_T1_SCENE_PASS; STAGE04_ARCHITECTURE_TESTS_PASS; STAGE05_DEPENDENCY_BOUNDARY_PASS; STAGE04_T0_PASS; STAGE09_STAGE04_REGRESSION_PASS
-STAGE09_ARTIFACT: 9551137293 / stage09-self-hosted-evidence / 1578 bytes
-STAGE09_ARTIFACT_DIGEST: sha256:486c9d0b5a2a35cd4fbb402d9c56ab226a5b6175b8920da95298d18199054ddd
-STAGE09_EVIDENCE: docs/evidence/STAGE_09.md
-LOCAL_REVALIDATION: docs/LOCAL_DEVICE_REVALIDATION.md
-EXECUTION_OVERRIDE: docs/USER_APPROVED_EXECUTION_OVERRIDE.md
-NEXT_WORK_STAGE: AŞAMA 10
-NEXT_WORK_STATUS: READY / WAITING_USER_CONTINUE
-NEXT_ACTION: kullanıcı `devam` dediğinde yalnız AŞAMA 10 — P0 temel geometri renderer'ı — başlat; aynı turda AŞAMA 11'e geçme.
+ACTIVE_PRODUCT_TARGET: ANDROID_ONLY
+IOS_STATUS: DEFERRED_FUTURE_OPTION — aktif sıra ve Android DoD dışında
+IMPLEMENTATION_BASELINE: AŞAMA 09 — DONE
+IMPLEMENTATION_NEXT: AŞAMA 10 — NOT_STARTED
+ANDROID_VALIDATION_PLAN: ANDROID_DOGRULAMA_PLANI.md
+ANDROID_VALIDATION_CURRENT: V01 — FIX_REQUIRED
+ANDROID_VALIDATION_NEXT: mevcut gate'in gerçek harness/APK/screenshot/crash-ANR kanıt açıklarını düzelt
+PENDING_EMULATOR_QUEUE: EMPTY
+CURRENT_GATE_TRUTH: geçici Stage01Smoke APK; `dotnet test` executable harness gövdelerini çalıştırmıyor; mevcut PNG'ler bozuk; PID/crash/ANR kontrolü eksik
+CURRENT_GATE_CLAIM_LIMIT: INFRASTRUCTURE_SMOKE_ONLY — MobilDwg.App/viewer PASS değil
+PHYSICAL_ANDROID: DEFERRED_RELEASE_DEVICE_GATE
+STAGE08_IOS: HISTORICAL_CHARACTERIZATION / FUTURE_INACTIVE
+STAGE09_HISTORICAL_EVIDENCE: docs/evidence/STAGE_09.md; run 32815175055/#6; artifact 9551137293; merge 0a2dd886bbe59698a6d2eb4c99f66e7f9270063a
+NEXT_ACTION: V01'de kanıt altyapısını düzelt ve exact Android emulator Release koşusunu gerçek kapsamıyla kaydet.
 LAST_UPDATE: 2026-08-25
 ```
 
 ## Yürütme kuralı
 
-AŞAMA 01'in gerçek Android/iOS dış erişim kapıları kullanıcı tarafından şimdilik ertelendi. Bunlar sahte PASS/DONE yapılmaz; `DEFERRED_EXTERNAL_GATE` olarak açık tutulur. Fiziksel erişime bağımlı olmayan sonraki aşamalar sırayla ilerler. Bir turda en fazla bir aşama tamamlanır. Release/beta/final cihaz kapılarında ertelenmiş dış kanıtlar yeniden zorunlu olur.
+AŞAMA 01–09 implementation geçmişi değiştirilmeden korunur; yeni Android doğrulama cursor'ı V01'den başlar. Runner çevrim dışıysa exact SHA test kuyruğuna alınır ve host-independent kod/test işi implementation cursor'ında sürdürülebilir. Emulator sonucu uydurulmaz; fiziksel Android release öncesi yeniden zorunludur. iOS future option'dır ve aktif Android sırasını bloke etmez.
 
 AŞAMA 09 için ADR 0002'deki yüksek efor/bakım riski kullanıcı tarafından açıkça kabul edildi ve stage gerçek T0/T1 kanıtıyla kapatıldı. Bu GO yeniden istenmez. AŞAMA 10 için ayrı bir GO bariyeri tanımlı değildir.
 
@@ -89,11 +74,11 @@ AŞAMA 09 için ADR 0002'deki yüksek efor/bakım riski kullanıcı tarafından 
 - [ ] AŞAMA 20 — Ölçümlü performans ve bellek optimizasyonu
 - [ ] AŞAMA 21 — Android tam corpus regresyon ve beta kapısı
 - [ ] AŞAMA 22 — Android Release/AAB/compliance RC
-- [ ] AŞAMA 23 — iOS toolchain, shared core ve ilk gerçek cihaz
-- [ ] AŞAMA 24 — iOS fidelity, lifecycle ve Release archive
-- [ ] AŞAMA 25 — Cross-platform beta ve yalnız blocker düzeltmeleri
-- [ ] AŞAMA 26 — Dependency freeze, final audit ve RC onayı
-- [ ] AŞAMA 27 — v1 artifact, yayın/handoff ve kapanış
+- [ ] AŞAMA 23 — iOS toolchain, shared core ve ilk gerçek cihaz — `DEFERRED_FUTURE_IOS / ACTIVE_SEQUENCE_OUT`
+- [ ] AŞAMA 24 — iOS fidelity, lifecycle ve Release archive — `DEFERRED_FUTURE_IOS / ACTIVE_SEQUENCE_OUT`
+- [ ] AŞAMA 25 — Android beta ve yalnız blocker düzeltmeleri
+- [ ] AŞAMA 26 — Android dependency freeze, final audit ve RC onayı
+- [ ] AŞAMA 27 — Android v1 artifact, yayın/handoff ve kapanış
 
 ## Tarihçe özeti
 
@@ -174,12 +159,13 @@ Ayrıntı: `docs/evidence/STAGE_09.md`.
 
 1. Gerçek `main` HEAD ve açık PR durumunu doğrula.
 2. Kullanıcı değişikliklerini koru; destructive Git işlemi yapma.
-3. Kullanıcı yalnız `devam` diyorsa `NEXT_WORK_STAGE` olan **AŞAMA 10** üzerinden ilerle.
-4. Bir turda en fazla bir aşama tamamla; AŞAMA 10 biterse AŞAMA 11'i aynı turda başlatma.
-5. AŞAMA 01/AŞAMA 06/AŞAMA 08 dış erişim kapılarını sahte PASS/DONE yapma.
-6. Dependency kendiliğinden yükseltme ve ProCad'ı production graph'a geri sokma.
-7. Her turun sonunda `gecmis.md`, `DEVAM.md`, ilgili evidence ve canonical checkpoint'i gerçek durumla güncelle.
+3. Kullanıcı yalnız `devam` diyorsa `ANDROID_DOGRULAMA_PLANI.md` içindeki açık **V01** üzerinden ilerle.
+4. Runner çevrim dışıysa V01 testini çoğaltma; exact SHA'yı kuyruğa al ve güvenli host-independent iş varsa AŞAMA 10 implementation cursor'ında sürdürebilirsin.
+5. Bir turda en fazla bir validation veya implementation aşaması tamamla; aynı turda sonraki aşamaya geçme.
+6. Emulatoru fiziksel Android, `Stage01Smoke` uygulamasını viewer veya queued işi PASS sayma. iOS işi başlatma.
+7. Dependency kendiliğinden yükseltme ve ProCad'ı production graph'a geri sokma.
+8. Her turun sonunda iki cursor'ı, test kuyruğunu, ilgili evidence ve canonical checkpoint'i gerçek durumla güncelle.
 
 ## Bir sonraki tur
 
-Kullanıcı `devam` dediğinde yalnız **AŞAMA 10 — P0 temel geometri renderer'ı** başlatılır. Kanonik iş listesi: LINE/ARC/CIRCLE/ELLIPSE/POINT; LW/POLYLINE + bulge; SPLINE tessellation; SOLID/TRACE/3DFACE 2D görünümü; OCS/extrusion/mirror/large-coordinate fixture'ları; draw order/clipping/antialias baseline. Batching/GPU/tiling eklenmez. T1 + küçük golden/semantic diff ile doğrulanır.
+Kullanıcı `devam` veya `BASLA.md dosyasını oku` dediğinde **V01 — Toolchain, runner ve emulator altyapısı** başlatılır. İlk iş mevcut gate'i doğruluk açısından düzeltmektir: executable harness'ları gerçekten çalıştır, screenshot'ı byte-safe üretip PNG imzasını doğrula, PID/crash/ANR ve exact AVD/API kontrollerini sertleştir, sonucu `INFRASTRUCTURE_SMOKE` ile gerçek viewer kanıtından ayır. AŞAMA 10 cursor'ı korunur; runner çevrim dışı olduğunda güvenli kod işinin devamı için kullanılabilir.

@@ -7,7 +7,9 @@
 
 ## 1. Sistemin Mimarisi ve Temel Prensibi
 
-Bu bilgisayar, `mobil-dwg` projesinin Android MAUI çıktılarını gerçek Android 16 (API 36) Emulator üzerinde otomatik olarak derlemek, kurmak, başlatmak ve test etmek için **Self-Hosted Android Test Node** olarak yapılandırılmıştır.
+Bu bilgisayar, `mobil-dwg` projesinin Android çalışmalarını Android 16 (API 36) Emulator üzerinde otomatik doğrulamak için **Self-Hosted Android Test Node** olarak yapılandırılmıştır.
+
+> **Mevcut sınır:** Bugünkü gate gerçek `MobilDwg.App` APK'sını kurmaz; geçici `Stage01Smoke` üretir. Ayrıca test projeleri executable harness olduğu için yalnız `dotnet test MobilDwg.sln` onların gövdelerini çalıştırmaz. V01 sertleştirmesi tamamlanana kadar sonuç yalnız altyapı smoke olarak yorumlanır. Eski screenshot artifact'leri byte-safe üretilmediğinden görsel kanıt değildir.
 
 ```text
        ┌─────────────────────────────────────────────────────────┐
@@ -27,9 +29,9 @@ Bu bilgisayar, `mobil-dwg` projesinin Android MAUI çıktılarını gerçek Andr
        │                                                         │
        │  1. Self-Hosted Runner (C:\actions-runner) işi yakalar  │
        │  2. mobil-dwg-api36 Emulator'ı kontrol eder (WHPX+GPU)  │
-       │  3. Solution birim & mimari testlerini koşar            │
-       │  4. .NET 10 MAUI Android APK paketini derler            │
-       │  5. APK'yı emulator'a 'adb install -r' ile kurar        │
+       │  3. Solution build eder; V01 sonrası harness'ları koşar │
+       │  4. Şimdilik geçici Stage01Smoke APK üretir             │
+       │  5. Smoke APK'yı emulator'a 'adb install -r' ile kurar  │
        │  6. Uygulama MainActivity'sini ayağa kaldırır (am start)│
        │  7. PID, bellek, logcat ve ANR/Crash kontrolü yapar     │
        │  8. Ekran görüntüsü ve logları toplar                   │
@@ -61,7 +63,7 @@ Bilgisayarınızı test almaya hazır tutmak için:
    cd C:\actions-runner
    run.cmd
    ```
-3. Ekranda `Listening for Jobs` yazısını gördüğünüzde pencereyi simge durumuna küçültebilirsiniz.
+3. Ekranda `Listening for Jobs` yazısını gördüğünüzde pencereyi simge durumuna küçültebilirsiniz. Bilgisayar açık olsa bile bu listener çalışmıyorsa GitHub emulator testi başlayamaz.
 
 > [!IMPORTANT]
 > **Neden Windows Servisi Değil de `run.cmd`?**  
@@ -76,11 +78,13 @@ GitHub'a gitmeden, kendi terminalinizden emulator testini tek komutla çalışt�
 ```
 *(Hızlı derleme için `-Configuration Debug` da verebilirsiniz).*
 
-Bu script:
+Bugünkü script:
 - Tüm araçları (.NET, Java, ADB, SDK) denetler.
 - Emulator açıksa yeniden başlatmadan kullanır, kapalıysa otomatik açar.
-- Testleri koşar, APK'yı derler, kurar, açar, ekran görüntüsü alır ve `artifacts/android-emulator-result/` klasörüne kaydeder.
-- Başarılı olursa terminale `ANDROID_EMULATOR_GATE_PASS` yazar.
+- Solution build/test komutunu çağırır; executable harness marker'ları V01 düzeltmesine kadar ayrıca doğrulanmalıdır.
+- Geçici `Stage01Smoke` APK'yı derler, kurar ve açar; gerçek viewer/FilePicker/render sonucu üretmez.
+- Screenshot yolu V01'de byte-safe hale getirilip PNG imzası doğrulanana kadar görsel kanıt sayılmaz.
+- Başarılı olursa `ANDROID_EMULATOR_GATE_PASS` yazar; bu marker mevcut sürümde yalnız infrastructure smoke kapsamındadır.
 
 ---
 
@@ -124,6 +128,8 @@ ChatGPT doğrudan bu bilgisayarın terminaline erişemez; bu yüzden **GitHub Ac
 > [!CAUTION]
 > **Kritik Kural:** `android-test` branch'inde asla doğrudan kod geliştirme yapılmaz. Bu branch sırf test edilecek commit'i yerel test makinesine iletmek için bir "taşıyıcı boru hattı"dır.
 
+Runner çevrim dışıysa yeni push'larla job biriktirilmez. Exact SHA `PENDING_EMULATOR_QUEUE` olarak kaydedilir; bilgisayar + interaktif listener döndüğünde yalnız hâlâ geçerli olan checkpoint test edilir. Normal GitHub senkronizasyonu yalnız `main` içindir.
+
 ---
 
 ### Senaryo 2: Yerel Ajan (AntiGravity, VS Code Codex / Cursor)
@@ -143,7 +149,7 @@ Ajan doğrudan kullanıcının bilgisayarında ve yerel terminal erişimine sahi
 | Parametre | Değer / Yol |
 |---|---|
 | **İşletim Sistemi** | Windows 11 Home 64-bit (AMD Ryzen 5 7640HS, NVIDIA RTX 4060) |
-| **Sanallaştırma** | Windows Hypervisor Platform (WHPX), GPU Host Direct |
+| **Sanallaştırma** | Windows Hypervisor Platform (WHPX); mevcut AVD'de `hw.gpu.enabled=no`, GPU Host Direct kanıtlanmış varsayılmaz |
 | **.NET SDK** | `10.0.400` (`C:\Program Files\dotnet\sdk\10.0.400`) |
 | **MAUI Workload** | `maui-android` (`10.0.20/10.0.100`) |
 | **Java JDK** | `Microsoft OpenJDK 21.0.12.1` (`JAVA_HOME`) |
@@ -162,4 +168,5 @@ Ajan doğrudan kullanıcının bilgisayarında ve yerel terminal erişimine sahi
 
 1. **Gizlilik ve Sır Güvenliği:** Runner tokenları, şifreler, kullanıcı özel yolları veya özel DWG çizimleri asla repoya, commit geçmişine veya loglara yazılmaz.
 2. **Fiziksel Cihaz Ayrımı:** Bu altyapı Android Emulator için geliştirilmiştir. `scripts/stage01-device-gate.ps1` fiziksel telefon gereksinimi için değiştirilmeden korunmaktadır.
-3. **CI İzolasyonu:** `main` branch'e yapılan normal push'lar bu bilgisayarı kesinlikle meşgul etmez. Sadece açıkça `android-test` hedef alındığında çalışır.
+3. **CI İzolasyonu:** `main` branch'e normal push self-hosted bilgisayarı tetiklemez. `android-test` push veya açık manuel `workflow_dispatch` emulator işini başlatabilir.
+4. **Güvenilen kod:** Self-hosted Windows kullanıcısı üzerinde yalnız repo sahibi tarafından kontrol edilen commit çalıştırılır; üçüncü taraf PR/ref'i bu runner'a gönderilmez.

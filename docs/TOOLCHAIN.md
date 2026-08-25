@@ -4,7 +4,7 @@ Bu dosya AŞAMA 01 için canlı doğrulanmış geliştirme zinciri hedefini kayd
 
 ## Doğrulama tarihi
 
-- 2026-08-24
+- 2026-08-25 local Android revalidation snapshot; original live-source pins 2026-08-24
 
 ## Pinlenen .NET / MAUI hattı
 
@@ -13,7 +13,7 @@ Bu dosya AŞAMA 01 için canlı doğrulanmış geliştirme zinciri hedefini kayd
 - SDK release tarihi: 2026-08-11
 - Workload update mode: workload-set
 - Workload set: `10.0.400`
-- Android-first workload: `maui-android`
+- Active Android-only workload: `maui-android`
 - SDK çözümleme politikası: exact (`rollForward=disable`)
 - Prerelease: kapalı
 
@@ -30,7 +30,7 @@ dotnet workload list
 
 Önemli: `global.json` içindeki `workloadVersion: 10.0.400` exact workload set'i seçer. Bu repo hattında `dotnet workload install maui-android --version 10.0.400` kullanılmaz; AŞAMA 01 CI sırasında bu ek `--version` biçiminin yanlış olduğu görülmüş ve başarılı hat `dotnet workload install maui-android` olarak doğrulanmıştır.
 
-Not: Workload kurulumu gerçek geliştirme makinesinde henüz kanıtlanmadı; CI smoke kurulumu host/CI kanıtıdır, fiziksel cihaz kapısını karşılamaz.
+Yerel Windows sağlık taraması .NET `10.0.400`, `maui-android`, JDK `21.0.12.1`, API 36, Build-Tools 36.0.0, ADB 37.0.1, emulator/AVD ve runner bileşenlerini gördü. Bu envanter fiziksel cihaz kanıtı değildir. Mevcut emulator gate gerçek viewer yerine `Stage01Smoke` kurduğu ve executable harness/screenshot/stability kanıt açıkları taşıdığı için V01 tamamlanmış sayılmaz.
 
 ## Java hattı
 
@@ -52,7 +52,7 @@ CI notu: 2026-08-24 tarihinde `actions/setup-java@v5` Microsoft kataloğu 21.0.1
 
 ## Android SDK hattı
 
-Ürün Android-first ve Google Play'e yeni uygulama olarak çıkacağı için release çizgisi API 36'ya sabitlenmiştir.
+Aktif ürün Android-only ve Google Play'e yeni uygulama olarak çıkacağı için release çizgisi API 36'ya sabitlenmiştir.
 
 - Minimum OS / `SupportedOSPlatformVersion`: Android 7.0, API `24`
 - Compile SDK: API `36`
@@ -90,7 +90,7 @@ Bu arşiv yalnız `sdkmanager` bootstrap içindir; release artifact dependency's
 
 ## Fiziksel cihaz kapısı
 
-AŞAMA 01 ancak aşağıdakilerin tamamı gerçek geliştirme makinesi + fiziksel Android cihaz üzerinde kanıtlanırsa `DONE` olabilir:
+Bu tarihsel AŞAMA 01 fiziksel cihaz kapısı ve final release cihaz matrisi ancak aşağıdakilerin tamamı gerçek Android cihaz üzerinde kanıtlanırsa kapanabilir:
 
 1. `dotnet --info` exact SDK/workload set'i gösterir.
 2. `java -version` JDK 21 hattını gösterir.
@@ -139,9 +139,11 @@ PASS halinde temiz MAUI smoke uygulaması `com.smitelagwar.mobildwg.stage01smoke
 
 Bu scriptlerin sözdizimi CI'da doğrulanır; fakat `STAGE01_DEVICE_GATE_PASS` yalnız gerçek fiziksel cihazda çalıştırıldığında AŞAMA 01 kanıtı sayılır.
 
-## iOS erişim envanteri
+## Future iOS erişim envanteri — aktif değil
 
-AŞAMA 01'de yalnız erişim durumu kaydedilir. iOS kurulum/build/signing/gerçek cihaz smoke AŞAMA 08 ve AŞAMA 23 kapsamındadır.
+25.08.2026 kullanıcı kararıyla iOS aktif v1 kapsamı ve Android V01 çıkış kriteri dışındadır. Aşağıdaki kayıt gelecekte açık iOS reactivation kararı verilirse kullanılmak üzere korunur; bugün Mac/Xcode/iPhone araştırması veya komutu çalıştırılmaz.
+
+Future iOS reactivation olursa önce erişim durumu kaydedilir; ardından yeni plan revizyonunda AŞAMA 08 riskleri ve AŞAMA 23 yolu değerlendirilir.
 
 Standart kayıt dosyası:
 
@@ -157,7 +159,7 @@ Apple Developer erişimi yoksa `APPLE_DEVELOPER_ACCESS=no` kullanılır. Bu değ
 
 Script macOS/Xcode erişimini, fiziksel iPhone sayısını ve code-signing identity sayısını yalnız hassas olmayan özet olarak verir. Apple ID/e-posta, Team ID, UDID/seri numarası, certificate private key, provisioning profile veya token kaydetmez.
 
-Bu sohbet oturumunda gerçek Mac/Xcode/iPhone/Apple Developer erişimi hâlâ doğrulanmamıştır; `docs/STAGE_01_IOS_ACCESS_INVENTORY.md` içindeki dört erişim alanı `UNKNOWN` kaldıkça bu alt madde tamamlanmış sayılmaz.
+`docs/STAGE_01_IOS_ACCESS_INVENTORY.md` alanları tarihsel olarak `UNKNOWN` kalabilir; bu durum Android validation, beta veya release'i bloke etmez. Future iOS track yeniden açılırsa gerçek değerlerle kapanır.
 
 ## Resmi kaynaklar — 2026-08-24 snapshot
 

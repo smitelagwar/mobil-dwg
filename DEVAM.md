@@ -5,56 +5,41 @@ Bu dosya yeni bir ChatGPT/AI oturumunda projeye kaldığı yerden devam etmek i�
 ## Yeni AI için doğrudan talimat
 
 1. `@GitHub` üzerinden `smitelagwar/mobil-dwg` reposunu, gerçek `main` HEAD'ini ve açık PR'ları doğrula.
-2. `Mobil_DWG_DXF_Royalty_Free_Android_iOS_Nihai_Plan.md`, `gecmis.md`, `docs/USER_APPROVED_EXECUTION_OVERRIDE.md` ve son tamamlanan/aktif aşama evidence dosyasını oku.
+2. `Mobil_DWG_DXF_Royalty_Free_Android_iOS_Nihai_Plan.md`, `ANDROID_DOGRULAMA_PLANI.md`, `gecmis.md`, `docs/USER_APPROVED_EXECUTION_OVERRIDE.md` ve aktif/tarihsel evidence dosyasını oku.
 3. **Çalışma bağlamını gerçek araç erişimine göre sınıflandır.** Kod/depo değişiklikleri ChatGPT sohbetinden GitHub üzerinden yapılıyor ve yerel repo/terminal/ADB'ye doğrudan erişim yoksa `CHATGPT_REMOTE_GITHUB` bağlamıdır; bu durumda `docs/CHATGPT_REMOTE_ANDROID_TEST_WORKFLOW.md` dosyasını okumak zorunludur. Dosyanın okunması zorunlu olsa da içindeki batching/test sıklığı/zaman yönetimi önerileri zorunlu değildir. Yerel IDE/ajan gerçek çalışma ağacı + terminal/ADB erişimiyle çalışıyorsa `LOCAL_IDE` bağlamıdır ve remote test modeli yürütme için geçersizdir.
-4. Açık `IN_PROGRESS` aşama varsa yeni aşama başlatmadan yalnız onu sürdür. Kullanıcı yalnız `devam` diyorsa `NEXT_WORK_STAGE` üzerinden ilerle.
-5. Bir kullanıcı turunda en fazla bir aşama tamamla; aynı turda sonraki aşamayı başlatma.
-6. Fiziksel cihaz/Mac/Apple hesabı gibi dış kapıları sahte PASS/DONE yapma; `DEFERRED_EXTERNAL_GATE` bırak.
-7. Her aşama sonunda canonical checkpoint, `gecmis.md`, `DEVAM.md` ve `docs/evidence/STAGE_XX.md` kaydını gerçek CI/commit/artifact kanıtıyla güncelle.
+4. Açık Android V01–V09 doğrulamasını birinci cursor olarak sürdür. Runner çevrim dışı ve doğrulama için güvenli iş kalmadıysa implementation cursor'ında host-independent kod yazılabilir; Android kanıtı beklemede kalır.
+5. Bir kullanıcı turunda en fazla bir doğrulama veya implementation aşaması tamamla; aynı turda sonraki aşamayı başlatma.
+6. Emulatoru fiziksel cihaz, geçici smoke APK'yı gerçek viewer ve queued runner işini PASS sayma. iOS aktif kapsam dışıdır.
+7. Her aşama sonunda iki cursor'ı, test kuyruğunu ve yeni/tarihsel evidence kayıtlarını gerçek CI/commit/artifact kanıtıyla güncelle.
 8. Production dependency'yi evidence olmadan yükseltme veya ProCad'ı tekrar graph'a sokma.
 
 ## Repo / ürün
 
 - Repo: `smitelagwar/mobil-dwg` (private), default `main`.
-- Android-first, iOS zorunlu ikinci platform, local/offline 2D DWG/DXF viewer.
+- Aktif v1 Android-only local/offline 2D DWG/DXF viewer; iOS future option olarak mimari düzeyde korunur.
 - v1 viewer-only; edit/save/export/cloud/account yok.
 
 ## Çalışma bağlamı notu
 
 `CHATGPT_REMOTE_GITHUB` bağlamında mevcut Android/self-hosted test altyapısı her küçük GitHub değişikliğinde çalıştırılmak zorunda değildir. Ajan aynı mantıksal işte birkaç düşük-riskli değişikliği tamamlayıp sonra ilgili test hattını bir kez tetikleyebilir; riskli tek bir değişiklikte hemen test etmeyi de seçebilir. Bu batching davranışı öneridir, zorunlu değildir.
 
-Bir aşamanın ilk turunda implementasyonun tamamı veya bir kısmı yapılabilir; sonraki `devam` turunda kalan değişiklikler, Android/self-hosted testleri veya evidence kapanışı yapılabilir. Değişmez olan kural: aktif aşama bitmeden sonraki aşamaya geçilmez ve gerçek kanıt olmadan `DONE` yazılmaz.
+PC açık olsa bile `C:\actions-runner\run.cmd` dinlemiyorsa remote emulator işi çalışmaz. Böyle durumda aynı workflow'u çoğaltma; exact SHA'yı test kuyruğuna al, host testleri/kod işini sürdür ve gerçek kanıt olmadan `VALIDATED/DONE` yazma.
 
 Ayrıntılı remote test modeli: `docs/CHATGPT_REMOTE_ANDROID_TEST_WORKFLOW.md`.
 
 ## Güncel checkpoint
 
 ```text
-LAST_COMPLETED_STAGE: AŞAMA 09 — DONE
-DEFERRED_STAGES: AŞAMA 01; AŞAMA 06; AŞAMA 08 local Mac/ios-arm64/physical iPhone gates
-AŞAMA_01: BLOCKED / DEFERRED_EXTERNAL_GATE — gerçek Android install/launch + iOS erişim envanteri
-AŞAMA_06: BLOCKED / DEFERRED_EXTERNAL_GATE — safe-open CI PASS; gerçek telefon FilePicker/SAF+lifecycle/cache gate açık
-AŞAMA_07: DONE / NO-GO — exact unpatched ProCad candidate precision blocker nedeniyle production reuse için reddedildi
-AŞAMA_08: DONE / CHARACTERIZATION — evidence BLOCKED_PARTIAL_EVIDENCE; iOS runtime/device PASS yok
-AŞAMA_09: DONE — compact immutable RenderScene + double camera + diagnostics + deterministic snapshot
-AŞAMA_09_USER_GO: GRANTED / CONSUMED — yeniden istenmez
-AŞAMA_09_PR: #12 — MERGED
-AŞAMA_09_FINAL_PR_HEAD: 68d08bd3984ef4d1fcca027acb788c4bfcc5e43a
-AŞAMA_09_MERGE_COMMIT: 0a2dd886bbe59698a6d2eb4c99f66e7f9270063a
-AŞAMA_09_SOURCE_TEST_HEAD: 9a17d333afc0a3df1de856a9a53fae0e74617c29
-AŞAMA_09_VALIDATION_HEAD: 7bba0b7a6da30dc4b23050872a7a1ef4e90ca087
-AŞAMA_09_POST_VALIDATION_DELTA: yalnız workflow/docs/handoff; production source/test değişikliği yok
-AŞAMA_09_VALIDATION_RUN: 32815175055 / #6 SUCCESS
-AŞAMA_09_VALIDATION_JOB: 97701882792 SUCCESS
-AŞAMA_09_ARTIFACT: 9551137293; stage09-self-hosted-evidence; 1578 bytes
-AŞAMA_09_ARTIFACT_DIGEST: sha256:486c9d0b5a2a35cd4fbb402d9c56ab226a5b6175b8920da95298d18199054ddd
-AŞAMA_09_MARKERS: STAGE09_DOTNET_PIN_PASS; STAGE09_T0_BUILD_PASS; STAGE04_RENDER_CONTRACT_TESTS_PASS; STAGE09_RENDER_SCENE_TESTS_PASS; render-scene/v1; STAGE09_T1_SCENE_PASS; STAGE09_STAGE04_REGRESSION_PASS
-AŞAMA_09_BUILD: targeted + full solution Release 0 warning / 0 error
-AŞAMA_09_EVIDENCE: docs/evidence/STAGE_09.md
-AŞAMA_10_STATUS: NOT_STARTED
-NEXT_WORK_STAGE: AŞAMA 10
-NEXT_WORK_STATUS: READY / WAITING_USER_CONTINUE
-NEXT_ACTION: kullanıcı `devam` dediğinde yalnız AŞAMA 10 — P0 temel geometri renderer'ı — başlat; aynı turda AŞAMA 11'e geçme.
+ACTIVE_PRODUCT_TARGET: ANDROID_ONLY
+IOS_STATUS: DEFERRED_FUTURE_OPTION
+IMPLEMENTATION_BASELINE: AŞAMA 09 — DONE
+IMPLEMENTATION_NEXT: AŞAMA 10 — NOT_STARTED
+ANDROID_VALIDATION_PROGRAM: V01–V09
+ANDROID_VALIDATION_CURRENT: V01 — FIX_REQUIRED
+PENDING_EMULATOR_QUEUE: EMPTY
+CURRENT_GATE_TRUTH: solution harness gövdeleri çalışmıyor; geçici Stage01Smoke kuruyor; mevcut screenshot'lar bozuk; crash/ANR/PID kanıtı yetersiz
+CURRENT_GATE_CLAIM_LIMIT: INFRASTRUCTURE_SMOKE_ONLY; gerçek MobilDwg.App/viewer PASS değil
+NEXT_ACTION: V01'de gate kanıt açıklarını düzelt, exact Release koşusunu al ve yalnız gerçekten kanıtlanan kapsamı kaydet.
 ```
 
 ## AŞAMA 09 özeti
@@ -82,8 +67,8 @@ Yetkili kapanış validation'ı self-hosted Windows runner üzerinde exact .NET 
 
 - ACadSharp `3.7.1` read-only parser baseline: GO.
 - Exact unpatched ProCad source candidate: NO-GO; large-survey-origin mm detail direct double→float scene boundary'sinde çöker.
-- AŞAMA 08 iOS characterization: risk kaydı tamamlandı fakat iOS runtime/device PASS kanıtlanmadı.
-- AŞAMA 01/AŞAMA 06 gerçek Android ve AŞAMA 08 local iOS gates deferred olarak açık kalır.
+- AŞAMA 08 iOS characterization tarihsel olarak korunur; aktif Android v1'de yeniden çalıştırılmaz.
+- AŞAMA 01/AŞAMA 06 fiziksel Android farkları release öncesine deferred; iOS gate'leri future track'te inactive'dir.
 
 ## Değiştirilemez ilkeler
 

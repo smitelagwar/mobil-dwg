@@ -2,26 +2,10 @@ name: Stage 08 iOS Feasibility
 
 on:
   workflow_dispatch:
-  pull_request:
-    branches: [main]
-    paths:
-      - spikes/Stage08.iOS/**
-      - scripts/stage08-ios-feasibility.sh
-      - .github/workflows/stage08-ios-feasibility.yml
-      - src/MobilDwg.Core/**
-      - src/MobilDwg.Cad/**
-      - Directory.Packages.props
-      - global.json
-  push:
-    branches: [main]
-    paths:
-      - spikes/Stage08.iOS/**
-      - scripts/stage08-ios-feasibility.sh
-      - .github/workflows/stage08-ios-feasibility.yml
-      - src/MobilDwg.Core/**
-      - src/MobilDwg.Cad/**
-      - Directory.Packages.props
-      - global.json
+
+# iOS is a preserved future option, not part of the active Android-only plan.
+# Keep this characterization workflow manually available without spending macOS
+# runner time on Android/Core pushes. Reactivation requires an explicit plan update.
 
 permissions:
   contents: read

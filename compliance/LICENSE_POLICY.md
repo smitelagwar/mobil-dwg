@@ -76,4 +76,4 @@ Runtime veya redistributable asset için en geç release gate'inde şunlar kayı
 - Açık internette bulunan DWG/DXF/font/screenshot yeniden dağıtılabilir varsayılmaz.
 - Müşteri/kullanıcı CAD dosyaları private corpus'ta ve Git dışında kalır.
 - Proprietary SHX/font dosyaları bundle edilmez.
-- Final APK/AAB/IPA gerçek içerik envanteri source/package evidence ile karşılaştırılmadan release yapılmaz.
+- Aktif Android release için final APK/AAB gerçek içerik envanteri source/package evidence ile karşılaştırılmadan release yapılmaz. IPA envanteri yalnız future iOS track yeniden açılırsa eklenir.
