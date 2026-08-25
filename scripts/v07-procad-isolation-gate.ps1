@@ -137,7 +137,7 @@ Write-Host "V07_PROCAD_FLOAT_PRECISION_BLOCKER_REPRODUCED observed_delta=$FloatO
 # rerun the rendering executable tests that contain the survey-origin camera/scene checks.
 $DoubleObservedDelta = 5000000.001d - 5000000.0d
 if ([Math]::Abs($DoubleObservedDelta - 0.001d) -gt 1e-9) { Fail "Production double precision delta unexpected: $DoubleObservedDelta" }
-$DoubleObservedText = $DoubleObservedDelta.ToString('R', [Globalization.CultureInfo]::InvariantCulture)
+$DoubleObservedText = [string]::Format([Globalization.CultureInfo]::InvariantCulture, '{0:G17}', $DoubleObservedDelta)
 Write-Host "V07_PRODUCTION_DOUBLE_SCALAR_PASS observed_delta=$DoubleObservedText"
 
 $RenderingOutput = (& dotnet run --project 'tests/MobilDwg.Rendering.Tests/MobilDwg.Rendering.Tests.csproj' --configuration Release 2>&1 | Out-String)
