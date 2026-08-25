@@ -7,95 +7,50 @@ on:
     paths:
       - Directory.Packages.props
       - compliance/**
+      - src/**/*.csproj
       - scripts/stage02-audit-packages.py
+      - scripts/v02-dependency-gate.ps1
       - .github/workflows/stage02-dependency-audit.yml
   pull_request:
     branches: [main]
+    paths:
+      - Directory.Packages.props
+      - compliance/**
+      - src/**/*.csproj
+      - scripts/stage02-audit-packages.py
+      - scripts/v02-dependency-gate.ps1
+      - .github/workflows/stage02-dependency-audit.yml
 
 permissions:
   contents: read
 
+concurrency:
+  group: stage02-dependency-${{ github.repository }}-${{ github.ref }}
+  cancel-in-progress: false
+
 jobs:
   dependency-audit:
-    runs-on: ubuntu-latest
+    name: V02 dependency and Android artifact boundary
+    runs-on: [self-hosted, windows, android-test, mobil-dwg]
     timeout-minutes: 30
 
     steps:
-      - name: Checkout
+      - name: Checkout exact revision
         uses: actions/checkout@v5
-
-      - name: Set up .NET 10.0.400
-        uses: actions/setup-dotnet@v5
         with:
-          dotnet-version: 10.0.400
+          persist-credentials: false
+          clean: true
 
-      - name: Validate audit script and committed evidence
-        shell: bash
+      - name: Run V02 dependency gate
+        shell: powershell
         run: |
-          set -euxo pipefail
-          python3 -m py_compile scripts/stage02-audit-packages.py
-          test -f compliance/Stage02.DependencyProbe/packages.lock.json
-          test -f compliance/stage02-package-manifest.json
-
-      - name: Install pinned Android workload set
-        shell: bash
-        run: |
-          set -euxo pipefail
-          test "$(dotnet --version)" = "10.0.400"
-          dotnet workload install maui-android
-          dotnet workload list | tee /tmp/workloads.txt
-          grep -F '10.0.400' /tmp/workloads.txt
-          grep -F 'maui-android' /tmp/workloads.txt
-
-      - name: Verify committed locked restore
-        shell: bash
-        run: |
-          set -euxo pipefail
-          dotnet restore compliance/Stage02.DependencyProbe/Stage02.DependencyProbe.csproj --locked-mode
-          git diff --exit-code -- compliance/Stage02.DependencyProbe/packages.lock.json
-
-      - name: Record resolved graph
-        shell: bash
-        run: |
-          set -euxo pipefail
-          dotnet list compliance/Stage02.DependencyProbe/Stage02.DependencyProbe.csproj package --include-transitive --format json > compliance/stage02-resolved-packages.json
-          cat compliance/stage02-resolved-packages.json
-
-      - name: Audit package licenses and exact nupkg hashes
-        shell: bash
-        run: |
-          set -euxo pipefail
-          python3 scripts/stage02-audit-packages.py
-          grep -F '"result": "PASS"' compliance/stage02-package-manifest.json
-          git diff --exit-code -- compliance/stage02-package-manifest.json
-
-      - name: Vulnerability report
-        shell: bash
-        run: |
-          set -euxo pipefail
-          dotnet list compliance/Stage02.DependencyProbe/Stage02.DependencyProbe.csproj package --vulnerable --include-transitive | tee compliance/stage02-vulnerabilities.txt
-          if grep -Fq 'has the following vulnerable packages' compliance/stage02-vulnerabilities.txt; then
-            echo 'Vulnerable package detected' >&2
-            exit 1
-          fi
-
-      - name: Evidence checksums
-        shell: bash
-        run: |
-          set -euxo pipefail
-          sha256sum \
-            compliance/Stage02.DependencyProbe/packages.lock.json \
-            compliance/stage02-package-manifest.json \
-            compliance/stage02-resolved-packages.json \
-            compliance/stage02-vulnerabilities.txt
+          & .\scripts\v02-dependency-gate.ps1 -ArtifactsDir "artifacts/v02-validation"
 
       - name: Upload Stage 02 evidence
         uses: actions/upload-artifact@v4
+        if: always()
         with:
           name: stage02-dependency-evidence
-          if-no-files-found: error
-          path: |
-            compliance/Stage02.DependencyProbe/packages.lock.json
-            compliance/stage02-package-manifest.json
-            compliance/stage02-resolved-packages.json
-            compliance/stage02-vulnerabilities.txt
+          path: artifacts/v02-validation/
+          retention-days: 14
+          if-no-files-found: warn

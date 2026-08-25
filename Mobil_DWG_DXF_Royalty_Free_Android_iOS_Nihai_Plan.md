@@ -1,86 +1,51 @@
 # Mobil DWG/DXF Görüntüleyici — Nihai Uygulama ve Yürütme Planı
 
-**Plan sürümü:** 1.1
-**Hazırlanma/doğrulama tarihi:** 25 Ağustos 2026
-**Ürün yönü:** Aktif hedef Android-only; iOS future option olarak korunur; preview-first, local/offline
-**Hedef:** Kullanıcıya ücretsiz sunulabilen; CAD dosyası başına, kullanıcı başına veya çalışma zamanı başına CAD SDK/API royalty’si doğurmayan; 2D DWG/DXF dosyalarını Android üzerinde güvenli ve teknik olarak güvenilir biçimde görüntüleyen çalışan mobil uygulama
-**Kaynak belgeler:** `Mobil_DWG_DXF_Royalty_Free_Android_iOS_Master_Plan.md`, `chatgpt_oneriler.md`, `claude_oneriler.md`, `gemini_oneriler.md`, `sonnet_5.md`
+**Plan sürümü:** 1.2
+**Son checkpoint güncellemesi:** 25 Ağustos 2026
+**Ürün yönü:** Aktif hedef Android-only; iOS future option; preview-first; local/offline
+**Hedef:** Kullanıcıya ücretsiz sunulabilen; CAD dosyası/kullanıcı/runtime başına ticari CAD SDK/API royalty’si gerektirmeyen; Android üzerinde 2D DWG/DXF dosyalarını güvenli ve teknik olarak güvenilir biçimde görüntüleyen çalışan mobil uygulama.
 
-> Bu belge bir fikir listesi değil, yürütme sırasıdır. Aşağıdaki aşamalar tamamlanmadan ürün “bitti” sayılmaz. “Royalty-free” bir hukuki garanti olarak değil, her release’in gerçek dependency ve dağıtım artifact’leri üzerinde yeniden kanıtlanan teknik/politika kriteri olarak kullanılır.
+> Bu belge fikir listesi değil yürütme sırasıdır. “Royalty-free” hukuki garanti değil; her release’in gerçek dependency ve dağıtım artifact’leri üzerinde yeniden kanıtlanan teknik/politika kriteridir.
 
 ---
 
 ## 1. Yürütme durumu — tek yetkili checkpoint
 
-Bu blok ve aşağıdaki aşama kutuları her çalışma turunun sonunda güncellenir.
-
 ```text
 ACTIVE_PROGRAM: ANDROID_REVALIDATION_01_09
-CURRENT_STAGE: V02 — Dependency, lockfile ve Android artifact sınırı
-CURRENT_SUBSTEP: V02.ready
+CURRENT_STAGE: V03 — Fixture, golden sözleşmesi ve Android test matrisi
+CURRENT_SUBSTEP: V03.ready
 STATUS: NOT_STARTED
 LAST_IMPLEMENTED_STAGE: AŞAMA 09 — DONE
-IMPLEMENTATION_NEXT: AŞAMA 10 — NOT_STARTED; Android doğrulama programının yanında ayrı cursor olarak korunur
-LAST_VERIFIED_REVISION: 698c6e901672a736f2803894efb5bda34af08212 — V01 exact Release emulator validation SHA; sonraki kapanış değişiklikleri yalnız dokümantasyon/workflow cleanup niteliğindedir
-LAST_HISTORICAL_EVIDENCE: docs/evidence/STAGE_09.md; run 32815175055/#6; artifact 9551137293; PR #12 merge 0a2dd886bbe59698a6d2eb4c99f66e7f9270063a
-LAST_ANDROID_VALIDATION_EVIDENCE: docs/evidence/android-validation/V01.md; run 32821991333; job 97721878468; artifact 9553530359
+IMPLEMENTATION_NEXT: AŞAMA 10 — NOT_STARTED; Android validation cursor'ından ayrı korunur
+LAST_VERIFIED_REVISION: 549770192c181b30db8968cec5c6ac3c2407e133 — V02 authoritative PR merge test revision; sonraki V02 kapanış commitleri evidence/checkpoint niteliğindedir
+LAST_HISTORICAL_EVIDENCE: docs/evidence/STAGE_09.md; run 32815175055; artifact 9551137293; PR #12 merge 0a2dd886bbe59698a6d2eb4c99f66e7f9270063a
+LAST_ANDROID_VALIDATION_EVIDENCE: docs/evidence/android-validation/V02.md; run 32824397251; job 97729154385; artifact 9554326162
 ACTIVE_PLAN: ANDROID_DOGRULAMA_PLANI.md
 PENDING_EMULATOR_QUEUE: EMPTY
-BLOCKERS: Aktif blocker yok. Runner/bilgisayar çevrim dışıysa kod çalışması sürer ve exact test PENDING_EMULATOR_QUEUE'ya alınır; kanıtsız VALIDATED/DONE yazılmaz. Fiziksel Android farkları release öncesi açık kalır. iOS aktif kapsam dışıdır ve Android'i bloke etmez.
-NEXT_ACTION: Yalnız V02'yi başlat; locked dependency graph, license/vulnerability policy ve Android artifact sınırını doğrula; aynı turda V03'e geçme.
+BLOCKERS: Aktif V03 blocker'ı yok. Fiziksel Android farkları release öncesi açık kalır. iOS aktif kapsam dışıdır ve Android'i bloke etmez.
+NEXT_ACTION: Yalnız V03'ü başlat; fixture/golden/provenance/private-ignore ve Android test matrisi sözleşmesini doğrula; aynı turda V04'e geçme.
 LAST_UPDATE: 2026-08-25
 ```
 
-Durum değerleri yalnızca şunlardır:
+Durum değerleri: `NOT_STARTED`, `IN_PROGRESS`, `BLOCKED`, `DONE`. Android validation alt planında ek olarak `CODE_AUDIT`, `FIX_REQUIRED`, `READY_FOR_EMULATOR`, `WAITING_RUNNER`, `VALIDATED`, `VALIDATED_WITH_DEFERRED_PHYSICAL`, `SCOPE_ARCHIVED`, `DEFERRED_PHYSICAL_ANDROID` kullanılabilir.
 
-- `NOT_STARTED`: aşamaya başlanmadı.
-- `IN_PROGRESS`: aşama başladı fakat bütün çıkış kriterleri sağlanmadı.
-- `BLOCKED`: yalnız kullanıcı donanımı, hesabı, özel test dosyası veya dış platform erişimi olmadan ilerlenemiyorsa.
-- `DONE`: bütün çıkış kriterleri gerçek komut/test/artifact kanıtıyla sağlandı.
+### `devam` protokolü
 
-### “devam” protokolü
+1. Önce gerçek `main` HEAD, açık PR, checkpoint ve kullanıcı değişiklikleri doğrulanır.
+2. `ANDROID_DOGRULAMA_PLANI.md` V01–V09 programı bitmediyse açık VXX birinci cursor’dır.
+3. Implementation cursor AŞAMA 10’da ayrı tutulur; validation beklerken yalnız güvenli host-independent iş yapılabilir.
+4. Bir kullanıcı turunda en fazla bir validation veya implementation aşaması kapatılır; sonraki aşama aynı turda başlatılmaz.
+5. Test/evidence olmadan PASS/DONE yazılmaz.
+6. Emulator fiziksel cihaz değildir; geçici `Stage01Smoke` gerçek viewer değildir; queued veya zero-step workflow PASS değildir.
+7. Dependency kendiliğinden yükseltilmez; her değişiklik license/hash/graph/native evidence ister.
+8. Kullanıcı değişiklikleri korunur; destructive/force Git işlemi yapılmaz.
+9. Her turun sonunda checkpoint/evidence/execution log/handoff kayıtları güncellenir.
+10. Kullanıcı iOS’u yeniden etkinleştirmedikçe iOS build/spike/signing işi yapılmaz.
 
-Kullanıcı `devam` dediğinde veya projeyi sürdürmeyi istediğinde ajan şu kurallara uyar:
+### Aktif kapsam ve dış kapılar
 
-1. Önce bu checkpoint, gerçek dosya ağacı, Git durumu ve kullanıcı değişiklikleri kontrol edilir.
-2. `ANDROID_DOGRULAMA_PLANI.md` içindeki V01–V09 programı tamamlanmadıysa açık VXX doğrulaması birinci iş cursor'ıdır.
-3. Normal geliştirme cursor'ı AŞAMA 10'da ayrıca korunur. Runner çevrim dışıyken VXX için yapılabilecek güvenli kod/audit işi bittiyse host-independent geliştirme devam edebilir; fakat bekleyen Android kanıtı PASS/DONE sayılmaz ve yüksek-riskli runtime değişiklikleri yığılmaz.
-4. Bir kullanıcı turunda **en fazla bir aşama tamamlanır**. Aşama biterse sonraki aşama aynı turda başlatılmaz.
-5. Bir aşama bir turda bitmek zorunda değildir. Bitmezse tamamlanan alt adımlar işaretlenir, durum `IN_PROGRESS` kalır ve tek bir somut `NEXT_ACTION` yazılır.
-6. Çıkış kriteri dosya, komut, test veya gerçek cihaz kanıtı olmadan işaretlenmez.
-7. Donanım/hesap/test dosyası gerekiyorsa güvenli bağımsız işler bitirilir, sonra blocker açıkça kaydedilir; sahte başarı yazılmaz.
-8. Önceki aşamalar gereksiz yere tekrarlanmaz. Her işlem mümkün olduğunca idempotent olur.
-9. Plan ile gerçek repo çelişirse gerçek repo esas alınır; plan/checkpoint gerekçesiyle düzeltilir.
-10. Dependency kendiliğinden yükseltilmez. Her yükseltme ayrı doğruluk, lisans ve artifact kontrolü gerektirir.
-11. Kullanıcıya ait değişiklikler korunur; destructive Git veya dosya işlemi yapılmaz.
-12. Her turun sonunda yalnız kısa sonuç, çalıştırılan testler, kalan risk ve sonraki eylem raporlanır.
-13. Self-hosted runner/bilgisayar çevrim dışıysa exact SHA ve gerekli test `PENDING_EMULATOR_QUEUE` olarak kaydedilir; aynı queued koşu gereksiz yere çoğaltılmaz.
-14. Kullanıcı iOS'u yeniden etkinleştirmedikçe iOS workflow/build/spike/signing işi yapılmaz.
-
-### Aktif kapsam ve dış erişim kapıları
-
-2026-08-25 kullanıcı kararıyla aktif ürün ve test hedefi Android-only olarak revize edilmiştir. AŞAMA 01–09, `ANDROID_DOGRULAMA_PLANI.md` içindeki V01–V09 turuyla kod + host test + gerektiğinde gerçek app emulator kanıtı üzerinden yeniden incelenir. Fiziksel Android farkları sahte PASS yapılmadan release/beta kapılarına taşınabilir. iOS geçmiş kayıtları ve taşınabilir mimari korunur fakat Mac/Xcode/iPhone/iOS workload/signing işi future option'dır; Android sırasını ve Android Definition of Done'ı bloke etmez.
-
-AŞAMA 09 özel renderer implementation'ı için ADR 0002'de istenen kullanıcı GO kararı verilmiş ve stage gerçek T0/T1 kanıtıyla tamamlanmıştır; GO yeniden istenmez.
-
-### Token ve test bütçesi
-
-- Önce `rg`, mevcut kod, upstream kaynak/test ve küçük adapter; en son özel implementasyon.
-- Uzun loglar konuşmaya dökülmez; hata için ilgili son bölüm ve özet verilir.
-- Aynı başarısız test kod/dependency değişmeden tekrar tekrar çalıştırılmaz.
-- Bir turda varsayılan olarak bir ilgili build + hedefli unit/smoke testi yapılır.
-- Tam corpus, bütün platform build’leri, SBOM ve artifact extraction yalnız tanımlı milestone’larda çalıştırılır.
-- Büyük matematik/kod blokları plana kopyalanmaz; gereksinim fixture ve beklenen davranışla tanımlanır.
-
-Test seviyeleri:
-
-| Seviye | İçerik | Ne zaman |
-|---|---|---|
-| T0 | Restore/build/static kontrol | İlgili kod değişince |
-| T1 | Değişen modülün unit testleri | Her uygulama turunda |
-| T2 | 1 küçük DWG + 1 küçük DXF smoke | Parser/render/mobil akışı değişince |
-| T3 | Mini corpus + gerçek Android Release cihaz testi | Aşama 05, 07, 15, 20 |
-| T4 | Tam private/public corpus + Android Release + artifact audit | Aşama 21, 26 |
+Aktif ürün Android-only v1’dir. AŞAMA 01–09 implementation geçmişi `ANDROID_DOGRULAMA_PLANI.md` V01–V09 programıyla yeniden doğrulanır. Fiziksel Android’in SAF/performance/üretici farkları emulator PASS’iyle kapatılmaz; release/beta matrisinde yeniden zorunludur. iOS geçmiş evidence ve taşınabilir mimari korunur fakat aktif Android DoD değildir.
 
 ---
 
@@ -88,92 +53,63 @@ Test seviyeleri:
 
 Kullanıcı açıkça değiştirmedikçe:
 
-- v1 bir **2D viewer** olacaktır; editor veya writer olmayacaktır.
-- Aktif v1 teslim hedefi yalnız **Android**'dir. iOS, kullanıcı yeniden etkinleştirene kadar future option'dır ve Android release kapısı değildir.
-- DWG ve DXF doğrudan cihazda okunur; zorunlu DWG→DXF bulut/ara dönüşümü yoktur.
-- Temel açma/render akışı local ve offline’dır; hesap, giriş veya sunucu gerekmez.
-- v1 kullanıcı için ücretsizdir; reklam, abonelik, ücretli CAD özelliği veya dosya başına ödeme yoktur.
-- Autodesk RealDWG, Autodesk APS/Forge dönüşümü, ticari ODA SDK, ücretli parser/renderer veya trial SDK kullanılmaz.
-- Runtime’da GPL, AGPL, SSPL, BUSL, non-commercial, source-available, proprietary veya lisansı belirsiz bileşen bulunmaz.
-- LGPL/MPL hukuken imkânsız diye değil, düşük uyumluluk yükü proje politikası nedeniyle varsayılan `RED` sayılır; istisna ayrıca yazılı onay ister.
-- Varsayılan allowlist: MIT, Apache-2.0, BSD-2-Clause, BSD-3-Clause, ISC, 0BSD. Her exact bileşen yine ayrıca denetlenir.
-- Root repo lisansı tek başına yeterli değildir; transitive paketler, native binary’ler, submodule/fork, vendored kod, font/PAT/icon/fixture gibi asset’ler de denetlenir.
-- Orijinal kullanıcı dosyası değiştirilmez; v1’de save/overwrite yoktur.
-- Unsupported/proxy entity, eksik font, XREF veya raster sessizce yok olmaz; compatibility özeti kullanıcıya gösterilir.
-- Uygulama adı ve ikonu Autodesk/AutoCAD/DWG markasını ürün markası gibi kullanmaz. Format uyumluluğu açıklama metninde, release tarihindeki güncel marka kılavuzuna göre ifade edilir.
-- Google Play geliştirici hesabı, Android cihaz ve bakım maliyetleri “ücretsiz CAD teknolojisi” iddiasının kapsamı dışındadır. Apple/Mac/iPhone maliyetleri yalnız future iOS track yeniden açılırsa değerlendirilir.
+- v1 bir **2D viewer**; editor/writer değildir.
+- Aktif v1 teslim hedefi yalnız Android’dir.
+- DWG/DXF doğrudan cihazda okunur; zorunlu bulut veya DWG→DXF dönüşümü yoktur.
+- Temel açma/render akışı local/offline’dır; hesap/giriş/sunucu gerekmez.
+- v1 kullanıcı için ücretsizdir; core CAD özelliği paywall arkasında değildir.
+- Autodesk RealDWG, APS/Forge dönüşümü, ticari ODA SDK, ücretli/trial parser-renderer kullanılmaz.
+- Runtime’da GPL/AGPL/SSPL/BUSL/non-commercial/source-available/proprietary/lisansı belirsiz bileşen yoktur.
+- Varsayılan allowlist: MIT, Apache-2.0, BSD-2-Clause, BSD-3-Clause, ISC, 0BSD. LGPL/MPL proje politikası gereği varsayılan `RED`; istisna yazılı karar ister.
+- Root lisans tek başına yeterli değildir; transitive package/native binary/submodule/vendored code/font/PAT/icon/fixture de denetlenir.
+- Original CAD immutable; v1’de save/overwrite yoktur.
+- Unsupported/proxy entity, eksik font, XREF/raster sessizce kaybolmaz; compatibility raporuna düşer.
+- Uygulama adı/ikonu Autodesk/AutoCAD/DWG markasını ürün markası gibi kullanmaz.
+- Google Play hesabı/cihaz/bakım maliyeti “ücretsiz CAD teknolojisi” kapsamı dışındadır.
 
-### v1 kapsamı
+### v1 zorunlu kapsam
 
-Zorunlu:
+- Yerel `.dwg` ve `.dxf` açma.
+- Emulator ile sürekli smoke; beta/release için gerçek Android cihaz.
+- Model space; corpus gerektiriyorsa standart paper-space/layout/viewport.
+- Pan, pinch zoom, fit extents, orientation.
+- Layer listesi ve show/hide.
+- Temel 2D geometri, block/INSERT, attribute, text/MTEXT, dimension, hatch.
+- CAD renkleri, ByLayer/ByBlock, basit linetype ve lineweight.
+- Türkçe text/encoding ve görünür font substitution.
+- Loading/progress/cancel talebi, kontrollü hata ve compatibility raporu.
+- Local/offline/privacy, close/reopen ve lifecycle güvenilirliği.
 
-- Yerel `.dwg` ve `.dxf` açma
-- Android emulator ile sürekli smoke; beta/release için gerçek Android cihaz
-- Model space; corpus gerektiriyorsa standart paper space/layout/viewport
-- Pan, pinch zoom, fit extents, orientation
-- Layer listesi ve show/hide
-- Temel 2D geometri, block/INSERT, attribute, text/MTEXT, dimension, hatch
-- CAD renkleri, ByLayer/ByBlock, basit linetype ve lineweight
-- Türkçe metin/encoding ve görünür font substitution
-- Loading/progress/cancel talebi, kontrollü hata ve compatibility raporu
-- Local/offline/privacy, close/reopen ve lifecycle güvenilirliği
-
-Future iOS uyumluluğu için shared Core/Cad/Rendering katmanları platformdan bağımsız ve adapter sınırları temiz tutulur. Bu taşınabilirlik kuralı, aktif turda iOS build/test yapılacağı anlamına gelmez.
-
-v1 dışı:
-
-- Çizim/düzenleme, selection, OSNAP, ölçüm
-- DWG/DXF yazma veya farklı kaydetme
-- PDF/SVG export
-- Collaboration, cloud sync, kullanıcı hesabı
-- Tam XREF crawler/otomatik yükleme
-- Civil 3D/Architecture proprietary proxy nesnelerinde tam fidelity
-- 3D CAD/BIM
+v1 dışı: edit/selection/OSNAP/ölçüm, DWG/DXF yazma, PDF/SVG export, cloud/collaboration/account, tam XREF crawler, proprietary proxy tam fidelity, 3D CAD/BIM.
 
 ---
 
-## 3. Doğrulanmış düzeltmeler ve başlangıç varsayımları
+## 3. Teknoloji kararları ve gerçeklik
 
-### 3.1 Yerel ortam fotoğrafı
+- .NET `10.0.400` / MAUI Android baseline pinlidir.
+- ACadSharp `3.7.1` read-only parser baseline `GO`; entity sınıfının varlığı fidelity kanıtı değildir.
+- SkiaSharp `4.151.1` renderer/native baseline’dır; native inventory ayrıca denetlenir.
+- Exact unpatched ProCad source reuse ADR 0002 ile `NO-GO`; survey-origin `5,000,000 + 0.001` precision blocker kanıtlıdır.
+- IxMilia.Dxf `0.8.4` yalnız test/fallback adayıdır; production graph’a varsayılan eklenmez.
+- `Task.Run(..., token)` senkron parser’ı hard-cancel etmiş sayılmaz. Cooperative cancellation yoksa sonuç discard edilir ve capability dürüstçe `BeforeStartOnly` kalır.
+- GPU/tiling/spatial index/largeHeap/GC hacks varsayılan çözüm değildir; yalnız ölçümlü A/B ile kabul edilir.
 
-24 Ağustos 2026 kontrolünde:
+### V02 ile düzeltilen exact-version politikası
 
-- Klasör yalnız beş plan/öneri MD dosyası içeriyordu; uygulama kodu yoktu.
-- Klasör Git reposu değildi.
-- Git kurulu; .NET host/runtime mevcut fakat .NET SDK yoktu.
-- Java/JDK ve `adb` PATH üzerinde yoktu.
-- Aşama 00–01 bu durumu yeniden kontrol eder; bu tarihli fotoğraf gelecekte gerçek durumun yerine kullanılmaz.
+Tarihsel plain CPM sürümlerinin lockfile’da open lower-bound request oluşturduğu V02’de bulundu. Güncel production/test baseline strict exact NuGet range kullanır:
 
-### 3.2 Dependency gerçekliği
+- ACadSharp `[3.7.1]`
+- SkiaSharp `[4.151.1]`
+- IxMilia.Dxf `[0.8.4]` — test/fallback only
 
-| Bileşen | 24.08.2026 doğrulaması | Başlangıç kararı |
-|---|---|---|
-| .NET 10 / .NET MAUI | .NET 10 LTS; MAUI Android+iOS’u destekliyor, exact SDK/workload pinlenmeli | Ana mobil teknoloji adayı |
-| ACadSharp | Resmi repo ve NuGet MIT; exact production baseline 3.7.1. AŞAMA 05 locked mini-corpus gate'i 4 DWG familyası + 5 DXF fixture ve 2 derived negative üzerinde geçti | Read-only parser baseline `GO`; render/engineering fidelity henüz ayrıca kanıtlanmalı |
-| ProCad | Resmi repo mevcut ve MIT; 0.1.x, genç ve düşük saha kullanımlı | Yalnız izole source-pinned spike |
-| ProCad NuGet hattı | Rendering paketi gevşek/yanlış ACadSharp alt sınırı çözebiliyor; kaynak repo kendi ACadSharp fork/submodule’una bağlı; MAUI kontrol hattında prerelease Skia view dependency bulunuyor | Mevcut haliyle production için varsayılan NO-GO |
-| SkiaSharp | MIT .NET 2D renderer; native dağıtım zinciri ayrıca denetlenmeli | Ana renderer adayı |
-| IxMilia.Dxf | MIT, DXF için yararlı ama güncel README kapsam sınırlamaları var | Test oracle’ı/koşullu DXF fallback; baştan runtime’a ekleme |
-| IxMilia.Dwg | Erken sürüm ve yalnız legacy R13/R14 kapsamı | Modern DWG fallback değil |
-| IxMilia.Shx | MIT kod/parser; font dosyası değildir | Yalnız font spike adayı |
-
-Önemli düzeltmeler:
-
-- Güncel ACadSharp README’sinde “alpha” etiketi veya eski “implement edilmemiş entity” listesi bulunmadığından bunlar gerçek diye yazılmaz. Entity sınıfının varlığı da fidelity kanıtı değildir; tek kanıt pinned sürüm + fixture + beklenen sonuçtur.
-- ProCad’in var olmadığı iddiası yanlıştır; ancak var olması production kalitesini kanıtlamaz.
-- `Task.Run(..., token)` başlamış senkron parser’ı sihirli biçimde durdurmaz. Gerçek cooperative cancellation yoksa UI iptal talebini kaydeder, sonucu terk edebilir; “hard timeout parser’ı durdurdu” denmez.
-- `largeHeap=true`, `GC.Collect()`, SKGLView/GPU, spatial index, tiling, batching ve triangulation varsayılan çözüm değildir. Yalnız profiler + A/B testiyle kabul edilir.
-- “60/120 FPS”, “100 MB dosyada garanti”, “AutoCAD ile piksel piksel aynı”, “%100 vektör PDF” ve “yasal olarak kesin risksiz” vaatleri yoktur.
-
-`[LIVE-VERIFY]` işaretli kararlar yürütme gününde resmi kaynaklardan yeniden doğrulanır.  
-`[MEASURE]` işaretli optimizasyonlar yalnız ölçülmüş darboğaz varsa açılır.
+Kalıcı `Stage 02 Dependency Audit` self-hosted Windows gate’i exact requested/resolved graph, locked restore, license/nupkg hash, vulnerability, production `src/` boundary ve Android native inventory’yi doğrular. Yetkili run `32824397251`, job `97729154385`, artifact `9554326162`. Ayrıntı `docs/evidence/android-validation/V02.md`.
 
 ---
 
 ## 4. Hedef mimari ve bağımlılık sınırları
 
 ```text
-MAUI App / platform adapters
+MAUI App / Android adapters
         │
         ▼
 Application + CadSession
@@ -181,216 +117,104 @@ Application + CadSession
         ├── ICadDocumentReader ──► ACadSharp adapter
         │                            └── parse diagnostics
         ▼
-Read-only document handle / metadata
+Read-only document/session
         │
         ▼
 IRenderSceneBuilder ──► immutable RenderScene + CompatibilityReport
         │
         ▼
 ICadRenderer ──► Skia renderer ──► Android canvas
-                                  └── future iOS adapter boundary (inactive)
+                                  └── future iOS adapter boundary
 ```
 
 Kurallar:
 
-- UI doğrudan ACadSharp veya ProCad entity’lerine bağlanmaz.
-- Parser document/session yaşam döngüsü tek owner tarafından yönetilir.
-- Dosya açma API’si çıplak path değil; source URI/bookmark, local-copy handle, display metadata, generation ID ve cancellation talebi taşıyan `OpenRequest` kullanır.
-- `RenderScene` türetilmiş ve yeniden üretilebilir; document verisinin yerine geçmez.
-- World/document koordinatları `double` tutulur; Skia’ya dönüşüm tek, test edilmiş kamera hattında yapılır.
-- Entity identity/handle korunur; gelecekte edit için kapı açık kalır ama v1 edit kodu taşımaz.
-- Compatibility raporu parse → scene → render zincirinde veri kaybını ve substitution’ı toplar.
-- Renderer seçimi bir ADR ile kilitlenir:
-  - **Yol A:** ProCad’in kanıtlanan minimum source modülleri, pinned commit/fork diff ile adapter arkasında.
-  - **Yol B:** ACadSharp + ince özel RenderScene + SkiaSharp.
-- İki yol aynı anda production mimarisine taşınmaz. Spike kodu runtime graph’a sızmaz.
-- ProCad Editing/Scripting/Collaboration, ACadSharp writer ve PDF/export paketleri v1 artifact’ine girmez.
+- UI doğrudan ACadSharp/ProCad entity’lerine bağlanmaz.
+- Parser document/session tek owner tarafından yönetilir.
+- Dosya açma çıplak path’e güvenmez; URI/stream/local-copy handle + generation ID + cancellation talebi kullanır.
+- `RenderScene` türetilmiş/reproducible’dır; document’ın yerine geçmez.
+- World/document koordinatları `double`; float dönüşüm ancak tek test edilmiş screen boundary’de olur.
+- Entity identity/handle korunur; v1 edit kodu taşımaz.
+- Compatibility report parse→scene→render kayıp/substitution’ı toplar.
+- Production tek scene/renderer yoludur; spike code runtime graph’a sızmaz.
+- ProCad Editing/Scripting/Collaboration, ACadSharp writer ve export paketleri v1 artifact’ine girmez.
 
-### Başlangıç repo yapısı
-
-Gereksiz proje parçalanması yapılmaz:
-
-```text
-src/
-  MobileCad.Core/                 # session, scene, geometry, diagnostics contracts
-  MobileCad.IO.ACadSharp/         # parser adapter; başka katmanlara sızmaz
-  MobileCad.Rendering.Skia/       # renderer ve platformdan bağımsız kamera
-  MobileCad.App/                  # bugün composition class library; V04'te Android MAUI shell, future iOS adapter'a açık
-tests/
-  MobileCad.UnitTests/
-  MobileCad.IntegrationTests/
-  MobileCad.GoldenTests/
-spikes/
-  ProCad.Android/                 # production graph dışında
-fixtures/
-  public/                         # yalnız redistributable/sentetik
-  private/                        # Git ignored
-docs/
-  ADR/
-  ARCHITECTURE.md
-  COMPATIBILITY.md
-  PERFORMANCE.md
-  EXECUTION_LOG.md
-compliance/
-  LICENSE_POLICY.md
-  DEPENDENCY_EVIDENCE.md
-  THIRD_PARTY_NOTICES.md
-  releases/
-```
-
-Yeni proje ancak gerçek bağımsızlık/test ihtiyacı oluşursa eklenir. `Editing`, `Export`, `Collaboration` projeleri v1’de oluşturulmaz.
+Mevcut repo production katmanları: `src/MobilDwg.Core`, `src/MobilDwg.Cad`, `src/MobilDwg.Rendering`, `src/MobilDwg.App`. V04’e kadar `MobilDwg.App` installable MAUI Android app değildir; class-library baseline’dır.
 
 ---
 
 ## 5. Fidelity, compatibility ve performans sözleşmesi
 
-### 5.1 Dört ayrı başarı durumu
+### Dört ayrı başarı durumu
 
-“Dosya açıldı” tek başına başarı değildir:
-
-1. **Parse success:** Dosya kontrollü biçimde document’a dönüştü.
-2. **Scene success:** Beklenen entity’ler render primitive’lerine dönüştü.
-3. **Render success:** Frame crash/NaN/sonsuz döngü olmadan çizildi.
-4. **Engineering fidelity:** Konum, ölçü, metin, block, dimension ve görünürlük referansla kabul sınırında.
+1. Parse success.
+2. Scene success.
+3. Render success.
+4. Engineering fidelity.
 
 Compatibility seviyeleri:
 
 | Seviye | Anlamı |
 |---|---|
-| C0 | Desteklenmiyor; algılandı ve kullanıcı uyarıldı |
+| C0 | Desteklenmiyor; algılandı ve uyarıldı |
 | C1 | Parse edildi; render doğrulanmadı |
 | C2 | Yaklaşık render; teknik fidelity garantisi yok ve uyarı var |
-| C3 | Golden/semantic testle görsel olarak kabul edildi |
-| C4 | Mühendislik açısından kritik fixture’da ayrıca doğrulandı |
+| C3 | Golden/semantic testle kabul edildi |
+| C4 | Mühendislik-kritik fixture’da ayrıca doğrulandı |
 
-P0 release entity’leri en az C3, dimension ve teknik annotation fixture’ları C4 olmalıdır. Yanlış görünen “yaklaşık dimension” yerine açık uyarı tercih edilir.
+P0 release entity’leri en az C3; dimension/teknik annotation kritik fixture’ları C4 olmalıdır. Yanlış yaklaşık dimension yerine açık warning tercih edilir.
 
-### 5.2 Entity önceliği
+### P0 entity kapsamı
 
-P0:
+LINE, ARC, CIRCLE, ELLIPSE, LWPOLYLINE/POLYLINE + bulge, SPLINE, POINT, SOLID, TRACE, 3DFACE 2D görünümü, TEXT, MTEXT, INSERT/nested INSERT/ATTRIB/ATTDEF, DIMENSION, HATCH.
 
-- LINE, ARC, CIRCLE, ELLIPSE
-- LWPOLYLINE/POLYLINE ve bulge
-- SPLINE
-- POINT, SOLID, TRACE, 3DFACE’in 2D görünümü
-- TEXT, MTEXT
-- INSERT, nested INSERT, ATTRIB/ATTDEF
-- DIMENSION
-- HATCH
+P1: LEADER/MLEADER/TOLERANCE, XLINE/RAY/MLINE, TABLE, VIEWPORT/layout, IMAGE/WIPEOUT, basit XREF tespiti. P2 proprietary proxy/ileri 3D/underlay/dynamic-block davranışı; v1’i bloklamaz ama raporlanır.
 
-P1:
+### Zorunlu doğruluk fixture’ları
 
-- LEADER/MLEADER, TOLERANCE
-- XLINE, RAY, MLINE
-- TABLE
-- VIEWPORT/layout
-- IMAGE/WIPEOUT
-- Basit XREF tespiti
+OCS/WCS, büyük/negatif koordinatlar, bulge işaretleri, nested rotate/mirror/non-uniform block, Layer0/ByLayer/ByBlock/ACI7/true-color, linetype/lineweight, CP1254+Unicode Turkish text, SHX missing/substitution, dimension familyaları, solid/pattern hatch, SOLID vertex order, layout/viewport, missing XREF/raster/proxy warnings.
 
-P2 — v1’i bloklamaz fakat raporlanır:
+### Performans ilkeleri
 
-- Proxy/custom entity
-- Civil 3D ve AutoCAD Architecture özel nesneleri
-- ACIS/ileri 3D, ileri underlay ve dynamic block davranışları
-
-### 5.3 Zorunlu doğruluk fixture’ları
-
-- OCS→WCS/extrusion normal
-- Büyük ve negatif koordinatlar; precision
-- Polyline bulge: sıfır, pozitif, negatif, yarım/tam daireye yakın
-- Nested block; rotate, mirror ve non-uniform scale
-- Layer 0, ByLayer, ByBlock, ACI 7, true color
-- Basit dashed linetype, LTSCALE ve lineweight
-- Türkçe CP1254 ve Unicode TEXT/MTEXT; alignment/width factor
-- SHX eksik/mevcut/substitution
-- Linear/aligned/angular/radius/diameter dimension; `*D` anonymous block
-- Solid/dense/pattern hatch, island ve bozuk boundary
-- SOLID vertex order
-- Layout/viewport clip ve viewport layer override
-- Eksik XREF/raster/proxy ve controlled warning
-
-### 5.4 Provisional performans hedefleri
-
-Dosya boyutu tek ölçü değildir. Şunlar birlikte kaydedilir: file byte, parsed entity, expanded block instance, scene primitive, glyph, hatch segment/vertex, raster pixel, peak managed/native/PSS bellek.
-
-Corpus ilk benchmarkından sonra hedefler cihaz bazında bir kez sabitlenir. Başlangıç hedefleri garanti değildir:
-
-| Profil | İlk anlamlı görüntü (TTFUP) | Etkileşim hedefi — Android Release |
-|---|---|---|
-| Küçük: ≤10 bin primitive | ≤2 sn hedef | p95 frame ≤16.7 ms hedef, ≤33.3 ms minimum |
-| Orta: 10–100 bin | ≤5 sn hedef | p95 frame ≤33.3 ms minimum |
-| Büyük: 100–500 bin | ≤10 sn veya görünür ilerleme/kademeli sonuç | ANR/OOM yok; ölçümlü LOD/culling gerekebilir |
-| Extreme: >500 bin | Ürün garantisi yok | Crash yerine kontrollü uyarı/ret |
-
-- Debug performansı release kararı değildir.
-- Referans: kullanıcının ana telefonu + mümkünse en az bir 4–6 GB RAM orta/alt segment fiziksel Android. Future iOS track yeniden açılırsa ayrı gerçek iPhone matrisi eklenir.
-- Repeat-open testinde kapanıştan sonra PSS/native bellek monoton büyümemeli; ilk kapanış baseline’ına göre beş döngü sonrası provisional tolerans +%15’tir ve Aşama 20’de cihaz bazında kesinleştirilir.
-- `largeHeap` varsayılan kapalıdır. Cache bütçesi ve hard guard değerleri gerçek `memoryClass`/profiler sonucuyla belirlenir.
-
-### 5.5 Optimizasyon kabul kuralı
-
-`[MEASURE]` adayları: SKGLView/GPU, primitive batching, R-tree/quadtree/BVH, tiling/SKPicture, adaptive tessellation, local-origin shift, LOD, HarfBuzz, hatch triangulation, trimming, `largeHeap`.
-
-Her biri için zorunlu sıra:
-
-```text
-baseline → profiler kanıtı → küçük izole A/B spike → aynı corpus
-→ doğruluk/bellek/size regresyonu yok → ölçülebilir kazanç → ADR ile kabul
-```
-
-Kazanç kanıtlanmazsa kod/dependency eklenmez.
+Dosya byte tek metrik değildir; parsed entity, expanded instance, scene primitive, glyph/hatch complexity, raster pixel ve managed/native/PSS birlikte kaydedilir. Debug sonucu release kararı değildir. `[MEASURE]` optimizasyonları baseline→profiler→tek A/B spike→aynı corpus→correctness/bellek/size regression yok→ölçülebilir kazanç sırasını izler. `largeHeap` son çaredir.
 
 ---
 
 ## 6. Lisans, kaynak ve veri firewall’u
 
-Her runtime dependency/asset için kayıt:
-
-- exact package version ve resolved transitive graph
-- source repo URL ve commit/tag
-- package/source SHA-256
-- license dosyası ve hash’i
-- submodule, fork ve upstream diff
-- native `.so`, `.aar`, `.jar`, `.framework`, `.dylib`
-- font, icon, PAT, fixture ve embedded resource provenance
-- redistribution/notice/source disclosure/royalty değerlendirmesi
-- runtime artifact’e dahil olup olmadığı
-- reviewer sonucu: `GREEN`, `REVIEW`, `RED`
+Her runtime dependency/asset için exact version, resolved transitive graph, source URL+commit/tag, package/source hash, license+hash, submodule/fork diff, native inventory, font/icon/PAT/fixture provenance, redistribution/notice/royalty değerlendirmesi ve artifact inclusion kaydı tutulur.
 
 Kurallar:
 
-- Central Package Management + exact version + `packages.lock.json` + locked restore.
-- `*`, `latest`, floating veya uygulamanın doğrudan dependency’sinde açık alt sınır yok.
-- Unknown license/native binary/asset = release blocker.
-- Scanner yardımcıdır; dual-license, vendored/native/source ve asset’ler manuel kanıt ister.
-- Rejected lisanslı kaynaktan kod, test vektörü veya satır satır port alınmaz. Algoritma gerekiyorsa permissive kaynak veya kamuya açık teknik spesifikasyon kullanılır ve provenance yazılır.
-- Açık internette bulunan DWG/DXF, font veya screenshot yeniden dağıtılabilir sayılmaz.
-- Müşteri/kullanıcı çizimleri yalnız izinli private corpus’ta, Git dışında ve hassas yol/metin loglanmadan tutulur.
-- Uygulamaya yalnız açık redistribution izni kanıtlanmış fontlar gömülür. AutoCAD kurulumundan alınan SHX dosyaları bundle edilmez. Kullanıcının kendi fontunu lokal seçmesi dağıtım sayılmaz.
-- Android RC’de gerçek APK/AAB içeriği çıkarılır; kaynak/license evidence ile karşılaştırılır. IPA yalnız future iOS reactivation planında ele alınır.
-- Release için CycloneDX veya SPDX SBOM, notices ve immutable compliance snapshot oluşturulur.
+- Central Package Management + strict exact NuGet range + `packages.lock.json` + locked restore.
+- `*`, `latest`, floating veya direct open-lower-bound production dependency yok.
+- Unknown license/native binary/asset release blocker.
+- Rejected lisanslı kaynaktan kod/test vektörü/satır satır port alınmaz.
+- Açık internetteki DWG/DXF/font/screenshot yeniden dağıtılabilir varsayılmaz.
+- Müşteri çizimleri private/ignored corpus’ta kalır; hassas path/text loglanmaz.
+- Proprietary SHX bundle edilmez; kullanıcı font importu local/app-private olabilir.
+- Android RC’de gerçek APK/AAB extract edilip source/license evidence ile karşılaştırılır.
+- Release için SBOM + THIRD_PARTY_NOTICES + immutable compliance snapshot gerekir.
 
 ---
 
 ## 7. Aşamalı uygulama planı
 
-Aktif yürütmede iki cursor vardır: AŞAMA 01–09 implementation geçmişi AŞAMA 09'da kalır; Android geriye dönük test cursor'ı `ANDROID_DOGRULAMA_PLANI.md` içindeki V01'den başlar. Normal implementation cursor'ı AŞAMA 10'dur. V01–V09 bir eski aşamayı sahte biçimde yeniden `DONE` yapmaz; mevcut kodu denetler, bulunan hatayı yeni commit/evidence ile düzeltir.
-
-Aktif Android sıra AŞAMA 10–22 ve ardından AŞAMA 25–27'dir. AŞAMA 23–24 korunmuş future iOS track'tir; atlanması Android planında sıra ihlali değildir.
+İki cursor vardır: Android validation V01–V09 ve implementation AŞAMA 10+. V01–V09 bitmeden normal cursor AŞAMA 10’dan ilerletilmez; runner beklenirken yalnız güvenli host-independent iş kuralı istisnadır.
 
 ### Aşama indeksi
 
-- [x] AŞAMA 00 — Çalışma alanı ve yürütme zemini
-- [ ] AŞAMA 01 — .NET/MAUI/Android toolchain ve gerçek telefon — `BLOCKED / DEFERRED_EXTERNAL_GATE`
-- [x] AŞAMA 02 — Canlı dependency/lisans kanıtı ve kilitler — `DONE`
-- [x] AŞAMA 03 — Test corpus’u, golden sözleşmesi ve cihaz matrisi — `DONE`
-- [x] AŞAMA 04 — Minimal solution ve mimari sınırlar — `DONE`
-- [x] AŞAMA 05 — ACadSharp headless parser spike — `DONE`
-- [ ] AŞAMA 06 — Android güvenli dosya alma ve parse spike — `BLOCKED / DEFERRED_EXTERNAL_GATE`
-- [x] AŞAMA 07 — ProCad source-pinned Android spike ve GO/NO-GO — `DONE / NO-GO`
-- [x] AŞAMA 08 — Erken iOS AOT/native fizibilite smoke — `DONE / CHARACTERIZATION; iOS PASS NOT CLAIMED`
-- [x] AŞAMA 09 — RenderScene, kamera ve diagnostics temeli — `DONE`
-- [ ] AŞAMA 10 — P0 temel geometri renderer’ı — `NOT_STARTED`
+- [x] AŞAMA 00 — Çalışma alanı/yürütme zemini — `DONE`
+- [ ] AŞAMA 01 — Toolchain + fiziksel Android — `BLOCKED / DEFERRED_EXTERNAL_GATE`
+- [x] AŞAMA 02 — Dependency/lisans/lock — `DONE`; Android V02 revalidation ile exact-pin policy sertleştirildi
+- [x] AŞAMA 03 — Corpus/golden/matris — `DONE`
+- [x] AŞAMA 04 — Minimal solution/mimari — `DONE`
+- [x] AŞAMA 05 — ACadSharp parser — `DONE`
+- [ ] AŞAMA 06 — Safe-open fiziksel Android kapısı — `BLOCKED / DEFERRED_EXTERNAL_GATE`
+- [x] AŞAMA 07 — ProCad source spike — `DONE / NO-GO`
+- [x] AŞAMA 08 — iOS characterization — `DONE / HISTORICAL; iOS PASS NOT CLAIMED`
+- [x] AŞAMA 09 — RenderScene/kamera/diagnostics — `DONE`
+- [ ] AŞAMA 10 — P0 temel geometri renderer — `NOT_STARTED`
 - [ ] AŞAMA 11 — Mobil viewport ve gesture’lar
 - [ ] AŞAMA 12 — Block/INSERT/attribute dönüşümleri
 - [ ] AŞAMA 13 — Layer, renk, linetype ve lineweight
@@ -403,518 +227,273 @@ Aktif Android sıra AŞAMA 10–22 ve ardından AŞAMA 25–27'dir. AŞAMA 23–
 - [ ] AŞAMA 20 — Ölçümlü performans ve bellek optimizasyonu
 - [ ] AŞAMA 21 — Android tam corpus regresyon ve beta kapısı
 - [ ] AŞAMA 22 — Android Release/AAB/compliance RC
-- [ ] AŞAMA 23 — iOS toolchain, shared core ve ilk gerçek cihaz — `DEFERRED_FUTURE_IOS / ACTIVE_ANDROID_SEQUENCE_OUT`
-- [ ] AŞAMA 24 — iOS fidelity, lifecycle ve Release archive — `DEFERRED_FUTURE_IOS / ACTIVE_ANDROID_SEQUENCE_OUT`
-- [ ] AŞAMA 25 — Android beta ve yalnız blocker düzeltmeleri
-- [ ] AŞAMA 26 — Android dependency freeze, final audit ve RC onayı
-- [ ] AŞAMA 27 — Android v1 artifact, yayın/handoff ve kapanış
+- [ ] AŞAMA 23–24 — `DEFERRED_FUTURE_IOS / ACTIVE_ANDROID_SEQUENCE_OUT`
+- [ ] AŞAMA 25 — Android beta ve blocker düzeltmeleri
+- [ ] AŞAMA 26 — Android dependency freeze/final audit/RC
+- [ ] AŞAMA 27 — Android v1 artifact/yayın-handoff/kapanış
 
-### AŞAMA 00 — Çalışma alanı ve yürütme zemini
+### Tarihsel AŞAMA 00–09
 
-**Amaç:** Mevcut belgeleri koruyarak izlenebilir çalışma zemini kurmak.
+Detaylı execution/evidence yeniden bu plan içine kopyalanmaz. Yetkili kaynaklar `docs/evidence/STAGE_01.md`–`STAGE_09.md`, `docs/EXECUTION_LOG.md`, `docs/ADR/0001-acadsharp-3.7.1-parser-baseline.md`, `docs/ADR/0002-procad-pinned-source-no-go.md` ve Android revalidation için `docs/evidence/android-validation/` dizinidir.
 
-İşler:
-
-- [x] Dosya ağacı, disk alanı, Git ve mevcut toolchain yeniden envanterlendi.
-- [x] GitHub’daki mevcut `smitelagwar/mobil-dwg` reposu ve `main` geçmişi doğrulandı; kullanıcı belgeleri korunarak devam edildi. Repo zaten başlatılmış olduğundan yeniden `git init` yapılmadı.
-- [x] Build/temp/private corpus/signing secret’ları için mevcut `.gitignore` incelendi ve yeterli bulundu; gereksiz değişiklik yapılmadı.
-- [x] `docs/EXECUTION_LOG.md`, `docs/ADR/0000-template.md`, `docs/EVIDENCE_TEMPLATE.md` ve proje devri için kökte `gecmis.md` oluşturuldu.
-- [x] Bu planın checkpoint’i gerçek durumla güncellendi.
-
-Test: Git status ve ignore dry-run.  
-Çıkış: Kaynak araştırma MD’leri değişmeden korunur; yalnız bu nihai planın checkpoint’i yürütme durumu için güncellenir. İzlenebilir repo, yürütme günlüğü ve tek aktif checkpoint vardır.
-
-### AŞAMA 01 — .NET/MAUI/Android toolchain ve gerçek telefon
-
-**Amaç:** CAD dependency eklemeden önce geliştirme zincirini kanıtlamak.
-
-İşler:
-
-- [x] `[LIVE-VERIFY]` Desteklenen güncel .NET 10 SDK patch’i resmi kaynaktan doğrulandı ve `global.json` ile pinlendi: SDK/workload set `10.0.400`.
-- [x] MAUI/Android workload, Microsoft OpenJDK 21.0.12, Android SDK API 36 / Build-Tools 36.0.0 / stable Platform-Tools 37.0.1 exact hattı GitHub Actions temiz runner üzerinde kuruldu ve kaydedildi.
-- [x] Minimum Android API `24`, target/compile SDK `36` olarak kaydedildi; temiz MAUI 10 template varsayılan min API 21 olduğundan `SupportedOSPlatformVersion=24.0` açıkça pinlendi.
-- [x] Temiz MAUI smoke app `net10.0-android` Debug ve Release derlendi; güncel CI run `32739952628` exact toolchain/workload, pinned `ApplicationId=com.smitelagwar.mobildwg.stage01smoke`, Debug/Release, manifest `minSdk=24 / targetSdk=36` ve APK artifact kapılarını geçti.
-- [x] Fiziksel cihaz kapısı için Windows PowerShell ve Bash gate scriptleri eklendi; CI üzerinde syntax/parse doğrulaması PASS oldu. Scriptler exact toolchain/workload, fiziksel `state=device`, emulator dışlama, Debug/Release build, manifest 24/36, install ve launcher `Status: ok` koşullarını zorunlu kılar.
-- [ ] `adb` ile kullanıcının gerçek telefonuna yüklenir ve açılır; gerçek geliştirme makinesinde `STAGE01_DEVICE_GATE_PASS` alınır.
-- [ ] Tarihsel iOS erişim envanteri tamamlanmadı; 25.08.2026 Android-only kapsam kararıyla bu madde aktif AŞAMA 01/Android V01 çıkışından çıkarıldı ve future iOS track'e taşındı.
-
-Test: `dotnet --info`, workload list, Android Debug/Release build, manifest/API/package baseline ve device-gate script syntax kontrolü en güncel AŞAMA 05 implementation-head regresyonu `Stage 01 Toolchain Smoke` run `32759095888` / #44 üzerinde PASS. Root Central Package Management etkisinden kaçınmak için temiz MAUI smoke projesi `$RUNNER_TEMP` altında izole edildi. Fiziksel Android install/launch ancak gerçek cihazdaki `STAGE01_DEVICE_GATE_PASS` ile kapanır.  
-Çıkış (tarihsel): Gerçek telefonda boş MAUI uygulaması şartı tamamlanmadığı için kayıt `BLOCKED / DEFERRED_EXTERNAL_GATE` kaldı. Aktif Android V01, emulator altyapısını ayrı kanıtlar; fiziksel Android açığı release cihaz matrisine taşınır. iOS envanteri future track'tir ve Android V01'i engellemez.
-
-### AŞAMA 02 — Canlı dependency/lisans kanıtı ve kilitler
-
-**Amaç:** Kod yazmadan önce kullanılabilecek exact teknoloji çizgisini belirlemek.
-
-İşler:
-
-- [x] ACadSharp `3.7.1` current stable release, source/license/dependency/submodule hattı resmi kaynaklardan kaydedildi; dependency/lisans sınıfı `GREEN`, fidelity kararı AŞAMA 05'e bırakıldı.
-- [x] SkiaSharp `4.151.1` ve Android native asset graph’ı incelendi; exact `.nupkg` hash/native-entry kanıtı kaydedildi; final native third-party inventory nedeniyle `REVIEW`.
-- [x] ProCad source snapshot `f8a862b3e7634e27664fee02ff5d68774b102985`, ACadSharp fork submodule `0ed79df48de0806af3c3028d0e2826447cbc1d36` ve ProEdit `64759b79289a024d08463ed1a9094fdcd9a270df` kaydedildi; production default `NO-GO`, yalnız AŞAMA 07 source-pinned spike.
-- [x] IxMilia.Dxf `0.8.4` test/fallback scope'unda `GREEN`; IxMilia.Dwg/Shx source-only `REVIEW` olarak raporlandı.
-- [x] `compliance/LICENSE_POLICY.md`, `compliance/DEPENDENCY_EVIDENCE.md`, `compliance/RISK_REGISTER.md` ve `docs/evidence/STAGE_02.md` hazırlandı.
-- [x] Central Package Management, exact versions, committed `packages.lock.json`, `--locked-mode` restore, exact `.nupkg` SHA-256/license manifest'i ve CI vulnerability/reproducibility kapısı kuruldu.
-
-Test: GitHub Actions `Stage 02 Dependency Audit` run `32747785867` / #9 SUCCESS; committed locked restore, resolved graph, exact nupkg license/hash audit, manifest diff, vulnerability check ve evidence artifact PASS. Aynı final PR head üzerinde `Stage 01 Toolchain Smoke` run `32747785948` / #29 SUCCESS; root-CPM regresyonu kapandı.  
-Çıkış: Sağlandı. Her aday `GREEN/REVIEW/RED`; floating/latest production dependency yok; unknown/policy-RED resolved package yok; ProCad production graph’a eklenmedi. PR #4 merge commit `f0a43db6cc3aee9103f42798fa124da4d1ff39d1`.
-
-### AŞAMA 03 — Test corpus’u, golden sözleşmesi ve cihaz matrisi
-
-**Amaç:** Parser/renderer kararlarını göz kararı yerine tekrar üretilebilir veriyle vermek.
-
-İşler:
-
-- [x] `fixtures/manifest` şeması oluşturuldu; hash, format/version, boyut, hak/provenance, özellikler, beklenen counts/warnings ve golden metadata alanları tanımlandı.
-- [x] Public/synthetic/private corpus ayrımı kuruldu; private fixture yolu Git ignored ve validator tarafından enforced.
-- [x] İlk mini corpus 4 DWG familyası (R2000/R2004/R2010/R2018) + en az 2 DXF içeriyor; upstream binary'ler immutable ACadSharp revision üzerinden remote-pinned tutuluyor, repoya vendored edilmiyor.
-- [x] Set basic geometry, Turkish text, nested block, dimension, hatch ve paper-space/layout feature coverage içeriyor.
-- [x] CI-derived truncated/corrupt DWG ile committed missing-font/missing-XREF negatif fixture'ları eklendi.
-- [x] Golden görüntü redistribution sözleşmesi `docs/GOLDEN_CONTRACT.md` içinde tanımlandı; izin kanıtı olmadan image golden repoya giremez.
-- [x] Android fiziksel cihaz matrisi, API 36 emulator slotu ve provisional benchmark profilleri `docs/DEVICE_MATRIX.md` içinde yazıldı; gerçek cihaz slotları erişim yokluğu nedeniyle UNKNOWN/DEFERRED_EXTERNAL_GATE, iOS slotları future/inactive'dir.
-
-Test: GitHub Actions `Stage 03 Corpus Audit` run `32752374980` / #4 SUCCESS; `STAGE03_FIXTURE_AUDIT_PASS fixtures=9 derived_negatives=2`, `STAGE03_DUAL_HASH_PASS fixtures=6`, private-ignore/coverage/version/hash/provenance ve evidence artifact upload PASS. Aynı final head üzerinde Stage 02 run #15 ve Stage 01 run #34 SUCCESS.  
-Çıkış: Sağlandı. Mini corpus + beklenen sonuç manifest’i, dual-hash source integrity kaydı, golden contract ve cihaz matrisi mevcut. PR #5 merge commit `fb2d0982efeab8f78bc78dc82a7a8deb688190f8`. AŞAMA 01 dış cihaz kapıları ertelenmiş olarak açık kalır.
-
-### AŞAMA 04 — Minimal solution ve mimari sınırlar
-
-**Amaç:** Parser ve renderer’ı UI’dan ayıran küçük, derlenebilir iskelet.
-
-İşler:
-
-- [x] Dört production projesi (`MobilDwg.Core`, `MobilDwg.Cad`, `MobilDwg.Rendering`, `MobilDwg.App`) ve üç test projesi oluşturuldu; v1 dışı production/test proje açılmadı.
-- [x] `ICadDocumentReader`, session owner (`CadDocumentSession` + `ICadDocumentHandle`), `IRenderSceneBuilder`, `ICadRenderer`, diagnostics ve compatibility kontratları tanımlandı.
-- [x] Core katmanı BCL-only tutuldu; MAUI/SkiaSharp/ACadSharp referansı ve ProjectReference/PackageReference yok.
-- [x] Cancellation/progress API’si `None/BeforeStartOnly/Cooperative` ve `None/StagesOnly/Fractional` capability seviyeleriyle gerçek destek düzeyini yanlış temsil etmeyecek şekilde modellendi; bilinmeyen fraction `null` kalır.
-- [x] Architecture dependency tests eklendi; tam proje sayısı ve exact ProjectReference yönleri korunur. Stage 04 baseline'ında production PackageReference yoktu; AŞAMA 05 sonrasında test kuralı yalnız `MobilDwg.Cad` içinde exact `ACadSharp` PackageReference'ını kabul eder ve Core/Rendering/App katmanlarında ACadSharp sızıntısını reddeder.
-
-Test: GitHub Actions `Stage 04 Architecture` run `32755230695` / #2 SUCCESS; exact .NET/workload set, clean solution restore, Release build `0 Warning(s) / 0 Error(s)`, `STAGE04_CORE_CONTRACT_TESTS_PASS`, `STAGE04_RENDER_CONTRACT_TESTS_PASS`, `STAGE04_ARCHITECTURE_TESTS_PASS`, `STAGE04_T0_PASS`. AŞAMA 05 implementation head regresyonu run `32759095988` / #11 de SUCCESS.  
-Çıkış: Sağlandı. Solution temiz restore/build/test geçer; dependency yönleri otomatik test edilir. PR #6 merge commit `c01311ccb5c82b7bac023b24ae6a8000ae4655af`.
-
-### AŞAMA 05 — ACadSharp headless parser spike
-
-**Amaç:** Pinned ACadSharp ile gerçek DWG/DXF okuma ve diagnostics’i UI’dan bağımsız kanıtlamak.
-
-İşler:
-
-- [x] Exact ACadSharp `3.7.1` yalnız `MobilDwg.Cad` adapter projesine eklendi; writer/save API’leri kullanılmadı. NuGet-generated project-aware lockfile commit edilerek final restore `--locked-mode` çalıştırıldı.
-- [x] DWG `AC####` magic ve DXF signature/header preflight, reader notifications, controlled exceptions ve parse timing Core diagnostics/metadata hattına bağlandı.
-- [x] Mini corpus headless açıldı; AC1015/AC1018/AC1024/AC1032 DWG, AC1015/AC1032 ASCII DXF ve üç sentetik DXF manifest count/warning beklentileriyle karşılaştırıldı. Ana upstream setinde model-space `163`, total block entity `341`, block-reference/INSERT `14`, DIMENSION `11`, HATCH `8`, LINE `98`, CIRCLE `13` semantiği doğrulandı.
-- [x] Unsupported/proxy/notification ve missing-resource sinyalleri diagnostics/compatibility olarak sınıflandırıldı; sabit “uyarı sayısı eşiği” kullanılmadı. ASCII DXF `unsupported-object` ve yüksek notification hacmi known limitation olarak kaydedildi.
-- [x] Aynı document’tan türetilen iki count başarı kanıtı sayılmadı; Stage 03 manifestin bağımsız beklenen semantic counts/warnings sözleşmesi kullanıldı. Derived truncated AC1015 DWG controlled `EndOfStreamException`, corrupt AC1018 DWG controlled warning üretti.
-- [x] `docs/ADR/0001-acadsharp-3.7.1-parser-baseline.md` ve `docs/evidence/STAGE_05.md` yazıldı. ACadSharp `3.7.1` read-only parser baseline `GO`; bu karar render/engineering fidelity garantisi değildir.
-
-Test: GitHub Actions `Stage 05 Parser Spike` run `32759096003` / #8 SUCCESS; committed locked restore, Release build `0 Warning(s) / 0 Error(s)`, Core/Rendering/Architecture regresyonları, `STAGE05_DEPENDENCY_BOUNDARY_PASS`, `STAGE05_MINI_CORPUS_PASS fixtures=9 derived_negatives=2`, package graph `ACadSharp 3.7.1` ve `STAGE05_T3_PASS`. Evidence artifact `9532001644`, digest `sha256:2750ba88141c5724306bb5811173d958c60836806021f2ff1a5b36b011631097`. Aynı implementation head Stage 04 run #11, Stage 02 run #25 ve Stage 01 toolchain run #44 SUCCESS. Fiziksel Android cihaz kapısı AŞAMA 01 `DEFERRED_EXTERNAL_GATE` olarak açık kalır ve bu headless aşamayla sahte PASS yapılmaz.  
-Çıkış: Sağlandı. DWG/DXF parse yolu, diagnostics ve exact ACadSharp `3.7.1` sürüm kararı kanıtlıdır. Kritik corpus parse kaybı görülmediğinden sürüm A/B veya IxMilia.Dxf fallback spike başlatılmadı. Parser başladıktan sonra cooperative cancellation kanıtı yoktur; capability `BeforeStartOnly` kalır. Render fidelity sonraki scene/render aşamalarında ayrıca kanıtlanacaktır.
-
-### AŞAMA 06 — Android güvenli dosya alma ve parse spike
-
-**Amaç:** Gerçek content URI’den dosyayı güvenli biçimde alıp UI’ı kilitlemeden parse etmek.
-
-İşler:
-
-- [x] MAUI FilePicker/Android SAF content URI akışı source spike olarak uygulandı; `FilePicker.Default.PickAsync` + `FileResult.OpenReadAsync()` kullanılır, provider fiziksel path'ine güvenilmez.
-- [x] Provider filename sanitize, bildirilen boyuta güvenmeyen actual stream byte quota, boş disk reserve kontrolü, progress, atomic unique app-private cache file, stream disposal ve deterministic cleanup eklendi.
-- [x] Stage 06 immediate private-copy akışında persistable grant gerekmediği doğrulandı ve alınmadı; kalıcı recent-file erişimi AŞAMA 18 kapsamındadır.
-- [x] Parse UI thread dışında worker hattında çalışır; cooperative cancellation yoksa kullanıcıya yanlış “parser durdu” sözü verilmez ve geç sonuç terk edilir.
-- [x] Her açma isteği generation ID taşır; hızlı ikinci seçimde eski parse sonucu commit edilmez (`last request wins`).
-- [ ] Metadata/diagnostics ekranına kadar **gerçek fiziksel Android telefonda** DWG ve DXF açılır; cancel/rotate/background/close ve gerçek cihaz cache cleanup smoke yapılır. `DEFERRED_EXTERNAL_GATE`.
-- [x] Original dosya hiçbir koşulda write modunda açılmaz; probe öncesi/sonrası DWG/DXF hash'leri değişmedi.
-
-Test: CI'da gerçek pinned DWG + sentetik DXF safe-open T2 probe, quota/disk/cleanup/last-request-wins/cancel semantics ve generated MAUI Android Debug+Release build PASS; minSdk 24 / targetSdk 36, broad storage permission yok. Final implementation run `32762879583` / #3 `SUCCESS`, artifact `9533538573`, digest `sha256:18c7c395e24b6e3d686edef03d3d0ad686c21fad82686704ef38e7e098a25ea3`. Gerçek telefon FilePicker/SAF, cancel UI, rotate/background/close ve cache leak testi fiziksel cihaz erişimi olmadığı için `DEFERRED_EXTERNAL_GATE`.  
-Çıkış: **Henüz sağlanmadı.** Cihazdan bağımsız implementation/CI kısmı PASS; gerçek telefon exit gate'i açık olduğundan AŞAMA 06 `BLOCKED / DEFERRED_EXTERNAL_GATE`. Kullanıcı onaylı execution override bağımsız AŞAMA 07'nin ilerlemesine izin verir.
-
-### AŞAMA 07 — ProCad source-pinned Android spike ve GO/NO-GO
-
-**Amaç:** Hazır renderer/control reuse’unu üretim kodunu bağlamadan ölçmek.
-
-İşler:
-
-- [x] Spike yalnız `spikes/ProCad.Android` içinde exact commit/submodule SHA ile kuruldu; ProCad `f8a862b3e7634e27664fee02ff5d68774b102985`, ACadSharp submodule `0ed79df48de0806af3c3028d0e2826447cbc1d36`, ProEdit `64759b79289a024d08463ed1a9094fdcd9a270df`.
-- [x] NuGet 0.1.1 restore graph’ı ile source graph farkı belgelendi. Published `ProCadSharp.Rendering 0.1.1` ACadSharp `>=0.1.1` istediği halde 0.1.1 bulunmadığından `ACadSharp 1.0.0` çözüyor; published MAUI graph Skia `4.147.0-preview.2.1` bandına çıkıyor.
-- [x] ProCad fork ACadSharp lineage official upstream’de aynı SHA olarak çözüldü; unresolved değildir. Mobil-dwg approved ACadSharp 3.7.1 source baseline pinned fork’tan `592` official commit ileridedir.
-- [x] Pinned ProCad source temporary checkout yalnız `net10.0-android` hedefiyle izole edilerek gerçek Android source build yapıldı: `82 Warning(s)`, `0 Error(s)`. Clean MAUI Release smoke `0 Warning(s)`, `0 Error(s)` ve signed APK üretti; GPU zorunluluğu karar nedeni yapılmadı.
-- [ ] Gerçek fiziksel Android Release T3 A/B’de mini corpus first-frame/pan/pinch/Turkish text/nested block/dimension/hatch/layout/close-reopen ölçülmedi: `NOT_RUN_AFTER_DETERMINISTIC_BLOCKER`. Bu PASS değildir; exact candidate gerçek cihazdan önce hard precision blocker ile reddedildi.
-- [x] ProCad scene direct `double -> float` koordinat hattı deterministic fixture ile ölçüldü. Origin `100.0` + `0.001` detay korunurken origin `5,000,000.0` + `0.001` float sınırında aynı değere çöktü; observed delta `0.0`, relative error `1.0`. `STAGE07_FLOAT_PRECISION_BLOCKER_REPRODUCED`.
-- [x] Runtime/source riskleri kaydedildi: ProCad/ACadSharp/ProEdit pinned license marker MIT; source Skia `3.119.4` ile MAUI view `4.147.0-preview.2.1` mixed/preview bandı; published graph ACadSharp `1.0.0`; MAUI CadViewer one-pointer pan içeriyor fakat pinch implementation bulunmadı.
-- [x] `docs/ADR/0002-procad-pinned-source-no-go.md` kararı exact unpatched candidate için `NO-GO`; `docs/evidence/STAGE_07.md` final kanıtı içerir. ProCad production graph’a eklenmedi.
-
-Blocker FAIL: **gerçekleşti** — survey-origin millimetre detay direct double-to-float RenderScene boundary'sinde sistematik P0 fidelity kaybına uğruyor. Build başarısızlığı değildir; pinned Android source build ve clean MAUI Release smoke başarılıdır.  
-Test: Final CI `Stage 07 ProCad Source Spike` run `32766501837` / #5 `SUCCESS`; artifact `9534797361`, digest `sha256:9cae376fd0cbf2861f006af347483f9de26a6cd49f30b201438a3afdb591e555`. Aynı decision head Stage 06 run #13, Stage 02 run #44 ve Stage 01 run #63 `SUCCESS`. Physical Android T3 `NOT_RUN_AFTER_DETERMINISTIC_BLOCKER` ve PASS değildir.  
-Çıkış: **Sağlandı — NO-GO.** Exact pinned ProCad candidate production reuse için reddedildi. Özel renderer garantili fallback sayılmaz; ADR 0002 P0 kapsamını AŞAMA 09–16 sekiz implementation/fidelity aşaması + sonraki performance/full-corpus gate'leri olarak yeniden maliyetlendirir, efor/bakım riskini `HIGH` kaydeder ve precision-safe upstream patch/rebase yolunu tanımlar. AŞAMA 09 custom renderer implementation öncesinde kullanıcı GO kararı gerekir. AŞAMA 01 ve AŞAMA 06 dış cihaz kapıları açık kalır.
-
-### AŞAMA 08 — Erken iOS AOT/native fizibilite smoke
-
-**Aktif kapsam notu (25.08.2026):** Bu aşama tarihsel karakterizasyon olarak korunur. Android-only v1 sırasında yeniden açılmaz; workflow yalnız manuel future reactivation içindir. V08'de yalnız Android graph izolasyonu kontrol edilir, iOS build/test yapılmaz.
-
-**Amaç:** Android’e aylarca yatırım yapmadan seçilen dependency hattının iOS Release/AOT’ta temel olarak çalışabildiğini kanıtlamak.
-
-İşler:
-
-- [x] Aşama 01’deki Mac/Xcode/iPhone dış erişim kapısı yeniden değerlendirildi: kullanıcı local Mac/iPhone kanıtı sağlayamıyor; `DEFERRED_EXTERNAL_GATE` açık kaldı.
-- [x] Exact dependency hattı GitHub-hosted macOS üzerinde restore edildi: .NET `10.0.400`, iOS workload `26.5.10301`, `ACadSharp 3.7.1`, `SkiaSharp 4.151.1`, `SkiaSharp.NativeAssets.iOS 4.151.1`; production graph değiştirilmedi.
-- [ ] Sentetik fixture için final simulator parse + native Skia single-frame/PNG marker'ı elde edilemedi. Build managed assembly üretimine ilerledi ancak Xcode 26.6 hosted image `install_name_tool`/`clang` lookup problemiyle kesildi; bu candidate runtime FAIL veya PASS değildir.
-- [x] Trimming/reflection/font uyarıları kaydedildi: final karakterizasyonda 30 trimmer, 12 reflection-related, 0 font warning line. ACadSharp hattında `IL2026`, `IL2070`, `IL2072`, `IL2075`, `IL2087`, `IL2090` aileleri görüldü; warning suppress çözüm sayılmaz.
-- [x] NativeAOT simulator sınırı ayrıştırıldı: `iossimulator-arm64` + `PublishAot=true` `NETSDK1203` ile desteklenmiyor; bu ACadSharp NativeAOT failure değildir. Gerçek kanıt `ios-arm64`/physical-device üzerinde gerekir.
-- [ ] Fiziksel iPhone smoke `NOT_RUN_DEFERRED_EXTERNAL_GATE`; simulator hiçbir durumda gerçek iPhone PASS yerine geçmez.
-- [x] Planın dış blocker/risk seçeneği uygulandı: mevcut kullanıcı-approved execution override ile iOS riskleri açıkça kaydedilip bağımsız sonraki işlerin ilerlemesine izin verildi. Bu risk kabulü iOS'u tamamlanmış/PASS saymaz.
-
-Test: Yetkili karakterizasyon `Stage 08 iOS Feasibility` run `32781026946` / #18 `SUCCESS`; artifact `9540018558`, digest `sha256:1414e3bf5a9800e150019c48f620c64efcd3d5282ac7322ef9a5e5746ab746f7`. Evidence JSON `BLOCKED_PARTIAL_EVIDENCE`. Workflow success, üç probe'un PASS olduğu anlamına gelmez; gerçek blocker'ları deterministik kaydettiği anlamına gelir.  
-Çıkış: **Sağlandı — dış blocker/risk kabulü açıkça kaydedildi; iOS fizibilitesi kanıtlanmış değildir.** Complete local/managed Mac, `ios-arm64` AOT ve fiziksel iPhone kapıları yalnız future AŞAMA 23/24 yeniden açılırsa geçerlidir. AŞAMA 09 için gerekli kullanıcı GO kararı daha sonra verilmiş ve implementation tamamlanmıştır.
-
-### AŞAMA 09 — RenderScene, kamera ve diagnostics temeli
-
-**Amaç:** Seçilen yol üzerinde parser’dan bağımsız, test edilebilir sahne çekirdeği.
-
-İşler:
-
-- [x] Tek scene implementasyonu seçildi: ADR 0002 ProCad exact reuse `NO-GO` olduğundan compact özel immutable scene; paralel iki scene graph yok.
-- [x] Stable entity ID, bounds, layer/style token ve source reference scene üzerinde modellendi; default-value bypass ve duplicate-ID guard'ları eklendi.
-- [x] Document/world koordinatları `double`; world→view→screen tek transform hattıdır; Core `RenderViewport` ile explicit bridge vardır.
-- [x] OCS/WCS, extents, invalid NaN/Infinity, finite-overflow ve büyük koordinat hedefli unit-test senaryoları gerçek execution'da geçti; büyük normal vektörleri scaled normalization kullanır.
-- [x] Scene build diagnostics `unsupported/substituted/dropped/error` türlerini toplar ve invalid taxonomy reddedilir.
-- [x] Camera fit/zoom bounds ve background/color context tanımlandı; invalid/default camera guard'ları eklendi.
-- [x] ProCad adapter gereksinimi ADR 0002 nedeniyle `NOT_APPLICABLE`; aynı sınırlar seçilen custom scene yolunda korunur.
-- [x] Deterministic `render-scene/v1` semantic snapshot ve insertion-order bağımsızlığı testi gerçek execution'da geçti; Stage 04 render-contract marker'ı korunur.
-- [x] Exact .NET `10.0.400` üzerinde T0 restore/build gerçek self-hosted execution ile geçti.
-- [x] T1 deterministic scene/camera executable testleri ve full Stage 04 architecture regression gerçek execution ile geçti; evidence artifact/log alındı.
-
-Test: Yetkili kapanış `Stage 09 Self-Hosted Validation` run `32815175055` / #6, job `97701882792`, head `7bba0b7a6da30dc4b23050872a7a1ef4e90ca087`, `SUCCESS`. Targeted ve full solution Release build `0 Warning / 0 Error`. Marker'lar: `STAGE09_DOTNET_PIN_PASS`, `STAGE09_T0_BUILD_PASS`, `STAGE04_CORE_CONTRACT_TESTS_PASS`, `STAGE04_RENDER_CONTRACT_TESTS_PASS`, `STAGE09_RENDER_SCENE_TESTS_PASS`, `render-scene/v1`, `STAGE09_T1_SCENE_PASS`, `STAGE04_ARCHITECTURE_TESTS_PASS`, `STAGE05_DEPENDENCY_BOUNDARY_PASS`, `STAGE04_T0_PASS`, `STAGE09_STAGE04_REGRESSION_PASS`. Artifact `9551137293`, digest `sha256:486c9d0b5a2a35cd4fbb402d9c56ab226a5b6175b8920da95298d18199054ddd`. Survey-origin snapshot `5000000.001` ayrıntısını korudu. Önceki hosted `runner_id=0` kayıtları infrastructure allocation problemi olarak ayrıştırıldı.  
-Çıkış: **Sağlandı.** Sentetik scene headless üretilebilir; aynı semantic girdi aynı snapshot'ı verir; precision/OCS/diagnostics/architecture gate'leri gerçek exact toolchain üzerinde PASS. PR #12 final head `68d08bd3984ef4d1fcca027acb788c4bfcc5e43a` üzerinden merge edildi; merge commit `0a2dd886bbe59698a6d2eb4c99f66e7f9270063a`. Validation head ile merge commit arasında A09 production source/test değişikliği yoktur. AŞAMA 10 aynı kullanıcı turunda başlatılmaz.
+Özet gerçeklik: ACadSharp read-only parser `GO`; ProCad exact unpatched reuse `NO-GO`; safe-open host implementation tamam ama fiziksel SAF/lifecycle gate açık; iOS yalnız historical characterization; RenderScene foundation gerçek self-hosted T0/T1 evidence ile tamamlandı. V01 emulator/toolchain altyapısı `INFRASTRUCTURE_SMOKE_ONLY` olarak doğrulandı; V02 dependency/native boundary doğrulandı. Aktif sonraki validation V03’tür.
 
 ### AŞAMA 10 — P0 temel geometri renderer’ı
 
 **Amaç:** Temel 2D geometriyi doğru, sade Skia baseline ile çizmek.
-
-İşler:
 
 - [ ] LINE/ARC/CIRCLE/ELLIPSE/POINT.
 - [ ] LW/POLYLINE + bulge; SPLINE için pinned parser verisini doğrulayan tessellation.
 - [ ] SOLID/TRACE/3DFACE 2D görünümü ve vertex order.
 - [ ] OCS/extrusion, mirror ve büyük koordinat fixture’ları.
 - [ ] Draw order, clipping ve antialias baseline.
-- [ ] Batching/GPU/tiling eklenmez; önce doğruluk ve baseline ölçülür.
+- [ ] Batching/GPU/tiling yok; önce correctness ve baseline.
 
 Test: T1 + küçük golden/semantic diff.  
-Çıkış: P0 basic fixture’ları C3; NaN/invalid geometry kontrollü warning olur.
+Çıkış: P0 basic fixture C3; invalid geometry controlled warning.
 
 ### AŞAMA 11 — Mobil viewport ve gesture’lar
 
-**Amaç:** CAD hissinde stabil kamera etkileşimi.
+- [ ] Pan, pinch zoom, fit extents; finger focal-point korunur.
+- [ ] Min/max zoom/overscroll guard.
+- [ ] Portrait/landscape/safe area; rotation reparse etmez.
+- [ ] Gesture sırasında geçici düşük kalite kalıcı detail kaybı yaratmaz.
+- [ ] Frame timing yalnız debug diagnostics.
 
-İşler:
-
-- [ ] Pan, pinch zoom, fit extents ve isteğe bağlı double-tap fit.
-- [ ] Parmak odak noktası korunur; min/max zoom ve overscroll guard.
-- [ ] Portrait/landscape/safe area; rotation yeniden parse etmez.
-- [ ] Gesture sırasında düşük kalite ancak detay kalıcı kaybolmadan kullanılabilir.
-- [ ] Frame timing overlay yalnız debug/diagnostic build’de.
-
-Test: Gesture unit + gerçek telefon smoke ve frame baseline.  
-Çıkış: Küçük/orta fixture’da navigation doğru ve donmadan çalışır; performans sayıları kaydedilir.
+Test: gesture unit + gerçek telefon smoke/frame baseline.  
+Çıkış: küçük/orta fixture navigation stabil.
 
 ### AŞAMA 12 — Block/INSERT/attribute dönüşümleri
 
-**Amaç:** Mimari/statik çizimlerin ana tekrar mekanizmasını doğru çözmek.
+- [ ] Translation/rotation/scale/mirror matrix order.
+- [ ] Nested block + non-uniform scale.
+- [ ] ATTRIB/ATTDEF placement + stable identity.
+- [ ] Layer0/ByBlock/ByLayer parent context.
+- [ ] Cycle/depth/expanded-instance guard.
+- [ ] Ölçülü shared geometry; ağır instance kopyası yok.
 
-İşler:
-
-- [ ] Translation/rotation/scale/mirror matris sırası.
-- [ ] Nested block ve non-uniform scale.
-- [ ] ATTRIB/ATTDEF text placement ve stable identity.
-- [ ] Layer 0 ile ByBlock/ByLayer parent context.
-- [ ] Cycle ve depth/expanded-instance guard.
-- [ ] Aynı block definition için ölçülü shared geometry; entity başına ağır kopya yok.
-
-Test: Transform conformance + nested golden.  
-Çıkış: Block fixture’ları C3, attribute/teknik etiketler kayıp değil; cycle kontrollü warning.
+Test: transform conformance + nested golden.  
+Çıkış: block fixture C3; cycle warning.
 
 ### AŞAMA 13 — Layer, renk, linetype ve lineweight
 
-**Amaç:** Çizimin teknik görsel hiyerarşisini doğru göstermek.
+- [ ] Layer on/off/frozen.
+- [ ] ACI/true-color/ACI7 light-dark.
+- [ ] ByLayer/ByBlock/Layer0 resolver tek merkez.
+- [ ] Basit linetype + entity scale + LTSCALE.
+- [ ] Lineweight screen/plot semantiği ayrılır.
+- [ ] Complex shape/text linetype C0/C2 raporu.
 
-İşler:
-
-- [ ] Layer on/off/frozen ve görünürlük filtresi.
-- [ ] ACI, true color, ACI 7 light/dark background davranışı.
-- [ ] ByLayer/ByBlock/Layer 0 nested çözümleyici tek merkezde.
-- [ ] Basit linetype, entity scale, global LTSCALE.
-- [ ] Lineweight aç/kapat ve screen/plot semantiği açıkça ayrılır.
-- [ ] Complex text/shape linetype C0/C2 raporu; v1’i şişirmez.
-
-Test: Style resolver unit + golden.  
-Çıkış: Style fixture’ları C3; layer toggling sahneyi yeniden parse etmeden çalışır.
+Test: style resolver unit + golden.  
+Çıkış: style fixture C3; layer toggle reparse etmez.
 
 ### AŞAMA 14 — TEXT/MTEXT, Türkçe, font ve SHX
 
-**Amaç:** Teknik not ve ölçü metnini okunur, izlenebilir fallback ile göstermek.
+- [ ] Codepage; CP1254 + Unicode.
+- [ ] TEXT height/width/rotation/alignment/justification/mirror.
+- [ ] MTEXT stateful tokenizer/minimum formatting; nested formatting regex ile kör silinmez.
+- [ ] Font resolver exact→audited mapping→system fallback.
+- [ ] Substitution compatibility/UI’a düşer; extents etkisi test edilir.
+- [ ] SHX capability izole fixture ile ölçülür; full custom interpreter son çare.
+- [ ] Bundle font exact license/hash/notice; kullanıcı importu app-private.
 
-İşler:
-
-- [ ] Header/codepage çözümleme; CP1254 ve Unicode fixture.
-- [ ] TEXT height, width, rotation, alignment, justification ve mirror.
-- [ ] MTEXT için stateful tokenizer/minimum formatting; regex ile nested format silinmez.
-- [ ] Font resolver exact isim → açık lisanslı mapping → sistem fallback sırası.
-- [ ] Her substitution compatibility raporuna ve UI’a düşer; text extents etkisi test edilir.
-- [ ] ProCad/IxMilia SHX kabiliyeti izole fixture ile ölçülür; full özel SHX interpreter son çaredir.
-- [ ] Bundle edilen her font exact license/hash/notice kaydı alır; kullanıcı font importu app-private kalır.
-
-Test: Turkish/SHX/text-metrics semantic + golden.  
-Çıkış: Türkçe metin bozulmaz; eksik font sessiz değildir; P0 text C3.
+Test: Turkish/SHX/text metrics semantic + golden.  
+Çıkış: Turkish text bozulmaz; missing font sessiz değildir; P0 text C3.
 
 ### AŞAMA 15 — Dimension, leader ve hatch doğruluğu
 
-**Amaç:** Mühendislik açısından yanıltıcı render riskini kapatmak.
+- [ ] DIMENSION’da önce mevcut `*D` anonymous block yolu.
+- [ ] Linear/aligned/angular/radius/diameter + override/arrows/scale fixture.
+- [ ] LEADER/MLEADER/TOLERANCE ayrı support seviyesi.
+- [ ] Solid/pattern/dense hatch, island, clipping, corrupt boundary.
+- [ ] Hatch LOD/triangulation yalnız profiler/fidelity A/B sonrası.
+- [ ] Yanlış dimension yerine C0/C2 warning.
 
-İşler:
-
-- [ ] DIMENSION için önce mevcut `*D` anonymous block render edilir; gerekmedikçe formatter sıfırdan yazılmaz.
-- [ ] Linear/aligned/angular/radius/diameter, text override, arrows ve scale fixture’ları.
-- [ ] LEADER/MLEADER/TOLERANCE destek seviyesi ayrı ölçülür; approximated öğe etiketlenir.
-- [ ] Solid/pattern/dense hatch, island, clipping ve bozuk boundary.
-- [ ] Hatch LOD/triangulation yalnız profiler/fidelity gerekçesiyle ayrı A/B sonrası eklenebilir.
-- [ ] Yanlış dimension göstermek yerine C0/C2 warning politikası uygulanır.
-
-Test: T3 engineering mini corpus + golden/semantic human review.  
-Çıkış: Release corpus dimension C4; hatch P0 fixture’ları C3; desteklenmeyen annotation görünür warning.
+Test: T3 engineering mini corpus + human golden/semantic review.  
+Çıkış: release dimension C4; hatch P0 C3.
 
 ### AŞAMA 16 — Model space, layout, paper space ve viewport
 
-**Amaç:** Pafta üzerinden okunan gerçek projeleri desteklemek.
-
-İşler:
-
-- [ ] Model/layout seçici ve active layout metadata.
-- [ ] Paper-space entity’leri, rectangular/polygon clip, view center/height/twist transform.
+- [ ] Model/layout selector + active layout metadata.
+- [ ] Paper-space, clip, view-center/height/twist transform.
 - [ ] Viewport-specific layer override/freeze.
-- [ ] Layout değişimi document’ı yeniden parse etmez.
-- [ ] Corpus’ta layout teknik anlam için zorunluysa v1 release blocker; değilse destek seviyesi açıkça belgelenir.
+- [ ] Layout change reparse etmez.
+- [ ] Corpus için teknik olarak zorunlu layout support release blocker olabilir.
 
-Test: Layout semantic + golden ve gerçek Android navigation.  
-Çıkış: Standart corpus layout’u C3; unsupported viewport detayı uyarı verir.
+Test: layout semantic/golden + gerçek Android navigation.  
+Çıkış: standart layout C3.
 
 ### AŞAMA 17 — XREF/raster/underlay ve compatibility raporu
 
-**Amaç:** Eksik dış kaynakları crash veya gizli veri erişimi olmadan yönetmek.
+- [ ] XREF adı/yolu tespit; remote URL auto-download yok.
+- [ ] Varsayılan tespit + missing warning; explicit folder grant olmadan sibling crawler yok.
+- [ ] Opsiyonel folder mapping explicit grant + canonical path + cycle/depth/byte guard.
+- [ ] Raster varsayılan tespit+warning; render ancak E3 + traversal/pixel/decode budget kanıtıyla.
+- [ ] PDF/ileri underlay v1’de render edilmez; C0 warning.
+- [ ] Compatibility ekranı parse/scene/render/font/XREF/raster/proxy özetini sunar.
 
-İşler:
-
-- [ ] XREF adı/yolu tespit edilir; remote URL otomatik indirilmez.
-- [ ] v1 varsayılanı tespit + eksik warning; kullanıcı klasör izni olmadan sibling crawler yapılmaz.
-- [ ] Opsiyonel klasör eşleştirme yalnız explicit grant, canonical path, cycle/depth/byte guard ile.
-- [ ] Raster v1 varsayılanı tespit + warning’dir. Gerçek raster render ancak mobil E3 kanıtı, path traversal koruması ve pixel/dimension/decode budget ile alınabilir.
-- [ ] PDF/ileri underlay v1’de render edilmez; drawing açılmaya devam eder ve açık C0 warning gösterir.
-- [ ] Kullanıcı compatibility ekranı parse/scene/render, font, XREF/raster ve proxy özetini sunar.
-
-Test: Missing/present external fixture, path traversal negatif test.  
-Çıkış: Dış kaynak problemi ana çizimi çökertmez veya sessizce gizlemez.
+Test: missing/present external + traversal negative.  
+Çıkış: dış kaynak problemi crash/sessiz kayıp değildir.
 
 ### AŞAMA 18 — Tam Android viewer UX ve lifecycle
 
-**Amaç:** Teknik motoru günlük kullanılabilir Android uygulamasına dönüştürmek.
+- [ ] Home/Open/loading/viewer/layer/fit/file-info/warnings/close.
+- [ ] Recent files güvenli metadata/URI grant politikası; cache path kalıcı kaynak değildir.
+- [ ] Back/foreground/background/orientation/process recreation/memory pressure.
+- [ ] Session/camera korunur; rotation reparse etmez; deterministic dispose/cache cleanup.
+- [ ] Safe recovery marker; imported CAD/thumbnail/scene backup exclusion.
+- [ ] Gereksiz `INTERNET` permission yok; log path/filename/drawing text redacted.
+- [ ] Open-With/share dar intent spike.
+- [ ] Light/dark/tablet/safe-area/accessibility.
 
-İşler:
-
-- [ ] Home/Open, loading/progress, viewer, layer sheet, fit, file info, warnings, close.
-- [ ] Recent files yalnız güvenli metadata/bookmark; hassas içerik/thumb varsayılan değil.
-- [ ] Android recent politikası: persistable URI mümkünse grant; değilse “dosyayı yeniden seç” durumu. Cache path kalıcı kaynak gibi saklanmaz.
-- [ ] Android Back, foreground/background, orientation, process recreation ve memory pressure.
-- [ ] Session/camera korunur; rotation’da reparse yok; deterministic dispose/cache cleanup.
-- [ ] Crash sırasında dosya yazmaya güvenmek yerine önceden session marker; sonraki açılışta safe recovery.
-- [ ] Imported DWG/DXF, filename, thumbnail ve prepared scene Android Auto Backup’tan `data-extraction-rules`/no-backup alanlarıyla çıkarılır; persistent thumbnail v1’de varsayılan kapalıdır.
-- [ ] Final manifestte core viewer için gereksiz `INTERNET` izni bulunmaz; loglar path, filename, drawing text ve entity içeriğini redakte eder.
-- [ ] Open With/share ayrı dar intent spike; aşırı geniş `application/octet-stream` yakalama yok.
-- [ ] Light/dark, tablet/safe area ve minimum erişilebilir touch/labels.
-
-Test: Gerçek telefon lifecycle matrix + T2.  
-Çıkış: Kullanıcı günlük aç/incele/kapat akışını yapar; temp/cache/session sızıntısı yok.
+Test: gerçek telefon lifecycle matrix + T2.  
+Çıkış: günlük aç/incele/kapat akışı stabil.
 
 ### AŞAMA 19 — Kötü niyetli/bozuk dosya ve resource guard’ları
 
-**Amaç:** DWG/DXF’i untrusted input olarak kontrollü işlemek.
+- [ ] Extension + magic/version + bounded preflight.
+- [ ] File/entity/block/scene/hatch/text/raster/XREF budget.
+- [ ] NaN/Infinity/extreme extents/recursion guard.
+- [ ] Corrupt/truncated/oversized controlled error taxonomy.
+- [ ] Cancellation limitation dürüstçe belgelenir.
+- [ ] Redacted diagnostics export.
+- [ ] Küçük bounded mutation/fuzz smoke.
 
-İşler:
-
-- [ ] Extension yanında magic/version ve bounded stream preflight.
-- [ ] File bytes, entity, block depth/instances, scene primitive, hatch vertices, text length, raster pixels ve XREF toplam budget.
-- [ ] NaN/Infinity/extreme extents ve recursion/cycle guard.
-- [ ] Corrupt/truncated/oversized fixture’da kontrollü error taxonomy.
-- [ ] Parser cooperative cancellation yoksa limitation belgelenir; UI watchdog hard kill gibi sunulmaz.
-- [ ] Hassas path/text loglanmaz; local diagnostics export kullanıcı onaylı ve redacted.
-- [ ] Küçük bounded mutation/fuzz smoke; cihazı saatlerce tüketen fuzz bu aşamanın parçası değildir.
-
-Test: Negative corpus + targeted guard unit tests.  
-Çıkış: Bilinen kötü input sınıfları crash/ANR yerine hata veya güvenli ret üretir.
+Test: negative corpus + guard unit.  
+Çıkış: bilinen kötü input crash/ANR yerine kontrollü sonuç.
 
 ### AŞAMA 20 — Ölçümlü performans ve bellek optimizasyonu
 
-**Amaç:** Yalnız gerçek darboğazları düzeltmek ve final bütçeleri sabitlemek.
-
-İşler:
-
-- [ ] Android Release gerçek cihazda T0–T6/TTFUP, frame p50/p95, managed/native/PSS, GC ve artifact size baseline.
-- [ ] Küçük/orta/büyük corpus ve beş repeat-open döngüsü ölçülür.
-- [ ] En büyük darboğaz profiler ile seçilir; aynı anda tek optimizasyon spike edilir.
-- [ ] Gerekirse viewport culling → shared cache → LOD → spatial index/GPU sırasıyla, A/B kanıtıyla değerlendirilir.
-- [ ] Precision sorunu ölçülürse local-origin tek transform hattına eklenir.
-- [ ] Cache shedding ve final resource budgets cihaz bazında yazılır; `largeHeap` ancak diğer yollar yetersiz ve kanıtlıysa ADR ister.
-- [ ] Regresyon yoksa kabul; kazanım yoksa spike production’a alınmaz.
+- [ ] Android Release fiziksel cihaz TTFUP/frame p50-p95/PSS/native/managed/GC/artifact baseline.
+- [ ] Küçük/orta/büyük corpus + 5 repeat-open.
+- [ ] Profiler ile tek en büyük bottleneck; tek optimizasyon A/B.
+- [ ] Gerektikçe culling→shared cache→LOD→spatial index/GPU.
+- [ ] Precision için local-origin yalnız ölçümle.
+- [ ] Cache shedding/final budgets; `largeHeap` yalnız ADR ile son çare.
 
 Test: T3 benchmark + correctness diff.  
-Çıkış: `PERFORMANCE.md` ölçümler/cihazlar/final eşikler içerir; provisional hedeflerin geçip geçmediği nettir.
+Çıkış: `PERFORMANCE.md` cihaz/eşik/ölçüm içerir.
 
 ### AŞAMA 21 — Android tam corpus regresyon ve beta kapısı
 
-**Amaç:** “Bende açıldı” yerine destek matrisiyle Android beta kararı.
+- [ ] Full private/public corpus parse/scene/render/golden.
+- [ ] P0/P1 entity + DWG version compatibility matrix.
+- [ ] Ana fiziksel telefon, mümkünse ikinci Android/tablet.
+- [ ] Debug/Release/trimming/AOT/artifact-size kontrolü.
+- [ ] Açık P0/P1 bug ve C0/C2 limitations sınıflandırılır.
 
-İşler:
-
-- [ ] Full private/public corpus parse/scene/render/golden çalışır.
-- [ ] P0/P1 entity ve DWG version compatibility matrix güncellenir.
-- [ ] En az ana telefon; mümkünse ikinci fiziksel Android/tablet matrisi çalışır.
-- [ ] Debug/Release farkı, trimming/AOT davranışı ve artifact size kontrol edilir.
-- [ ] Açık P0/P1 bug’lar sınıflandırılır; C0/C2 özellikler kullanıcı metnine yansır.
-
-Test: T4’ün Android kısmı.  
-Çıkış: P0 blocker yok; bilinen sınırlamalar dürüst ve fixture kanıtlı; beta build hazır.
+Test: T4 Android.  
+Çıkış: P0 blocker yok; beta build hazır.
 
 ### AŞAMA 22 — Android Release/AAB/compliance RC
 
-**Amaç:** Store/sideload için imzalanabilir, denetlenmiş Android release candidate.
+- [ ] App name/package/icon/versioning kilidi.
+- [ ] `[LIVE-VERIFY]` target SDK/Play/Data Safety/privacy/store requirements.
+- [ ] Turkish/English UI + accessibility + privacy/about/open-source screens.
+- [ ] Signing secret repo/log/chat’e girmez.
+- [ ] Signed APK+AAB + gerçek cihaz smoke.
+- [ ] Backup exclusion + permission audit.
+- [ ] Artifact DLL/SO/JAR/font/asset inventory ↔ dependency evidence.
+- [ ] SBOM + notices + compliance snapshot.
+- [ ] Autodesk trademark/compatibility wording live-verify.
 
-İşler:
+Test: signed Release smoke + artifact audit.  
+Çıkış: installable Android RC; unknown artifact yok.
 
-- [ ] Özgün uygulama adı, package ID, ikon ve versioning kullanıcı kararıyla kilitlenir.
-- [ ] `[LIVE-VERIFY]` Target SDK, Play policy, Data Safety, privacy ve store gereksinimleri resmi kaynaklardan kontrol edilir.
-- [ ] Turkish/English temel UI, accessibility labels/touch sizes, privacy/about/open-source licenses ekranı.
-- [ ] Release signing anahtarı güvenli oluşturulur/yedeklenir; secret repo/log/chat’e girmez.
-- [ ] Signed APK + AAB üretilir ve gerçek cihazda kurulup smoke edilir.
-- [ ] Backup exclusion kuralları ve gereksiz permission yokluğu artifact/manifest üzerinde doğrulanır.
-- [ ] Artifact çıkarılır; DLL/SO/JAR/font/asset envanteri dependency evidence ile karşılaştırılır.
-- [ ] SBOM, THIRD_PARTY_NOTICES ve Android compliance snapshot oluşturulur.
-- [ ] Marka/store açıklamasında uyumluluk iddiası güncel Autodesk guideline’a göre kontrol edilir.
+### AŞAMA 23–24 — Future iOS track
 
-Test: Signed Release smoke + artifact audit.  
-Çıkış: Android RC installable ve compliance `GREEN`; unknown artifact yok.
-
-### AŞAMA 23 — iOS toolchain, shared core ve ilk gerçek cihaz
-
-**Durum:** `DEFERRED_FUTURE_IOS / ACTIVE_ANDROID_SEQUENCE_OUT`. Kullanıcı iOS'u açıkça yeniden etkinleştirene kadar bu bölüm okunup uygulanmaz, Android AŞAMA 25'i bloke etmez.
-
-Future reactivation olduğunda bu aşama sıfır varsayımla yeniden planlanır. Başlangıç kaynakları: `docs/evidence/STAGE_08.md`, `docs/STAGE_01_IOS_ACCESS_INVENTORY.md`, `docs/LOCAL_DEVICE_REVALIDATION.md` ve planın Git geçmişindeki 1.0 sürümü. Active Android turlarında bu kaynaklar yüklenmez veya güncellenmez.
-
-### AŞAMA 24 — iOS fidelity, lifecycle ve Release archive
-
-**Durum:** `DEFERRED_FUTURE_IOS / ACTIVE_ANDROID_SEQUENCE_OUT`. AŞAMA 23 yeniden etkinleştirilmeden bu bölüm çalıştırılmaz.
-
-Future reactivation planı gerçek iPhone lifecycle/fidelity/corpus/performance ve signed archive kapılarını yeniden tanımlar. Android eşikleri kör kopyalanmaz; gerçek cihaz olmadan PASS yazılmaz. Bu kısa placeholder Android v1 için iş veya blocker üretmez.
+`DEFERRED_FUTURE_IOS / ACTIVE_ANDROID_SEQUENCE_OUT`. Kullanıcı iOS’u açıkça yeniden etkinleştirene kadar Android AŞAMA 25’i bloke etmez. Reactivation olursa gerçek Mac/iPhone/AOT/lifecycle/corpus/archive DoD ayrı plan revizyonuyla yeniden açılır; simulator gerçek iPhone PASS sayılmaz.
 
 ### AŞAMA 25 — Android beta ve yalnız blocker düzeltmeleri
 
-**Amaç:** Scope creep olmadan gerçek kullanım geri bildirimiyle release’i sertleştirmek.
+- [ ] İzinli küçük beta grubunda gerçek dosyalar.
+- [ ] Feedback: fixture hash/build/reproduce/compatibility/expected-actual.
+- [ ] Yalnız crash/privacy/P0 fidelity/open/lifecycle/ciddi performance blocker.
+- [ ] Yeni edit/export/XREF crawler yok.
+- [ ] Her fix hedefli test; milestone sonunda full corpus.
 
-İşler:
-
-- [ ] İzinli küçük beta grubu veya Android kullanıcı cihazlarında günlük mimari/statik dosyalar denenir.
-- [ ] Geri bildirim formatı: fixture hash, platform/build, reproduce, compatibility report, beklenen/gerçek.
-- [ ] Yalnız crash, veri gizliliği, P0 fidelity, açma/lifecycle ve ciddi performans blocker’ları düzeltilir.
-- [ ] Yeni özellik/edit/export/XREF crawler bu aşamaya alınmaz.
-- [ ] Her düzeltmede hedefli test; milestone sonunda tam corpus.
-
-Test: Fix bazlı T1/T2; kapanışta T4.  
-Çıkış: Açık release blocker yok; bilinen sınırlamalar güncel.
+Test: fix T1/T2; kapanış T4.  
+Çıkış: açık release blocker yok.
 
 ### AŞAMA 26 — Android dependency freeze, final audit ve RC onayı
 
-**Amaç:** Store’a/sunuma gidecek exact Android artifact'lerini dondurmak.
+- [ ] Dependency/toolchain freeze; lock/resolved graph diff sıfır.
+- [ ] Full corpus/lifecycle/performance/signed artifact smoke.
+- [ ] APK/AAB inventory + SBOM + license/source/native/font/asset evidence.
+- [ ] Unknown/rejected dependency, analytics/upload/debug endpoint/secret/proprietary asset aranır.
+- [ ] Privacy/store/target SDK/marka guideline `[LIVE-VERIFY]`.
+- [ ] Release notes/compatibility/privacy/support final.
 
-İşler:
-
-- [ ] Dependency/toolchain freeze; lockfile ve resolved graph diff sıfır.
-- [ ] Android full corpus, lifecycle, performance ve signed artifact smoke son kez çalışır.
-- [ ] Gerçek APK/AAB inventory; SBOM; license/source/native/font/asset evidence karşılaştırılır.
-- [ ] Unknown/rejected dependency, analytics/upload, debug endpoint, secret veya proprietary asset aranır.
-- [ ] Privacy, store, target SDK/Xcode ve Autodesk trademark yönergeleri `[LIVE-VERIFY]` edilir.
-- [ ] Release notes, compatibility matrix, privacy policy ve support metni final olur.
-
-Test: T4 tam final gate.  
-Çıkış: Android RC `GREEN`; herhangi bir unknown = NO-GO.
+Test: T4 final gate.  
+Çıkış: Android RC `GREEN`; unknown = NO-GO.
 
 ### AŞAMA 27 — Android v1 artifact, yayın/handoff ve kapanış
 
-**Amaç:** Çalışan uygulamayı tekrar üretilebilir biçimde teslim etmek.
+- [ ] Final APK/AAB/checksum/build instructions.
+- [ ] Store hesabı varsa submission; yoksa store-ready package/checklist ve açık blocker.
+- [ ] Clean machine/CI locked restore+build+test.
+- [ ] Version/tag/release snapshot kullanıcı onayıyla; otomatik push yok.
+- [ ] Usage/privacy/compatibility/notices/known-limitations/support docs.
+- [ ] Bu checkpoint `DONE`; Definition of Done tek tek kapanır.
 
-İşler:
-
-- [ ] Final Android APK/AAB, checksum ve build talimatları üretilir.
-- [ ] Kullanıcı store hesaplarını sağladıysa submission yapılır; sağlamadıysa store-ready paket/checklist teslim edilir ve yayın alt hedefi açıkça blokeli kalır.
-- [ ] Clean machine/CI locked restore + build/test yolu doğrulanır.
-- [ ] Version/tag/release snapshot yöntemi kullanıcı onayıyla uygulanır; otomatik push yapılmaz.
-- [ ] Kullanım, privacy, compatibility, third-party notices, known limitations ve support belgeleri tamamlanır.
-- [ ] Bu plan checkpoint’i `DONE`; aşağıdaki Definition of Done tek tek işaretlenir.
-
-Test: Final install/open/close smoke ve checksum doğrulaması.  
-Çıkış: Gerçek Android cihazda çalışan, exact kaynaklardan yeniden üretilebilen, denetlenmiş ücretsiz Android viewer v1 teslim edilmiştir. iOS future option bu teslimi bloke etmez.
+Test: final install/open/close smoke + checksum.  
+Çıkış: gerçek Android cihazda çalışan, exact kaynaklardan reproducible, denetlenmiş ücretsiz Android viewer v1.
 
 ---
 
-## 8. Risk kaydı ve zorunlu tepkiler
+## 8. Risk kaydı ve zorunlu tepki
 
-| Risk | Erken sinyal | Zorunlu tepki |
-|---|---|---|
-| ACadSharp belirli dosyada fidelity kaybı | Golden/count/notification farkı | Sürüm A/B, fixture issue; kullanıcı warning; sistematikse parser gate yeniden açılır |
-| ProCad lineage/preview/olgunluk riski | Fork diff, restore mismatch, crash/fidelity | NO-GO veya upstream patch; özel renderer ancak yeniden maliyetlendirme ve kullanıcı GO kararıyla |
-| Renderer eforu büyür | P0 handler eksikleri | P0’ı bitir, P1/P2’yi warning ile ertele; edit/export ekleme |
-| SHX/font yerleşimi bozulur | Missing/substitution ve text extents diff | Görünür uyarı, kullanıcı font importu, audited fallback; proprietary bundle yok |
-| Büyük çizimde OOM/ANR | PSS/frame/primitive artışı | Guard + controlled ret; profiler tabanlı culling/cache; largeHeap son çare |
-| Test corpus lisans/gizlilik sorunu | Provenance yok | Repodan çıkarma değil önce dağıtımı durdurma; private/ignored taşıma kullanıcı onayıyla; evidence düzeltme |
-| Android emulator kanıtının fazla yorumlanması | Geçici smoke APK, çalışmayan harness veya bozuk screenshot | Scriptin gerçekten yaptığı işi oku; gerçek app/executable marker/geçerli artifact olmadan viewer PASS yazma |
-| Self-hosted runner çevrim dışı | Job queued/runner yok | Kod ve host testine devam et; exact SHA'yı test kuyruğuna al; aynı işi tekrarlama; kanıtsız VALIDATED yazma |
-| Future Android/iOS platform farkı | AOT/font/URI/native crash | Shared core’u fork etme; platform adapter sınırını koru; iOS ancak açık reactivation ile ayrı gate alır |
-| Mac/iPhone/store hesabı yok | Future iOS yeniden açıldığında erişim yok | Android release'i bloke etme; future iOS track'i `BLOCKED` bırak ve simülatörü gerçek iPhone PASS sayma |
-| Unknown native/transitive asset | Artifact inventory eşleşmiyor | Release NO-GO; kaynak/lisans bulunana veya bileşen çıkarılana kadar dur |
-| Dependency terk edilir | Release/issue activity düşer | Pinned sürüm + source archive; adapter sayesinde kontrollü fork/alternatif spike |
-| Marka/policy değişir | Store review veya yeni guideline | Release gününde yalnız resmi kaynakla yeniden doğrula |
-| Scope creep | Edit/export/cloud isteği v1’e girer | Backlog’a taşı; viewer DoD bitmeden başlatma |
+| Risk | Tepki |
+|---|---|
+| ACadSharp fidelity kaybı | Sürüm A/B + fixture; warning; sistematikse parser gate yeniden açılır |
+| ProCad lineage/precision/olgunluk | Production NO-GO korunur; upstream patch ancak ayrı evidence ile |
+| Renderer efor büyümesi | P0 bitirilir, P1/P2 warning ile ertelenir; edit/export eklenmez |
+| SHX/font sorunu | Görünür substitution + audited fallback; proprietary bundle yok |
+| OOM/ANR | Guard/controlled reject + profiler-based optimization; largeHeap son çare |
+| Corpus lisans/gizlilik | Dağıtım durdurulur; private/ignored provenance düzeltilir |
+| Emulatorun fazla yorumlanması | Gerçek app/marker/artifact yoksa viewer PASS yazılmaz |
+| Self-hosted runner offline | Exact SHA queue; host-safe iş sürer; kanıtsız VALIDATED yok |
+| Unknown native/transitive asset | Release NO-GO |
+| Dependency terk edilmesi | Pinned source archive + adapter üzerinden kontrollü alternatif |
+| Marka/store policy değişimi | Release günü resmi kaynaktan live-verify |
+| Scope creep | Backlog’a taşı; viewer DoD bitmeden başlatma |
 
 ---
 
-## 9. Definition of Done — uygulama ne zaman gerçekten bitti?
+## 9. Definition of Done
 
-Aktif Android v1 planı yalnız aşağıdakilerin tamamı gerçek kanıtla sağlandığında tamamlanır:
+Android v1 ancak aşağıdakilerin tamamı gerçek evidence ile sağlandığında biter:
 
-- [ ] Gerçek Android cihazda local DWG ve DXF açılıyor; emulator sürekli smoke kanıtı ayrıca mevcut.
-- [ ] P0 geometry/block/text/dimension/hatch kabul matrisi geçiyor.
-- [ ] Pan/pinch/fit/layer toggle ve lifecycle stabil.
+- [ ] Gerçek Android cihazda local DWG/DXF açılıyor; emulator smoke ayrıca mevcut.
+- [ ] P0 geometry/block/text/dimension/hatch acceptance matrix geçiyor.
+- [ ] Pan/pinch/fit/layer/lifecycle stabil.
 - [ ] Unsupported/proxy/font/XREF/raster sorunları sessiz değil.
-- [ ] Sertifikalı corrupt/adversarial corpus crash/ANR yerine kontrollü davranıyor; yakalanamayan process-fatal runtime sınırları belgelenmiş.
-- [ ] Final performans/bellek hedefleri referans cihazlarda kaydedilmiş ve geçilmiş veya dürüst kontrollü limit uygulanmış.
-- [ ] Full corpus regresyonu Android Release artifact'i için geçiyor.
-- [ ] Original drawing immutable; cloud/upload/account zorunluluğu yok.
-- [ ] Runtime dependency/native/font/asset zincirinde unknown veya policy-RED bileşen yok.
-- [ ] APK/AAB inventory, SBOM, notices ve release evidence eşleşiyor.
+- [ ] Adversarial/corrupt corpus kontrollü davranıyor.
+- [ ] Performance/memory hedefleri referans cihazlarda ölçülmüş ve geçilmiş ya da kontrollü limit var.
+- [ ] Full corpus Android Release artifact üzerinde geçiyor.
+- [ ] Original immutable; cloud/upload/account zorunluluğu yok.
+- [ ] Runtime dependency/native/font/asset zincirinde unknown/policy-RED yok.
+- [ ] APK/AAB inventory + SBOM + notices + evidence eşleşiyor.
 - [ ] CAD SDK/API için per-user/per-file/runtime royalty veya zorunlu servis ücreti saptanmamış.
-- [ ] Uygulama v1’de kullanıcı için ücretsiz; core özellik paywall arkasında değil.
-- [ ] Signed/store-ready artifact, checksum, build ve kullanım belgeleri teslim edilmiş.
-- [ ] Bilinen compatibility sınırları yayımlanabilir metinde dürüstçe belirtilmiş.
+- [ ] v1 kullanıcı için ücretsiz.
+- [ ] Signed/store-ready artifact + checksum + build/use docs teslim edilmiş.
+- [ ] Bilinen compatibility sınırları dürüstçe yayımlanabilir.
 
-“Tüm DWG’leri AutoCAD ile piksel piksel aynı gösterir” bir DoD değildir ve vaat edilmez.
-
-iOS dönüşü ayrı bir ürün/plan reactivation kararıdır. O gün iOS gerçek cihaz, AOT, lifecycle, corpus ve archive DoD maddeleri yeniden eklenir; bugünkü Android v1 teslimi geriye dönük olarak geçersiz sayılmaz.
+“Bütün DWG’leri AutoCAD ile piksel piksel aynı gösterir” bir DoD değildir ve vaat edilmez.
 
 ---
 
-## 10. v1 sonrası backlog — bu plan bitmeden başlanmaz
+## 10. v1 sonrası backlog — plan bitmeden başlanmaz
 
-Öncelik sırası:
+1. Read-only selection/properties.
+2. Ölçüm: mesafe/alan/koordinat + unit validation.
+3. User-granted proje klasöründen tam XREF resolution.
+4. İleri paper-space/complex linetype/underlay.
+5. PDF/SVG export için ayrı fidelity/license spike.
+6. Command/undo-redo tabanlı editor.
+7. Save-as-copy + DWG/DXF round-trip corpus; original overwrite varsayılan kapalı.
 
-1. Read-only entity selection ve properties
-2. Ölçüm: mesafe/alan/koordinat; unit doğrulamasıyla
-3. Kullanıcı-granted proje klasöründen tam XREF resolution
-4. İleri paper-space/complex linetype/underlay
-5. PDF/SVG export için ayrı fidelity ve lisans spike
-6. Command/undo-redo tabanlı editor
-7. Save-as-copy ve DWG/DXF round-trip corpus; orijinal üzerine yazma yine varsayılan kapalı
-
-Bu özellikler v1 dependency graph’ına feature flag ile bile gizlice eklenmez; feature flag dependency exclusion değildir.
+Feature flag dependency exclusion değildir; v1 dışı dependency gizlice runtime graph’a eklenmez.
 
 ---
 
@@ -922,23 +501,18 @@ Bu özellikler v1 dependency graph’ına feature flag ile bile gizlice eklenmez
 
 Yürütme gününde live-verify edilir:
 
-- ACadSharp repo/README/license: https://github.com/DomCR/ACadSharp
+- ACadSharp: https://github.com/DomCR/ACadSharp
 - ACadSharp NuGet: https://www.nuget.org/packages/ACadSharp/
-- ACadSharp reader notifications: https://github.com/DomCR/ACadSharp/blob/master/docs/articles/samples/reading.md
-- ProCad repo/license: https://github.com/wieslawsoltes/ProCad
-- ProCad dependency/submodule kaynakları: https://github.com/wieslawsoltes/ProCad/blob/master/.gitmodules
-- SkiaSharp repo/license: https://github.com/mono/SkiaSharp
-- .NET MAUI 10 docs: https://learn.microsoft.com/dotnet/maui/?view=net-maui-10.0
-- .NET MAUI installation: https://learn.microsoft.com/dotnet/maui/get-started/installation?view=net-maui-10.0
+- ProCad: https://github.com/wieslawsoltes/ProCad
+- SkiaSharp: https://github.com/mono/SkiaSharp
+- .NET MAUI 10: https://learn.microsoft.com/dotnet/maui/?view=net-maui-10.0
 - .NET support policy: https://dotnet.microsoft.com/platform/support/policy
 - IxMilia DXF: https://github.com/ixmilia/dxf
-- IxMilia DWG: https://github.com/ixmilia/dwg
-- IxMilia SHX: https://github.com/ixmilia/shx
-- Android Storage Access Framework: https://developer.android.com/training/data-storage/shared/documents-files
-- Android app memory guidance: https://developer.android.com/topic/performance/memory-overview
+- Android SAF: https://developer.android.com/training/data-storage/shared/documents-files
+- Android memory: https://developer.android.com/topic/performance/memory-overview
 - Autodesk trademark guidance: https://www.autodesk.com/company/legal-notices-trademarks/trademarks/guidelines-for-use
-- Apple Developer: https://developer.apple.com/programs/
 - Google Play Console help: https://support.google.com/googleplay/android-developer/
+- Apple Developer yalnız future iOS reactivation için: https://developer.apple.com/programs/
 
 ---
 
