@@ -11,11 +11,11 @@ GitHub Actions / Dispatch Request
 Self-Hosted Runner (Windows Node: C:\actions-runner)
   │
   ├─► .\scripts\doctor-local-environment.ps1 (Validates environment)
-  ├─► solution build + executable harness run (V01 hardening target)
+  ├─► solution build + executable harness marker runs (V01 validated)
   ├─► .\scripts\start-emulator.ps1 (Launches AVD 'mobil-dwg-api36')
   ├─► dotnet build -f net10.0-android (Currently temporary Stage01Smoke APK)
   ├─► adb install & launch (Infrastructure smoke on API 36)
-  ├─► byte-safe screencap & stability evidence (Pending V01 hardening)
+  ├─► byte-safe PNG + numeric PID/crash/post-launch ANR evidence
   │
   ▼
 GitHub Actions Artifacts (Screenshots & Logs)
@@ -68,7 +68,7 @@ Gracefully shuts down running emulator instances.
 ```powershell
 .\scripts\android-emulator-gate.ps1 -Configuration Release
 ```
-Current gate executes prerequisite checks, boots/reuses an emulator and builds/installs a temporary `Stage01Smoke` MAUI APK. It does **not** install the real `MobilDwg.App`. Its `dotnet test` call also does not execute this repository's custom executable harness bodies, current screenshot redirection is not byte-safe, and PID/crash/ANR evidence needs V01 hardening. Until then `ANDROID_EMULATOR_GATE_PASS` means infrastructure smoke only.
+Current V01-hardened gate executes prerequisite checks, builds the solution, explicitly runs the custom executable harnesses with required markers, boots/reuses the exact AVD, and builds/installs a temporary `Stage01Smoke` MAUI APK. It captures a signature-validated byte-safe PNG and requires numeric PID plus package/PID crash and post-launch ANR checks. It still does **not** install the real `MobilDwg.App`; therefore `ANDROID_EMULATOR_GATE_PASS` means `INFRASTRUCTURE_SMOKE_ONLY`. The real app artifact becomes the gate target in V04.
 
 ---
 
@@ -100,8 +100,8 @@ The runner binaries are installed in `C:\actions-runner`.
 
 ## 5. Automation & Trigger Policy
 
-1. **Trigger Isolation**: The self-hosted Windows runner is **never** triggered by normal commits or pushes to `main` or feature branches.
-2. **Dedicated Test Branch**: The Windows runner triggers exclusively when:
+1. **Emulator Trigger Isolation**: The legacy `android-emulator-test.yml` workflow is not triggered by normal commits or pushes to `main` or feature branches. Separate V02/V03 self-hosted audit workflows may run on `main` or pull requests when their dependency/fixture path filters match. The V04 workflow introduced by PR `#17` may also use the self-hosted emulator on pull-request `opened/synchronize/reopened` events when app/Core/Cad/Rendering/architecture paths match; a push to an already-open PR is therefore not offline-safe by default.
+2. **Dedicated Emulator Test Branch**: The Android emulator workflow triggers when:
    - Commits are pushed to the dedicated `android-test` branch, OR
    - Manually dispatched via GitHub Actions (`workflow_dispatch`).
 3. **Physical Device Integrity**: Emulator automation is an additional automated gate in `scripts/android-emulator-gate.ps1`. It does not replace or modify the mandatory physical device gate defined in `scripts/stage01-device-gate.ps1`.

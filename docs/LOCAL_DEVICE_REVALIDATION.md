@@ -15,19 +15,19 @@ Temel kural: **CI kanıtı cihaz kanıtı değildir.** Daha önce CI ile doğrul
 
 ## E0 — Aktif Android emulator revalidation lane
 
-| V aşaması | Kapsam | Emulator gereksinimi | Başlangıç durumu |
+| V aşaması | Kapsam | Emulator gereksinimi | Güncel durum |
 |---|---|---|---|
-| V01 | Toolchain, runner, gate ve kanıt altyapısı | Zorunlu | `FIX_REQUIRED` |
-| V02 | Dependency/license/lockfile | Gereksiz | `NOT_STARTED` |
-| V03 | Fixture/hash/golden sözleşmesi | Gereksiz | `NOT_STARTED` |
-| V04 | Mimari + gerçek installable Android app shell | Zorunlu | `NOT_STARTED` |
+| V01 | Toolchain, runner, gate ve kanıt altyapısı | Zorunlu | `VALIDATED — INFRASTRUCTURE_SMOKE_ONLY` |
+| V02 | Dependency/license/lockfile | Gereksiz | `VALIDATED` |
+| V03 | Fixture/hash/golden sözleşmesi | Gereksiz | `VALIDATED` |
+| V04 | Mimari + gerçek installable Android app shell | Zorunlu | `VALIDATED — REAL_APP_SHELL_RUNTIME_ONLY` |
 | V05 | ACadSharp parser/corpus | Headless + gerçek app linkage | `NOT_STARTED` |
 | V06 | FilePicker/SAF/safe-open/lifecycle/cache | Zorunlu | `NOT_STARTED` |
 | V07 | ProCad NO-GO ve graph izolasyonu | Uygulanmaz | `NOT_STARTED` |
 | V08 | Tarihsel iOS kaydı / Android graph izolasyonu | iOS testi çalıştırılmaz | `SCOPE_ARCHIVED` hedefi |
 | V09 | RenderScene/kamera/diagnostics | Host harness; Android linkage gerekirse | `NOT_STARTED` |
 
-Mevcut V01 açığı: gate geçici `Stage01Smoke` kuruyor, executable test harness gövdelerini çalıştırmıyor, byte-safe PNG üretmiyor ve PID/crash/ANR kanıtı yetersiz. Bunlar düzelmeden eski emulator koşusu `VALIDATED` sayılmaz.
+V01 sonucu yalnız geçici `Stage01Smoke` altyapı smoke'udur. V04 gerçek `MobilDwg.App` runtime gate'ini geçip merge edilerek `VALIDATED` oldu; parser/render fidelity ve fiziksel Android kanıtı ayrıca açıktır.
 
 ## R0 — Temiz geliştirme ortamı
 

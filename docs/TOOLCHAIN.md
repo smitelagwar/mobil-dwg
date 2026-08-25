@@ -30,7 +30,7 @@ dotnet workload list
 
 Önemli: `global.json` içindeki `workloadVersion: 10.0.400` exact workload set'i seçer. Bu repo hattında `dotnet workload install maui-android --version 10.0.400` kullanılmaz; AŞAMA 01 CI sırasında bu ek `--version` biçiminin yanlış olduğu görülmüş ve başarılı hat `dotnet workload install maui-android` olarak doğrulanmıştır.
 
-Yerel Windows sağlık taraması .NET `10.0.400`, `maui-android`, JDK `21.0.12.1`, API 36, Build-Tools 36.0.0, ADB 37.0.1, emulator/AVD ve runner bileşenlerini gördü. Bu envanter fiziksel cihaz kanıtı değildir. Mevcut emulator gate gerçek viewer yerine `Stage01Smoke` kurduğu ve executable harness/screenshot/stability kanıt açıkları taşıdığı için V01 tamamlanmış sayılmaz.
+Yerel Windows sağlık taraması .NET `10.0.400`, `maui-android`, JDK `21.0.12.1`, API 36, Build-Tools 36.0.0, ADB 37.0.1, emulator/AVD ve runner bileşenlerini gördü. V01 exact self-hosted koşusunda executable harness'lar, byte-safe PNG, numeric PID ve crash/ANR kontrolleriyle `VALIDATED — INFRASTRUCTURE_SMOKE_ONLY` oldu. Gate hâlâ gerçek viewer yerine `Stage01Smoke` kurar; bu nedenle V01 gerçek `MobilDwg.App` veya fiziksel cihaz kanıtı değildir. Gerçek app APK/runtime sınırı V04 kapsamıdır.
 
 ## Java hattı
 

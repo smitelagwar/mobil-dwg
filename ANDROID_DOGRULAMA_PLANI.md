@@ -8,7 +8,8 @@ Bu belge AŞAMA 01–09 arasında geliştirilen kodu Android hedefinde sırayla 
 ACTIVE_PRODUCT_TARGET: ANDROID_ONLY
 IOS_STATUS: DEFERRED_FUTURE_OPTION
 IMPLEMENTATION_BASELINE: AŞAMA 09 — DONE
-IMPLEMENTATION_NEXT: AŞAMA 10 — NOT_STARTED
+IMPLEMENTATION_CURSOR: AŞAMA 10 — MAIN'E HENÜZ MERGE EDİLMEDİ
+IMPLEMENTATION_WORKSTREAM: docs/A10_WORKSTREAM.md + varsa açık A10 branch/PR
 ACTIVE_PROGRAM: ANDROID_REVALIDATION_01_09
 CURRENT_VALIDATION_STAGE: V05
 CURRENT_STATUS: NOT_STARTED
@@ -17,6 +18,10 @@ V02: VALIDATED — DEPENDENCY/LOCKFILE/LICENSE/HASH/VULNERABILITY/ANDROID-NATIVE
 V03: VALIDATED — FIXTURE/PROVENANCE/GOLDEN/ANDROID-SMOKE-SET CONTRACT
 V04: VALIDATED — REAL_APP_SHELL_RUNTIME_ONLY_NOT_VIEWER_FIDELITY
 NEXT_ACTION: Yalnız V05'i başlat — ACadSharp parser adapter yolunu gerçek MobilDwg.App içinde V03 DWG/DXF smoke setiyle Android üzerinde doğrula; aynı turda V06'ya geçme
+NEXT_IF_TEST_READY: V05 validation hattını yürüt
+NEXT_IF_TEST_OFFLINE: BASLA_A10.md ile yalnız ayrı branch'te A10 host-independent taslağını yürüt
+A10_MAIN_MERGE: BLOCKED_UNTIL_V04_V09_CLOSED_AND_A10_ANDROID_GATE
+A11_GATE: BLOCKED_UNTIL_V04_V09_CLOSED_AND_A10_DONE_ON_MAIN_AND_EMULATOR_QUEUE_EMPTY
 PENDING_EMULATOR_QUEUE: EMPTY
 PHYSICAL_ANDROID: DEFERRED_RELEASE_DEVICE_GATE
 ```
@@ -29,11 +34,11 @@ Kullanıcı `BASLA.md dosyasını oku` veya `devam` dediğinde ajan:
 
 1. Gerçek `main` HEAD, açık PR ve checkpoint'i doğrular.
 2. `BASLA.md`, bu dosya, canonical plan, `DEVAM.md`, `gecmis.md`, execution override ve çalışma bağlamına uygun Android test workflow'unu okur.
-3. Açık VXX bitmediyse doğrudan onu sürdürür.
+3. Genel `BASLA.md` komutunda açık VXX bitmediyse doğrudan onu sürdürür. Ayrı A10 sohbeti yalnız kullanıcı `BASLA_A10.md` komutunu verdiğinde açılır.
 4. Bir kullanıcı turunda en fazla bir validation veya implementation aşaması kapatır; sonraki aşamayı aynı turda başlatmaz.
 5. Emulator fiziksel cihaz sayılmaz; geçici `Stage01Smoke` gerçek viewer sayılmaz; queued/zero-step workflow PASS sayılmaz.
 6. Test/evidence olmadan `VALIDATED/DONE` yazmaz.
-7. Implementation cursor AŞAMA 10'da validation cursor'dan ayrı korunur.
+7. Implementation cursor AŞAMA 10'da validation cursor'dan ayrı korunur. Erken A10 yalnız izole draft branch'inde ilerleyebilir; VXX checkpoint/evidence dosyalarını değiştiremez.
 8. Exact tested SHA/PR merge revision, run/job ve artifact evidence'e yazılır.
 
 ## 3. Gerçeklik sınıfları
@@ -48,9 +53,9 @@ Kullanıcı `BASLA.md dosyasını oku` veya `devam` dediğinde ajan:
 
 ## 4. Durumlar
 
-`NOT_STARTED`, `CODE_AUDIT`, `FIX_REQUIRED`, `FIX_IN_PROGRESS`, `READY_FOR_EMULATOR`, `WAITING_RUNNER`, `VALIDATED`, `VALIDATED_WITH_DEFERRED_PHYSICAL`, `SCOPE_ARCHIVED`, `DEFERRED_PHYSICAL_ANDROID`, `BLOCKED`.
+`NOT_STARTED`, `CODE_AUDIT`, `FIX_REQUIRED`, `FIX_IN_PROGRESS`, `IN_PROGRESS_UNVALIDATED`, `CODED_PENDING_HOST_TESTS`, `CODED_PENDING_EMULATOR`, `READY_FOR_EMULATOR`, `WAITING_RUNNER`, `VALIDATED`, `VALIDATED_WITH_DEFERRED_PHYSICAL`, `SCOPE_ARCHIVED`, `DEFERRED_PHYSICAL_ANDROID`, `BLOCKED`.
 
-`READY_FOR_EMULATOR` ve `WAITING_RUNNER` PASS değildir.
+`IN_PROGRESS_UNVALIDATED`, `CODED_PENDING_HOST_TESTS`, `CODED_PENDING_EMULATOR`, `READY_FOR_EMULATOR` ve `WAITING_RUNNER` PASS değildir.
 
 ## 5. Self-hosted runner kuralı
 
@@ -59,8 +64,19 @@ Kullanıcı `BASLA.md dosyasını oku` veya `devam` dediğinde ajan:
 - Exact tested SHA/PR merge revision evidence'e yazılır.
 - Runner çevrim dışıysa aynı queued işi çoğaltma; exact SHA/test `PENDING_EMULATOR_QUEUE` kaydına alınır.
 - Force-push/force-ref update yapılmaz.
+- Bir feature head `android-test` taşıyıcısıyla test edildiyse PR merge yöntemi varsayılan olarak **merge commit** olmalıdır. Squash/rebase tested head'i `main` ancestry'sinden çıkarıp sonraki fast-forward taşıyıcı güncellemesini bozabilir. Merge commit kullanılamıyorsa force uygulanmaz; exact-ref `workflow_dispatch` veya güvenli başka bir tetikleme yolu seçilir.
 - Workflow `SUCCESS` yalnız gerçekten çalışan adımlar kadar güçlüdür.
 - GitHub-hosted job `steps=[]`, `runner_id=0`, boş runner adı ile biterse bu runner-allocation failure'dır; kod/test failure olarak sınıflandırılmaz.
+
+### 5.1 Bilgisayar kapalıyken sınırlı A10 hattı
+
+- Validation hattı V04→V09 sırasını korur ve `main`/VXX evidence üzerinde yetkilidir.
+- Kullanıcı zaman kaybetmemek için ayrı sohbette `BASLA_A10.md dosyasını oku` diyebilir. Bu sohbet yalnız `stage10-p0-geometry-draft` normal feature branch'inde çalışır.
+- Erken A10 yalnız yeni/internal platform-neutral primitive-tessellator matematiği ve saf testlerdir. V09 kapanana kadar mevcut RenderScene/interface/snapshot, architecture, `.csproj`/Skia ve fixture/image-golden sözleşmeleri dondurulur; ProCad, MAUI/FilePicker/lifecycle ve A11 kapsam dışıdır.
+- A10 PR yoksa PC offline iken normal branch push yapılabilir. PR zaten açıksa push `synchronize` olayıyla V04 self-hosted işini açabileceğinden offline push öncesi workflow etkisi giderilir/PR kapatılır; aksi halde push yapılmaz. Runner hazırken PR açılır/güncellenir ve actual non-zero-step hosted/self-hosted sonuç doğrulanır. Billing/capacity blocker'ında kod `CODED_PENDING_HOST_TESTS` kalır.
+- Host testleri geçti fakat emulator yoksa A10 en fazla `CODED_PENDING_EMULATOR` olur. `android-test` branch'ini A10 sohbeti hareket ettirmez; `main` merge, `READY_TO_MERGE`, `DONE` ve A11 yasaktır.
+- A10 durumu/branch/SHA/test borcu `docs/A10_WORKSTREAM.md` içinde tutulur. A10 draft SHA, V09 sonrası güncel `main` ile oluşturulacak integration SHA'nın kanıtı değildir.
+- V09 kapandıktan sonra güncel validated `main` A10 branch'ine alınır; etkilenen V02/V03, V04–V07, V08 Android graph-isolation, V09, A10 T1/golden/C3 ve gerçek-app API 36 emulator render gate exact integration SHA'da geçmeden merge yapılmaz. iOS workflow açılmaz; render kanıtı PID/PNG yanında expected-content/golden/görsel doğrulamadan en az birini içerir.
 
 ## 6. Validation sırası
 
@@ -174,13 +190,13 @@ V04 parser/render fidelity kanıtlamaz ve fiziksel Android release/device kapıs
 
 - AŞAMA 09 T0/T1, semantic snapshot, OCS/WCS, invalid geometry, overflow, large-coordinate regresyonları yeniden çalıştır.
 - Real app Core/Cad/Rendering composition sınırını doğrula.
-- AŞAMA 10 renderer işi erkenden yazılmaz.
+- Ayrı A10 draft branch'i varsa validation sözleşmesi ona göre değiştirilmez. V09 sonucu üstün kabul edilir; draft güncel validated `main` ile daha sonra uzlaştırılır.
 
-Çıkış: AŞAMA 01–09 Android revalidation kuyruğu temiz; implementation cursor AŞAMA 10'dan sürer.
+Çıkış: AŞAMA 01–09 Android revalidation kuyruğu temiz. A10 başlamadıysa normal sırada açılır; draft varsa güncel `main` ile integration + Android gate aşamasına alınır. Bu V09 kapanış turunda A10 merge/DONE veya A11 başlangıcı yapılmaz.
 
-## 7. V09 sonrası uygulama sırası
+## 7. V09 sonrası uzlaştırma ve uygulama sırası
 
-Aktif sıra AŞAMA 10–22, ardından Android-only AŞAMA 25–27. AŞAMA 23–24 future iOS track'tir. Android runtime/UI/packaging değişikliklerinde anlamlı checkpoint'te gerçek app emulator gate çalıştırılır. Fiziksel Android AŞAMA 20–22 ve final release kapılarında tekrar zorunludur.
+Aktif sıra AŞAMA 10–22, ardından Android-only AŞAMA 25–27. AŞAMA 23–24 future iOS track'tir. A10 draft varsa önce `docs/A10_WORKSTREAM.md` merge kapısı tamamlanır; A10 `DONE` olmadan A11 açılmaz. Android runtime/UI/packaging değişikliklerinde anlamlı checkpoint'te gerçek app emulator gate çalıştırılır. Fiziksel Android AŞAMA 20–22 ve final release kapılarında tekrar zorunludur.
 
 ## 8. Her validation kapanışında güncellenecek kayıtlar
 

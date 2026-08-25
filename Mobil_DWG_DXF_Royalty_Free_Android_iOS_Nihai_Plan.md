@@ -18,7 +18,8 @@ CURRENT_STAGE: V05 — ACadSharp parser entegrasyonu
 CURRENT_SUBSTEP: V05.ready
 STATUS: NOT_STARTED
 LAST_IMPLEMENTED_STAGE: AŞAMA 09 — DONE
-IMPLEMENTATION_NEXT: AŞAMA 10 — NOT_STARTED
+IMPLEMENTATION_CURSOR: AŞAMA 10 — MAIN'E HENÜZ MERGE EDİLMEDİ
+IMPLEMENTATION_WORKSTREAM: docs/A10_WORKSTREAM.md + varsa açık A10 branch/PR
 V01: VALIDATED — INFRASTRUCTURE_SMOKE_ONLY
 V02: VALIDATED — DEPENDENCY/LOCKFILE/LICENSE/HASH/VULNERABILITY/ANDROID-NATIVE BOUNDARY
 V03: VALIDATED — FIXTURE/PROVENANCE/GOLDEN/ANDROID-SMOKE-SET CONTRACT
@@ -32,6 +33,9 @@ PENDING_EMULATOR_QUEUE: EMPTY
 PHYSICAL_ANDROID: DEFERRED_RELEASE_DEVICE_GATE
 BLOCKERS: Aktif V05 blocker'ı yok; fiziksel Android release öncesi ayrıca zorunlu; iOS aktif kapsam dışı.
 NEXT_ACTION: Yalnız V05'i başlat — gerçek MobilDwg.App içinde ACadSharp parser adapter + V03 DWG/DXF smoke seti; aynı turda V06'ya geçme.
+NEXT_IF_TEST_OFFLINE: BASLA_A10.md ile yalnız izole A10 draft branch'inde host-independent kod/test işi yap.
+A10_MAIN_MERGE: BLOCKED_UNTIL_V04_V09_CLOSED_AND_A10_ANDROID_GATE
+A11_GATE: BLOCKED_UNTIL_V04_V09_CLOSED_AND_A10_DONE_ON_MAIN_AND_EMULATOR_QUEUE_EMPTY
 ```
 
 ### `devam` protokolü
@@ -46,6 +50,8 @@ NEXT_ACTION: Yalnız V05'i başlat — gerçek MobilDwg.App içinde ACadSharp pa
 8. Destructive/force Git işlemi yapılmaz; kullanıcı değişiklikleri korunur.
 9. Her kapanışta validation planı, evidence, `DEVAM.md`, `gecmis.md`, execution log ve bu checkpoint güncellenir.
 10. Kullanıcı iOS'u yeniden etkinleştirmedikçe iOS build/spike/signing işi yapılmaz.
+11. Genel `BASLA.md` açık VXX'i yürütür. Yalnız açık `BASLA_A10.md` komutu A10'u ayrı `stage10-p0-geometry-draft` branch'inde başlatabilir.
+12. Erken A10 host/GitHub-hosted kontrolü sonuçsuzsa `CODED_PENDING_HOST_TESTS`, actual FAIL ise `FIX_REQUIRED/FIX_IN_PROGRESS`, hepsi actual non-zero-step PASS olduğunda V04–V09 uzlaştırması + Android gate bekleyen `CODED_PENDING_EMULATOR` olur. V04–V09 kapanmadan `main` merge/DONE yoktur ve A11 açılmaz.
 
 ---
 
@@ -248,15 +254,32 @@ V04 authoritative run/job `32832142832` / `97752997848`; artifact `9557331919`.
 
 ## 9. Implementation aşamaları
 
-AŞAMA 00–09 tarihsel implementation evidence `docs/evidence/STAGE_XX.md` ve ADR'lerde korunur. Implementation cursor AŞAMA 10'dadır; V01–V09 tamamlanmadan erken renderer işine atlanmaz.
+AŞAMA 00–09 tarihsel implementation evidence `docs/evidence/STAGE_XX.md` ve ADR'lerde korunur. Implementation cursor AŞAMA 10'dadır. V04–V09 validation hattı ana/öncelikli sıradır; bilgisayar veya runner kapalıyken yalnız `BASLA_A10.md` protokolüyle izole branch'te sınırlı A10 taslağı hazırlanabilir. Bu taslak validation sonucu, `main` revision veya tamamlanmış aşama sayılmaz.
 
 ### AŞAMA 10 — P0 temel geometri renderer'ı — `NOT_STARTED`
 
 LINE/ARC/CIRCLE/ELLIPSE/POINT, polyline+bulge, SPLINE, SOLID/TRACE/3DFACE 2D; OCS/extrusion/mirror/large-coordinate; draw-order/clipping/AA baseline. Önce correctness; GPU/batching/tiling yok.
 
+Paralel erken çalışma sınırı:
+
+- Ayrı branch: `stage10-p0-geometry-draft`; `android-test` geliştirme branch'i değildir.
+- V04–V09 sürerken yalnız yeni/internal platform-neutral primitive-tessellator matematiği ve saf testler yapılır. V09 kapanana kadar mevcut RenderScene/interface/snapshot, architecture, `.csproj`/Skia ve fixture/image-golden sözleşmeleri dondurulur; A11, MAUI/FilePicker/lifecycle ve ProCad kapsam dışıdır.
+- Host/hosted build-harness yoksa `CODED_PENDING_HOST_TESTS`; bu kontroller gerçekten geçse bile Android gate öncesi en ileri durum `CODED_PENDING_EMULATOR`dır. `main` merge/DONE yasaktır.
+- V09 sonrasında güncel validated `main` branch'e alınır. Etkilenen V02/V03, V04–V07, V08 Android graph-isolation, V09 ve A10 T1/semantic-golden/C3 exact integration SHA üzerinde geçer; iOS workflow açılmaz. Gerçek `MobilDwg.App` API 36 render kanıtı PID/PNG/crash/ANR yanında expected-content pixel probe, Android golden veya kayıtlı görsel incelemeden en az birini içerir.
+- A10 yalnız doğrulanmış PR main'e merge, post-merge kontrol ve `docs/evidence/STAGE_10.md` kapanışı sonrasında `DONE` olur.
+
 ### AŞAMA 11 — Mobil viewport ve gesture
 
-Pan, pinch zoom, fit extents, focal-point preservation, zoom guards, orientation/safe area; rotation reparse yapmaz.
+Giriş kapısı: `V04–V09 PROGRAM CLOSED` + `AŞAMA 10 DONE ON MAIN` + `PENDING_EMULATOR_QUEUE EMPTY`. AŞAMA 11, A10 kapanış turunda başlatılmaz.
+
+- pan, pinch zoom, fit extents, gerekirse double-tap fit
+- pinch focal point preservation
+- min/max zoom/overscroll guards
+- portrait/landscape/safe area
+- rotation reparse yapmaz
+- debug-only frame timing
+
+Çıkış: küçük/orta fixture navigation stabil; gerçek Android frame baseline kaydedilir.
 
 ### AŞAMA 12 — Block/INSERT/attribute
 

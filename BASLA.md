@@ -6,6 +6,8 @@
 >
 > Dosyayı okuyup sadece özet çıkarma, kullanıcıdan ayrıca `devam` isteme ve “ne yapmak istersin?” diye sorma. Aşağıdaki protokolü uygula ve mevcut aşamadaki işi doğrudan yürüt.
 
+`BASLA.md` Android V01–V09 validation programındaki **gerçek açık VXX cursor'ının** varsayılan başlatıcısıdır; V01'den yeniden başlatmaz, plan/checkpoint hangi VXX'i açık gösteriyorsa onu sürdürür. Bilgisayar/runner kapalıyken ayrı AŞAMA 10 taslağını yürütmek için kullanıcı farklı bir sohbette `BASLA_A10.md dosyasını oku` der; iki komutun sahiplik alanları karıştırılmaz.
+
 ## 1. Repo
 
 - GitHub repo: `smitelagwar/mobil-dwg`
@@ -26,12 +28,14 @@ GitHub connector kullanılabiliyorsa gerçek repo durumunu mutlaka connector üz
 4. `gecmis.md` dosyasını oku. Buradaki ayrı implementation/doğrulama cursor'larını, açık blocker/test kuyruğunu ve son CI/merge kanıtlarını doğrula.
 5. `docs/USER_APPROVED_EXECUTION_OVERRIDE.md` dosyasını oku ve dış cihaz/runner kapılarının yürütme kuralını uygula.
 6. **Gerçek çalışma bağlamını otomatik sınıflandır:** Kod değişiklikleri ChatGPT sohbetinden GitHub connector/API üzerinden yapılıyor ve ajan kullanıcının yerel repo/terminal/ADB ortamında doğrudan çalışmıyorsa bağlam `CHATGPT_REMOTE_GITHUB` sayılır. Bu bağlamda `docs/CHATGPT_REMOTE_ANDROID_TEST_WORKFLOW.md` dosyasını **okumadan implementasyona başlama**. AntiGravity, Visual Studio + Codex, Codex IDE veya başka bir yerel ajan gerçek yerel çalışma ağacı + terminal/ADB erişimiyle çalışıyorsa bağlam `LOCAL_IDE` sayılır.
-7. Açık V01–V09 doğrulaması varsa onu doğrudan sürdür. Runner çevrim dışıysa exact test SHA'sını kuyruğa al; kanıt beklerken güvenli kod/host-test işi varsa implementation cursor'ında devam et.
+7. Açık V01–V09 doğrulaması varsa onu doğrudan sürdür. Runner çevrim dışıysa yalnız test edilebilir exact SHA varsa kuyruğa alıp `WAITING_RUNNER` yaz; SHA yoksa gerçek mevcut stage durumunu koru. Aynı sohbet kendiliğinden A10'a geçmez.
 8. Doğrulama programı bittiyse açık normal `IN_PROGRESS` aşamayı, yoksa `NEXT_IMPLEMENTATION_STAGE` işini başlat.
 9. Aktif iş için ilgili `docs/evidence/android-validation/VXX.md` veya tarihsel `docs/evidence/STAGE_XX.md`, mimari/compliance/fixture dosyaları, açık PR’lar ve GitHub Actions koşularını gerektiği kadar oku.
 10. Açık PR veya yarım CI run varsa yeni iş açmadan önce gerçek durumunu kontrol et. Runner-offline queued işi implementation failure sayma ve aynı koşuyu çoğaltma.
 11. Kullanıcıdan daha önce verilmiş bilgiyi tekrar isteme. Fiziksel erişim gerektirmeyen işi mümkün olduğunca tamamla.
 12. Bir kullanıcı turunda en fazla **bir doğrulama veya implementation aşaması** tamamla. Aynı turda sonraki aşamaya başlama.
+
+Kullanıcı açıkça `BASLA_A10.md dosyasını oku` dediyse bu dosyanın validation rotası yerine `BASLA_A10.md` protokolü uygulanır. A10 ayrı feature branch'te ilerler; ortak VXX checkpoint dosyalarına dokunmaz.
 
 Aktif Android işinde `docs/evidence/STAGE_08.md`, `docs/STAGE_01_IOS_ACCESS_INVENTORY.md`, iOS spike/script ve AŞAMA 23–24 ayrıntılarını rutin olarak yükleme. Bunlar yalnız V08 graph-isolation kontrolünde gerektiği kadar veya kullanıcı future iOS'u açıkça yeniden etkinleştirirse okunur.
 
@@ -88,7 +92,7 @@ Aşağıdaki gerçekler ayrı tutulur:
 
 Emulatoru fiziksel telefon; geçici `Stage01Smoke` APK'sını gerçek viewer; queued/offline runner'ı PASS sayma.
 
-Runner veya bilgisayar çevrim dışıysa test SHA'sını `PENDING_EMULATOR_QUEUE` olarak kaydet ve güvenli kod/host-test işine devam et. Aynı test işini tekrar tekrar kuyruğa sokma.
+Runner veya bilgisayar çevrim dışıysa yalnız test edilebilir exact SHA mevcutsa onu `PENDING_EMULATOR_QUEUE` olarak kaydet; henüz SHA yoksa validation'ın gerçek mevcut durumunu koru. Aynı test işini tekrar tekrar kuyruğa sokma. Zamanı A10 ile değerlendirmek için ayrı sohbette `BASLA_A10.md` kullanılır. A10 host/hosted kontrolü sonuçsuzsa `CODED_PENDING_HOST_TESTS`, actual FAIL ise `FIX_REQUIRED/FIX_IN_PROGRESS`, hepsi geçtiğinde V04–V09 uzlaştırması + Android gate bekleyen `CODED_PENDING_EMULATOR` olur.
 
 Release/beta/final Android aşamalarında fiziksel cihaz ve boş test kuyruğu yeniden zorunludur. iOS yalnız kullanıcı açıkça yeniden etkinleştirirse ayrı blocker olur.
 
@@ -114,6 +118,8 @@ Release/beta/final Android aşamalarında fiziksel cihaz ve boş test kuyruğu y
 - Gerçek müşteri/kullanıcı DWG-DXF, private corpus, font, signing key, token veya secret repoya ekleme.
 - Public/synthetic fixture yalnız provenance/lisans politikasıyla uyumluysa eklenebilir.
 - PR/CI kullanılıyorsa doğrulanmamış head’i merge etme.
+- V04–V09 bitmeden A10 draft branch'ini `main`e merge etme, `DONE/READY_TO_MERGE` yazma veya AŞAMA 11'e başlama.
+- A10 sohbeti `android-test` taşıyıcı branch'ini yönetmez; validation/test koordinatörüyle branch sahipliğini karıştırmaz.
 
 ## 8. Her doğrulama/implementation aşaması sonunda zorunlu kapanış
 
@@ -124,10 +130,10 @@ Aşama gerçekten tamamlandığında aynı turda:
 3. `ANDROID_DOGRULAMA_PLANI.md` ile canonical plan checkpoint'ini gerçek durumla güncelle.
 4. README/handoff girişinde eski aşama bilgisi varsa düzelt.
 5. `docs/EXECUTION_LOG.md` teknik geçmişini güncelle.
-6. `DEVAM.md` tutuluyorsa checkpoint snapshot’ını güncelle; ancak `BASLA.md` genel bootstrap protokolüdür ve aşama numarası içermez, normalde değiştirilmesi gerekmez.
+6. `DEVAM.md` tutuluyorsa checkpoint snapshot’ını güncelle. `BASLA.md` aktif cursor değeri taşımaz; yalnız bootstrap/iki-hat protokolü değişirse güncellenir.
 7. O turda sonraki aşamaya başlama.
 
-Aşama tamamlanmamışsa `DONE/VALIDATED` yazma; gerçek `FIX_IN_PROGRESS`, `READY_FOR_EMULATOR`, `WAITING_RUNNER`, `IN_PROGRESS` veya `BLOCKED` durumunu ve tam sonraki eylemi kalıcı kayıtlara geçir.
+Aşama tamamlanmamışsa `DONE/VALIDATED` yazma; gerçek `FIX_IN_PROGRESS`, `READY_FOR_EMULATOR`, `WAITING_RUNNER`, `IN_PROGRESS`, `IN_PROGRESS_UNVALIDATED`, `CODED_PENDING_HOST_TESTS`, `CODED_PENDING_EMULATOR` veya `BLOCKED` durumunu ve tam sonraki eylemi kalıcı kayıtlara geçir.
 
 ## 9. Toolchain/dependency gerçekliği
 
@@ -137,8 +143,14 @@ Mevcut repo pinlerinin değiştirilmesi ancak gerçek gerekçe + build/test/comp
 
 ## 10. Bu dosyanın kullanım şekli
 
-Yeni sohbette kullanıcının yazması gereken tek cümle:
+Validation sohbetinde kullanıcının yazması gereken tek cümle:
 
 > **BASLA.md dosyasını oku**
 
 Bu cümle tek başına yeterlidir. Ek olarak “kaldığımız yerden devam et”, “GitHub’a bak” veya `devam` yazması gerekmez.
+
+Bilgisayar/runner kapalıyken ayrı A10 sohbetinde kullanılacak tek cümle:
+
+> **BASLA_A10.md dosyasını oku**
+
+Bu ikinci komut yalnız A10 draft hattını açar; validation cursor'ını ilerletmez. AŞAMA 11, V04–V09 ile A10 main kapanışı tamamlanana kadar kilitlidir.

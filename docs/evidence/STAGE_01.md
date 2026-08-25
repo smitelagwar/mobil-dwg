@@ -1,6 +1,6 @@
 # AŞAMA 01 Evidence — .NET/MAUI/Android toolchain ve gerçek telefon
 
-> **Tarihsel kayıt:** Bu dosya AŞAMA 01'in o tarihteki sonucunu korur. 25.08.2026 itibarıyla aktif Android tekrar turu `ANDROID_DOGRULAMA_PLANI.md` V01'dir; iOS envanteri future option, fiziksel Android ise release cihaz kapısıdır. Aşağıdaki eski “sonraki aşama başlatılamaz” ifadeleri güncel execution override'dan önceki anı anlatır.
+> **Tarihsel kayıt:** Bu dosya AŞAMA 01'in o tarihteki sonucunu korur. Güncel Android cursor'ı ve tamamlanan VXX kayıtları `ANDROID_DOGRULAMA_PLANI.md` içindedir; iOS envanteri future option, fiziksel Android ise release cihaz kapısıdır. Aşağıdaki eski “sonraki aşama başlatılamaz” ifadeleri güncel execution override'dan önceki anı anlatır.
 
 Tarih: 2026-08-24
 

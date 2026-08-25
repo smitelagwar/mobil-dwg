@@ -4,13 +4,14 @@ Bu dosya kısa kalıcı tarihçe/checkpoint kaydıdır. Ayrıntılı teknik kan�
 
 ## Yeni ajan okuma sırası
 
-1. Gerçek `main` HEAD ve açık PR'ları doğrula.
-2. `BASLA.md`.
-3. `DEVAM.md`.
-4. `ANDROID_DOGRULAMA_PLANI.md`.
-5. `Mobil_DWG_DXF_Royalty_Free_Android_iOS_Nihai_Plan.md`.
-6. Son `docs/evidence/android-validation/VXX.md` ve gerektiğinde tarihsel `docs/evidence/STAGE_XX.md` / `docs/ADR/`.
-7. `docs/USER_APPROVED_EXECUTION_OVERRIDE.md`; remote bağlamdaysa `docs/CHATGPT_REMOTE_ANDROID_TEST_WORKFLOW.md`.
+1. Gerçek `main` HEAD, açık branch/PR ve Actions durumunu doğrula.
+2. Validation sohbetiyse yalnız `BASLA.md` + `DEVAM.md`; A10 ayrı sohbetiyse yalnız `BASLA_A10.md` + mevcut A10 branch/ref'indeki `docs/A10_WORKSTREAM.md` girişini kullan.
+3. `ANDROID_DOGRULAMA_PLANI.md`.
+4. `Mobil_DWG_DXF_Royalty_Free_Android_iOS_Nihai_Plan.md`.
+5. Seçilen hatta ait son VXX/A10 evidence ve gerektiğinde tarihsel `docs/evidence/STAGE_XX.md` / `docs/ADR/`.
+6. `docs/USER_APPROVED_EXECUTION_OVERRIDE.md`; remote bağlamdaysa `docs/CHATGPT_REMOTE_ANDROID_TEST_WORKFLOW.md`.
+
+`BASLA.md` ile `BASLA_A10.md` aynı sohbette iki ayrı execution komutu olarak birlikte çalıştırılmaz.
 
 ## Repo / ürün
 
@@ -25,7 +26,8 @@ Bu dosya kısa kalıcı tarihçe/checkpoint kaydıdır. Ayrıntılı teknik kan�
 ACTIVE_PRODUCT_TARGET: ANDROID_ONLY
 IOS_STATUS: DEFERRED_FUTURE_OPTION
 IMPLEMENTATION_BASELINE: AŞAMA 09 — DONE
-IMPLEMENTATION_NEXT: AŞAMA 10 — NOT_STARTED
+IMPLEMENTATION_CURSOR: AŞAMA 10 — MAIN'E HENÜZ MERGE EDİLMEDİ
+IMPLEMENTATION_WORKSTREAM: docs/A10_WORKSTREAM.md + varsa açık A10 branch/PR
 ANDROID_VALIDATION_CURRENT: V05 — NOT_STARTED
 PENDING_EMULATOR_QUEUE: EMPTY
 V01_EVIDENCE: docs/evidence/android-validation/V01.md; run 32821991333; job 97721878468; artifact 9553530359
@@ -34,12 +36,16 @@ V03_EVIDENCE: docs/evidence/android-validation/V03.md; tested head 69e4e842b5426
 V04_EVIDENCE: docs/evidence/android-validation/V04.md; tested head 227ffa49c3095c4328f146acf1a2d9ecc07eb62d; PR merge test revision 6201be929a636b963235f7da8ee72b0bbf9decf2; run 32832142832; job 97752997848; artifact 9557331919
 PHYSICAL_ANDROID: DEFERRED_RELEASE_DEVICE_GATE
 NEXT_ACTION: Yalnız V05'i başlat — gerçek MobilDwg.App içinde ACadSharp parser adapter + V03 DWG/DXF smoke seti; aynı turda V06'ya geçme.
+NEXT_IF_TEST_READY: BASLA.md hattında V05.
+NEXT_IF_TEST_OFFLINE: Ayrı BASLA_A10.md sohbetinde yalnız A10 draft branch'i.
+A10_MAIN_MERGE: BLOCKED_UNTIL_V04_V09_CLOSED_AND_A10_ANDROID_GATE
+A11_GATE: BLOCKED_UNTIL_V04_V09_CLOSED_AND_A10_DONE_ON_MAIN_AND_EMULATOR_QUEUE_EMPTY
 LAST_UPDATE: 2026-08-25
 ```
 
 ## Yürütme kuralı
 
-Android V01–V09 validation cursor'ı implementation cursor'dan ayrıdır. Bir kullanıcı turunda en fazla bir validation veya implementation aşaması kapanır. Kanıtsız PASS/DONE yoktur. Emulator fiziksel Android değildir. Stage01Smoke gerçek viewer değildir. iOS Android hattını bloke etmez.
+Android V01–V09 validation cursor'ı implementation cursor'dan ayrıdır. Normal `BASLA.md` açık VXX'i yürütür; yalnız `BASLA_A10.md` ayrı branch'te A10 taslağını açar. A10 host/GitHub-hosted kontrolü sonuçsuzsa `CODED_PENDING_HOST_TESTS`, actual FAIL ise `FIX_REQUIRED/FIX_IN_PROGRESS`, hepsi geçtiğinde V04–V09 uzlaştırması + Android gate bekleyen `CODED_PENDING_EMULATOR` olur. A10 main merge/DONE olmadan A11 yoktur. Kanıtsız PASS/DONE yoktur; iOS Android hattını bloke etmez.
 
 ## Implementation geçmişi
 
@@ -53,8 +59,8 @@ Android V01–V09 validation cursor'ı implementation cursor'dan ayrıdır. Bir 
 - AŞAMA 07 — ProCad exact source spike — `DONE / NO-GO`; ADR 0002.
 - AŞAMA 08 — iOS characterization — historical/future; iOS PASS iddiası yok.
 - AŞAMA 09 — immutable RenderScene/kamera/diagnostics foundation — `DONE`; authoritative run `32815175055`, artifact `9551137293`, merge `0a2dd886bbe59698a6d2eb4c99f66e7f9270063a`.
-- AŞAMA 10 — P0 geometri renderer — `NOT_STARTED`.
-- AŞAMA 11–22 — Android viewer/release hattı.
+- AŞAMA 10 — P0 geometri renderer — `NOT_STARTED`; offline/parallel taslak yalnız `docs/A10_WORKSTREAM.md` kurallarıyla.
+- AŞAMA 11–22 — Android viewer/release hattı; A11, V04–V09 + A10 `DONE ON MAIN` tamamlanana kadar kilitli.
 - AŞAMA 23–24 — `DEFERRED_FUTURE_IOS`.
 - AŞAMA 25–27 — Android beta/freeze/final handoff.
 

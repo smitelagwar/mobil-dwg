@@ -2,7 +2,7 @@
 
 İlk kayıt: 2026-08-24  
 Android kapsam güncellemesi: 2026-08-25  
-Aktif validation: V03
+Son doğrulanan aşama: V04; aktif validation cursor: V05
 
 Bu belge emulator ile fiziksel cihaz kanıtını birbirine karıştırmaz. Android Emulator sürekli ve hedefli smoke için kullanılabilir; fiziksel Android slotları beta/release çeşitliliği, gerçek SAF ve performans için ayrıca açıktır. iOS aktif v1 dışında future option olarak korunur.
 
@@ -17,7 +17,7 @@ Bu belge emulator ile fiziksel cihaz kanıtını birbirine karıştırmaz. Andro
 | I-OLDEST | Future iOS | yeniden etkinleştirilirse en eski gerçek iPhone sınıfı | future Stage 23'te pinlenecek | UNKNOWN | `DEFERRED_FUTURE_IOS` |
 | I-CURRENT | Future iOS | yeniden etkinleştirilirse güncel cihaz regresyonu | future supported iOS, arm64 | UNKNOWN | `DEFERRED_FUTURE_IOS` |
 
-E-API36 için V01 authoritative run `32821991333`, job `97721878468` üzerinde emulator/toolchain hattı doğrulandı. Bu sonuç yalnız `Stage01Smoke` infrastructure smoke kanıtıdır; gerçek `MobilDwg.App`, DWG/DXF açma veya viewer fidelity PASS değildir. V04 gerçek installable uygulama kabuğuna geçmeden E-API36 sonucu viewer sonucu diye kullanılmaz.
+E-API36 için V01 yalnız `Stage01Smoke` infrastructure smoke kanıtıdır. V04 gerçek installable `MobilDwg.App` shell runtime'ını ayrıca doğruladı; bu sonuç parser/render fidelity veya fiziksel Android PASS değildir.
 
 ## V03 Android smoke input seti
 
@@ -62,7 +62,7 @@ Seri numarası, UDID, hesap bilgisi, kullanıcı yolu veya müşteri dosya adı 
 
 ## Şimdiki durum
 
-- E-API36: altyapı olarak kullanılabilir; gerçek viewer gate V04'ten sonra açılır.
+- E-API36: V04 gerçek-app shell runtime gate'i doğrulandı; V05+ parser/viewer fidelity kapıları ayrıdır.
 - Fiziksel Android: release/beta kapılarında zorunlu farkları kanıtlamak üzere deferred.
 - iOS: future/inactive; Android release'i bloke etmez.
 - V03: fixture ve test-matrix sözleşmesini doğrular; bu aşamada gereksiz emulator koşusu yapılmaz.

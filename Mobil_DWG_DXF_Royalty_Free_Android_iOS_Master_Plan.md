@@ -1,5 +1,8 @@
 # MOBİL 2D CAD (DWG/DXF) VIEWER
 
+> **ARCHIVED_RESEARCH / NOT_AUTHORITATIVE / IOS_ACTIVE_SCOPE_DEPRECATED**
+> Bu dosya yalnız tarihsel araştırma girdisidir. Yetkili yürütme planı `Mobil_DWG_DXF_Royalty_Free_Android_iOS_Nihai_Plan.md`; aktif ürün Android-only, iOS future option'dır.
+
 ## Tamamen Ücretsiz / Royalty-Free CAD Teknoloji Yığınıyla Android + iOS Ana Planı
 
 ### Android-first • iOS-ready • Preview-first • Future-editor-ready

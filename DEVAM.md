@@ -11,7 +11,8 @@ Repo kayıtları sohbet/model belleğinden üstündür.
 5. Bir kullanıcı turunda en fazla bir validation veya implementation aşaması kapatılır; aynı turda sonraki aşama başlatılmaz.
 6. Emulator fiziksel cihaz değildir; `Stage01Smoke` gerçek viewer değildir; queued/zero-step workflow PASS değildir.
 7. Her kapanış exact revision + run/job/artifact + claim limit ile kaydedilir.
-8. Production dependency evidence olmadan dependency yükseltilmez; ProCad production graph'a geri sokulmaz.
+8. Production dependency evidence olmadan yükseltilmez; ProCad production graph'a geri sokulmaz.
+9. Bu validation sohbetidir. Bilgisayar/runner kapalıyken A10 önden çalışması ayrı sohbette `BASLA_A10.md` ile ve `docs/A10_WORKSTREAM.md` sahipliğinde yürütülür.
 
 ## Repo / ürün
 
@@ -26,7 +27,8 @@ Repo kayıtları sohbet/model belleğinden üstündür.
 ACTIVE_PRODUCT_TARGET: ANDROID_ONLY
 IOS_STATUS: DEFERRED_FUTURE_OPTION
 IMPLEMENTATION_BASELINE: AŞAMA 09 — DONE
-IMPLEMENTATION_NEXT: AŞAMA 10 — NOT_STARTED
+IMPLEMENTATION_CURSOR: AŞAMA 10 — MAIN'E HENÜZ MERGE EDİLMEDİ
+IMPLEMENTATION_WORKSTREAM: docs/A10_WORKSTREAM.md + varsa açık A10 branch/PR
 ANDROID_VALIDATION_PROGRAM: V01–V09
 ANDROID_VALIDATION_CURRENT: V05 — NOT_STARTED
 PENDING_EMULATOR_QUEUE: EMPTY
@@ -36,6 +38,10 @@ V03: VALIDATED — fixture/provenance/golden/Android smoke-set contract
 V04: VALIDATED — REAL_APP_SHELL_RUNTIME_ONLY_NOT_VIEWER_FIDELITY
 PHYSICAL_ANDROID: DEFERRED_RELEASE_DEVICE_GATE
 NEXT_ACTION: Yalnız V05'i başlat — ACadSharp parser adapter yolunu gerçek MobilDwg.App içinde V03 DWG/DXF smoke setiyle Android üzerinde doğrula; aynı turda V06'ya geçme.
+NEXT_IF_TEST_READY: Bu sohbet V05'i yürütür.
+NEXT_IF_TEST_OFFLINE: Test edilebilir exact V05 SHA varsa queue/WAITING_RUNNER; yoksa gerçek stage durumu korunur. Ayrı sohbet BASLA_A10.md ile A10 draft branch'ini yürütür.
+A10_MAIN_MERGE: BLOCKED_UNTIL_V04_V09_CLOSED_AND_A10_ANDROID_GATE
+A11_GATE: BLOCKED_UNTIL_V04_V09_CLOSED_AND_A10_DONE_ON_MAIN_AND_EMULATOR_QUEUE_EMPTY
 ```
 
 ## V01 özeti
@@ -110,3 +116,11 @@ Claim limit: `REAL_APP_SHELL_RUNTIME_ONLY_NOT_VIEWER_FIDELITY`. V04 parser/rende
 - Host-only parser PASS ile real Android app parser PASS karıştırılmayacak.
 
 V05 bu V04 kapanış turunda başlatılmadı.
+
+## Paralel A10 yolu
+
+- Normal `BASLA.md`/bu dosya açık V05→V09 validation hattına gider.
+- Bilgisayar veya runner kapalıyken kullanıcı başka sohbette `BASLA_A10.md dosyasını oku` der.
+- A10 yalnız `stage10-p0-geometry-draft` branch'inde dondurulmuş sözleşmelere dokunmayan host-independent taslak işi yapar. PC/runner kapalıyken workflow filtreleri kontrol edilir; açık A10 PR'ı yoksa branch commit/push yapılabilir. PR zaten açıksa push `synchronize` sayılacağından önce PR kapatılır/etki güvenle gate edilir, aksi halde offline push yapılmaz.
+- Host/GitHub-hosted kontrol sonuçsuzsa `CODED_PENDING_HOST_TESTS`, actual FAIL ise `FIX_REQUIRED/FIX_IN_PROGRESS`, hepsi actual non-zero-step PASS olduğunda V04–V09 uzlaştırması + Android gate bekleyen durum `CODED_PENDING_EMULATOR`dır. `main` merge/DONE yoktur; `android-test` branch'ine A10 sohbeti dokunmaz.
+- V09 sonrası güncel validated `main` ile integration; V04–V07, V08 Android graph-isolation, V09 ve expected-content içeren real-app API 36 emulator render gate tamamlanır. iOS workflow açılmaz; A10 `DONE ON MAIN` olmadan A11 açılmaz.

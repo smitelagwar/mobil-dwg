@@ -66,8 +66,18 @@ Bu dosya teknik yürütme geçmişinin kısa indeksidir. Ayrıntılı kanıt `do
 - claim `REAL_APP_SHELL_RUNTIME_ONLY_NOT_VIEWER_FIDELITY`
 - evidence `docs/evidence/android-validation/V04.md`
 
+## 2026-08-25 — İki çalışma hattı / sınırlı A10 taslak kararı
+
+- Validation cursor V04→V09 sırasını korur ve genel `BASLA.md` sohbetinde yürür.
+- Bilgisayar/self-hosted runner kapalıyken zaman kaybetmemek için yalnız AŞAMA 10, ayrı `stage10-p0-geometry-draft` branch'inde `BASLA_A10.md` protokolüyle önden hazırlanabilir.
+- Erken kapsam yeni/internal primitive-tessellator matematiğiyle sınırlıdır; mevcut RenderScene/snapshot/architecture/package/fixture sözleşmeleri, A11 ve Android runtime/lifecycle işi açılmaz.
+- Host/GitHub-hosted kontrol sonuçsuzsa `CODED_PENDING_HOST_TESTS`, actual FAIL ise `FIX_REQUIRED/FIX_IN_PROGRESS`, hepsi actual non-zero-step PASS olduğunda V04–V09 uzlaştırması + Android gate bekleyen `CODED_PENDING_EMULATOR`dır. `android-test`, `main` merge, `READY_TO_MERGE` ve `DONE` yasaktır.
+- V09 sonrasında güncel validated `main` ile A10 integration SHA oluşturulur; etkilenen V02/V03, V04–V07, V08 Android graph-isolation, V09, A10 kabulü ve expected-content içeren gerçek-app API 36 emulator render gate geçmeden merge yapılmaz; iOS workflow açılmaz.
+- A11 yalnız A10 `DONE ON MAIN` ve boş emulator kuyruğu sonrasında, ayrı kullanıcı turunda açılır.
+- Kalıcı çalışma kaydı: `docs/A10_WORKSTREAM.md`.
+
 ## Sonraki iş
 
 `NEXT_VALIDATION_STAGE = V05 — ACadSharp parser entegrasyonu (NOT_STARTED)`.
 
-Bir sonraki `devam` yalnız V05'i açar; aynı turda V06'ya geçmez. Implementation cursor `AŞAMA 10 — NOT_STARTED` kalır.
+Bir sonraki validation `devam` yalnız V05'i açar; aynı turda V06'ya geçmez. Implementation cursor `AŞAMA 10 — MAIN'E HENÜZ MERGE EDİLMEDİ` olarak ayrı korunur. Bilgisayar/runner kapalı A10 sohbeti yalnız `BASLA_A10.md` ile ayrı draft branch'te açılır.

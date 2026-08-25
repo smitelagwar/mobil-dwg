@@ -9,17 +9,17 @@
 
 Bu bilgisayar, `mobil-dwg` projesinin Android çalışmalarını Android 16 (API 36) Emulator üzerinde otomatik doğrulamak için **Self-Hosted Android Test Node** olarak yapılandırılmıştır.
 
-> **Mevcut sınır:** Bugünkü gate gerçek `MobilDwg.App` APK'sını kurmaz; geçici `Stage01Smoke` üretir. Ayrıca test projeleri executable harness olduğu için yalnız `dotnet test MobilDwg.sln` onların gövdelerini çalıştırmaz. V01 sertleştirmesi tamamlanana kadar sonuç yalnız altyapı smoke olarak yorumlanır. Eski screenshot artifact'leri byte-safe üretilmediğinden görsel kanıt değildir.
+> **Mevcut sınır:** V01 sonucu yalnız `INFRASTRUCTURE_SMOKE_ONLY`dır. V04 gerçek `MobilDwg.App` APK build/install/cold-launch/UI/stability gate'ini geçip PR `#17` ile `main`e merge edilerek `VALIDATED` oldu; parser/render fidelity ve fiziksel Android PASS değildir.
 
 ```text
        ┌─────────────────────────────────────────────────────────┐
        │                 GELİŞTİRME AKIŞI                       │
        │                                                         │
        │  Normal main / feature commit'leri                      │
-       │  ───────────────► GitHub (Ubuntu Cloud CI)              │
-       │                   (Bu bilgisayar TETİKLENMEZ)           │
+       │  ───────────────► GitHub (çoğunlukla hosted CI)         │
+       │                   (Android emulator gate tetiklenmez)   │
        │                                                         │
-       │  Yalnızca 'android-test' branch'ine push veya dispatch  │
+       │  Emulator için 'android-test' push veya manual dispatch │
        │  ───────────────► GitHub Actions                        │
        └────────────────────────────┬────────────────────────────┘
                                     │
@@ -29,7 +29,7 @@ Bu bilgisayar, `mobil-dwg` projesinin Android çalışmalarını Android 16 (API
        │                                                         │
        │  1. Self-Hosted Runner (C:\actions-runner) işi yakalar  │
        │  2. mobil-dwg-api36 Emulator'ı kontrol eder (WHPX+GPU)  │
-       │  3. Solution build eder; V01 sonrası harness'ları koşar │
+       │  3. Solution build eder; harness marker'larını koşar    │
        │  4. Şimdilik geçici Stage01Smoke APK üretir             │
        │  5. Smoke APK'yı emulator'a 'adb install -r' ile kurar  │
        │  6. Uygulama MainActivity'sini ayağa kaldırır (am start)│
@@ -81,9 +81,9 @@ GitHub'a gitmeden, kendi terminalinizden emulator testini tek komutla çalışt�
 Bugünkü script:
 - Tüm araçları (.NET, Java, ADB, SDK) denetler.
 - Emulator açıksa yeniden başlatmadan kullanır, kapalıysa otomatik açar.
-- Solution build/test komutunu çağırır; executable harness marker'ları V01 düzeltmesine kadar ayrıca doğrulanmalıdır.
+- Solution Release build'ini ve executable Core/Rendering/Architecture harness marker'larını açıkça çalıştırır.
 - Geçici `Stage01Smoke` APK'yı derler, kurar ve açar; gerçek viewer/FilePicker/render sonucu üretmez.
-- Screenshot yolu V01'de byte-safe hale getirilip PNG imzası doğrulanana kadar görsel kanıt sayılmaz.
+- Screenshot'ı byte-safe alır ve PNG imzasını doğrular; artifact yine test edilen exact SHA ve scope ile yorumlanır.
 - Başarılı olursa `ANDROID_EMULATOR_GATE_PASS` yazar; bu marker mevcut sürümde yalnız infrastructure smoke kapsamındadır.
 
 ---
@@ -118,17 +118,18 @@ Bugünkü script:
 ChatGPT doğrudan bu bilgisayarın terminaline erişemez; bu yüzden **GitHub Actions köprüsünü** kullanır:
 
 1. **Geliştirme Yap:** Normal kod değişikliklerini `main` veya ilgili feature branch üzerinde tamamla.
-2. **Test Noktasına Gelindiğinde:** Test edilmek istenen commit'i `android-test` branch'ine aktar:
-   - `git checkout android-test`
-   - `git merge main` (veya test edilecek commit'e fast-forward yap)
-   - `git push origin android-test`
+2. **Test Noktasına Gelindiğinde:** GitHub connector/API ile test edilecek exact SHA'yı ve mevcut `android-test` ref'ini oku. Hedef SHA mevcut taşıyıcı ref'in descendant'ıysa ref'i yalnız `force: false` fast-forward ile ilerlet. Değilse force kullanma; uygun manual dispatch/exact-ref yolunu değerlendir veya blocker'ı kaydet.
 3. **Runner Otomatik Tetiklenir:** `android-test` branch'ine yapılan push, bu bilgisayardaki `[self-hosted, windows, android-test, mobil-dwg]` runner'ını uyandırır.
 4. **Sonucu İncele:** GitHub Actions API veya arayüzünden test run çıktısını ve yüklenen `android-emulator-result` artifact'ini kontrol et.
+
+Feature head `android-test` taşıyıcısıyla sınandıysa PR merge yöntemi varsayılan olarak **merge commit** olmalıdır. Squash/rebase tested head'i `main` ancestry'sinden çıkararak sonraki `force:false` fast-forward taşıyıcı güncellemesini bozabilir. Merge commit kullanılamıyorsa force uygulanmaz; exact-ref manual dispatch veya güvenli eşdeğer tetikleme seçilir.
 
 > [!CAUTION]
 > **Kritik Kural:** `android-test` branch'inde asla doğrudan kod geliştirme yapılmaz. Bu branch sırf test edilecek commit'i yerel test makinesine iletmek için bir "taşıyıcı boru hattı"dır.
 
 Runner çevrim dışıysa yeni push'larla job biriktirilmez. Exact SHA `PENDING_EMULATOR_QUEUE` olarak kaydedilir; bilgisayar + interaktif listener döndüğünde yalnız hâlâ geçerli olan checkpoint test edilir. Normal GitHub senkronizasyonu yalnız `main` içindir.
+
+Bilgisayar kapalıyken paralel A10 geliştirmesi gerekiyorsa ayrı sohbette `BASLA_A10.md dosyasını oku` denir. A10 yalnız `stage10-p0-geometry-draft` branch'inde ilerler. Workflow filtreleri kontrol edilir: açık A10 PR'ı yoksa normal branch commit/push yapılabilir; PR zaten açıksa branch push'u `pull_request:synchronize` sayılıp V04 sonrası Core/Rendering için self-hosted emulator işi açabileceğinden önce PR kapatılır/etki güvenle gate edilir, aksi halde offline push yapılmaz. Host testleri yoksa durum `CODED_PENDING_HOST_TESTS` kalır. A10 sohbeti `android-test` branch'ini hareket ettirmez; Android kanıtı olmadan `main` merge/DONE yoktur.
 
 ---
 
@@ -168,5 +169,5 @@ Ajan doğrudan kullanıcının bilgisayarında ve yerel terminal erişimine sahi
 
 1. **Gizlilik ve Sır Güvenliği:** Runner tokenları, şifreler, kullanıcı özel yolları veya özel DWG çizimleri asla repoya, commit geçmişine veya loglara yazılmaz.
 2. **Fiziksel Cihaz Ayrımı:** Bu altyapı Android Emulator için geliştirilmiştir. `scripts/stage01-device-gate.ps1` fiziksel telefon gereksinimi için değiştirilmeden korunmaktadır.
-3. **CI İzolasyonu:** `main` branch'e normal push self-hosted bilgisayarı tetiklemez. `android-test` push veya açık manuel `workflow_dispatch` emulator işini başlatabilir.
+3. **CI İzolasyonu:** Legacy `android-emulator-test.yml` açısından normal `main`/feature push tetikleyici değildir; `android-test` push veya manuel `workflow_dispatch` işi başlatır. Ayrı V02/V03 self-hosted audit workflow'ları kendi path filtreleri eşleştiğinde `main`/PR üzerinde çalışabilir. PR `#17` ile gelen V04 workflow'u da app/Core/Cad/Rendering/architecture yolları değişen açık PR push'unda `pull_request:synchronize` üzerinden self-hosted emulator çalıştırabilir; PC kapalı çalışma planlanırken bütün bu filtreler kontrol edilir.
 4. **Güvenilen kod:** Self-hosted Windows kullanıcısı üzerinde yalnız repo sahibi tarafından kontrol edilen commit çalıştırılır; üçüncü taraf PR/ref'i bu runner'a gönderilmez.

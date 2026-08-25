@@ -1,7 +1,7 @@
 # Golden ve semantik fixture sözleşmesi
 
 Tarih: 2026-08-25  
-Aktif validation: V03
+Son doğrulanan aşama: V04; aktif validation cursor: V05
 
 Amaç, parser/renderer doğruluğunu aynı parser/writer çıktısını kendisiyle kıyaslayan dairesel testlerden ayırmak ve Android smoke girdilerinin hak/provenance sınırını açık tutmaktır.
 
