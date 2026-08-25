@@ -9,6 +9,8 @@
     "sources",
     "rights_profiles",
     "fixtures",
+    "generated_fixtures",
+    "android_smoke_set",
     "negative_derivations",
     "coverage_requirements"
   ],
@@ -65,6 +67,43 @@
           "expected": { "type": "object", "required": ["open_result", "entity_counts", "warnings"] },
           "golden": { "type": "object", "required": ["semantic", "image_status", "redistribution"] }
         }
+      }
+    },
+    "generated_fixtures": {
+      "type": "array",
+      "minItems": 1,
+      "items": {
+        "type": "object",
+        "required": ["id", "corpus", "role", "format", "acad_version", "version_family", "source_fixture_id", "generator", "generator_dependency", "rights_profile", "features", "expected", "artifact_policy"],
+        "properties": {
+          "id": { "type": "string", "pattern": "^[a-z0-9][a-z0-9._-]+$" },
+          "corpus": { "const": "synthetic" },
+          "role": { "enum": ["positive", "negative"] },
+          "format": { "enum": ["dwg", "dxf"] },
+          "acad_version": { "type": "string", "pattern": "^AC[0-9]{4}$" },
+          "version_family": { "type": "string", "minLength": 1 },
+          "source_fixture_id": { "type": "string" },
+          "generator": { "type": "string" },
+          "generator_dependency": {
+            "type": "object",
+            "required": ["id", "version"]
+          },
+          "rights_profile": { "type": "string" },
+          "features": { "type": "array", "items": { "type": "string" }, "uniqueItems": true },
+          "expected": { "type": "object" },
+          "artifact_policy": { "type": "string" }
+        }
+      }
+    },
+    "android_smoke_set": {
+      "type": "object",
+      "required": ["positive_fixture_ids", "generated_fixture_ids", "negative_fixture_ids", "minimum_positive_formats", "claim_limit"],
+      "properties": {
+        "positive_fixture_ids": { "type": "array", "minItems": 1, "items": { "type": "string" }, "uniqueItems": true },
+        "generated_fixture_ids": { "type": "array", "minItems": 1, "items": { "type": "string" }, "uniqueItems": true },
+        "negative_fixture_ids": { "type": "array", "items": { "type": "string" }, "uniqueItems": true },
+        "minimum_positive_formats": { "type": "array", "minItems": 2, "items": { "enum": ["dwg", "dxf"] }, "uniqueItems": true },
+        "claim_limit": { "type": "string", "minLength": 1 }
       }
     },
     "negative_derivations": {
