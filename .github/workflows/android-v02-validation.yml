@@ -1,0 +1,47 @@
+name: Android Validation V02 Dependency Gate
+
+on:
+  pull_request:
+    branches: [main]
+    paths:
+      - Directory.Packages.props
+      - compliance/**
+      - src/**/*.csproj
+      - scripts/stage02-audit-packages.py
+      - scripts/v02-dependency-gate.ps1
+      - .github/workflows/android-v02-validation.yml
+  workflow_dispatch:
+
+permissions:
+  contents: read
+
+concurrency:
+  group: android-v02-${{ github.repository }}-${{ github.ref }}
+  cancel-in-progress: false
+
+jobs:
+  v02-dependency-gate:
+    name: V02 dependency and Android artifact boundary
+    runs-on: [self-hosted, windows, android-test, mobil-dwg]
+    timeout-minutes: 30
+
+    steps:
+      - name: Checkout exact revision
+        uses: actions/checkout@v5
+        with:
+          persist-credentials: false
+          clean: true
+
+      - name: Run V02 dependency gate
+        shell: powershell
+        run: |
+          & .\scripts\v02-dependency-gate.ps1 -ArtifactsDir "artifacts/v02-validation"
+
+      - name: Upload V02 evidence
+        uses: actions/upload-artifact@v4
+        if: always()
+        with:
+          name: android-v02-dependency-evidence
+          path: artifacts/v02-validation/
+          retention-days: 14
+          if-no-files-found: warn
