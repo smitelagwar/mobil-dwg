@@ -58,7 +58,7 @@ $requiredContractTokens = @(
     "duplicate stable ID must fail"
 )
 foreach ($token in $requiredContractTokens) {
-    if (-not $renderTestText.Contains($token, [StringComparison]::Ordinal)) {
+    if ($renderTestText.IndexOf($token, [StringComparison]::Ordinal) -lt 0) {
         Fail ("Required V09 executable test contract is missing: " + $token)
     }
 }
