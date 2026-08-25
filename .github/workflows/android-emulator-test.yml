@@ -1,7 +1,7 @@
 name: Android Emulator Automated Test Gate
 
-# Bu workflow normal main veya feature branch push'larında ÇALIŞMAZ.
-# Yalnızca 'android-test' branch'ine anlamlı (Markdown-only olmayan) push yapıldığında
+# Bu workflow normal main veya feature branch push'larında CALISMAZ.
+# Yalnizca 'android-test' branch'ine anlamli (Markdown-only olmayan) push yapildiginda
 # veya manuel (workflow_dispatch) tetiklenir.
 on:
   push:
@@ -21,7 +21,7 @@ on:
           - Debug
 
 permissions:
-  contents: read
+  contents: write
 
 concurrency:
   group: android-emulator-${{ github.repository }}
@@ -37,7 +37,7 @@ jobs:
       - name: Checkout Repository
         uses: actions/checkout@v5
         with:
-          persist-credentials: false
+          persist-credentials: true
 
       - name: Run Local Environment Doctor
         shell: powershell
@@ -51,6 +51,14 @@ jobs:
           Write-Host "Triggered by: ${{ github.event_name }} on branch: ${{ github.ref_name }}"
           Write-Host "Running android-emulator-gate.ps1 with Configuration: $config"
           & .\scripts\android-emulator-gate.ps1 -Configuration $config -ArtifactsDir "artifacts/android-emulator-result"
+
+      # V01_CLOSE_BEGIN
+      - name: Close V01 Checkpoint On Feature Branch
+        if: success() && github.ref_name == 'android-test'
+        shell: powershell
+        run: |
+          & .\scripts\close-v01-checkpoint.ps1
+      # V01_CLOSE_END
 
       - name: Upload Test Diagnostics Artifacts
         uses: actions/upload-artifact@v4
