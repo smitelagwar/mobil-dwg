@@ -35,12 +35,16 @@ IOS_STATUS: DEFERRED_FUTURE_OPTION
 IMPLEMENTATION_BASELINE: AŞAMA 09 — DONE
 IMPLEMENTATION_NEXT: AŞAMA 10 — NOT_STARTED
 ANDROID_VALIDATION_PROGRAM: V01–V09
-ANDROID_VALIDATION_CURRENT: V01 — FIX_REQUIRED
+ANDROID_VALIDATION_CURRENT: V02 — NOT_STARTED
 PENDING_EMULATOR_QUEUE: EMPTY
-CURRENT_GATE_TRUTH: solution harness gövdeleri çalışmıyor; geçici Stage01Smoke kuruyor; mevcut screenshot'lar bozuk; crash/ANR/PID kanıtı yetersiz
-CURRENT_GATE_CLAIM_LIMIT: INFRASTRUCTURE_SMOKE_ONLY; gerçek MobilDwg.App/viewer PASS değil
-NEXT_ACTION: V01'de gate kanıt açıklarını düzelt, exact Release koşusunu al ve yalnız gerçekten kanıtlanan kapsamı kaydet.
+CURRENT_GATE_TRUTH: V01 hardened gate gerçek executable harness'ları çalıştırıyor; Stage01Smoke Release APK build/install/launch yapıyor; numeric PID zorunlu; byte-safe PNG ve package/PID crash + post-launch ANR kanıtı doğrulanıyor
+CURRENT_GATE_CLAIM_LIMIT: INFRASTRUCTURE_SMOKE_ONLY; Stage01Smoke gerçek MobilDwg.App/viewer fidelity kanıtı değildir
+NEXT_ACTION: Yalnız V02'yi başlat — dependency/lockfile/license-vulnerability policy ve Android artifact boundary doğrulaması; aynı turda V03'e geçme.
 ```
+
+## Android V01 özeti
+
+V01 `VALIDATED`. Exact tested SHA `698c6e901672a736f2803894efb5bda34af08212`, self-hosted Windows Android Emulator Release run `32821991333`, job `97721878468`. .NET `10.0.400`, `maui-android`, OpenJDK 21.0.12 baseline, Android API 36, Build-Tools 36.0.0, ADB 37.0.1 ve `mobil-dwg-api36` doğrulandı. Core/Rendering/Architecture executable harness marker'ları gerçekten yürütüldü. Stage01Smoke APK Android 16 emulator üzerinde cold-launch `Status: ok` verdi; PID `3374`, byte-safe PNG, boş crash buffer ve `lastanr`/events kanıtı doğrulandı. Artifact `9553530359`, digest `sha256:ad96924682330a93368c95889d75e8112dff8387170dcdeb17b17e3d72c8e7f7`. Screenshot indirildi ve açıldı. Kapsam yalnız `INFRASTRUCTURE_SMOKE_ONLY`; gerçek viewer PASS değildir. Ayrıntı: `docs/evidence/android-validation/V01.md`.
 
 ## AŞAMA 09 özeti
 
