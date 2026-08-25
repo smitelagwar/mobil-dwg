@@ -2,40 +2,42 @@
 
 ## Durum
 
-`IN_PROGRESS — IMPLEMENTATION_READY / T0_T1_VALIDATION_PENDING_RUNNER`
+`DONE`
 
-AŞAMA 09 henüz `DONE` değildir. Uygulama kodu ve hedefli testler yazılmıştır; ancak gerçek .NET `10.0.400` restore/build/test yürütme kanıtı alınmadan çıkış kriteri kapatılmaz.
+AŞAMA 09 çıkış kriterleri gerçek exact .NET `10.0.400` execution üzerinde sağlandı. Bu aşama P0 geometry renderer değildir; parser'dan bağımsız scene/camera/diagnostics temelini ve deterministic semantic snapshot sözleşmesini kapatır.
 
 ## Karar ve kapsam
 
-- Base `main`: `b7926cb1df2b2ff1f32c67033dba73aed1c01523`.
+- Güncel base `main` AŞAMA 09 kapanışı sırasında: `b0b0620c40ee5d9a0bcb681783c834fe44040afa`.
 - Branch: `stage09-render-scene-camera`.
+- PR: `#12` — `stage09: add render scene, camera, and diagnostics foundation`.
 - İlk scene/camera implementation head: `5b3f590dca123c3855e8aac7d48f781ba2cdfdb3`.
 - Son source/test hardening head: `9a17d333afc0a3df1de856a9a53fae0e74617c29`.
-- Son workflow/fallback head: `0c5aa84bf491ec24c4409c35ffad83dd159b9290`.
-- PR: `#12` — `stage09: add render scene, camera, and diagnostics foundation`.
+- Current-main merge-parent sync: `259793da3828a291c6611700202bbbfcc02652a5`.
+- Yetkili AŞAMA 09 validation head: `7bba0b7a6da30dc4b23050872a7a1ef4e90ca087`.
 - ADR 0002 exact ProCad candidate için `NO-GO` verdiğinden tek production scene yolu **compact özel immutable RenderScene** olarak seçildi.
 - ProCad package/source production graph'a eklenmedi; paralel ikinci scene graph oluşturulmadı.
-- AŞAMA 10 geometry renderer kapsamına başlanmadı.
+- AŞAMA 10 geometry renderer kapsamına bu turda başlanmadı.
 
 ## AŞAMA 09 requirement matrisi
 
 | Gereksinim | Uygulama / test | Durum |
 |---|---|---|
-| Tek scene implementation | `src/MobilDwg.Rendering/Scene/RenderScene.cs`; compact custom immutable scene | IMPLEMENTED |
-| Stable entity ID / bounds / layer-style token / source reference | `Scene/SceneGeometry.cs`; default-value bypass guard'ları | IMPLEMENTED |
-| World/document coordinate `double` | `WorldPoint2`, `WorldPoint3`, `WorldBounds2`; camera pipeline `double` | IMPLEMENTED |
-| Tek world → view → screen hattı | `Camera/Camera2D.cs` / `CameraTransform`; finite point guards | IMPLEMENTED |
-| Core viewport bridge | `Camera2D.ToViewport/FromViewport`; renderer contract ile açık tek adapter | IMPLEMENTED |
-| OCS/WCS | `Coordinates/OcsTransform.cs`; normal + oblique round-trip ve scaled normalization | IMPLEMENTED |
-| Extents / invalid NaN-Infinity / büyük koordinat | finite-span guards, overflow-safe center, survey precision tests | IMPLEMENTED |
-| Scene diagnostics | `Unsupported/Substituted/Dropped/Error`; invalid enum/default entity ID guards | IMPLEMENTED |
-| Camera fit/zoom bounds | `Camera2D.Fit`, `ZoomBy`, min/max clamps, invalid default-camera guard | IMPLEMENTED |
-| Background/color context | `RenderColorContext`, Dark/Light presets | IMPLEMENTED |
-| Deterministic semantic snapshot | insertion-order-independent invariant/round-trip snapshot | IMPLEMENTED |
-| ProCad facade sınırı | N/A — ADR 0002 exact ProCad candidate'ı reddetti; custom path seçildi | NOT_APPLICABLE |
-| T0 restore/build | Exact .NET `10.0.400` üzerinde gerçek execution gerekir | NOT_EXECUTED |
-| T1 deterministic tests | Hedefli test executable hazır; gerçek execution gerekir | NOT_EXECUTED |
+| Tek scene implementation | `src/MobilDwg.Rendering/Scene/RenderScene.cs`; compact custom immutable scene | PASS |
+| Stable entity ID / bounds / layer-style token / source reference | `Scene/SceneGeometry.cs`; default-value bypass ve duplicate-ID guard'ları | PASS |
+| World/document coordinate `double` | `WorldPoint2`, `WorldPoint3`, `WorldBounds2`; camera pipeline `double` | PASS |
+| Tek world → view → screen hattı | `Camera/Camera2D.cs` / `CameraTransform`; finite point guards | PASS |
+| Core viewport bridge | `Camera2D.ToViewport/FromViewport`; renderer contract ile açık tek adapter | PASS |
+| OCS/WCS | `Coordinates/OcsTransform.cs`; normal + oblique round-trip ve scaled normalization | PASS |
+| Extents / invalid NaN-Infinity / büyük koordinat | finite-span guards, overflow-safe center, survey precision tests | PASS |
+| Scene diagnostics | `Unsupported/Substituted/Dropped/Error`; invalid enum/default entity ID guards | PASS |
+| Camera fit/zoom bounds | `Camera2D.Fit`, `ZoomBy`, min/max clamps, invalid default-camera guard | PASS |
+| Background/color context | `RenderColorContext`, Dark/Light presets | PASS |
+| Deterministic semantic snapshot | insertion-order-independent invariant/round-trip snapshot | PASS |
+| ProCad facade sınırı | ADR 0002 exact ProCad candidate'ı reddetti; custom path seçildi | NOT_APPLICABLE |
+| T0 restore/build | exact .NET `10.0.400`, Release `/warnaserror` | PASS |
+| T1 deterministic tests | precision/OCS/diagnostics/snapshot executable testleri | PASS |
+| Mimari regresyon | tam solution restore/build + Core/Rendering/Architecture harness | PASS |
 
 ## Precision ve robustness tasarım kuralı
 
@@ -48,7 +50,7 @@ AŞAMA 07'de reddedilen ProCad hattındaki kritik hata, absolute CAD world koord
 5. finite girdilerin çıkarma/span sırasında `Infinity` üretmesine izin verilmez;
 6. çok büyük finite OCS normal vektörleri önce scale edilerek normalize edilir.
 
-Hedefli regression testi survey origin `5,000,000` çevresinde `0.001` world-unit ayrıntının camera transform sonrasında yaklaşık bir pixel olarak korunmasını ve screen/world round-trip'in `double` hassasiyetini korumasını zorunlu kılar.
+Yetkili T1 snapshot'ı survey origin `5,000,000` çevresindeki `0.001` world-unit ayrıntıyı korudu. Snapshot satırı `entity=E-001|...|5000000,-25,5000000.001,100|...` olarak gerçek execution logunda kaydedildi.
 
 ## Determinism / immutable boundary
 
@@ -61,74 +63,64 @@ Hedefli regression testi survey origin `5,000,000` çevresinde `0.001` world-uni
 - Aynı semantic scene farklı insertion order ile oluşturulduğunda snapshot eşitliği test edilir.
 - Eski `STAGE04_RENDER_CONTRACT_TESTS_PASS` marker'ı korunur.
 
-## T0/T1 doğrulama durumu
+## Yetkili T0/T1 + regresyon kanıtı
 
-### GitHub-hosted runner allocation blocker
+Self-hosted Windows runner'ın `android-test` otomasyonu 2026-08-25 tarihinde yeniden çevrimiçi ve çalışır durumda doğrulandı. AŞAMA 09 için yalnız doğrulama amacıyla geçici workflow kullanıldı; kapanıştan sonra workflow branch'ten kaldırıldı.
 
-Standard Ubuntu, doğru macOS ve GitHub'ın ayrı lightweight container pool'u üzerinde aynı davranış gözlendi: job checkout başlamadan `steps=[]`, `runner_id=0`, empty runner name ile failure oldu. Bu kayıtlar **C# compile/test failure değildir** ve PASS de değildir.
+Yetkili kapanış koşusu:
 
-Önemli kayıtlar:
+- Workflow: `Stage 09 Self-Hosted Validation`.
+- Run: `32815175055` / `#6`.
+- Job: `97701882792`.
+- Head: `7bba0b7a6da30dc4b23050872a7a1ef4e90ca087`.
+- Runner: self-hosted Windows, labels `[self-hosted, windows, android-test, mobil-dwg]`.
+- Sonuç: `SUCCESS`.
+- .NET: exact `10.0.400` — `STAGE09_DOTNET_PIN_PASS`.
+- Hedefli Release build: `0 Warning`, `0 Error` — `STAGE09_T0_BUILD_PASS`.
+- T1 marker'ları:
+  - `STAGE04_RENDER_CONTRACT_TESTS_PASS`
+  - `STAGE09_RENDER_SCENE_TESTS_PASS`
+  - `render-scene/v1`
+  - `STAGE09_T1_SCENE_PASS`
+- Tam solution Release restore/build: `0 Warning`, `0 Error`.
+- Mimari/regresyon marker'ları:
+  - `STAGE04_CORE_CONTRACT_TESTS_PASS`
+  - `STAGE04_RENDER_CONTRACT_TESTS_PASS`
+  - `STAGE04_ARCHITECTURE_TESTS_PASS`
+  - `STAGE05_DEPENDENCY_BOUNDARY_PASS`
+  - `STAGE04_T0_PASS`
+  - `STAGE09_STAGE04_REGRESSION_PASS`
+- Artifact: `9551137293`, `stage09-self-hosted-evidence`, 1,578 bytes.
+- Artifact digest: `sha256:486c9d0b5a2a35cd4fbb402d9c56ab226a5b6175b8920da95298d18199054ddd`.
+- Artifact files: `stage09-render-scene.log`, `stage09-stage04-regression.log`.
 
-- Ubuntu ilk Stage 09 run `32783063933` / #2, job `97609094989`: pre-step failure.
-- macOS doğru `macos-26` label run `32786600644` / #14:
-  - attempt 1 job `97619697255`;
-  - attempt 2 job `97619957457`;
-  - attempt 3 job `97631138677`;
-  - üçünde de `steps=[]`, `runner_id=0`.
-- Standard Linux run `32790863975` / #18, job `97631981506`: `ubuntu-latest`, pre-step failure.
-- Son canonical branch head öncesi run `32791364379` / #30:
-  - initial job `97633411528`;
-  - 2026-08-25 explicit rerun attempt 2 job `97690824454`;
-  - attempt 2 de `ubuntu-latest`, `steps=[]`, `runner_id=0`.
-- Bağımsız lightweight pool fallback, head `0c5aa84bf491ec24c4409c35ffad83dd159b9290`:
-  - Stage 09 run `32811281420` / #32;
-  - job `97690952636`;
-  - label `ubuntu-slim`;
-  - `steps=[]`, `runner_id=0`.
+İlk başarılı hedefli self-hosted koşu `32815005461`, job `97701406863`, artifact `9551083791`, digest `sha256:33da24c645ba225856ca05778e93f940d6a978defd9a45a7c2788fd6720cce3a` idi. Yetkili kapanış kanıtı daha geniş Stage 04 regresyonunu da içeren run `32815175055` / #6'dır.
 
-`ubuntu-slim` denemesi standard Ubuntu/macOS pool'undan ayrı bir hosted runner hattında da aynı allocation semptomunu üretmiştir. Bu nedenle yeni runner-label denemeleriyle tekrar zinciri üretmek için teknik gerekçe kalmamıştır.
+## Önceki hosted runner blocker geçmişi
 
-Aynı head ailelerinde Stage 01/02/04/05/06/07/08 workflow'larının da pre-step failure göstermesi problemi AŞAMA 09 kaynak koduna özgü olmaktan çıkarır. GitHub Community'de Temmuz 2026'da private repo hosted jobs için aynı gözlenebilir `runner_id=0` / zero-step sınıfı raporlanmıştır; bu yalnız dış corroboration'dır, mobil-dwg için billing/quota/policy/capacity gibi özel kök neden kanıtlanmadığından tahmin edilmez.
+AŞAMA 09 kodundan bağımsız olarak standard `ubuntu-latest`, `macos-26` ve `ubuntu-slim` hosted job'ları bir süre checkout başlamadan `steps=[]`, `runner_id=0` ile kesildi. Bunlar compile/test failure değildir. Self-hosted runner yeniden çevrimiçi olduğunda aynı AŞAMA 09 kodu gerçek checkout/restore/build/test üzerinde PASS verdi. Böylece önceki kayıtların implementation failure olmadığı ayrıştırılmış oldu.
 
-### Configured self-hosted runner probe
+Önemli eski kayıtlar:
 
-Repo içinde daha önce tanımlanmış `[self-hosted, windows, android-test, mobil-dwg]` etiketli runner için geçici Stage 09 probe çalıştırıldı.
+- Ubuntu run `32791364379` / #30, rerun job `97690824454` — pre-step allocation failure.
+- macOS run `32786600644` / #14 attempts 1/2/3 — pre-step allocation failure.
+- `ubuntu-slim` run `32811281420` / #32, job `97690952636` — pre-step allocation failure.
 
-- PR run `32784140351` / #3.
-- Job `97612382891`.
-- Uygun çevrimiçi runner atanmadı.
-- Probe workflow PR'dan tekrar silindi; kalıcı CI yüzeyine eklenmedi.
-- Bu probe PASS değildir ve fiziksel Android cihaz kanıtı değildir.
+## CI cleanup
 
-### Exact SDK / container fallback
+- Geçici `.github/workflows/stage09-self-hosted-validation.yml` yalnız AŞAMA 09 kapanış kanıtını üretmek için kullanıldı ve PASS sonrasında branch'ten kaldırıldı.
+- Kalıcı `.github/workflows/stage09-render-scene.yml` platform-independent uzun vadeli CI için tekrar `ubuntu-latest` kullanır.
+- Current `main` üzerindeki Android emulator automation dosyaları korunmuştur; AŞAMA 09 onları değiştirmez.
 
-Exact `.NET SDK 10.0.400` Microsoft `dotnet/core` release metadata'sında doğrulandı:
+## Çıkış
 
-- Linux x64 archive: `https://builds.dotnet.microsoft.com/dotnet/Sdk/10.0.400/dotnet-sdk-10.0.400-linux-x64.tar.gz`
-- SHA-512: `1033977dd837150e0814cf0c5d5b17ceb63925fda7ba2158b47258a4bd7c048cf82eac3bc1166f3146f53124a3f5fba09db1de1260d2ce96399860303b404b48`
+AŞAMA 09 çıkış kriteri **sağlandı**:
 
-Mevcut execution container'ında `dotnet`/C# compiler kurulu değildir ve dış SDK payload indirme yolu execution-network sınırları nedeniyle tamamlanamamıştır. Farklı SDK ile sahte yerel PASS üretilmedi.
+- sentetik scene headless üretildi;
+- aynı semantic girdi deterministic `render-scene/v1` snapshot üretti;
+- large-survey-origin `0.001` detay `double` hattında korundu;
+- exact .NET `10.0.400` T0/T1 geçti;
+- full Stage 04 architecture regression geçti;
+- production graph'a ProCad eklenmedi.
 
-## Beklenen T0/T1 marker'ları
-
-`.github/workflows/stage09-render-scene.yml` gerçek runner aldığında başarı durumunda şunları üretir:
-
-- `STAGE09_DOTNET_PIN_PASS`
-- `STAGE09_T0_BUILD_PASS`
-- `STAGE04_RENDER_CONTRACT_TESTS_PASS`
-- `STAGE09_RENDER_SCENE_TESTS_PASS`
-- `STAGE09_T1_SCENE_PASS`
-- `render-scene/v1` semantic snapshot
-
-Artifact: `stage09-render-scene-evidence` / `stage09-render-scene.log`.
-
-## Açık çıkış kriteri
-
-AŞAMA 09 exit kriteri şu anda **sağlanmış sayılmaz**. Gerekli kalan tek doğrulama zinciri:
-
-1. exact .NET `10.0.400` üzerinde Stage 09 T0 restore/build + T1 deterministic scene/camera tests gerçek execution environment'ta çalışacak;
-2. varsa compiler/test hataları aynı AŞAMA 09 branch'inde düzeltilecek;
-3. marker'lar ve evidence artifact/log doğrulanacak;
-4. bundan sonra canonical checkpoint/gecmis/DEVAM `DONE` olarak güncellenip PR #12 merge edilebilecek.
-
-AŞAMA 01, AŞAMA 06 ve AŞAMA 08'in fiziksel/local dış kapıları değişmeden açık kalır. AŞAMA 10 bu doğrulama gelmeden başlatılmaz.
+AŞAMA 01, AŞAMA 06 ve AŞAMA 08'in fiziksel/local dış kapıları değişmeden açık kalır. Bir turda en fazla bir aşama kuralı gereği AŞAMA 10 bu kapanış turunda başlatılmaz.
