@@ -27,7 +27,7 @@ dotnet restore MobilDwg.sln
 dotnet build MobilDwg.sln \
   --configuration Release \
   --no-restore \
-  /warnaserror
+  -warnaserror
 
 dotnet run --project tests/MobilDwg.Core.Tests/MobilDwg.Core.Tests.csproj \
   --configuration Release \
@@ -46,7 +46,7 @@ dotnet restore tools/Stage05.ParserProbe/Stage05.ParserProbe.csproj
 dotnet build tools/Stage05.ParserProbe/Stage05.ParserProbe.csproj \
   --configuration Release \
   --no-restore \
-  /warnaserror
+  -warnaserror
 
 dotnet run --project tools/Stage05.ParserProbe/Stage05.ParserProbe.csproj \
   --configuration Release \
