@@ -7,15 +7,17 @@ Bu dosya yeni sohbet veya yeni bir yapay zeka oturumu başladığında projenin 
 1. `gecmis.md`
 2. `docs/USER_APPROVED_EXECUTION_OVERRIDE.md`
 3. `Mobil_DWG_DXF_Royalty_Free_Android_iOS_Nihai_Plan.md`
-4. `docs/evidence/STAGE_07.md` ve `docs/ADR/0002-procad-pinned-source-no-go.md`
-5. `docs/evidence/STAGE_06.md`
-6. `docs/evidence/STAGE_05.md` ve `docs/ADR/0001-acadsharp-3.7.1-parser-baseline.md`
-7. `docs/ARCHITECTURE.md` ve `MobilDwg.sln`
-8. `docs/evidence/STAGE_04.md`
-9. `docs/evidence/STAGE_03.md`, `fixtures/manifest/stage03-mini.json`, `fixtures/manifest/stage03-source-integrity.json`, `docs/GOLDEN_CONTRACT.md`, `docs/DEVICE_MATRIX.md`
-10. `docs/evidence/STAGE_02.md` ve `compliance/DEPENDENCY_EVIDENCE.md`
-11. `docs/EXECUTION_LOG.md`
-12. `docs/TOOLCHAIN.md`, `docs/evidence/STAGE_01.md`, `docs/STAGE_01_IOS_ACCESS_INVENTORY.md`
+4. `docs/evidence/STAGE_09.md` ve `docs/ADR/0002-procad-pinned-source-no-go.md`
+5. `DEVAM.md`
+6. `docs/evidence/STAGE_08.md` ve `docs/LOCAL_DEVICE_REVALIDATION.md`
+7. `docs/evidence/STAGE_06.md`
+8. `docs/evidence/STAGE_05.md` ve `docs/ADR/0001-acadsharp-3.7.1-parser-baseline.md`
+9. `docs/ARCHITECTURE.md` ve `MobilDwg.sln`
+10. `docs/evidence/STAGE_04.md`
+11. `docs/evidence/STAGE_03.md`, `fixtures/manifest/stage03-mini.json`, `fixtures/manifest/stage03-source-integrity.json`, `docs/GOLDEN_CONTRACT.md`, `docs/DEVICE_MATRIX.md`
+12. `docs/evidence/STAGE_02.md` ve `compliance/DEPENDENCY_EVIDENCE.md`
+13. `docs/EXECUTION_LOG.md`
+14. `docs/TOOLCHAIN.md`, `docs/evidence/STAGE_01.md`, `docs/STAGE_01_IOS_ACCESS_INVENTORY.md`
 
 ## Repo kimliği
 
@@ -29,6 +31,8 @@ Bu dosya yeni sohbet veya yeni bir yapay zeka oturumu başladığında projenin 
 
 ```text
 LAST_COMPLETED_STAGE: AŞAMA 08 — CHARACTERIZATION / RISK_ACCEPTED_FOR_CONTINUATION; iOS PASS NOT CLAIMED
+CURRENT_STAGE: AŞAMA 09
+CURRENT_STAGE_STATUS: IN_PROGRESS — IMPLEMENTATION_READY / T0_T1_VALIDATION_PENDING_RUNNER
 DEFERRED_STAGES: AŞAMA 01; AŞAMA 06; AŞAMA 08 iOS local/device gates
 STAGE01_STATUS: BLOCKED / DEFERRED_EXTERNAL_GATE — fiziksel Android install/launch ve iOS erişim envanteri açık, DONE değil
 STAGE06_STATUS: BLOCKED / DEFERRED_EXTERNAL_GATE — safe-open implementation/CI PASS, fiziksel Android FilePicker/SAF+lifecycle/cache gate açık, DONE değil
@@ -36,22 +40,32 @@ STAGE07_STATUS: DONE / NO-GO — exact unpatched ProCad source candidate determi
 STAGE08_STATUS: DONE — CHARACTERIZATION / BLOCKED_PARTIAL_EVIDENCE / RISK_ACCEPTED_FOR_CONTINUATION; iOS runtime/device feasibility NOT PROVEN
 STAGE08_DECISION_HEAD: 4987fa3e5fadfb113aa3b27ac443da9776864ad5
 STAGE08_CI: run 32781026946 / #18 SUCCESS characterization; artifact 9540018558; sha256:1414e3bf5a9800e150019c48f620c64efcd3d5282ac7322ef9a5e5746ab746f7
-STAGE08_HOST_BLOCKER: GitHub-hosted macos-26/Xcode 26.6 install_name_tool/clang lookup; baseline/simulator runtime PASS yok
-STAGE08_TRIM_RISK: ACadSharp 3.7.1 ILLink reflection/trimming warnings; 30 trimmer / 12 reflection-related / 0 font lines
-STAGE08_NATIVEAOT: iossimulator-arm64 PublishAot NETSDK1203 — dependency failure sayılmaz; ios-arm64/physical device future gate
 STAGE08_PHYSICAL_IPHONE: NOT_RUN_DEFERRED_EXTERNAL_GATE
+STAGE09_USER_GO: GRANTED — kullanıcı custom renderer implementation başlangıcını açıkça onayladı
+STAGE09_BRANCH: stage09-render-scene-camera
+STAGE09_PR: #12 — OPEN / NOT_MERGED
+STAGE09_SOURCE_TEST_HEAD: 9a17d333afc0a3df1de856a9a53fae0e74617c29
+STAGE09_LATEST_WORKFLOW_HEAD: 0c5aa84bf491ec24c4409c35ffad83dd159b9290
+STAGE09_IMPLEMENTATION: compact immutable RenderScene; stable metadata; double camera; RenderViewport bridge; precision/overflow guards; OCS/WCS; diagnostics; deterministic snapshot
+STAGE09_VALIDATION: NOT_EXECUTED — hosted/self-hosted denemelerde checkout/build/test step'i başlamadı
+STAGE09_UBUNTU: run 32791364379 / #30; rerun job 97690824454; steps=[]; runner_id=0
+STAGE09_MACOS: run 32786600644 / #14; attempts 1/2/3; steps=[]; runner_id=0
+STAGE09_UBUNTU_SLIM: run 32811281420 / #32; job 97690952636; steps=[]; runner_id=0
+STAGE09_SELF_HOSTED: run 32784140351 / #3; uygun online runner atanmadı; geçici workflow silindi
+STAGE09_EVIDENCE: docs/evidence/STAGE_09.md
 LOCAL_REVALIDATION: docs/LOCAL_DEVICE_REVALIDATION.md
-NEXT_WORK_STAGE: AŞAMA 09
-NEXT_WORK_STATUS: WAITING_EXPLICIT_USER_GO
-STAGE09_GO_BARRIER: ADR 0002 custom renderer efor/bakım riskini HIGH olarak kaydeder; AŞAMA 09 implementation öncesinde kullanıcı açık GO kararı gerekir.
 EXECUTION_OVERRIDE: docs/USER_APPROVED_EXECUTION_OVERRIDE.md
-NEXT_ACTION: Kullanıcıdan explicit `AŞAMA 09 GO` bekle; generic devam ile custom renderer implementation başlatma.
+NEXT_WORK_STAGE: AŞAMA 09
+NEXT_WORK_STATUS: IN_PROGRESS / WAITING_REAL_DOTNET_10_0_400_EXECUTION
+NEXT_ACTION: exact .NET 10.0.400 çalışan bir environment elde et; T0 restore/build + T1 deterministic scene/camera testlerini çalıştır; gerçek marker/artifact olmadan PR #12 merge etme veya AŞAMA 10'a geçme.
 LAST_UPDATE: 2026-08-25
 ```
 
 ## Yürütme kuralı
 
 AŞAMA 01'in gerçek Android/iOS dış erişim kapıları kullanıcı tarafından şimdilik ertelendi. Bunlar sahte PASS/DONE yapılmaz; `DEFERRED_EXTERNAL_GATE` olarak açık tutulur. Fiziksel erişime bağımlı olmayan sonraki aşamalar `NEXT_WORK_STAGE` sırasıyla ilerler. Bir turda en fazla bir aşama tamamlanır. Release/beta/final cihaz kapılarında ertelenmiş dış kanıtlar yeniden zorunlu olur.
+
+AŞAMA 09 için ADR 0002'deki yüksek efor/bakım riski kullanıcı tarafından açıkça kabul edilmiştir ve implementation başlamıştır. Bu GO yeniden istenmez. Buna karşılık AŞAMA 09'un kendi T0/T1 çıkış kapısı halen zorunludur; runner allocation problemi stage'i PASS/DONE yapmaz.
 
 ## Aşama durumu
 
@@ -64,8 +78,8 @@ AŞAMA 01'in gerçek Android/iOS dış erişim kapıları kullanıcı tarafında
 - [ ] AŞAMA 06 — Android güvenli dosya alma ve parse spike — `BLOCKED / DEFERRED_EXTERNAL_GATE`
 - [x] AŞAMA 07 — ProCad source-pinned Android spike ve GO/NO-GO — `DONE / NO-GO`
 - [x] AŞAMA 08 — Erken iOS AOT/native fizibilite smoke — `DONE / CHARACTERIZATION; iOS PASS NOT CLAIMED`
-- [ ] AŞAMA 09 — RenderScene, kamera ve diagnostics temeli
-- [ ] AŞAMA 10 — P0 temel geometri renderer’ı
+- [ ] AŞAMA 09 — RenderScene, kamera ve diagnostics temeli — `IN_PROGRESS / IMPLEMENTATION_READY / T0_T1_VALIDATION_PENDING_RUNNER`
+- [ ] AŞAMA 10 — P0 temel geometri renderer’ı — `NOT_STARTED`
 - [ ] AŞAMA 11 — Mobil viewport ve gesture’lar
 - [ ] AŞAMA 12 — Block/INSERT/attribute dönüşümleri
 - [ ] AŞAMA 13 — Layer, renk, linetype ve lineweight
@@ -155,7 +169,6 @@ Pinned ACadSharp ile headless parser baseline gerçek corpus üzerinde doğrulan
 
 Ayrıntı: `docs/evidence/STAGE_05.md` ve `docs/ADR/0001-acadsharp-3.7.1-parser-baseline.md`.
 
-
 ### AŞAMA 06 — BLOCKED / DEFERRED_EXTERNAL_GATE
 
 Cihazdan bağımsız safe-open implementation ve CI hattı tamamlandı:
@@ -174,6 +187,38 @@ Açık dış kapı: gerçek Android telefonda FilePicker/SAF ile DWG+DXF açma, 
 
 Ayrıntı: `docs/evidence/STAGE_06.md`.
 
+### AŞAMA 07 — DONE / NO-GO
+
+Exact ProCad source candidate `f8a862b3e7634e27664fee02ff5d68774b102985` production graph'a eklenmeden izole Android spike ile değerlendirildi. ACadSharp submodule lineage official upstream'de çözüldü fakat mobil-dwg approved 3.7.1 source baseline'dan 592 commit geride. Published ProCadSharp 0.1.1 restore graph'ı `NU1603` ile ACadSharp 1.0.0 çözüyor ve Skia 4.147.0-preview.2.1 bandına çıkıyor. Pinned Android source build `82 warning / 0 error`, clean MAUI Release smoke `0 warning / 0 error` ile geçti. Buna rağmen origin 5,000,000 üzerindeki 1 mm detail direct double-to-float RenderScene boundary'sinde observed delta `0.0` olarak çöktü; deterministic P0 fidelity blocker. Physical Android T3 bu hard blocker sonrasında `NOT_RUN_AFTER_DETERMINISTIC_BLOCKER` ve PASS değildir. ADR `docs/ADR/0002-procad-pinned-source-no-go.md`; evidence `docs/evidence/STAGE_07.md`; final decision CI run `32766501837` / #5 SUCCESS, artifact `9534797361`, digest `sha256:9cae376fd0cbf2861f006af347483f9de26a6cd49f30b201438a3afdb591e555`. PR #9 merge commit `28cc06c2de5d21f733e29ae69a38395979b6d759`. Özel renderer garantili fallback değildir; efor/bakım riski HIGH olarak kaydedildi.
+
+### AŞAMA 08 — DONE / CHARACTERIZATION; iOS PASS NOT CLAIMED
+
+Exact ACadSharp 3.7.1 + SkiaSharp 4.151.1 hattı izole macOS/iOS spike ile karakterize edildi. Yetkili CI run `32781026946` / #18 SUCCESS, artifact `9540018558`, digest `sha256:1414e3bf5a9800e150019c48f620c64efcd3d5282ac7322ef9a5e5746ab746f7`. Evidence JSON `BLOCKED_PARTIAL_EVIDENCE`: exact restore/workload/Xcode hattı kanıtlandı; hosted Xcode 26.6 tool lookup baseline/simulator runtime'ı engelledi; ACadSharp trimming/reflection riskleri kaydedildi; simulator NativeAOT `NETSDK1203` platform sınırı olarak ayrıştırıldı. Fiziksel iPhone ve local Mac kanıtı `DEFERRED_EXTERNAL_GATE`. Kullanıcı-approved execution override uyarınca risk açık kaydedilerek independent continuation kabul edildi; iOS PASS iddiası yok. Gelecek ikinci tur: `docs/LOCAL_DEVICE_REVALIDATION.md`. PR #11 merge commit `b7926cb1df2b2ff1f32c67033dba73aed1c01523`.
+
+### AŞAMA 09 — IN_PROGRESS / IMPLEMENTATION_READY / T0_T1_VALIDATION_PENDING_RUNNER
+
+Kullanıcı ADR 0002'deki özel renderer yüksek efor/bakım riskini kabul ederek AŞAMA 09 implementation başlangıcını açıkça onayladı. `stage09-render-scene-camera` branch'i ve PR #12 açıldı. Exact ProCad reuse NO-GO olduğu için tek production yolu compact özel immutable `RenderScene` seçildi.
+
+Uygulanan temel:
+
+- stable entity ID, bounds, layer/style token ve source reference;
+- world/document ve world→view→screen hattında `double` precision;
+- `Camera2D` ↔ Core `RenderViewport` explicit bridge;
+- survey origin 5,000,000 + 0.001 precision regression;
+- finite-span/subtraction overflow guard'ları ve overflow-safe center;
+- OCS/WCS arbitrary-axis transform, oblique round-trip ve scaled normalization;
+- Unsupported/Substituted/Dropped/Error diagnostics;
+- camera fit/zoom clamps ve dark/light color context;
+- stable-ID sıralı immutable scene ve deterministic `render-scene/v1` semantic snapshot;
+- default value-object metadata bypass ve duplicate ID guard'ları;
+- Stage 04 render-contract marker geriye uyumlu tutuldu.
+
+Son source/test hardening head: `9a17d333afc0a3df1de856a9a53fae0e74617c29`. Son workflow/fallback head: `0c5aa84bf491ec24c4409c35ffad83dd159b9290`.
+
+Gerçek T0/T1 henüz yürütülemedi. Standard `ubuntu-latest`, `macos-26` ve ayrı `ubuntu-slim` hosted pool'larında job'lar checkout başlamadan `steps=[]`, `runner_id=0` ile kesildi. Son bağımsız-pool kayıt: run `32811281420`/#32, job `97690952636`, label `ubuntu-slim`. Standard Ubuntu run #30 explicit rerun job `97690824454` de aynı semptomu verdi. Configured self-hosted Windows probe uygun online runner bulamadı ve geçici workflow kaldırıldı. Bu nedenle compile/test failure veya PASS iddiası yoktur.
+
+Ayrıntı: `docs/evidence/STAGE_09.md`.
+
 ## Değiştirilemez temel teknik kararlar
 
 - v1 yalnız 2D viewer; edit/write yok.
@@ -183,31 +228,25 @@ Ayrıntı: `docs/evidence/STAGE_06.md`.
 - Runtime graph'ta GPL/AGPL/SSPL/BUSL/non-commercial/source-available/proprietary/unknown release blocker'dır.
 - ACadSharp `3.7.1` read-only parser baseline `GO`; bu karar render/engineering fidelity garantisi değildir.
 - SkiaSharp renderer adayıdır; native dağıtım zinciri ayrıca denetlenir.
-- ProCad yalnız source-pinned izole spike; otomatik production dependency değildir.
+- Exact unpatched ProCad production reuse `NO-GO`; production graph'a geri sokulmaz.
+- AŞAMA 09 custom scene yolu kullanıcı GO'su ile başlamıştır; T0/T1 olmadan merge/DONE yapılmaz.
 - UI parser entity'lerine doğrudan bağlanmaz.
 - Unsupported/proxy/font/XREF/raster kaybı sessiz olmaz.
 - Original drawing overwrite edilmez.
 
 ## Yeni ajan için protokol
 
-1. Bu dosyayı ve execution override'ı oku.
-2. Gerçek `main` durumunu doğrula.
+1. Bu dosyayı, `DEVAM.md`, aktif Stage 09 evidence ve execution override'ı oku.
+2. Gerçek `main` ve PR #12 head durumunu doğrula.
 3. Kullanıcı değişikliklerini koru; destructive Git işlemi yapma.
-4. Kullanıcı yalnız `devam` diyorsa `NEXT_WORK_STAGE` üzerinden ilerle. AŞAMA 06 merge sonrasında bu AŞAMA 07'dir.
-5. AŞAMA 01 dış erişim kapılarını sahte PASS/DONE yapma.
-6. Bir turda en fazla bir aşama tamamla.
-7. `[LIVE-VERIFY]` noktalarında resmi/güncel kaynak kullan.
-8. Her turun sonunda `gecmis.md`, ilgili stage evidence ve canonical checkpoint'i gerçek durumla güncelle.
+4. Kullanıcı yalnız `devam` diyorsa **AŞAMA 09'dan devam et**; GO yeniden isteme.
+5. Runner label değiştirerek tekrar zinciri üretme; standard Ubuntu, macOS ve ubuntu-slim allocation denemeleri tüketildi.
+6. Exact .NET `10.0.400` çalışan gerçek bir execution environment varsa Stage 09 T0/T1'i çalıştır.
+7. AŞAMA 01/AŞAMA 06/AŞAMA 08 dış erişim kapılarını sahte PASS/DONE yapma.
+8. Bir turda en fazla bir aşama tamamla.
+9. `[LIVE-VERIFY]` noktalarında resmi/güncel kaynak kullan.
+10. Her turun sonunda `gecmis.md`, ilgili stage evidence ve canonical checkpoint'i gerçek durumla güncelle.
 
 ## Bir sonraki tur
 
-AŞAMA 06 PR #8 main'e merge edilip merge SHA checkpoint'e işlendiğinde kullanıcı `devam` derse yalnız AŞAMA 07 — ProCad source-pinned Android spike ve GO/NO-GO — başlatılır. AŞAMA 06 fiziksel Android gate açık kalır.
-
-
-### AŞAMA 07 — DONE / NO-GO
-
-Exact ProCad source candidate `f8a862b3e7634e27664fee02ff5d68774b102985` production graph'a eklenmeden izole Android spike ile değerlendirildi. ACadSharp submodule lineage official upstream'de çözüldü fakat mobil-dwg approved 3.7.1 source baseline'dan 592 commit geride. Published ProCadSharp 0.1.1 restore graph'ı `NU1603` ile ACadSharp 1.0.0 çözüyor ve Skia 4.147.0-preview.2.1 bandına çıkıyor. Pinned Android source build `82 warning / 0 error`, clean MAUI Release smoke `0 warning / 0 error` ile geçti. Buna rağmen origin 5,000,000 üzerindeki 1 mm detail direct double-to-float RenderScene boundary'sinde observed delta `0.0` olarak çöktü; deterministic P0 fidelity blocker. Physical Android T3 bu hard blocker sonrasında `NOT_RUN_AFTER_DETERMINISTIC_BLOCKER` ve PASS değildir. ADR `docs/ADR/0002-procad-pinned-source-no-go.md`; evidence `docs/evidence/STAGE_07.md`; final decision CI run `32766501837` / #5 SUCCESS, artifact `9534797361`, digest `sha256:9cae376fd0cbf2861f006af347483f9de26a6cd49f30b201438a3afdb591e555`. Özel renderer garantili fallback değildir; AŞAMA 09 implementation öncesinde HIGH efor/bakım riski için kullanıcı GO gerekir.
-
-### AŞAMA 08 — DONE / CHARACTERIZATION; iOS PASS NOT CLAIMED
-
-Exact ACadSharp 3.7.1 + SkiaSharp 4.151.1 hattı izole macOS/iOS spike ile karakterize edildi. Yetkili CI run `32781026946` / #18 SUCCESS, artifact `9540018558`, digest `sha256:1414e3bf5a9800e150019c48f620c64efcd3d5282ac7322ef9a5e5746ab746f7`. Evidence JSON `BLOCKED_PARTIAL_EVIDENCE`: exact restore/workload/Xcode hattı kanıtlandı; hosted Xcode 26.6 tool lookup baseline/simulator runtime'ı engelledi; ACadSharp trimming/reflection riskleri kaydedildi; simulator NativeAOT `NETSDK1203` platform sınırı olarak ayrıştırıldı. Fiziksel iPhone ve local Mac kanıtı `DEFERRED_EXTERNAL_GATE`. Kullanıcı-approved execution override uyarınca risk açık kaydedilerek independent continuation kabul edildi; iOS PASS iddiası yok. Gelecek ikinci tur: `docs/LOCAL_DEVICE_REVALIDATION.md`. AŞAMA 09 custom renderer için explicit kullanıcı GO gerekir.
+Yalnız AŞAMA 09 sürdürülür. Exact .NET `10.0.400` üzerinde `tests/MobilDwg.Rendering.Tests/MobilDwg.Rendering.Tests.csproj` restore/build ve deterministic executable testleri gerçekten çalıştırılmadan Stage 09 kapatılmaz. Beklenen marker'lar: `STAGE09_DOTNET_PIN_PASS`, `STAGE09_T0_BUILD_PASS`, `STAGE04_RENDER_CONTRACT_TESTS_PASS`, `STAGE09_RENDER_SCENE_TESTS_PASS`, `STAGE09_T1_SCENE_PASS`, `render-scene/v1`. Gerçek PASS ve evidence artifact/log elde edilirse AŞAMA 09 checkpoint'i `DONE` yapılır ve PR #12 merge edilir; **aynı turda AŞAMA 10 başlatılmaz**.
