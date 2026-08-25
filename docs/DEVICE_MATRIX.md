@@ -1,23 +1,33 @@
-# Fiziksel cihaz matrisi ve provisional benchmark profilleri
+# Android cihaz matrisi ve provisional benchmark profilleri
 
-İlk kayıt: 2026-08-24
-Android kapsam güncellemesi: 2026-08-25
-Aşama: AŞAMA 03
+İlk kayıt: 2026-08-24  
+Android kapsam güncellemesi: 2026-08-25  
+Aktif validation: V03
 
-Bu belge emulator ile fiziksel cihaz kanıtını birbirine karıştırmaz. Android Emulator kuruludur; fiziksel Android slotları release çeşitliliği için açıktır. iOS slotları aktif v1 dışında future option olarak korunur.
+Bu belge emulator ile fiziksel cihaz kanıtını birbirine karıştırmaz. Android Emulator sürekli ve hedefli smoke için kullanılabilir; fiziksel Android slotları beta/release çeşitliliği, gerçek SAF ve performans için ayrıca açıktır. iOS aktif v1 dışında future option olarak korunur.
 
 ## Cihaz slotları
 
 | Slot | Platform | Amaç | Minimum özellik | Gerçek cihaz | Durum |
 |---|---|---|---|---|---|
-| E-API36 | Android Emulator | GitHub/self-hosted sürekli build-install-launch ve hedefli runtime smoke | `mobil-dwg-api36`, Pixel 7 profile, API 36, x86_64 | AVD mevcut | `AVAILABLE / V01_FIX_REQUIRED` |
-| A-LOW | Android | düşük kaynak / min-supported doğrulama | Android API 24+, arm64 tercih, 3-4 GiB RAM sınıfı | UNKNOWN | DEFERRED_EXTERNAL_GATE |
-| A-CURRENT | Android | güncel orta sınıf ana regresyon | target API 36 sınıfı, arm64, 6+ GiB RAM sınıfı | UNKNOWN | DEFERRED_EXTERNAL_GATE |
-| A-LARGE | Android | büyük corpus/perf karşılaştırma | arm64, 8+ GiB RAM sınıfı | UNKNOWN | OPTIONAL / NOT_ASSIGNED |
-| I-OLDEST | Future iOS | yeniden etkinleştirilirse en eski gerçek iPhone sınıfı | future Stage 23'te pinlenecek | UNKNOWN | DEFERRED_FUTURE_IOS |
-| I-CURRENT | Future iOS | yeniden etkinleştirilirse güncel cihaz regresyonu | future supported iOS, arm64 | UNKNOWN | DEFERRED_FUTURE_IOS |
+| E-API36 | Android Emulator | self-hosted sürekli build/install/launch ve hedefli runtime smoke | `mobil-dwg-api36`, API 36, x86_64 | AVD mevcut | `AVAILABLE / V01_VALIDATED_INFRASTRUCTURE_SMOKE` |
+| A-LOW | Android | düşük kaynak / min-supported doğrulama | Android API 24+, arm64 tercih, 3–4 GiB RAM sınıfı | UNKNOWN | `DEFERRED_PHYSICAL_ANDROID` |
+| A-CURRENT | Android | güncel orta sınıf ana regresyon | target API 36 sınıfı, arm64, 6+ GiB RAM sınıfı | UNKNOWN | `DEFERRED_PHYSICAL_ANDROID` |
+| A-LARGE | Android | büyük corpus/perf karşılaştırma | arm64, 8+ GiB RAM sınıfı | UNKNOWN | `OPTIONAL / NOT_ASSIGNED` |
+| I-OLDEST | Future iOS | yeniden etkinleştirilirse en eski gerçek iPhone sınıfı | future Stage 23'te pinlenecek | UNKNOWN | `DEFERRED_FUTURE_IOS` |
+| I-CURRENT | Future iOS | yeniden etkinleştirilirse güncel cihaz regresyonu | future supported iOS, arm64 | UNKNOWN | `DEFERRED_FUTURE_IOS` |
 
-Android emulator smoke için aktiftir fakat fiziksel slotun PASS kanıtı yerine geçmez. iOS simulator/cihaz işi active değildir.
+E-API36 için V01 authoritative run `32821991333`, job `97721878468` üzerinde emulator/toolchain hattı doğrulandı. Bu sonuç yalnız `Stage01Smoke` infrastructure smoke kanıtıdır; gerçek `MobilDwg.App`, DWG/DXF açma veya viewer fidelity PASS değildir. V04 gerçek installable uygulama kabuğuna geçmeden E-API36 sonucu viewer sonucu diye kullanılmaz.
+
+## V03 Android smoke input seti
+
+V04–V09 doğrulamalarında hak durumu açık küçük test girdisi gerektiğinde manifestteki `android_smoke_set` kullanılır:
+
+- committed 0BSD DXF: `synthetic-turkish-basic-ac1015`;
+- validation-time generated 0BSD DWG: `synthetic-turkish-basic-ac1015-dwg`;
+- kontrollü negatif committed DXF'ler: `negative-missing-font-ac1015`, `negative-missing-xref-ac1015`.
+
+Generated DWG, committed sentetik DXF'den exact ACadSharp `3.7.1` fixture generator ile üretilir; `AC1015` magic ve `DwgReader` read-back doğrulanır. Bu artifact open-path smoke girdisidir, bağımsız DWG engineering-fidelity goldeni değildir. Remote-pinned ACadSharp sample DWG/DXF corpus'u fidelity/parser regresyonu için korunur fakat mobil-dwg tarafından yeniden dağıtılabilir bundle olarak sınıflandırılmaz.
 
 ## Provisional corpus profilleri
 
@@ -37,7 +47,7 @@ Her cihaz koşusu en az şunları kaydeder:
 - `device_slot`
 - gerçek modelin hassas olmayan adı ve OS/API sürümü
 - app revision / configuration (`Debug` veya `Release`)
-- fixture ID ve manifest hash
+- fixture ID ve manifest hash/provenance
 - `file_bytes`
 - `parse_ms`
 - `scene_build_ms`
@@ -48,8 +58,11 @@ Her cihaz koşusu en az şunları kaydeder:
 - close/reopen sonrası gözlenen memory delta
 - PASS/FAIL'i belirleyen aşama kriteri
 
-Seri numarası, UDID, Apple ID, kullanıcı yolu veya müşteri dosya adı kaydedilmez.
+Seri numarası, UDID, hesap bilgisi, kullanıcı yolu veya müşteri dosya adı kaydedilmez.
 
 ## Şimdiki durum
 
-AŞAMA 03 için cihaz matrisi tasarımı tamamdır. E-API36 V01 sertleştirmesinden sonra otomatik smoke slotu olur. Fiziksel Android ataması bilinçli olarak açık kalır ve AŞAMA 20–22/final kapılarında zorunludur. Future iOS slotları Android release'i bloke etmez.
+- E-API36: altyapı olarak kullanılabilir; gerçek viewer gate V04'ten sonra açılır.
+- Fiziksel Android: release/beta kapılarında zorunlu farkları kanıtlamak üzere deferred.
+- iOS: future/inactive; Android release'i bloke etmez.
+- V03: fixture ve test-matrix sözleşmesini doğrular; bu aşamada gereksiz emulator koşusu yapılmaz.
