@@ -15,7 +15,7 @@ NEXT_ACTION: AŞAMA 10 — P0 temel geometri renderer'ı — bir sonraki kullan�
 LAST_UPDATE: 2026-08-25
 '@
 
-$checkpointPattern = '(?ms)^CURRENT_STAGE: AŞAMA 09\r?\n.*?^LAST_UPDATE: 2026-08-25$'
+$checkpointPattern = '(?ms)^CURRENT_STAGE: AŞAMA 09\r?\n.*?^LAST_UPDATE: 2026-08-25\r?$'
 if (-not [regex]::IsMatch($text, $checkpointPattern)) { throw 'Stage 09 checkpoint block not found' }
 $text = [regex]::Replace($text, $checkpointPattern, $checkpoint.TrimEnd())
 
