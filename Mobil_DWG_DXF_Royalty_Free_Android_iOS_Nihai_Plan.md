@@ -15,14 +15,14 @@
 Bu blok ve aşağıdaki aşama kutuları her çalışma turunun sonunda güncellenir.
 
 ```text
-CURRENT_STAGE: AŞAMA 08
-CURRENT_SUBSTEP: 08.6
-STATUS: DONE — CHARACTERIZATION / RISK_ACCEPTED_FOR_CONTINUATION; iOS PASS NOT CLAIMED
-LAST_VERIFIED_REVISION: 4987fa3e5fadfb113aa3b27ac443da9776864ad5 — current-main tabanında exact ACadSharp 3.7.1 + SkiaSharp 4.151.1 iOS characterization yeniden doğrulandı; runtime/device feasibility hosted toolchain ve dış cihaz kapıları nedeniyle kanıtlanmadı
-LAST_SUCCESSFUL_COMMAND: GitHub Actions Stage 08 iOS Feasibility run 32781026946 / #18 SUCCESS — characterization complete; workflow success probe PASS iddiası değildir
-EVIDENCE: docs/evidence/STAGE_08.md; docs/LOCAL_DEVICE_REVALIDATION.md; Stage 08 artifact 9540018558 sha256:1414e3bf5a9800e150019c48f620c64efcd3d5282ac7322ef9a5e5746ab746f7; STAGE08_HOST_PASS; STAGE08_IOS_WORKLOAD_PASS; STAGE08_EXACT_GRAPH_RECORDED; STAGE08_BASELINE_BUILD_BLOCKED_HOSTED_RUNNER_TOOLCHAIN; STAGE08_IOS_FEASIBILITY_CHARACTERIZATION_COMPLETE
-BLOCKERS: iOS runtime/device feasibility NOT PROVEN. GitHub-hosted macos-26/Xcode 26.6 tool lookup install_name_tool/clang problemi baseline/trim runtime sonucunu engelledi; ACadSharp 3.7.1 trimming hattında IL2026/IL2070/IL2072/IL2075/IL2087/IL2090 riskleri görüldü; iossimulator-arm64 NativeAOT NETSDK1203 nedeniyle gerçek AOT kanıtı değildir; fiziksel iPhone ve kullanıcı local Mac envanteri DEFERRED_EXTERNAL_GATE. AŞAMA 01 ve AŞAMA 06 gerçek cihaz kapıları da açık. AŞAMA 09 custom renderer implementation öncesinde ADR 0002 gereği açık kullanıcı GO gerekir.
-NEXT_ACTION: AŞAMA 09 için explicit kullanıcı GO beklenir. Bu AŞAMA 08 kapanış turunda AŞAMA 09 başlatılmaz.
+CURRENT_STAGE: AŞAMA 09
+CURRENT_SUBSTEP: 09.complete
+STATUS: DONE
+LAST_VERIFIED_REVISION: 7bba0b7a6da30dc4b23050872a7a1ef4e90ca087 — exact .NET 10.0.400 self-hosted execution üzerinde AŞAMA 09 targeted T0/T1 ve full Stage 04 architecture regression PASS
+LAST_SUCCESSFUL_COMMAND: Stage 09 Self-Hosted Validation run 32815175055 / #6, job 97701882792 SUCCESS — targeted + full solution Release build 0 warning / 0 error
+EVIDENCE: docs/evidence/STAGE_09.md; run 32815175055/#6; artifact 9551137293; sha256:486c9d0b5a2a35cd4fbb402d9c56ab226a5b6175b8920da95298d18199054ddd; STAGE09_DOTNET_PIN_PASS; STAGE09_T0_BUILD_PASS; STAGE09_RENDER_SCENE_TESTS_PASS; STAGE09_T1_SCENE_PASS; STAGE09_STAGE04_REGRESSION_PASS; render-scene/v1
+BLOCKERS: AŞAMA 09 blocker yok. AŞAMA 01/AŞAMA 06 gerçek Android ve AŞAMA 08 local Mac/ios-arm64/physical iPhone kapıları DEFERRED_EXTERNAL_GATE olarak açık kalır; AŞAMA 09 bunları kapatmaz.
+NEXT_ACTION: AŞAMA 10 — P0 temel geometri renderer'ı — bir sonraki kullanıcı `devam` turunda başlatılır. Bir turda en fazla bir aşama kuralı gereği bu AŞAMA 09 kapanış turunda AŞAMA 10 başlatılmaz.
 LAST_UPDATE: 2026-08-25
 ```
 
@@ -53,6 +53,8 @@ Kullanıcı `devam` dediğinde veya projeyi sürdürmeyi istediğinde ajan şu k
 ### Aktif yürütme istisnası — dış erişim kapıları
 
 2026-08-24 kullanıcı onayıyla `docs/USER_APPROVED_EXECUTION_OVERRIDE.md` yürürlüktedir. AŞAMA 01'in gerçek Android cihaz install/launch ve iOS erişim envanteri kapıları `DEFERRED_EXTERNAL_GATE` olarak açık kalır; bunlar sahte PASS/DONE yapılmaz. Buna rağmen fiziksel cihaz/hesap erişimine bağımlı olmayan sonraki aşamalar `gecmis.md` içindeki `NEXT_WORK_STAGE` sırasıyla yürütülebilir. Bir turda en fazla bir aşama tamamlama kuralı değişmez. Release/beta/final cihaz kapılarında ertelenen dış kanıtlar yeniden zorunlu olarak açılır.
+
+AŞAMA 09 özel renderer implementation'ı için ADR 0002'de istenen kullanıcı GO kararı verilmiş ve stage gerçek T0/T1 kanıtıyla tamamlanmıştır; GO yeniden istenmez.
 
 ### Token ve test bütçesi
 
@@ -372,8 +374,8 @@ Kurallar:
 - [ ] AŞAMA 06 — Android güvenli dosya alma ve parse spike — `BLOCKED / DEFERRED_EXTERNAL_GATE`
 - [x] AŞAMA 07 — ProCad source-pinned Android spike ve GO/NO-GO — `DONE / NO-GO`
 - [x] AŞAMA 08 — Erken iOS AOT/native fizibilite smoke — `DONE / CHARACTERIZATION; iOS PASS NOT CLAIMED`
-- [ ] AŞAMA 09 — RenderScene, kamera ve diagnostics temeli
-- [ ] AŞAMA 10 — P0 temel geometri renderer’ı
+- [x] AŞAMA 09 — RenderScene, kamera ve diagnostics temeli — `DONE`
+- [ ] AŞAMA 10 — P0 temel geometri renderer’ı — `NOT_STARTED`
 - [ ] AŞAMA 11 — Mobil viewport ve gesture’lar
 - [ ] AŞAMA 12 — Block/INSERT/attribute dönüşümleri
 - [ ] AŞAMA 13 — Layer, renk, linetype ve lineweight
@@ -539,7 +541,7 @@ Test: Final CI `Stage 07 ProCad Source Spike` run `32766501837` / #5 `SUCCESS`; 
 - [x] Planın dış blocker/risk seçeneği uygulandı: mevcut kullanıcı-approved execution override ile iOS riskleri açıkça kaydedilip bağımsız sonraki işlerin ilerlemesine izin verildi. Bu risk kabulü iOS'u tamamlanmış/PASS saymaz.
 
 Test: Yetkili karakterizasyon `Stage 08 iOS Feasibility` run `32781026946` / #18 `SUCCESS`; artifact `9540018558`, digest `sha256:1414e3bf5a9800e150019c48f620c64efcd3d5282ac7322ef9a5e5746ab746f7`. Evidence JSON `BLOCKED_PARTIAL_EVIDENCE`. Workflow success, üç probe'un PASS olduğu anlamına gelmez; gerçek blocker'ları deterministik kaydettiği anlamına gelir.  
-Çıkış: **Sağlandı — dış blocker/risk kabulü açıkça kaydedildi; iOS fizibilitesi kanıtlanmış değildir.** Complete local/managed Mac, `ios-arm64` AOT ve fiziksel iPhone kapıları `docs/LOCAL_DEVICE_REVALIDATION.md` ve AŞAMA 23/24 için açık kalır. AŞAMA 09 custom renderer implementation ADR 0002 gereği ayrıca açık kullanıcı GO ister.
+Çıkış: **Sağlandı — dış blocker/risk kabulü açıkça kaydedildi; iOS fizibilitesi kanıtlanmış değildir.** Complete local/managed Mac, `ios-arm64` AOT ve fiziksel iPhone kapıları `docs/LOCAL_DEVICE_REVALIDATION.md` ve AŞAMA 23/24 için açık kalır. AŞAMA 09 için gerekli kullanıcı GO kararı daha sonra verilmiş ve implementation başlamıştır.
 
 ### AŞAMA 09 — RenderScene, kamera ve diagnostics temeli
 
@@ -547,16 +549,19 @@ Test: Yetkili karakterizasyon `Stage 08 iOS Feasibility` run `32781026946` / #18
 
 İşler:
 
-- [ ] Tek scene implementasyonu seçilir: ProCad GO ise onun scene’i üzerinde ince facade; değilse compact özel immutable scene. Paralel iki scene graph oluşturulmaz.
-- [ ] Stable entity ID, bounds, layer/style token ve source reference facade/scene üzerinde modellenir.
-- [ ] Document/world koordinatları `double`; world→view→screen tek transform hattıdır.
-- [ ] OCS/WCS, extents, invalid NaN/Infinity ve büyük koordinat unit testleri eklenir.
-- [ ] Scene build diagnostics unsupported/substituted/dropped/error türlerini toplar.
-- [ ] Camera fit/zoom bounds ve background/color context tanımlanır.
-- [ ] Seçilen ProCad yolunda da bu sınırlar adapter ile korunur.
+- [x] Tek scene implementasyonu seçildi: ADR 0002 ProCad exact reuse `NO-GO` olduğundan compact özel immutable scene; paralel iki scene graph yok.
+- [x] Stable entity ID, bounds, layer/style token ve source reference scene üzerinde modellendi; default-value bypass ve duplicate-ID guard'ları eklendi.
+- [x] Document/world koordinatları `double`; world→view→screen tek transform hattıdır; Core `RenderViewport` ile explicit bridge vardır.
+- [x] OCS/WCS, extents, invalid NaN/Infinity, finite-overflow ve büyük koordinat hedefli unit-test senaryoları gerçek execution'da geçti; büyük normal vektörleri scaled normalization kullanır.
+- [x] Scene build diagnostics `unsupported/substituted/dropped/error` türlerini toplar ve invalid taxonomy reddedilir.
+- [x] Camera fit/zoom bounds ve background/color context tanımlandı; invalid/default camera guard'ları eklendi.
+- [x] ProCad adapter gereksinimi ADR 0002 nedeniyle `NOT_APPLICABLE`; aynı sınırlar seçilen custom scene yolunda korunur.
+- [x] Deterministic `render-scene/v1` semantic snapshot ve insertion-order bağımsızlığı testi gerçek execution'da geçti; Stage 04 render-contract marker'ı korunur.
+- [x] Exact .NET `10.0.400` üzerinde T0 restore/build gerçek self-hosted execution ile geçti.
+- [x] T1 deterministic scene/camera executable testleri ve full Stage 04 architecture regression gerçek execution ile geçti; evidence artifact/log alındı.
 
-Test: T0/T1, deterministic scene snapshot.  
-Çıkış: Sentetik scene headless üretilebilir; aynı girdi aynı semantik snapshot’ı verir.
+Test: Yetkili kapanış `Stage 09 Self-Hosted Validation` run `32815175055` / #6, job `97701882792`, head `7bba0b7a6da30dc4b23050872a7a1ef4e90ca087`, `SUCCESS`. Targeted ve full solution Release build `0 Warning / 0 Error`. Marker'lar: `STAGE09_DOTNET_PIN_PASS`, `STAGE09_T0_BUILD_PASS`, `STAGE04_CORE_CONTRACT_TESTS_PASS`, `STAGE04_RENDER_CONTRACT_TESTS_PASS`, `STAGE09_RENDER_SCENE_TESTS_PASS`, `render-scene/v1`, `STAGE09_T1_SCENE_PASS`, `STAGE04_ARCHITECTURE_TESTS_PASS`, `STAGE05_DEPENDENCY_BOUNDARY_PASS`, `STAGE04_T0_PASS`, `STAGE09_STAGE04_REGRESSION_PASS`. Artifact `9551137293`, digest `sha256:486c9d0b5a2a35cd4fbb402d9c56ab226a5b6175b8920da95298d18199054ddd`. Survey-origin snapshot `5000000.001` ayrıntısını korudu. Önceki hosted `runner_id=0` kayıtları infrastructure allocation problemi olarak ayrıştırıldı.  
+Çıkış: **Sağlandı.** Sentetik scene headless üretilebilir; aynı semantic girdi aynı snapshot'ı verir; precision/OCS/diagnostics/architecture gate'leri gerçek exact toolchain üzerinde PASS. AŞAMA 10 aynı kullanıcı turunda başlatılmaz.
 
 ### AŞAMA 10 — P0 temel geometri renderer’ı
 

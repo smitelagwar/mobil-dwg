@@ -34,6 +34,16 @@ public readonly record struct RenderViewport
             throw new ArgumentOutOfRangeException(nameof(pixelHeight));
         }
 
+        if (!double.IsFinite(centerX))
+        {
+            throw new ArgumentOutOfRangeException(nameof(centerX));
+        }
+
+        if (!double.IsFinite(centerY))
+        {
+            throw new ArgumentOutOfRangeException(nameof(centerY));
+        }
+
         if (!double.IsFinite(worldUnitsPerPixel) || worldUnitsPerPixel <= 0)
         {
             throw new ArgumentOutOfRangeException(nameof(worldUnitsPerPixel));
