@@ -1,3 +1,6 @@
+using System.Collections.ObjectModel;
+using MobilDwg.Rendering.Geometry;
+
 namespace MobilDwg.Rendering.Scene;
 
 public readonly record struct WorldPoint2
@@ -126,25 +129,51 @@ public sealed record RenderSourceReference
 
 public sealed record RenderSceneEntity
 {
+    private readonly ReadOnlyCollection<RenderGeometryPrimitive> _geometry;
+
     public RenderSceneEntity(
         RenderEntityId id,
         WorldBounds2 bounds,
         RenderLayerToken layer,
         RenderStyleToken style,
         RenderSourceReference source)
+        : this(id, bounds, layer, style, source, Array.Empty<RenderGeometryPrimitive>())
     {
-        // record structs can be default-constructed without invoking their validating constructors.
-        // Enforce the invariant again at the immutable scene boundary.
+    }
+
+    public RenderSceneEntity(
+        RenderEntityId id,
+        WorldBounds2 bounds,
+        RenderLayerToken layer,
+        RenderStyleToken style,
+        RenderSourceReference source,
+        IEnumerable<RenderGeometryPrimitive> geometry)
+    {
         if (string.IsNullOrWhiteSpace(id.Value)) throw new ArgumentException("Stable entity ID is required.", nameof(id));
         if (string.IsNullOrWhiteSpace(layer.Value)) throw new ArgumentException("Layer token is required.", nameof(layer));
         if (string.IsNullOrWhiteSpace(style.Value)) throw new ArgumentException("Style token is required.", nameof(style));
         ArgumentNullException.ThrowIfNull(source);
+        ArgumentNullException.ThrowIfNull(geometry);
+
+        var geometryCopy = geometry.ToArray();
+        if (geometryCopy.Any(item => item is null)) throw new ArgumentException("Geometry collection cannot contain null items.", nameof(geometry));
 
         Id = id;
         Bounds = bounds;
         Layer = layer;
         Style = style;
         Source = source;
+        _geometry = Array.AsReadOnly(geometryCopy);
+    }
+
+    public RenderSceneEntity(
+        RenderEntityId id,
+        RenderLayerToken layer,
+        RenderStyleToken style,
+        RenderSourceReference source,
+        IEnumerable<RenderGeometryPrimitive> geometry)
+        : this(id, CalculateGeometryBounds(geometry), layer, style, source, geometry)
+    {
     }
 
     public RenderEntityId Id { get; }
@@ -152,4 +181,17 @@ public sealed record RenderSceneEntity
     public RenderLayerToken Layer { get; }
     public RenderStyleToken Style { get; }
     public RenderSourceReference Source { get; }
+    public IReadOnlyList<RenderGeometryPrimitive> Geometry => _geometry;
+
+    private static WorldBounds2 CalculateGeometryBounds(IEnumerable<RenderGeometryPrimitive> geometry)
+    {
+        ArgumentNullException.ThrowIfNull(geometry);
+        var copy = geometry.ToArray();
+        if (copy.Length == 0) throw new ArgumentException("At least one geometry primitive is required when bounds are inferred.", nameof(geometry));
+        if (copy.Any(item => item is null)) throw new ArgumentException("Geometry collection cannot contain null items.", nameof(geometry));
+
+        var bounds = copy[0].Bounds;
+        for (var i = 1; i < copy.Length; i++) bounds = bounds.Union(copy[i].Bounds);
+        return bounds;
+    }
 }
