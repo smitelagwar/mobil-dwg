@@ -118,14 +118,25 @@ function Wait-LogMarker {
 
 function Select-Document {
     param([string]$Serial, [string]$FileName, [string]$Stem)
+    $openedRoots = $false
     $clickedDownloads = $false
     for ($i = 0; $i -lt 40; $i++) {
         if (Try-ClickUiText -Serial $Serial -Text $FileName -Stem "$Stem-file-$i") { return }
-        if (-not $clickedDownloads -and (Try-ClickUiText -Serial $Serial -Text 'Downloads' -Stem "$Stem-downloads-$i" -Contains)) {
+
+        if (-not $openedRoots) {
+            if (Try-ClickUiText -Serial $Serial -Text 'Show roots' -Stem "$Stem-roots-$i") {
+                $openedRoots = $true
+                Start-Sleep -Milliseconds 750
+                continue
+            }
+        }
+
+        if ($openedRoots -and -not $clickedDownloads -and (Try-ClickUiText -Serial $Serial -Text 'Downloads' -Stem "$Stem-downloads-$i" -Contains)) {
             $clickedDownloads = $true
             Start-Sleep -Seconds 1
             continue
         }
+
         Start-Sleep -Milliseconds 500
     }
     Fail "DocumentsUI did not expose selected test file: $FileName"
