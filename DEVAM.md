@@ -6,18 +6,29 @@ Bu dosya, yeni bir ChatGPT/AI oturumunda projeye kaldığı yerden devam etmek i
 
 1. `@GitHub` üzerinden `smitelagwar/mobil-dwg` reposunu ve gerçek `main` HEAD'i doğrula.
 2. `Mobil_DWG_DXF_Royalty_Free_Android_iOS_Nihai_Plan.md`, `gecmis.md` ve `docs/USER_APPROVED_EXECUTION_OVERRIDE.md` dosyalarını oku.
-3. AŞAMA 08 için `docs/evidence/STAGE_08.md` ve `docs/LOCAL_DEVICE_REVALIDATION.md`; AŞAMA 07 için `docs/evidence/STAGE_07.md` ve `docs/ADR/0002-procad-pinned-source-no-go.md` dosyalarını oku.
-4. Kullanıcı yalnız `devam` diyorsa `NEXT_WORK_STAGE` üzerinden ilerle.
-5. Bir kullanıcı turunda en fazla bir aşama tamamla; aynı turda sonraki aşamayı başlatma.
-6. Fiziksel cihaz/Mac/Apple hesabı gibi kullanıcının sağlayamadığı dış kapıları sahte PASS/DONE yapma; `DEFERRED_EXTERNAL_GATE` bırak.
-7. Her aşama sonunda canonical checkpoint, `gecmis.md` ve `docs/evidence/STAGE_XX.md` kaydını gerçek CI/commit/artifact kanıtıyla güncelle.
-8. Production dependency'yi evidence olmadan yükseltme veya ProCad'ı tekrar graph'a sokma.
+3. **Çalışma bağlamını gerçek araç erişimine göre sınıflandır.** Kod/depo değişiklikleri ChatGPT sohbetinden GitHub üzerinden yapılıyor ve yerel repo/terminal/ADB'ye doğrudan erişim yoksa `CHATGPT_REMOTE_GITHUB` bağlamıdır; bu durumda `docs/CHATGPT_REMOTE_ANDROID_TEST_WORKFLOW.md` dosyasını okumak zorunludur. Dosyanın okunması zorunlu olsa da içindeki batching/test sıklığı/25 dakikalık zaman yönetimi önerileri zorunlu değildir. AntiGravity, Visual Studio + Codex, Codex IDE veya başka bir yerel ajan gerçek yerel çalışma ağacı + terminal/ADB erişimiyle çalışıyorsa `LOCAL_IDE` bağlamıdır ve bu remote test modeli yürütme için geçersizdir.
+4. AŞAMA 08 için `docs/evidence/STAGE_08.md` ve `docs/LOCAL_DEVICE_REVALIDATION.md`; AŞAMA 07 için `docs/evidence/STAGE_07.md` ve `docs/ADR/0002-procad-pinned-source-no-go.md` dosyalarını oku.
+5. Kullanıcı yalnız `devam` diyorsa `NEXT_WORK_STAGE` üzerinden ilerle. Aktif aşama `IN_PROGRESS` ise aynı aşamadan devam et; bitmeden sonraki aşamaya geçme.
+6. Bir kullanıcı turunda en fazla bir aşama tamamla; aynı turda sonraki aşamayı başlatma. Bir aşama tek turda bitmek zorunda değildir; kullanıcı `devam` dedikçe aynı aşama gerçek çıkış kriterleri sağlanana kadar sürdürülebilir.
+7. Fiziksel cihaz/Mac/Apple hesabı gibi kullanıcının sağlayamadığı dış kapıları sahte PASS/DONE yapma; `DEFERRED_EXTERNAL_GATE` bırak.
+8. Her aşama sonunda canonical checkpoint, `gecmis.md` ve `docs/evidence/STAGE_XX.md` kaydını gerçek CI/commit/artifact kanıtıyla güncelle.
+9. Production dependency'yi evidence olmadan yükseltme veya ProCad'ı tekrar graph'a sokma.
 
 ## Repo / ürün
 
 - Repo: `smitelagwar/mobil-dwg` (private), default `main`.
 - Android-first, iOS zorunlu ikinci platform, local/offline 2D DWG/DXF viewer.
 - v1 viewer-only; edit/save/export/cloud/account yok.
+
+## Çalışma bağlamı notu
+
+`CHATGPT_REMOTE_GITHUB` bağlamında mevcut Android test altyapısı her küçük GitHub değişikliğinde çalıştırılmak için tasarlanmamıştır. Ajan isterse aynı mantıksal işte birkaç dosyayı/değişikliği tamamlayıp sonra `android-test` hattını bir kez tetikleyebilir. Örneğin üç dosya değişikliğinden sonra tek emulator testi yapmak çoğu durumda daha verimli olabilir. Bunun tersi de mümkündür: riskli tek bir değişiklikten sonra hemen test edilebilir.
+
+Bu batching davranışı **öneridir, zorunlu değildir**. Özellikle ChatGPT High çalışma penceresinde GitHub → self-hosted PC → emulator → artifact round-trip süresini gereksiz yere çoğaltmamak için ajan bunu teknik muhakemesinde hesaba katmalıdır.
+
+Aynı şekilde bir aşamanın ilk turunda implementasyonun tamamı veya bir kısmı yapılabilir; sonraki `devam` turunda kalan değişiklikler, Android testleri veya evidence kapanışı yapılabilir. Ajan farklı bir sıra seçebilir. Değişmez olan kural: aktif aşama bitmeden sonraki aşamaya geçilmez ve gerçek kanıt olmadan `DONE` yazılmaz.
+
+Ayrıntılı ve güncel remote test modeli: `docs/CHATGPT_REMOTE_ANDROID_TEST_WORKFLOW.md`.
 
 ## Güncel checkpoint
 
