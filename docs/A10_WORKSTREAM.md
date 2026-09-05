@@ -6,20 +6,15 @@ Bu dosya, Android V04–V09 geriye dönük doğrulaması sürerken ayrı branch'
 
 ```text
 WORKSTREAM: A10_P0_GEOMETRY_DRAFT
-STATUS: NOT_STARTED
-BRANCH: NONE
-BASE_MAIN_SHA: NONE
-HEAD_SHA: NONE
-LOCAL_OR_AGENT_HOST_TESTS: NOT_RUN
-GITHUB_HOSTED_CHECKS: NOT_RUN
-HOSTED_RUN_IDS: NONE
-HOSTED_BLOCKER: LAST_OBSERVED_ACCOUNT_BILLING_OR_SPENDING_LIMIT
-HOSTED_CI_AVAILABILITY: CHECK_EACH_TURN
-KNOWN_HOSTED_CI_BLOCKER_EVIDENCE: ACCOUNT_BILLING_OR_SPENDING_LIMIT — main e9b52c2 Stage04 run 32833969360 / job 97758618786, zero-step failure
-ANDROID_EMULATOR: NOT_QUEUED
-MERGE_TO_MAIN: BLOCKED_BY_V04_V09_AND_A10_ANDROID_GATE
-A11_GATE: BLOCKED_UNTIL_V04_V09_CLOSED_AND_A10_DONE_ON_MAIN_AND_EMULATOR_QUEUE_EMPTY
-NEXT_ACTION: Bilgisayar/runner kapalıyken ayrı stage10-p0-geometry-draft branch'ini güncel main'den aç ve yalnız A10 host-independent kapsamına başla.
+STATUS: READY_TO_MERGE
+BRANCH: stage10-p0-geometry-draft
+BASE_MAIN_SHA: 3ebf8226b8f133255e65cafdec9f7f26fbe7afbe
+LOCAL_OR_AGENT_HOST_TESTS: PASS
+ANDROID_EMULATOR: PASS (pixels=56163, PNG screenshot, PID=6257, no crash/ANR)
+EVIDENCE: docs/evidence/STAGE_10.md
+MERGE_TO_MAIN: READY_TO_MERGE
+A11_GATE: READY_TO_OPEN_AFTER_MAIN_MERGE
+NEXT_ACTION: Merge PR #23 into main with merge commit, update main checkpoint docs, and mark A10 DONE.
 ```
 
 Bu başlangıç kaydı A10'un başladığı anlamına gelmez. Gerçek branch/commit oluştuğunda A10 sohbeti bu dosyayı kendi branch'inde günceller.

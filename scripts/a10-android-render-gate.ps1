@@ -110,6 +110,8 @@ if (-not $Launcher) { Fail "launcher could not be resolved" }
 $Launcher = $Launcher.Trim()
 Write-Host "A10_REAL_APP_INSTALL_PASS package=$PackageName launcher=$Launcher"
 
+& adb -s $Serial shell input keyevent KEYCODE_WAKEUP | Out-Null
+& adb -s $Serial shell wm dismiss-keyguard | Out-Null
 & adb -s $Serial shell am force-stop $PackageName | Out-Null
 & adb -s $Serial logcat -c | Out-Null
 & adb -s $Serial logcat -b crash -c | Out-Null
