@@ -18,10 +18,10 @@ IOS_STATUS: DEFERRED_FUTURE_OPTION
 ANDROID_REVALIDATION_01_09: CLOSED / VALIDATED_WITH_CLAIM_LIMITS
 LAST_VALIDATION_STAGE: V09 — VALIDATED
 LAST_VALIDATION_EVIDENCE: docs/evidence/android-validation/V09.md
-LAST_IMPLEMENTED_STAGE: AŞAMA 17 — DONE
-LAST_IMPLEMENTATION_EVIDENCE: docs/evidence/STAGE_17.md
-IMPLEMENTATION_CURSOR: AŞAMA 18 — NOT_STARTED
-IMPLEMENTATION_WORKSTREAM: AŞAMA 17 DONE (docs/evidence/STAGE_17.md)
+LAST_IMPLEMENTED_STAGE: AŞAMA 19 — DONE
+LAST_IMPLEMENTATION_EVIDENCE: docs/evidence/STAGE_19.md
+IMPLEMENTATION_CURSOR: AŞAMA 20 — NOT_STARTED
+IMPLEMENTATION_WORKSTREAM: AŞAMA 19 DONE (docs/evidence/STAGE_19.md)
 V01: VALIDATED — INFRASTRUCTURE_SMOKE_ONLY
 V02: VALIDATED — DEPENDENCY/LOCKFILE/LICENSE/HASH/VULNERABILITY/ANDROID-NATIVE BOUNDARY
 V03: VALIDATED — FIXTURE/PROVENANCE/GOLDEN/ANDROID-SMOKE-SET CONTRACT
@@ -33,9 +33,9 @@ V08: VALIDATED — ANDROID_PRODUCTION_CI_GRAPH_IOS_ISOLATION_ONLY_HISTORICAL_IOS
 V09: VALIDATED — RENDER_SCENE_CAMERA_DIAGNOSTICS_FOUNDATION_AND_ANDROID_COMPOSITION_REVALIDATION_ONLY_NOT_GEOMETRY_RENDER_FIDELITY
 PENDING_EMULATOR_QUEUE: EMPTY
 PHYSICAL_ANDROID: DEFERRED_RELEASE_DEVICE_GATE
-NEXT_ACTION: Sonraki normal BASLA/devam turunda AŞAMA 18'i (Tam Android viewer UX / lifecycle) başlat.
-A17_MAIN_MERGE: dd9727b (PR #30)
-A18_GATE: OPEN
+NEXT_ACTION: Sonraki normal BASLA/devam turunda AŞAMA 20'yi (Ölçümlü performance/memory) başlat.
+A19_MAIN_MERGE: 9483e7a (PR #32)
+A20_GATE: OPEN
 ```
 
 ### `devam` protokolü
@@ -276,7 +276,7 @@ Yetkili ayrıntı: `ANDROID_DOGRULAMA_PLANI.md`.
 
 ## 9. Implementation aşamaları
 
-AŞAMA 00–18 tarihsel implementation evidence `docs/evidence/STAGE_XX.md` ve ADR'lerde korunur. AŞAMA 18 PR #31 ile tamamlanmış ve `main`e merge edilmiştir. Normal implementation cursor artık AŞAMA 19'dur.
+AŞAMA 00–19 tarihsel implementation evidence `docs/evidence/STAGE_XX.md` ve ADR'lerde korunur. AŞAMA 19 PR #32 ile tamamlanmış ve `main`e merge edilmiştir. Normal implementation cursor artık AŞAMA 20'dir.
 
 ### AŞAMA 10 — P0 temel geometri renderer'ı — `DONE`
 
@@ -356,9 +356,11 @@ Giriş kapısı: `AŞAMA 17 DONE ON MAIN`. PR #31 ile tamamlandı.
 
 Home/open/loading/viewer/layers/fit/info/warnings/close, recent URI/grant metadata, Back/background/foreground/orientation/process recreation/memory pressure, no-backup, permission/log redaction, accessibility.
 
-### AŞAMA 19 — Malicious/corrupt input ve resource guards
+### AŞAMA 19 — Malicious/corrupt input ve resource guards — `DONE`
 
-Magic/version preflight, size/entity/depth/scene/text/hatch/raster/XREF budgets, NaN/Infinity/cycle guards, corrupt/truncated controlled errors, bounded mutation/fuzz smoke.
+Giriş kapısı: `AŞAMA 18 DONE ON MAIN`. PR #32 ile tamamlandı.
+
+Magic/version preflight (DWG magic, DXF binary/ASCII, empty/truncated, foreign formats rejection), size/entity/depth/text/hatch/raster/XREF budgets, raster decompression bomb protection (15MP), NaN/Infinity/$10^{12}$ coordinate guards, block cycle detection, controlled error codes, bounded mutation/fuzz smoke (15 iterations), deterministic semantic snapshot (`schema=resource-guards/v1`).
 
 ### AŞAMA 20 — Ölçümlü performance/memory
 

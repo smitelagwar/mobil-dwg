@@ -251,11 +251,27 @@ NEXT_ACTION: Sonraki normal BASLA/devam turunda AŞAMA 18'i (Tam Android viewer 
 - Claim limit: `CLAIM_LIMIT=A18_VIEWER_LIFECYCLE_API36_ONLY_NOT_CAD_PARSE_TO_SCENE_OR_PHYSICAL_DEVICE_FIDELITY`.
 - Kanıt belgesi: `docs/evidence/STAGE_18.md`.
 
+### 2026-09-05 — AŞAMA 19: Malicious/corrupt input ve resource guards tamamlandı
+
+- PR: `#32` (`feat(stage19): malicious corrupt input and resource guards`).
+- `main` merge commit: `9483e7a`.
+- Release APK: `39,417,878` byte; SHA-256 `dd7ccd6001f4851ca59281ff71b49d4b3b82f4f8d5393724779d1bd12ab6da7e`.
+- Android Emulator: `sdk_gphone64_x86_64` (Android 16 / API 36 / `x86_64`, serial `emulator-5554`).
+- Canlı PID: `11834`.
+- Ekran görüntüsü: `116,176` byte; SHA-256 `cfadf755a2815c015d733f466d66b16002c55b7a67fa3869a9e6ff329544dcc9`.
+- Host test belirteçleri: `STAGE19_RESOURCE_GUARDS_TESTS_PASS` (12/12 test: preflight valid DWG magic passes AC1015..AC1032, invalid DWG magic rejected, preflight binary/ASCII DXF signatures pass, non-CAD files rejected cleanly PE/ELF/ZIP/PDF/HTML/images, zero-byte and truncated header handled cleanly, file size budget exceeded rejection, entity count budget exceeded guard, block insert nesting depth budget and cycle detection, text length budget and truncation, raster image dimension and decompression bomb guard, NaN/Infinity and extreme coordinates sanity guard, bounded mutation fuzz smoke zero crashes and snapshot determinism), `STAGE18_VIEWER_LIFECYCLE_TESTS_PASS`, `STAGE17_REFERENCE_COMPATIBILITY_TESTS_PASS`, `STAGE16_LAYOUT_VIEWPORT_TESTS_PASS`, `STAGE15_DIMENSION_HATCH_TESTS_PASS`, `STAGE14_TEXT_FONT_TESTS_PASS`, `STAGE13_LAYER_STYLE_TESTS_PASS`, `STAGE12_BLOCK_INSERT_TESTS_PASS`, `STAGE11_VIEWPORT_GESTURE_TESTS_PASS`, `STAGE10_GEOMETRY_PRIMITIVES_TESTS_PASS`, `STAGE10_TESSELLATION_PRECISION_TESTS_PASS`, `STAGE10_P0_SEMANTIC_GOLDEN_PASS`, `STAGE04_RENDER_CONTRACT_TESTS_PASS`, `STAGE09_RENDER_SCENE_TESTS_PASS`.
+- Katman Mimari Testleri: `STAGE04_ARCHITECTURE_TESTS_PASS`, `STAGE05_DEPENDENCY_BOUNDARY_PASS`, `V04_REAL_ANDROID_APP_PROJECT_PASS` (MobilDwg.App içinde SkiaSharp ve ACadSharp doğrudan kaynak bağımlılık yasağı eksiksiz doğrulanmıştır).
+- Android emülatör belirteçleri: `A19_EMULATOR_API36_PASS`, `A19_REAL_APP_APK_PASS`, `A19_REAL_APP_INSTALL_PASS`, `A19_REAL_APP_LAUNCH_PASS`, `A19_ANDROID_PREFLIGHT_PASS`, `A19_ANDROID_BUDGET_GUARDS_PASS`, `A19_ANDROID_SANITY_GUARDS_PASS`, `A19_ANDROID_FUZZ_PASS count=15`, `A19_ANDROID_SNAPSHOT_PASS`, `A19_ANDROID_SKIA_RENDER_PASS`, `A19_REAL_APP_GUARDS_MARKERS_PASS`, `A19_REAL_APP_UI_STATUS_PASS`, `A19_SCREENSHOT_PNG_PASS`, `A19_REAL_APP_STABILITY_PASS pid=11834`, `ANDROID_STAGE19_RESOURCE_GUARDS_PASS`.
+- UI Doğrulaması: `window.xml` hiyerarşisinde `ANDROID_STAGE19_RESOURCE_GUARDS_PASS` doğrulanarak `A19_REAL_APP_UI_STATUS_PASS` alındı.
+- Kararlılık: Paket ve PID kapsamında crash/ANR yok, uygulama canlı kaldı (`A19_REAL_APP_STABILITY_PASS pid=11834`).
+- Claim limit: `CLAIM_LIMIT=A19_RESOURCE_GUARDS_API36_ONLY_NOT_CAD_PARSE_TO_SCENE_OR_PHYSICAL_DEVICE_FIDELITY`.
+- Kanıt belgesi: `docs/evidence/STAGE_19.md`.
+
 ```text
-IMPLEMENTATION_BASELINE: AŞAMA 18 — DONE
-IMPLEMENTATION_CURSOR: AŞAMA 19 — NOT_STARTED
-A19_GATE: OPEN
-NEXT_ACTION: Sonraki normal BASLA/devam turunda AŞAMA 19'u (Malicious/corrupt input ve resource guards) başlat.
+IMPLEMENTATION_BASELINE: AŞAMA 19 — DONE
+IMPLEMENTATION_CURSOR: AŞAMA 20 — NOT_STARTED
+A20_GATE: OPEN
+NEXT_ACTION: Sonraki normal BASLA/devam turunda AŞAMA 20'yi (Ölçümlü performance/memory) başlat.
 ```
 
 

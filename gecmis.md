@@ -26,18 +26,18 @@ Bu dosya kısa kalıcı tarihçe/checkpoint kaydıdır. Ayrıntılı teknik kan�
 ```text
 ACTIVE_PRODUCT_TARGET: ANDROID_ONLY
 IOS_STATUS: DEFERRED_FUTURE_OPTION
-IMPLEMENTATION_BASELINE: AŞAMA 18 — DONE
+IMPLEMENTATION_BASELINE: AŞAMA 19 — DONE
 ANDROID_VALIDATION_V01_V09: CLOSED / VALIDATED_WITH_CLAIM_LIMITS
-LAST_IMPLEMENTATION: AŞAMA 18 — DONE
-LAST_IMPLEMENTATION_EVIDENCE: docs/evidence/STAGE_18.md
-A18_MAIN_MERGE: ab3a768 (PR #31)
-A18_CLAIM: A18_VIEWER_LIFECYCLE_API36_ONLY_NOT_CAD_PARSE_TO_SCENE_OR_PHYSICAL_DEVICE_FIDELITY
-IMPLEMENTATION_CURSOR: AŞAMA 19 — NOT_STARTED
+LAST_IMPLEMENTATION: AŞAMA 19 — DONE
+LAST_IMPLEMENTATION_EVIDENCE: docs/evidence/STAGE_19.md
+A19_MAIN_MERGE: 9483e7a (PR #32)
+A19_CLAIM: A19_RESOURCE_GUARDS_API36_ONLY_NOT_CAD_PARSE_TO_SCENE_OR_PHYSICAL_DEVICE_FIDELITY
+IMPLEMENTATION_CURSOR: AŞAMA 20 — NOT_STARTED
 A10_WORKSTREAM: docs/A10_WORKSTREAM.md (DONE)
 PENDING_EMULATOR_QUEUE: EMPTY
 PHYSICAL_ANDROID: DEFERRED_RELEASE_DEVICE_GATE
-A19_GATE: OPEN
-NEXT_ACTION: Sonraki normal BASLA/devam turunda AŞAMA 19'u (Malicious/corrupt input ve resource guards) başlat.
+A20_GATE: OPEN
+NEXT_ACTION: Sonraki normal BASLA/devam turunda AŞAMA 20'yi (Ölçümlü performance/memory) başlat.
 LAST_UPDATE: 2026-09-05
 ```
 
@@ -62,7 +62,8 @@ LAST_UPDATE: 2026-09-05
 - AŞAMA 16 — Model / Layout / Paper-Space / Viewport — `DONE`; PR `#29`, main merge `b978b84`, evidence `docs/evidence/STAGE_16.md`.
 - AŞAMA 17 — XREF / Raster Image / Underlay / External References & Compatibility — `DONE`; PR `#30`, main merge `dd9727b`, evidence `docs/evidence/STAGE_17.md`.
 - AŞAMA 18 — Tam Android viewer UX / lifecycle — `DONE`; PR `#31`, main merge `ab3a768`, evidence `docs/evidence/STAGE_18.md`.
-- AŞAMA 19–22 — Android viewer/release implementation sırası; cursor AŞAMA 19'da.
+- AŞAMA 19 — Malicious/corrupt input ve resource guards — `DONE`; PR `#32`, main merge `9483e7a`, evidence `docs/evidence/STAGE_19.md`.
+- AŞAMA 20–22 — Android viewer/release implementation sırası; cursor AŞAMA 20'de.
 - AŞAMA 23–24 — future iOS track, deferred.
 - AŞAMA 25–27 — Android beta/freeze/final handoff.
 
