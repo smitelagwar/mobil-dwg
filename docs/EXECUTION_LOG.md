@@ -167,10 +167,25 @@ PENDING_EMULATOR_QUEUE: EMPTY
 - Claim limit: `CLAIM_LIMIT=A13_LAYER_STYLE_API36_ONLY_NOT_CAD_PARSE_TO_SCENE_OR_PHYSICAL_DEVICE_FIDELITY`.
 - Kanıt belgesi: `docs/evidence/STAGE_13.md`.
 
+### 2026-09-05: AŞAMA 14 — TEXT / MTEXT / Türkçe / Font / SHX Tamamlandı ve Merge Edildi (PR #27)
+
+- PR: `#27` (`feat(a14): implement text, mtext, turkish encoding, and font substitution`).
+- `main` merge commit: `3803f25`.
+- Release APK: `39,621,552` byte; SHA-256 `2f853f638daba940b45f1685b92cb92750a52f09e16d0017e312c0430fe33b90`.
+- Android Emulator: `sdk_gphone64_x86_64` (Android 16 / API 36 / `x86_64`, serial `emulator-5554`).
+- Canlı PID: `8961`.
+- Ekran görüntüsü: `113,001` byte; SHA-256 `ad06c5c032d89f0f6000188aa1f3f895da3af930208cc76623ac778d9b05c3f7`.
+- Host test belirteçleri: `STAGE14_TEXT_FONT_TESTS_PASS` (Turkish character encoding CP1254/UTF-8, AutoCAD Unicode escapes `\U+XXXX`, AutoCAD symbols `%%d`, `%%p`, `%%c`, `%%%`, bounded MTEXT parser with `\P`, MTEXT nesting guard `MTEXT_NESTING_EXCEEDED`, zero-proprietary font substitution table `txt.shx`, `romans.shx`, `simplex.shx`, `isocp.shx` -> `sans-serif`, unknown font fallback, text alignment calculations, text mirror flags and rotation, text world bounds calculation, SkiaSharp text rendering dark and light themes, deterministic text-scene semantic snapshot), `STAGE13_LAYER_STYLE_TESTS_PASS`, `STAGE12_BLOCK_INSERT_TESTS_PASS`, `STAGE11_VIEWPORT_GESTURE_TESTS_PASS`, `STAGE10_GEOMETRY_PRIMITIVES_TESTS_PASS`, `STAGE10_TESSELLATION_PRECISION_TESTS_PASS`, `STAGE10_P0_SEMANTIC_GOLDEN_PASS`, `STAGE04_RENDER_CONTRACT_TESTS_PASS`, `STAGE09_RENDER_SCENE_TESTS_PASS`, `STAGE04_ARCHITECTURE_TESTS_PASS`, `STAGE05_DEPENDENCY_BOUNDARY_PASS`, `V04_REAL_ANDROID_APP_PROJECT_PASS`.
+- Android emülatör belirteçleri: `A14_ANDROID_TURKISH_UNICODE_PASS`, `A14_ANDROID_AUTOCAD_ESCAPES_PASS`, `A14_ANDROID_BOUNDED_MTEXT_PASS`, `A14_ANDROID_FONT_SUBSTITUTION_PASS`, `A14_ANDROID_ALIGNMENT_MIRROR_PASS`, `A14_ANDROID_SKIA_TEXT_PNG_PASS`, `ANDROID_STAGE14_TEXT_FONT_PASS`, `A14_REAL_APP_UI_IMAGE_READY`, `A14_REAL_APP_UI_STATUS_PASS`, `A14_REAL_APP_STABILITY_PASS`.
+- UI Doğrulaması: `window.xml` hiyerarşisinde `ANDROID_STAGE14_TEXT_FONT_PASS` doğrulanarak `A14_REAL_APP_UI_STATUS_PASS` alındı.
+- Kararlılık: Paket ve PID kapsamında crash/ANR yok, uygulama canlı kaldı (`A14_REAL_APP_STABILITY_PASS pid=8961`).
+- Claim limit: `CLAIM_LIMIT=A14_TEXT_FONT_API36_ONLY_NOT_CAD_PARSE_TO_SCENE_OR_PHYSICAL_DEVICE_FIDELITY`.
+- Kanıt belgesi: `docs/evidence/STAGE_14.md`.
+
 ```text
-IMPLEMENTATION_BASELINE: AŞAMA 13 — DONE
-IMPLEMENTATION_CURSOR: AŞAMA 14 — NOT_STARTED
-A14_GATE: OPEN
-NEXT_ACTION: Sonraki normal BASLA/devam turunda AŞAMA 14'ü (TEXT/MTEXT/Türkçe/font/SHX) başlat.
+IMPLEMENTATION_BASELINE: AŞAMA 14 — DONE
+IMPLEMENTATION_CURSOR: AŞAMA 15 — NOT_STARTED
+A15_GATE: OPEN
+NEXT_ACTION: Sonraki normal BASLA/devam turunda AŞAMA 15'i (Dimension/leader/hatch) başlat.
 ```
 
