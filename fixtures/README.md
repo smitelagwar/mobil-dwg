@@ -1,46 +1,49 @@
-# Test fixtures
+# mobil-dwg — Test Fixtures
 
-Bu klasör mobil-dwg test corpus'unun yalnız yeniden dağıtım açısından açıkça sınıflandırılmış bölümünü ve immutable remote referans sözleşmesini tutar.
+Bu klasör test corpus'unun yeniden dağıtım açısından açıkça sınıflandırılmış bölümünü ve immutable remote-reference sözleşmesini tutar. Fixture kayıtları aktif bir stage/cursor değildir; gelecekteki parser/render regresyonlarında yeniden kullanılabilir.
 
 ## Klasör politikası
 
-- `fixtures/manifest/`: fixture kimliği, format/version, boyut, içerik hash'i, provenance/hak bilgisi, feature kapsamı ve beklenen sonuç sözleşmesi.
+- `fixtures/manifest/`: fixture kimliği, format/version, boyut, hash, provenance/hak bilgisi, feature kapsamı ve beklenen sonuç sözleşmesi.
 - `fixtures/public/synthetic/`: mobil-dwg tarafından oluşturulmuş ve ayrı lisans notuyla commit edilmesine izin verilen küçük sentetik CAD fixture'ları.
 - `fixtures/private/`: müşteri/kullanıcı/özel test çizimleri. Git tarafından ignore edilir ve repoya giremez.
-- Upstream public CAD örnekleri varsayılan olarak bu repoya kopyalanmaz. Manifest, immutable upstream revision + path + hash ile referans verir; CI geçici cache'e indirir.
+- Upstream public CAD örnekleri varsayılan olarak repoya kopyalanmaz. Manifest gerektiğinde immutable upstream revision + path + hash ile referans verir.
 
-Bir dosyanın internette erişilebilir olması yeniden dağıtım izni anlamına gelmez. İlgili `sources` veya `rights_profiles` kaydında lisans/redistribution durumu çözülmemişse fixture redistributable smoke setine alınmaz.
+Bir dosyanın internette erişilebilir olması yeniden dağıtım izni anlamına gelmez. Lisans/redistribution durumu çözülmemiş fixture redistributable smoke setine alınmaz.
 
-CAD fixture bytes kanıtın parçasıdır. `.gitattributes` `*.dxf -text` ve `*.dwg binary` uygular; Windows checkout CRLF dönüşümü manifest hash'lerini değiştiremez.
+CAD fixture bytes kanıtın parçasıdır. `.gitattributes` CAD dosyalarında platform kaynaklı byte değişimini önleyecek şekilde korunur.
 
 ## Mini corpus
 
-Pozitif çekirdek:
+Tarihsel ve tekrar kullanılabilir pozitif referans seti:
 
-- 4 pinned ACadSharp DWG: R2000, R2004, R2010, R2018.
-- 2 pinned ACadSharp ASCII DXF: R2000, R2018.
-- 1 committed mobil-dwg sentetik R2000 DXF: basic geometry + Türkçe Unicode escape metni + nested block.
+- pinned ACadSharp DWG örnekleri: R2000, R2004, R2010, R2018,
+- pinned ACadSharp ASCII DXF örnekleri: R2000, R2018,
+- committed mobil-dwg sentetik R2000 DXF: basic geometry + Türkçe metin + nested block.
 
 Kontrollü negatifler:
 
-- committed missing-font DXF,
-- committed missing-XREF DXF,
-- CI'da pinned DWG'den üretilen deterministic truncated DWG,
-- CI'da pinned DWG'den üretilen deterministic byte-corruption DWG.
+- missing-font DXF,
+- missing-XREF DXF,
+- gerektiğinde pinned DWG'den üretilen truncated DWG,
+- gerektiğinde deterministic byte-corruption DWG.
 
-Remote ACadSharp fixture'ları mobil-dwg içine vendored değildir ve `remote-reference-only` kalır. Upstream semantic tree; hatch, block reference, dimension ve paper-space varlığını provenance/evidence olarak doğrular; mobil-dwg parser sonucu golden sayılmaz.
+Remote ACadSharp fixture'ları mobil-dwg içine vendored değildir ve `remote-reference-only` kalır. Upstream semantic bilgi provenance/reference olabilir; mobil-dwg parser çıktısının kendisi bağımsız golden sayılmaz.
 
-## Android redistributable smoke seti
+## Redistributable Android smoke seti
 
-`fixtures/manifest/stage03-mini.json` içindeki `android_smoke_set` daha sonraki V04–V09 Android doğrulamalarına küçük ve hak durumu açık girdiler sağlar:
+`fixtures/manifest/stage03-mini.json` içindeki tarihsel `android_smoke_set` gelecekteki Android/parser smoke testlerinde yeniden kullanılabilir:
 
-- `synthetic-turkish-basic-ac1015`: committed 0BSD DXF;
-- `synthetic-turkish-basic-ac1015-dwg`: yukarıdaki DXF'den `scripts/stage03-generate-synthetic-dwg.ps1` ile exact ACadSharp 3.7.1 kullanılarak validation-time üretilen DWG;
-- `negative-missing-font-ac1015` ve `negative-missing-xref-ac1015`: committed negatif 0BSD DXF'ler.
+- `synthetic-turkish-basic-ac1015`: committed 0BSD DXF,
+- `synthetic-turkish-basic-ac1015-dwg`: sentetik DXF'den exact ACadSharp 3.7.1 generator sözleşmesiyle test sırasında üretilebilen DWG,
+- `negative-missing-font-ac1015`,
+- `negative-missing-xref-ac1015`.
 
-Generated DWG binary golden olarak commit edilmez. Generator output'u `AC1015` magic ve `DwgReader` read-back ile doğrulanır; run-specific byte count/SHA-256 evidence artifact'ine yazılır. Bu DWG open-path smoke girdisidir; bağımsız DWG engineering-fidelity goldeni değildir.
+Generated DWG binary bağımsız engineering-fidelity goldeni değildir. Kullanılıyorsa generator/version, format magic/read-back, byte count ve SHA-256 test evidence'ına yazılır.
 
 ## Validator
+
+Mevcut fixture audit aracı tarihsel dosya adını korur:
 
 ```bash
 python scripts/stage03-validate-fixtures.py \
@@ -48,9 +51,6 @@ python scripts/stage03-validate-fixtures.py \
   --evidence artifacts/stage03-fixture-audit.json
 ```
 
-Beklenen ana marker'lar:
+Script/marker adlarında `stage03` veya `V03` geçmesi onların aktif geliştirme cursor'ı olduğu anlamına gelmez; bunlar geriye dönük uyumluluk için korunmuş test isimleridir.
 
-- `V03_ANDROID_SMOKE_SET_PASS`
-- `STAGE03_FIXTURE_AUDIT_PASS`
-- `STAGE03_DUAL_HASH_PASS`
-- CI kapanışında `ANDROID_VALIDATION_V03_PASS`
+Fixture/golden genel kuralları için `docs/GOLDEN_CONTRACT.md` esas alınır.
