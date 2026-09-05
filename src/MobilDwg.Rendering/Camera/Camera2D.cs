@@ -84,6 +84,35 @@ public readonly record struct Camera2D
         return new Camera2D(PixelWidth, PixelHeight, Center, next, MinWorldUnitsPerPixel, MaxWorldUnitsPerPixel);
     }
 
+    public Camera2D ZoomAt(ScreenPoint2 focalScreenPoint, double factor)
+    {
+        EnsureValid();
+        if (!double.IsFinite(factor) || factor <= 0) throw new ArgumentOutOfRangeException(nameof(factor));
+        var worldFocal = CameraTransform.ScreenToWorld(focalScreenPoint, this);
+        var nextWupp = Math.Clamp(WorldUnitsPerPixel / factor, MinWorldUnitsPerPixel, MaxWorldUnitsPerPixel);
+        var newCenterX = worldFocal.X - ((focalScreenPoint.X - (PixelWidth / 2d)) * nextWupp);
+        var newCenterY = worldFocal.Y - (((PixelHeight / 2d) - focalScreenPoint.Y) * nextWupp);
+        return new Camera2D(PixelWidth, PixelHeight, new WorldPoint2(newCenterX, newCenterY), nextWupp, MinWorldUnitsPerPixel, MaxWorldUnitsPerPixel);
+    }
+
+    public Camera2D PanBy(double deltaScreenX, double deltaScreenY)
+    {
+        EnsureValid();
+        if (!double.IsFinite(deltaScreenX)) throw new ArgumentOutOfRangeException(nameof(deltaScreenX));
+        if (!double.IsFinite(deltaScreenY)) throw new ArgumentOutOfRangeException(nameof(deltaScreenY));
+        var newCenterX = Center.X - (deltaScreenX * WorldUnitsPerPixel);
+        var newCenterY = Center.Y + (deltaScreenY * WorldUnitsPerPixel);
+        return new Camera2D(PixelWidth, PixelHeight, new WorldPoint2(newCenterX, newCenterY), WorldUnitsPerPixel, MinWorldUnitsPerPixel, MaxWorldUnitsPerPixel);
+    }
+
+    public Camera2D Resize(int newPixelWidth, int newPixelHeight)
+    {
+        EnsureValid();
+        if (newPixelWidth <= 0) throw new ArgumentOutOfRangeException(nameof(newPixelWidth));
+        if (newPixelHeight <= 0) throw new ArgumentOutOfRangeException(nameof(newPixelHeight));
+        return new Camera2D(newPixelWidth, newPixelHeight, Center, WorldUnitsPerPixel, MinWorldUnitsPerPixel, MaxWorldUnitsPerPixel);
+    }
+
     public RenderViewport ToViewport()
     {
         EnsureValid();

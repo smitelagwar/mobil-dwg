@@ -191,7 +191,19 @@ public static class SkiaScenePngRenderer
         if (scene.WorldBounds is not { } bounds) throw new ArgumentException("Cannot fit-render an empty scene.", nameof(scene));
 
         var camera = Camera2D.Fit(bounds, pixelWidth, pixelHeight, paddingFraction);
-        using var surface = new SkiaBitmapRenderSurface(pixelWidth, pixelHeight, density);
+        return await RenderCameraWithStatsAsync(scene, camera, density, cancellationToken);
+    }
+
+    public static async ValueTask<ScenePngRenderResult> RenderCameraWithStatsAsync(
+        RenderScene scene,
+        Camera2D camera,
+        double density = 1d,
+        CancellationToken cancellationToken = default)
+    {
+        ArgumentNullException.ThrowIfNull(scene);
+        if (!camera.IsValid) throw new ArgumentException("Camera must be valid.", nameof(camera));
+
+        using var surface = new SkiaBitmapRenderSurface(camera.PixelWidth, camera.PixelHeight, density);
         await new SkiaCadRenderer().RenderAsync(scene, surface, camera.ToViewport(), cancellationToken);
 
         var background = scene.ColorContext.BackgroundArgb;
