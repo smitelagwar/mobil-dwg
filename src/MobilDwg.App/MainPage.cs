@@ -5,7 +5,7 @@ using Microsoft.Maui.Storage;
 using MobilDwg.App.Opening;
 using MobilDwg.Cad.AcadSharp;
 
-#if V06_VALIDATION || A10_VALIDATION || A11_VALIDATION || A12_VALIDATION || A13_VALIDATION || A14_VALIDATION || A15_VALIDATION || A16_VALIDATION || A17_VALIDATION || A18_VALIDATION || A19_VALIDATION || A20_VALIDATION
+#if V06_VALIDATION || A10_VALIDATION || A11_VALIDATION || A12_VALIDATION || A13_VALIDATION || A14_VALIDATION || A15_VALIDATION || A16_VALIDATION || A17_VALIDATION || A18_VALIDATION || A19_VALIDATION || A20_VALIDATION || A21_VALIDATION
 using Android.Util;
 #endif
 
@@ -51,6 +51,9 @@ public sealed class MainPage : ContentPage
 #endif
 #if A19_VALIDATION
     private bool _a19Started;
+#endif
+#if A21_VALIDATION
+    private bool _a21Started;
 #endif
 
     public MainPage()
@@ -362,7 +365,26 @@ public sealed class MainPage : ContentPage
         };
         layout.Children.Insert(2, a20Status);
         layout.Children.Insert(3, a20Image);
-        Loaded += async (_, _) => await RunA20ValidationAsync(a20Status, a20Image);
+#endif
+#if A21_VALIDATION
+        var a21Status = new Label
+        {
+            Text = "A21_VALIDATION_PENDING",
+            AutomationId = "a21-validation-status",
+            FontSize = 13,
+            TextColor = Color.FromArgb("#B8C4D8"),
+            HorizontalTextAlignment = TextAlignment.Center,
+        };
+        var a21Image = new Image
+        {
+            AutomationId = "a21-render-image",
+            HeightRequest = 420,
+            Aspect = Aspect.AspectFit,
+            BackgroundColor = Color.FromArgb("#101010"),
+        };
+        layout.Children.Insert(2, a21Status);
+        layout.Children.Insert(3, a21Image);
+        Loaded += async (_, _) => await RunA21ValidationAsync(a21Status, a21Image);
 #endif
 
         Content = new ScrollView { Content = layout };
@@ -870,6 +892,34 @@ public sealed class MainPage : ContentPage
                 status.Text = $"ANDROID_STAGE20_PERFORMANCE_MEMORY_FAIL: {exception.Message}";
             });
             Log.Error(A20AndroidValidationRunner.Tag, $"ANDROID_STAGE20_PERFORMANCE_MEMORY_FAIL: {exception}");
+        }
+    }
+#endif
+
+#if A21_VALIDATION
+    private async Task RunA21ValidationAsync(Label status, Image image)
+    {
+        if (_a21Started) return;
+        _a21Started = true;
+        status.Text = "A21_VALIDATION_RUNNING";
+        try
+        {
+            var result = await Task.Run(A21AndroidValidationRunner.RunAsync);
+            var png = result.Png;
+            MainThread.BeginInvokeOnMainThread(() =>
+            {
+                image.Source = ImageSource.FromStream(() => new MemoryStream(png, writable: false));
+                status.Text = $"{result.Marker} | {result.RegressionSummary} | {result.BetaGateSummary}";
+            });
+            Log.Info(A21AndroidValidationRunner.Tag, $"A21_REAL_APP_UI_IMAGE_READY sha256={result.PngSha256}");
+        }
+        catch (Exception exception)
+        {
+            MainThread.BeginInvokeOnMainThread(() =>
+            {
+                status.Text = $"ANDROID_STAGE21_CORPUS_REGRESSION_FAIL: {exception.Message}";
+            });
+            Log.Error(A21AndroidValidationRunner.Tag, $"ANDROID_STAGE21_CORPUS_REGRESSION_FAIL: {exception}");
         }
     }
 #endif
