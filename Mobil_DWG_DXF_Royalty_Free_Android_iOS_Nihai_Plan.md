@@ -400,9 +400,11 @@ Yalnız crash/privacy/P0 fidelity/open/lifecycle/severe perf blocker düzeltmele
 - B5: CadFileOpenCoordinator.ResetCurrentSessionAsync() ile hatalı açma sonrası bayat oturum temizliği ve temiz 2. açma
 - Platform-neutral sözleşme testleri (Stage25BetaBlockerTests) ve API 36 emülatör kabul testi ile beta blocker kapı onayı (`ANDROID_STAGE25_BETA_BLOCKER_PASS`). Evidence: `docs/evidence/STAGE_25.md`.
 
-### AŞAMA 26 — Dependency freeze / final audit / RC approval
+### AŞAMA 26 — Dependency freeze / final audit / RC approval — `DONE`
 
-Toolchain/dependency freeze, full regression/perf/signed artifact smoke, APK/AAB inventory+SBOM/license/source/native/font/asset match; unknown = NO-GO.
+Giriş kapısı: `AŞAMA 25 DONE ON MAIN`.
+
+Toolchain ve bağımlılık dondurma (.NET SDK 10.0.400, SDK 36, minSdk 24, locked-mode restore, Directory.Packages.props exact freeze), sıfır güvenlik açığı, APK ve AAB envanter denetimi (37.7 MB APK, 37.41 MB AAB < 45 MB bütçesi altında), yerel kütüphane denetimi (yalnızca libSkiaSharp.so ve resmi .NET çalışma zamanı; sıfır kapalı CAD SDK), font asset denetimi (sıfır tescilli AutoCAD SHX fontu; açık kaynak sistem font eşlemesi), %100 çevrimdışı Data Safety (sıfır INTERNET izni), 114.8 MB Dumpsys PSS, deterministik snapshot (`schema=rc-approval/v1`), platform-neutral denetim testleri (`Stage26FinalAuditTests`) ve API 36 emülatör kabul testi ile nihai Release Candidate onayı (`ANDROID_STAGE26_RC_APPROVAL_PASS`). Evidence: `docs/evidence/STAGE_26.md`.
 
 ### AŞAMA 27 — Android v1 artifact / yayın / handoff
 

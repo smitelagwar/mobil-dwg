@@ -371,12 +371,32 @@ NEXT_ACTION: Sonraki normal BASLA/devam turunda AŞAMA 21'i (Android full corpus
 - Claim limit: `CLAIM_LIMIT=A25_BETA_BLOCKER_FIXES_EMULATOR_ONLY_NOT_PHYSICAL_DEVICE_FIDELITY`.
 - Kanıt belgesi: `docs/evidence/STAGE_25.md`.
 
+### 2026-09-05 — AŞAMA 26: Dependency freeze / final audit / RC approval tamamlandı
+
+- Branch: `stage26-final-audit`.
+- PR: `#37` (`feat(stage26): dependency freeze final audit and rc approval with api36 acceptance gate`).
+- Toolchain Dondurma: .NET SDK `10.0.400`, `maui-android` workload, Target SDK `36`, Min SDK `24`, kilitli mod (`--locked-mode`) paket geri yükleme doğrulandı (`A26_TOOLCHAIN_FREEZE_PASS`).
+- Bağımlılık Dondurma & İzin Listesi: `Directory.Packages.props` exact freeze (`ACadSharp [3.7.1]`, `SkiaSharp [4.151.1]`, `Microsoft.Maui.Controls [10.0.100]`), %100 Permissive/Royalty-Free lisanslar (MIT / Apache-2.0), sıfır kapalı CAD SDK, sıfır copyleft, sıfır güvenlik açığı (`A26_DEPENDENCY_FREEZE_PASS`).
+- Yerel İkili (.so) ve Font Denetimi: Yalnızca onaylı `libSkiaSharp.so` ve resmi .NET/Mono çalışma zamanı kütüphaneleri (216 kütüphane tarandı, yabancı/kapalı SDK sıfır); sıfır tescilli AutoCAD SHX fontu (`A26_NATIVE_ASSET_AUDIT_PASS`, `A26_FONT_SUBSTITUTION_AUDIT_PASS`).
+- Veri Güvenliği: 100% çevrimdışı, sıfır `android.permission.INTERNET`, sıfır kullanıcı verisi toplama/telemetri/reklam (`A26_DATA_SAFETY_AUDIT_PASS`).
+- Paket Bütçeleri: İmzalı Release APK `37.7 MB` (< 45 MB), İmzalı Release AAB `37.41 MB` (< 45 MB).
+- Dumpsys meminfo Total PSS: `114.8 MB` (< 250 MB).
+- Deterministik Snapshot: `schema=rc-approval/v1`, hash `8f03b5572669c896e7ee1fba4833c2d74461080a95e9fff44a3b3216627c0a09` (`A26_RC_APPROVAL_SNAPSHOT_PASS`).
+- Host test belirteçleri: `STAGE26_TOOLCHAIN_FREEZE_PASS`, `STAGE26_DEPENDENCY_FREEZE_PASS`, `STAGE26_NATIVE_ASSET_AUDIT_PASS`, `STAGE26_FONT_SUBSTITUTION_AUDIT_PASS`, `STAGE26_VERDICT_EVALUATION_PASS`, `STAGE26_SNAPSHOT_DETERMINISM_PASS`, `STAGE26_FINAL_AUDIT_TESTS_PASS`.
+- Android Emulator: `sdk_gphone64_x86_64` (Android 16 / API 36 / `x86_64`, serial `emulator-5554`).
+- Android emülatör belirteçleri: `A26_ANDROID_VALIDATION_STARTING`, `A26_TOOLCHAIN_FREEZE_PASS`, `A26_DEPENDENCY_FREEZE_PASS`, `A26_NATIVE_ASSET_AUDIT_PASS`, `A26_FONT_SUBSTITUTION_AUDIT_PASS`, `A26_DATA_SAFETY_AUDIT_PASS`, `A26_FINAL_RC_APPROVAL_PASS verdict=ANDROID_STAGE26_RC_APPROVAL_PASS passed=7/7 blockers=0`, `A26_RC_APPROVAL_SNAPSHOT_PASS`, `A26_PROOF_PNG_READY bytes=26142 sha256=b7a95e02c31920dc3ecb5cd28cc7cbf4336e81b83ceee27119260bf587250e23`, `ANDROID_STAGE26_RC_APPROVAL_PASS`, `A26_REAL_APP_UI_IMAGE_READY`.
+- UI Doğrulaması: `a26_window.xml` hiyerarşisinde `ANDROID_STAGE26_RC_APPROVAL_PASS` doğrulanarak `[A26-GATE] UI hierarchy verified!` alındı.
+- Ekran görüntüsü: `artifacts/a26-android-final-audit/a26-real-app-rc-approval.png` (136.9 KB, geçerli PNG başlığı).
+- Kararlılık: Paket kapsamında crash/ANR yok.
+- Claim limit: `CLAIM_LIMIT=A26_FINAL_RC_APPROVAL_API36_ONLY_NOT_PHYSICAL_DEVICE_FIDELITY`.
+- Kanıt belgesi: `docs/evidence/STAGE_26.md`.
+
 ```text
-IMPLEMENTATION_BASELINE: AŞAMA 25 — DONE
-IMPLEMENTATION_CURSOR: AŞAMA 26 — NOT_STARTED
-A25_GATE: CLOSED / PASSED
-A26_GATE: OPEN
-NEXT_ACTION: Sonraki normal BASLA/devam turunda AŞAMA 26'yı (Dependency freeze / final audit / RC approval) başlat.
+IMPLEMENTATION_BASELINE: AŞAMA 26 — DONE
+IMPLEMENTATION_CURSOR: AŞAMA 27 — NOT_STARTED
+A26_GATE: CLOSED / PASSED
+A27_GATE: OPEN
+NEXT_ACTION: Sonraki normal BASLA/devam turunda AŞAMA 27'yi (Android v1 artifact / yayın / handoff) başlat.
 ```
 
 

@@ -26,18 +26,18 @@ Bu dosya kısa kalıcı tarihçe/checkpoint kaydıdır. Ayrıntılı teknik kan�
 ```text
 ACTIVE_PRODUCT_TARGET: ANDROID_ONLY
 IOS_STATUS: DEFERRED_FUTURE_OPTION
-IMPLEMENTATION_BASELINE: AŞAMA 25 — DONE
+IMPLEMENTATION_BASELINE: AŞAMA 26 — DONE
 ANDROID_VALIDATION_V01_V09: CLOSED / VALIDATED_WITH_CLAIM_LIMITS
-LAST_IMPLEMENTATION: AŞAMA 25 — DONE
-LAST_IMPLEMENTATION_EVIDENCE: docs/evidence/STAGE_25.md
-A25_CLAIM: A25_BETA_BLOCKER_FIXES_EMULATOR_ONLY_NOT_PHYSICAL_DEVICE_FIDELITY
-IMPLEMENTATION_CURSOR: AŞAMA 26 — NOT_STARTED
+LAST_IMPLEMENTATION: AŞAMA 26 — DONE
+LAST_IMPLEMENTATION_EVIDENCE: docs/evidence/STAGE_26.md
+A26_CLAIM: A26_FINAL_RC_APPROVAL_API36_ONLY_NOT_PHYSICAL_DEVICE_FIDELITY
+IMPLEMENTATION_CURSOR: AŞAMA 27 — NOT_STARTED
 A10_WORKSTREAM: docs/A10_WORKSTREAM.md (DONE)
 PENDING_EMULATOR_QUEUE: EMPTY
 PHYSICAL_ANDROID: DEFERRED_RELEASE_DEVICE_GATE
-A25_GATE: CLOSED / PASSED
-A26_GATE: OPEN
-NEXT_ACTION: Sonraki normal BASLA/devam turunda AŞAMA 26'yı (Dependency freeze / final audit / RC approval) başlat.
+A26_GATE: CLOSED / PASSED
+A27_GATE: OPEN
+NEXT_ACTION: Sonraki normal BASLA/devam turunda AŞAMA 27'yi (Android v1 artifact / yayın / handoff) başlat.
 LAST_UPDATE: 2026-09-05
 ```
 
@@ -68,7 +68,8 @@ LAST_UPDATE: 2026-09-05
 - AŞAMA 22 — Android Release/AAB/compliance RC — `DONE`; PR `#35`, main merge `b0105a3`, evidence `docs/evidence/STAGE_22.md`.
 - AŞAMA 23–24 — future iOS track, deferred.
 - AŞAMA 25 — Android beta ve blocker düzeltmeleri — `DONE`; evidence `docs/evidence/STAGE_25.md`.
-- AŞAMA 26–27 — Dependency freeze / final audit / RC approval ve artifact handoff; cursor AŞAMA 26'da.
+- AŞAMA 26 — Dependency freeze / final audit / RC approval — `DONE`; evidence `docs/evidence/STAGE_26.md`.
+- AŞAMA 27 — Android v1 artifact / yayın / handoff; cursor AŞAMA 27'de.
 
 
 ## Android revalidation geçmişi
