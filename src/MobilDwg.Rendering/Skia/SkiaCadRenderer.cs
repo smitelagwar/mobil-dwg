@@ -170,6 +170,12 @@ public sealed class SkiaCadRenderer : ICadRenderer
             return;
         }
 
+        if (primitive is HatchPrimitive hatchPrimitive)
+        {
+            DrawHatchPrimitive(canvas, hatchPrimitive, camera, strokePaint, fillPaint);
+            return;
+        }
+
         var path = GeometryTessellator.Tessellate(primitive, tessellation);
         if (primitive is PointPrimitive)
         {
@@ -247,6 +253,48 @@ public sealed class SkiaCadRenderer : ICadRenderer
         finally
         {
             canvas.RestoreToCount(saveCount);
+        }
+    }
+
+    private static void DrawHatchPrimitive(
+        SKCanvas canvas,
+        HatchPrimitive hatch,
+        Camera2D camera,
+        SKPaint strokePaint,
+        SKPaint fillPaint)
+    {
+        if (hatch.Loops.Count == 0) return;
+
+        using var builder = new SKPathBuilder();
+        builder.FillType = SKPathFillType.EvenOdd;
+        foreach (var loop in hatch.Loops)
+        {
+            if (loop.Vertices.Count < 2) continue;
+            var start = CameraTransform.WorldToScreen(loop.Vertices[0], camera);
+            builder.MoveTo(ToFloat(start.X), ToFloat(start.Y));
+            for (var i = 1; i < loop.Vertices.Count; i++)
+            {
+                var pt = CameraTransform.WorldToScreen(loop.Vertices[i], camera);
+                builder.LineTo(ToFloat(pt.X), ToFloat(pt.Y));
+            }
+            builder.Close();
+        }
+
+        using var skPath = builder.Detach();
+
+        if (hatch.IsSolid)
+        {
+            canvas.DrawPath(skPath, fillPaint);
+        }
+        else
+        {
+            canvas.DrawPath(skPath, strokePaint);
+            foreach (var line in hatch.PatternLines)
+            {
+                var p1 = CameraTransform.WorldToScreen(line.Start, camera);
+                var p2 = CameraTransform.WorldToScreen(line.End, camera);
+                canvas.DrawLine(ToFloat(p1.X), ToFloat(p1.Y), ToFloat(p2.X), ToFloat(p2.Y), strokePaint);
+            }
         }
     }
 
