@@ -64,7 +64,7 @@ LAST_UPDATE: 2026-09-05
 - AŞAMA 19 — Malicious/corrupt input ve resource guards — `DONE`; PR `#32`, main merge `9483e7a`, evidence `docs/evidence/STAGE_19.md`.
 - AŞAMA 20 — Ölçümlü performance/memory — `DONE`; PR `#33`, main merge `1603154`, evidence `docs/evidence/STAGE_20.md`.
 - AŞAMA 21 — Android full corpus regression / beta gate — `DONE`; PR `#34`, main merge `919888b`, evidence `docs/evidence/STAGE_21.md`.
-- AŞAMA 22 — Android Release/AAB/compliance RC — `DONE`; PR `#35`, evidence `docs/evidence/STAGE_22.md`.
+- AŞAMA 22 — Android Release/AAB/compliance RC — `DONE`; PR `#35`, main merge `b0105a3`, evidence `docs/evidence/STAGE_22.md`.
 - AŞAMA 23–24 — future iOS track, deferred.
 - AŞAMA 25–27 — Android beta/freeze/final handoff; cursor AŞAMA 25'te.
 

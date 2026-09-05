@@ -11,6 +11,7 @@ AŞAMA 22 çıkış kriterleri platform-neutral C# testleri (7/7 PASS), katman m
 - Base `main` HEAD: `450f2b5` (A21 tamamlanması sonrası).
 - Branch: `stage22-release-rc`.
 - PR: `#35` (`feat(stage22): android release aab and compliance rc with api36 acceptance gate`).
+- `main` Merge SHA: `b0105a3`.
 - **Nihai Paket Metaverisi (Final Package Metadata)**:
   - Package ID: `com.smitelagwar.mobildwg`
   - Application Title: `Mobil DWG`

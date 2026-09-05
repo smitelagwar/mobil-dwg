@@ -328,6 +328,7 @@ NEXT_ACTION: Sonraki normal BASLA/devam turunda AŞAMA 21'i (Android full corpus
 
 - Branch: `stage22-release-rc`.
 - PR: `#35` (`feat(stage22): android release aab and compliance rc with api36 acceptance gate`).
+- `main` merge commit: `b0105a3`.
 - Release APK: `39,524,374` byte (~37.7 MB, <45 MB bütçesi altında, SHA-256 `97d0e544d64cb20fdf9cc08948e8174e6d3e61a7621761ddf2fa7dca905b1cc9`).
 - Release AAB: `38,978,709` byte (~37.1 MB, multi-ABI universal arm64-v8a + x86_64, <45 MB bütçesi altında, SHA-256 `c8dcb33f925bbd3df43a96ae7b1dff90d1f7bebb6c8889c0953184cfb786fa0b`).
 - Android Emulator: `sdk_gphone64_x86_64` (Android 16 / API 36 / `x86_64`, serial `emulator-5554`).
