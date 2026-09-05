@@ -12,6 +12,7 @@
     <SupportedOSPlatformVersion>24.0</SupportedOSPlatformVersion>
     <TargetSdkVersion>36</TargetSdkVersion>
     <EmbedAssembliesIntoApk>true</EmbedAssembliesIntoApk>
+    <AndroidEnableSGenConcurrent>true</AndroidEnableSGenConcurrent>
   </PropertyGroup>
 
   <PropertyGroup Condition="'$(V05Validation)' == 'true'">
@@ -102,6 +103,10 @@
   <ItemGroup>
     <MauiIcon Include="Resources/AppIcon/appicon.svg" Color="#1565C0" />
     <MauiSplashScreen Include="Resources/Splash/splash.svg" Color="#0B1220" BaseSize="128,128" />
+  </ItemGroup>
+
+  <ItemGroup>
+    <AndroidEnvironment Include="Platforms\Android\environment.txt" />
   </ItemGroup>
 
   <ItemGroup Condition="'$(V05Validation)' == 'true'">

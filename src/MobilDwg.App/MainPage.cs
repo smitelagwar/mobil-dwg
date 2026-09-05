@@ -106,6 +106,16 @@ public sealed class MainPage : ContentPage
         BackgroundColor = Color.FromArgb("#0B0F19");
         _coordinator = CreateCoordinator();
 
+#if ANDROID
+        MainActivity.CadFileRequested += fileName =>
+        {
+            Dispatcher.Dispatch(async () =>
+            {
+                await OpenDesktopCadFileAsync(fileName, fileName);
+            });
+        };
+#endif
+
         _titleLabel = new Label
         {
             Text = "Mobil DWG",
@@ -302,11 +312,44 @@ public sealed class MainPage : ContentPage
 
         dashContent.Children.Add(new Label
         {
+            Text = "MASAÜSTÜ GERÇEK CAD PROJELERİ",
+            FontSize = 12,
+            FontAttributes = FontAttributes.Bold,
+            TextColor = Color.FromArgb("#38BDF8"),
+            Margin = new Thickness(4, 4, 0, 0)
+        });
+
+        dashContent.Children.Add(CreateSampleCard(
+            "📐",
+            "1 ve 2.kat dwg.dwg",
+            "Kat mimari ve kalıp planı • 6.869 Varlık • 40 Katman",
+            "3.28 MB • DWG 2018",
+            async () => await OpenDesktopCadFileAsync("1 ve 2.kat dwg.dwg", "1 ve 2.kat dwg.dwg", "1_ve_2_kat_dwg.dwg"),
+            "desktop-card-dwg1"));
+
+        dashContent.Children.Add(CreateSampleCard(
+            "🏗️",
+            "SÜHEYLA KARA STATİK (HAFİF).dwg",
+            "Statik betonarme kalıp & donatı projesi • 131.655 Varlık • 68 Katman",
+            "7.32 MB • DWG 2018",
+            async () => await OpenDesktopCadFileAsync("SÜHEYLA KARA STATİK (HAFİF) - Kopya.dwg", "SÜHEYLA KARA STATİK (HAFİF) - Kopya.dwg", "suheyla_kara_statik.dwg"),
+            "desktop-card-dwg2"));
+
+        dashContent.Children.Add(CreateSampleCard(
+            "⚡",
+            "SÜHEYLA KARA STATİK (HAFİF).dxf",
+            "Vektör CAD veri değişimi formatı • 131.655 Varlık • 69 Katman",
+            "60.52 MB • DXF 2004",
+            async () => await OpenDesktopCadFileAsync("SÜHEYLA KARA STATİK (HAFİF) - Kopya.dxf", "SÜHEYLA KARA STATİK (HAFİF) - Kopya.dxf", "suheyla_kara_statik.dxf"),
+            "desktop-card-dxf3"));
+
+        dashContent.Children.Add(new Label
+        {
             Text = "HIZLI TEST İÇİN ÖRNEK ÇİZİMLER",
             FontSize = 12,
             FontAttributes = FontAttributes.Bold,
             TextColor = Color.FromArgb("#64748B"),
-            Margin = new Thickness(4, 4, 0, 0)
+            Margin = new Thickness(4, 8, 0, 0)
         });
 
         dashContent.Children.Add(CreateSampleCard(
@@ -361,7 +404,7 @@ public sealed class MainPage : ContentPage
         });
         engineStack.Children.Add(new Label
         {
-            Text = ".NET 10 MAUI • Skia 2D Çizim Motoru • ACadSharp Okuyucu\nHedef Platform: Android 16 (API 36) • Min: API 24",
+            Text = ".NET 10 MAUI • Skia 2D Çizim Motoru • CAD Okuyucu\nHedef Platform: Android 16 (API 36) • Min: API 24",
             FontSize = 11,
             TextColor = Color.FromArgb("#64748B")
         });
@@ -1085,10 +1128,17 @@ public sealed class MainPage : ContentPage
         Content = rootGrid;
     }
 
-    private static Border CreateSampleCard(string icon, string title, string subtitle, string badge, Action onTap)
+    private static Border CreateSampleCard(
+        string icon,
+        string title,
+        string subtitle,
+        string badge,
+        Action onTap,
+        string? automationId = null)
     {
         var border = new Border
         {
+            AutomationId = automationId,
             Stroke = Color.FromArgb("#1E293B"),
             StrokeThickness = 1,
             StrokeShape = new RoundRectangle { CornerRadius = 14 },
@@ -1365,6 +1415,27 @@ public sealed class MainPage : ContentPage
 #if V06_VALIDATION
         LogV06("V06_LIFECYCLE_APPEARING");
 #endif
+#if ANDROID
+        try
+        {
+            var activity = Microsoft.Maui.ApplicationModel.Platform.CurrentActivity;
+            var intent = activity?.Intent;
+            if (intent is not null)
+            {
+                var openCad = intent.GetStringExtra("open_cad");
+                if (!string.IsNullOrEmpty(openCad))
+                {
+                    intent.RemoveExtra("open_cad");
+                    Dispatcher.Dispatch(async () =>
+                    {
+                        await Task.Delay(400);
+                        await OpenDesktopCadFileAsync(openCad, openCad);
+                    });
+                }
+            }
+        }
+        catch { }
+#endif
     }
 
     protected override void OnDisappearing()
@@ -1374,6 +1445,97 @@ public sealed class MainPage : ContentPage
         LogV06("V06_LIFECYCLE_DISAPPEARING");
 #endif
         base.OnDisappearing();
+    }
+
+    public async Task OpenDesktopCadFileAsync(string displayName, params string[] candidateNames)
+    {
+        try
+        {
+            var searchDirs = new List<string>();
+#if ANDROID
+            try
+            {
+                var extFiles = Android.App.Application.Context.GetExternalFilesDir(null)?.AbsolutePath;
+                if (!string.IsNullOrEmpty(extFiles))
+                {
+                    searchDirs.Add(extFiles);
+                    searchDirs.Add(System.IO.Path.Combine(extFiles, "CAD"));
+                }
+            }
+            catch { }
+            try
+            {
+                var downloads = Android.OS.Environment.GetExternalStoragePublicDirectory(Android.OS.Environment.DirectoryDownloads)?.AbsolutePath;
+                if (!string.IsNullOrEmpty(downloads)) searchDirs.Add(downloads);
+            }
+            catch { }
+#endif
+            try
+            {
+                var appData = FileSystem.Current.AppDataDirectory;
+                if (!string.IsNullOrEmpty(appData)) searchDirs.Add(appData);
+            }
+            catch { }
+            try
+            {
+                var cacheDir = FileSystem.Current.CacheDirectory;
+                if (!string.IsNullOrEmpty(cacheDir)) searchDirs.Add(cacheDir);
+            }
+            catch { }
+            searchDirs.Add("/sdcard/Android/data/com.smitelagwar.mobildwg/files");
+            searchDirs.Add("/sdcard/Android/data/com.smitelagwar.mobildwg/files/CAD");
+            searchDirs.Add("/storage/emulated/0/Android/data/com.smitelagwar.mobildwg/files");
+            searchDirs.Add("/sdcard/Download");
+            searchDirs.Add("/storage/emulated/0/Download");
+
+            string? foundPath = null;
+            foreach (var dir in searchDirs)
+            {
+                if (string.IsNullOrEmpty(dir) || !Directory.Exists(dir)) continue;
+                foreach (var name in candidateNames)
+                {
+                    var full = System.IO.Path.Combine(dir, name);
+                    if (File.Exists(full))
+                    {
+                        foundPath = full;
+                        break;
+                    }
+                }
+                if (foundPath != null) break;
+            }
+
+            if (foundPath is null)
+            {
+                _status.Text = $"Dosya bulunamadı: {displayName}";
+#if ANDROID
+                Android.Util.Log.Warn("MobilDwgCAD", $"DESKTOP_FILE_NOT_FOUND name={displayName}");
+#endif
+                return;
+            }
+
+#if ANDROID
+            Android.Util.Log.Info("MobilDwgCAD", $"DESKTOP_FILE_OPEN_START name={displayName} path={foundPath}");
+#endif
+            _status.Text = $"Açılıyor: {displayName}...";
+            var fileInfo = new FileInfo(foundPath);
+            var selection = new CadFileSelection(
+                displayName,
+                fileInfo.Length,
+                _ => ValueTask.FromResult<Stream>(File.OpenRead(foundPath))
+            );
+
+            await OpenSelectionAsync(selection);
+#if ANDROID
+            Android.Util.Log.Info("MobilDwgCAD", $"DESKTOP_FILE_OPEN_SUCCESS name={displayName}");
+#endif
+        }
+        catch (Exception ex)
+        {
+            _status.Text = $"Açma hatası: {ex.Message}";
+#if ANDROID
+            Android.Util.Log.Error("MobilDwgCAD", $"DESKTOP_FILE_OPEN_FAIL name={displayName} ex={ex}");
+#endif
+        }
     }
 
     private async void OpenClicked(object? sender, EventArgs e)
@@ -1479,8 +1641,20 @@ public sealed class MainPage : ContentPage
             {
                 try
                 {
+#if ANDROID
+                    var swExt = System.Diagnostics.Stopwatch.StartNew();
+#endif
                     var extracted = AcadSharpEntityExtractor.Extract(coordinator.CurrentSession.Handle);
+#if ANDROID
+                    swExt.Stop();
+                    Android.Util.Log.Info("MobilDwgCAD", $"STAGE_EXTRACT_DONE count={extracted.Entities.Count} in {swExt.ElapsedMilliseconds}ms");
+                    var swScn = System.Diagnostics.Stopwatch.StartNew();
+#endif
                     var scene = CadExtractedSceneBuilder.Build(extracted);
+#if ANDROID
+                    swScn.Stop();
+                    Android.Util.Log.Info("MobilDwgCAD", $"STAGE_SCENE_DONE entities={scene.Entities.Count} in {swScn.ElapsedMilliseconds}ms");
+#endif
                     await DisplayCadSceneAsync(scene, selection.DisplayName ?? "cizim.dwg", extracted.Version);
                 }
                 catch (Exception renderEx)

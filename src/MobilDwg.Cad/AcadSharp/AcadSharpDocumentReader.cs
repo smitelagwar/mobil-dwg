@@ -191,6 +191,11 @@ public sealed class AcadSharpDocumentReader : ICadDocumentReader
         ICollection<CadDiagnostic> diagnostics,
         ICollection<CadCompatibilityIssue> compatibility)
     {
+        if (diagnostics.Count >= 50)
+        {
+            return;
+        }
+
         var typeName = args.NotificationType.ToString();
         var severity = typeName.Contains("Error", StringComparison.OrdinalIgnoreCase)
             ? DiagnosticSeverity.Error
@@ -198,18 +203,24 @@ public sealed class AcadSharpDocumentReader : ICadDocumentReader
                 ? DiagnosticSeverity.Warning
                 : DiagnosticSeverity.Info;
 
-        var codeSuffix = string.Concat(typeName.ToLowerInvariant().Select(c => char.IsLetterOrDigit(c) ? c : '-')).Trim('-');
-        if (string.IsNullOrEmpty(codeSuffix))
+        if (diagnostics.Count < 200)
         {
-            codeSuffix = "notice";
+            var codeSuffix = string.Concat(typeName.ToLowerInvariant().Select(c => char.IsLetterOrDigit(c) ? c : '-')).Trim('-');
+            if (string.IsNullOrEmpty(codeSuffix))
+            {
+                codeSuffix = "notice";
+            }
+
+            diagnostics.Add(new CadDiagnostic(
+                $"acadsharp.notification.{codeSuffix}",
+                severity,
+                args.Message));
         }
 
-        diagnostics.Add(new CadDiagnostic(
-            $"acadsharp.notification.{codeSuffix}",
-            severity,
-            args.Message));
-
-        ClassifyMessage(args.Message, compatibility);
+        if (compatibility.Count < 100)
+        {
+            ClassifyMessage(args.Message, compatibility);
+        }
     }
 
     private static void CollectCompatibility(

@@ -28,6 +28,19 @@ namespace MobilDwg.App;
     DataPathPatterns = new[] { @".*\.dwg", @".*\.dxf" })]
 public sealed class MainActivity : MauiAppCompatActivity
 {
+    public static event Action<string>? CadFileRequested;
+
+    protected override void OnNewIntent(Intent? intent)
+    {
+        base.OnNewIntent(intent);
+        Intent = intent;
+        var openCad = intent?.GetStringExtra("open_cad");
+        if (!string.IsNullOrEmpty(openCad))
+        {
+            CadFileRequested?.Invoke(openCad);
+        }
+    }
+
     /// <summary>
     /// Called by Android OS when memory is low. Purges any orphaned temporary CAD cache
     /// files left in the app-private cache directory. Normal operation: each CachedCadFile

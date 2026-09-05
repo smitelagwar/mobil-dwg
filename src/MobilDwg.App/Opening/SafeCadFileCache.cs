@@ -28,7 +28,7 @@ public sealed class CachedCadFile : IAsyncDisposable
             FileAccess.Read,
             FileShare.Read,
             bufferSize: 128 * 1024,
-            options: FileOptions.Asynchronous | FileOptions.SequentialScan);
+            options: FileOptions.SequentialScan);
     }
 
     public ValueTask DisposeAsync()

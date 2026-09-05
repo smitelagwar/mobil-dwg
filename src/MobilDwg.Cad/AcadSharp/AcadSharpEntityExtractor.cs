@@ -15,8 +15,8 @@ public static class AcadSharpEntityExtractor
         }
 
         var document = acadHandle.Document;
-        var layerList = new List<CadExtractedLayer>();
-        var layerNames = new HashSet<string>(StringComparer.OrdinalIgnoreCase);
+        var layerList = new List<CadExtractedLayer>(document.Layers.Count + 1);
+        var layerNames = new HashSet<string>(document.Layers.Count + 1, StringComparer.OrdinalIgnoreCase);
 
         // 1. Extract Layers
         foreach (var layer in document.Layers)
@@ -43,7 +43,7 @@ public static class AcadSharpEntityExtractor
         }
 
         // 2. Extract Entities
-        var extracted = new List<CadExtractedEntity>();
+        var extracted = new List<CadExtractedEntity>(document.Entities.Count);
         double minX = double.MaxValue, minY = double.MaxValue;
         double maxX = double.MinValue, maxY = double.MinValue;
 
