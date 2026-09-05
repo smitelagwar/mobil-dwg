@@ -65,6 +65,17 @@
     <DefineConstants>$(DefineConstants);A20_VALIDATION</DefineConstants>
   </PropertyGroup>
 
+  <PropertyGroup Condition="'$(A21Validation)' == 'true'">
+    <DefineConstants>$(DefineConstants);A21_VALIDATION</DefineConstants>
+  </PropertyGroup>
+
+  <ItemGroup Condition="'$(A21Validation)' == 'true'">
+    <MauiAsset Include="../../fixtures/public/synthetic/synthetic_turkish_basic_ac1015.dxf" LogicalName="a21_turkish.dxf" />
+    <MauiAsset Include="../../fixtures/public/synthetic/negative_missing_font_ac1015.dxf" LogicalName="a21_missing_font.dxf" />
+    <MauiAsset Include="../../fixtures/public/synthetic/negative_missing_xref_ac1015.dxf" LogicalName="a21_missing_xref.dxf" />
+    <MauiAsset Include="$(A21GeneratedDwgPath)" LogicalName="a21_synthetic.dwg" Condition="'$(A21GeneratedDwgPath)' != '' and Exists('$(A21GeneratedDwgPath)')" />
+  </ItemGroup>
+
   <ItemGroup>
     <PackageReference Include="Microsoft.Maui.Controls" />
   </ItemGroup>
