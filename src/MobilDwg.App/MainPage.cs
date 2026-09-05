@@ -5,7 +5,7 @@ using Microsoft.Maui.Storage;
 using MobilDwg.App.Opening;
 using MobilDwg.Cad.AcadSharp;
 
-#if V06_VALIDATION || A10_VALIDATION || A11_VALIDATION || A12_VALIDATION
+#if V06_VALIDATION || A10_VALIDATION || A11_VALIDATION || A12_VALIDATION || A13_VALIDATION
 using Android.Util;
 #endif
 
@@ -30,6 +30,9 @@ public sealed class MainPage : ContentPage
 #endif
 #if A12_VALIDATION
     private bool _a12Started;
+#endif
+#if A13_VALIDATION
+    private bool _a13Started;
 #endif
 
     public MainPage()
@@ -174,6 +177,27 @@ public sealed class MainPage : ContentPage
         layout.Children.Insert(2, a12Status);
         layout.Children.Insert(3, a12Image);
         Loaded += async (_, _) => await RunA12ValidationAsync(a12Status, a12Image);
+#endif
+
+#if A13_VALIDATION
+        var a13Status = new Label
+        {
+            Text = "A13_VALIDATION_PENDING",
+            AutomationId = "a13-validation-status",
+            FontSize = 13,
+            TextColor = Color.FromArgb("#B8C4D8"),
+            HorizontalTextAlignment = TextAlignment.Center,
+        };
+        var a13Image = new Image
+        {
+            AutomationId = "a13-render-image",
+            HeightRequest = 420,
+            Aspect = Aspect.AspectFit,
+            BackgroundColor = Color.FromArgb("#101010"),
+        };
+        layout.Children.Insert(2, a13Status);
+        layout.Children.Insert(3, a13Image);
+        Loaded += async (_, _) => await RunA13ValidationAsync(a13Status, a13Image);
 #endif
 
         Content = new ScrollView { Content = layout };
@@ -455,6 +479,34 @@ public sealed class MainPage : ContentPage
         {
             status.Text = $"ANDROID_STAGE12_BLOCK_INSERT_FAIL type={exception.GetType().Name}";
             Log.Error(A12AndroidValidationRunner.Tag, status.Text);
+        }
+    }
+#endif
+
+#if A13_VALIDATION
+    private async Task RunA13ValidationAsync(Label status, Image image)
+    {
+        if (_a13Started) return;
+        _a13Started = true;
+        status.Text = "A13_VALIDATION_RUNNING";
+        try
+        {
+            var result = await Task.Run(A13AndroidValidationRunner.RunAsync);
+            var png = result.Png;
+            MainThread.BeginInvokeOnMainThread(() =>
+            {
+                image.Source = ImageSource.FromStream(() => new MemoryStream(png, writable: false));
+                status.Text = $"{result.Marker} layers={result.LayerCount}";
+            });
+            Log.Info(A13AndroidValidationRunner.Tag, $"A13_REAL_APP_UI_IMAGE_READY sha256={result.PngSha256}");
+        }
+        catch (Exception exception)
+        {
+            MainThread.BeginInvokeOnMainThread(() =>
+            {
+                status.Text = $"ANDROID_STAGE13_LAYER_STYLE_FAIL type={exception.GetType().Name}";
+            });
+            Log.Error(A13AndroidValidationRunner.Tag, $"ANDROID_STAGE13_LAYER_STYLE_FAIL type={exception.GetType().Name}");
         }
     }
 #endif
