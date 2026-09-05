@@ -5,7 +5,7 @@ using Microsoft.Maui.Storage;
 using MobilDwg.App.Opening;
 using MobilDwg.Cad.AcadSharp;
 
-#if V06_VALIDATION || A10_VALIDATION || A11_VALIDATION || A12_VALIDATION || A13_VALIDATION || A14_VALIDATION || A15_VALIDATION || A16_VALIDATION || A17_VALIDATION || A18_VALIDATION
+#if V06_VALIDATION || A10_VALIDATION || A11_VALIDATION || A12_VALIDATION || A13_VALIDATION || A14_VALIDATION || A15_VALIDATION || A16_VALIDATION || A17_VALIDATION || A18_VALIDATION || A19_VALIDATION
 using Android.Util;
 #endif
 
@@ -48,6 +48,9 @@ public sealed class MainPage : ContentPage
 #endif
 #if A18_VALIDATION
     private bool _a18Started;
+#endif
+#if A19_VALIDATION
+    private bool _a19Started;
 #endif
 
     public MainPage()
@@ -318,6 +321,27 @@ public sealed class MainPage : ContentPage
         layout.Children.Insert(2, a18Status);
         layout.Children.Insert(3, a18Image);
         Loaded += async (_, _) => await RunA18ValidationAsync(a18Status, a18Image);
+#endif
+
+#if A19_VALIDATION
+        var a19Status = new Label
+        {
+            Text = "A19_VALIDATION_PENDING",
+            AutomationId = "a19-validation-status",
+            FontSize = 13,
+            TextColor = Color.FromArgb("#B8C4D8"),
+            HorizontalTextAlignment = TextAlignment.Center,
+        };
+        var a19Image = new Image
+        {
+            AutomationId = "a19-render-image",
+            HeightRequest = 420,
+            Aspect = Aspect.AspectFit,
+            BackgroundColor = Color.FromArgb("#101010"),
+        };
+        layout.Children.Insert(2, a19Status);
+        layout.Children.Insert(3, a19Image);
+        Loaded += async (_, _) => await RunA19ValidationAsync(a19Status, a19Image);
 #endif
 
         Content = new ScrollView { Content = layout };
@@ -767,6 +791,34 @@ public sealed class MainPage : ContentPage
                 status.Text = $"ANDROID_STAGE18_VIEWER_LIFECYCLE_FAIL: {exception.Message}";
             });
             Log.Error(A18AndroidValidationRunner.Tag, $"ANDROID_STAGE18_VIEWER_LIFECYCLE_FAIL: {exception}");
+        }
+    }
+#endif
+
+#if A19_VALIDATION
+    private async Task RunA19ValidationAsync(Label status, Image image)
+    {
+        if (_a19Started) return;
+        _a19Started = true;
+        status.Text = "A19_VALIDATION_RUNNING";
+        try
+        {
+            var result = await Task.Run(A19AndroidValidationRunner.RunAsync);
+            var png = result.Png;
+            MainThread.BeginInvokeOnMainThread(() =>
+            {
+                image.Source = ImageSource.FromStream(() => new MemoryStream(png, writable: false));
+                status.Text = $"{result.Marker} {result.PreflightSummary}";
+            });
+            Log.Info(A19AndroidValidationRunner.Tag, $"A19_REAL_APP_UI_IMAGE_READY sha256={result.PngSha256}");
+        }
+        catch (Exception exception)
+        {
+            MainThread.BeginInvokeOnMainThread(() =>
+            {
+                status.Text = $"ANDROID_STAGE19_RESOURCE_GUARDS_FAIL: {exception.Message}";
+            });
+            Log.Error(A19AndroidValidationRunner.Tag, $"ANDROID_STAGE19_RESOURCE_GUARDS_FAIL: {exception}");
         }
     }
 #endif
