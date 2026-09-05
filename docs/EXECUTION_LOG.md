@@ -235,4 +235,27 @@ A18_GATE: OPEN
 NEXT_ACTION: Sonraki normal BASLA/devam turunda AŞAMA 18'i (Tam Android viewer UX / lifecycle) başlat.
 ```
 
+### 2026-09-05: AŞAMA 18 — Tam Android Viewer UX / Lifecycle Tamamlandı ve Merge Edildi (PR #31)
+
+- PR: `#31` (`feat(stage18): full android viewer ux and lifecycle`).
+- `main` merge commit: `ab3a768`.
+- Release APK: `39,707,568` byte; SHA-256 `eda1c59f56d4eb97c51f68d048f405af3c66270c121d3f4822da4391e840dc27`.
+- Android Emulator: `sdk_gphone64_x86_64` (Android 16 / API 36 / `x86_64`, serial `emulator-5554`).
+- Canlı PID: `11177`.
+- Ekran görüntüsü: `97,827` byte; SHA-256 `32144a7032260b687366087992a3550e706d485c3c28b44e3fa4cb3348938d1a`.
+- Host test belirteçleri: `STAGE18_VIEWER_LIFECYCLE_TESTS_PASS` (12/12 test: recent files manager caps at 10 and maintains LRU order, recent files manager persists and reloads from JSON, log redactor masks sensitive path information, log redactor masks sensitive URI information, viewer session lifecycle transitions closed/loading/ready/error, camera pan/zoom/fit navigation, layer visibility toggles without reparsing CAD model, layout switch without reparsing, viewport resize on orientation change maintains aspect ratio, on-trim-memory handles memory pressure cleanly, deterministic viewer lifecycle semantic snapshot `schema=viewer-lifecycle/v1`, end-to-end viewer session render integration), `STAGE17_REFERENCE_COMPATIBILITY_TESTS_PASS`, `STAGE16_LAYOUT_VIEWPORT_TESTS_PASS`, `STAGE15_DIMENSION_HATCH_TESTS_PASS`, `STAGE14_TEXT_FONT_TESTS_PASS`, `STAGE13_LAYER_STYLE_TESTS_PASS`, `STAGE12_BLOCK_INSERT_TESTS_PASS`, `STAGE11_VIEWPORT_GESTURE_TESTS_PASS`, `STAGE10_GEOMETRY_PRIMITIVES_TESTS_PASS`, `STAGE10_TESSELLATION_PRECISION_TESTS_PASS`, `STAGE10_P0_SEMANTIC_GOLDEN_PASS`, `STAGE04_RENDER_CONTRACT_TESTS_PASS`, `STAGE09_RENDER_SCENE_TESTS_PASS`.
+- Katman Mimari Testleri: `STAGE04_ARCHITECTURE_TESTS_PASS`, `STAGE05_DEPENDENCY_BOUNDARY_PASS`, `V04_REAL_ANDROID_APP_PROJECT_PASS`.
+- Android emülatör belirteçleri: `A18_EMULATOR_API36_PASS`, `A18_REAL_APP_APK_PASS`, `A18_REAL_APP_INSTALL_PASS`, `A18_REAL_APP_LAUNCH_PASS`, `A18_REAL_APP_VIEWER_MARKERS_PASS`, `A18_REAL_APP_UI_STATUS_PASS`, `A18_SCREENSHOT_PNG_PASS`, `A18_REAL_APP_STABILITY_PASS pid=11177`, `ANDROID_STAGE18_VIEWER_LIFECYCLE_PASS`.
+- UI Doğrulaması: `window.xml` hiyerarşisinde `ANDROID_STAGE18_VIEWER_LIFECYCLE_PASS` doğrulanarak `A18_REAL_APP_UI_STATUS_PASS` alındı.
+- Kararlılık: Paket ve PID kapsamında crash/ANR yok, `am send-trim-memory COMPLETE` bellek baskısı başarıyla yönetildi, uygulama canlı kaldı (`A18_REAL_APP_STABILITY_PASS pid=11177`).
+- Claim limit: `CLAIM_LIMIT=A18_VIEWER_LIFECYCLE_API36_ONLY_NOT_CAD_PARSE_TO_SCENE_OR_PHYSICAL_DEVICE_FIDELITY`.
+- Kanıt belgesi: `docs/evidence/STAGE_18.md`.
+
+```text
+IMPLEMENTATION_BASELINE: AŞAMA 18 — DONE
+IMPLEMENTATION_CURSOR: AŞAMA 19 — NOT_STARTED
+A19_GATE: OPEN
+NEXT_ACTION: Sonraki normal BASLA/devam turunda AŞAMA 19'u (Malicious/corrupt input ve resource guards) başlat.
+```
+
 

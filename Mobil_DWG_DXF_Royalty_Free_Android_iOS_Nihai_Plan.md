@@ -276,7 +276,7 @@ Yetkili ayrıntı: `ANDROID_DOGRULAMA_PLANI.md`.
 
 ## 9. Implementation aşamaları
 
-AŞAMA 00–10 tarihsel implementation evidence `docs/evidence/STAGE_XX.md` ve ADR'lerde korunur. AŞAMA 10 PR #23 ile tamamlanmış ve `main`e merge edilmiştir. Normal implementation cursor artık AŞAMA 11'dir.
+AŞAMA 00–18 tarihsel implementation evidence `docs/evidence/STAGE_XX.md` ve ADR'lerde korunur. AŞAMA 18 PR #31 ile tamamlanmış ve `main`e merge edilmiştir. Normal implementation cursor artık AŞAMA 19'dur.
 
 ### AŞAMA 10 — P0 temel geometri renderer'ı — `DONE`
 
@@ -350,7 +350,9 @@ Giriş kapısı: `AŞAMA 16 DONE ON MAIN`. PR #30 ile tamamlandı.
 
 Detect/warn; remote auto-download yok; explicit folder grant varsa bounded mapping; external kaynak eksikliği sessiz değil.
 
-### AŞAMA 18 — Tam Android viewer UX/lifecycle
+### AŞAMA 18 — Tam Android viewer UX/lifecycle — `DONE`
+
+Giriş kapısı: `AŞAMA 17 DONE ON MAIN`. PR #31 ile tamamlandı.
 
 Home/open/loading/viewer/layers/fit/info/warnings/close, recent URI/grant metadata, Back/background/foreground/orientation/process recreation/memory pressure, no-backup, permission/log redaction, accessibility.
 
