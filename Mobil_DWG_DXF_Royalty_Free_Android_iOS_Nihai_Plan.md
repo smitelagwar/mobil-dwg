@@ -333,9 +333,11 @@ Giriş kapısı: `AŞAMA 13 DONE ON MAIN`. PR #27 ile tamamlandı.
 
 CP1254/Unicode, TEXT alignment/mirror, bounded MTEXT parser, audited font fallback, visible substitution; proprietary font bundle yok.
 
-### AŞAMA 15 — Dimension/leader/hatch
+### AŞAMA 15 — Dimension/leader/hatch — `DONE`
 
-Önce anonymous dimension block, temel dimension types, hatch island/broken boundary; yanlış dimension yerine warning.
+Giriş kapısı: `AŞAMA 14 DONE ON MAIN`. PR #28 ile tamamlandı.
+
+Önce anonymous dimension block (`*D...`), temel dimension types (Aligned, Rotated Linear, Radial, Diametric), dejenere ölçü korumaları (`DEGENERATE_DIMENSION_POINTS`, `INVALID_DIMENSION_GEOMETRY`), leader/multileader geometrisi, hatch 1mm kapanma toleransı ve kırık sınır teşhisi, EvenOdd ada doldurma, ANSI31 kırpılmış desen çizgisi üretimi.
 
 ### AŞAMA 16 — Model/layout/paper-space/viewport
 

@@ -182,10 +182,25 @@ PENDING_EMULATOR_QUEUE: EMPTY
 - Claim limit: `CLAIM_LIMIT=A14_TEXT_FONT_API36_ONLY_NOT_CAD_PARSE_TO_SCENE_OR_PHYSICAL_DEVICE_FIDELITY`.
 - Kanıt belgesi: `docs/evidence/STAGE_14.md`.
 
+### 2026-09-05: AŞAMA 15 — Dimension / Leader / Hatch Tamamlandı ve Merge Edildi (PR #28)
+
+- PR: `#28` (`feat(rendering): Stage 15 - Dimension, Leader, Hatch and Skia Render`).
+- `main` merge commit: `c99ba86`.
+- Release APK: `39,340,054` byte; SHA-256 `9a7531eb8c9b4946ba24374c5d31655cc765a9855cffe21b8bd3109b5f42617b`.
+- Android Emulator: `sdk_gphone64_x86_64` (Android 16 / API 36 / `x86_64`, serial `emulator-5554`).
+- Canlı PID: `9288`.
+- Ekran görüntüsü: `111,314` byte; SHA-256 `bfe4fac1932f7c2168f529afa2bd1454bcbb2873a5c3250986d1b86d1c6c6b4d`.
+- Host test belirteçleri: `STAGE15_DIMENSION_HATCH_TESTS_PASS` (13/13 test: anonymous dimension block preference, procedural aligned/rotated/radial/diametric dimensions, degenerate defpoints guards, NaN coordinate guard, leader & multileader geometry, hatch auto-closure tolerance <= 1mm, broken boundary diagnostic > 1mm, EvenOdd nested islands normal style, ANSI31 clipped pattern line generation, deterministic dimension-hatch semantic snapshot `schema=dim-hatch/v1`), `STAGE14_TEXT_FONT_TESTS_PASS`, `STAGE13_LAYER_STYLE_TESTS_PASS`, `STAGE12_BLOCK_INSERT_TESTS_PASS`, `STAGE11_VIEWPORT_GESTURE_TESTS_PASS`, `STAGE10_GEOMETRY_PRIMITIVES_TESTS_PASS`, `STAGE10_TESSELLATION_PRECISION_TESTS_PASS`, `STAGE10_P0_SEMANTIC_GOLDEN_PASS`, `STAGE04_RENDER_CONTRACT_TESTS_PASS`, `STAGE09_RENDER_SCENE_TESTS_PASS`.
+- Android emülatör belirteçleri: `A15_ANDROID_ANONYMOUS_BLOCK_PASS`, `A15_ANDROID_PROCEDURAL_DIMENSIONS_PASS`, `A15_ANDROID_DEGENERATE_GUARDS_PASS`, `A15_ANDROID_LEADER_PASS`, `A15_ANDROID_HATCH_PROCESSING_PASS`, `A15_SCENE_ENTITIES_COUNT=8`, `A15_HATCH_ISLAND_EVENODD_VERIFIED loops=2`, `A15_ANSI31_PATTERN_LINES_COUNT=19`, `A15_RENDER_PIXELS=58280`, `A15_SNAPSHOT_HASH=3edb1660f76aaf46a751593fb4bb0d0cf27aa5845267a1f01ddbd222a6a45578`, `A15_ANDROID_SKIA_RENDER_PASS bytes=16859 sha256=bc28ab30f1f6ede833aac316a61f00d3a790b90339ea3c63a63dc5de32f3015b`, `ANDROID_STAGE15_DIMENSION_HATCH_PASS`, `A15_REAL_APP_UI_IMAGE_READY`, `A15_REAL_APP_UI_STATUS_PASS`, `A15_REAL_APP_STABILITY_PASS`.
+- UI Doğrulaması: `window.xml` hiyerarşisinde `ANDROID_STAGE15_DIMENSION_HATCH_PASS` doğrulanarak `A15_REAL_APP_UI_STATUS_PASS` alındı.
+- Kararlılık: Paket ve PID kapsamında crash/ANR yok, uygulama canlı kaldı (`A15_REAL_APP_STABILITY_PASS pid=9288`).
+- Claim limit: `CLAIM_LIMIT=A15_DIMENSION_HATCH_API36_ONLY_NOT_CAD_PARSE_TO_SCENE_OR_PHYSICAL_DEVICE_FIDELITY`.
+- Kanıt belgesi: `docs/evidence/STAGE_15.md`.
+
 ```text
-IMPLEMENTATION_BASELINE: AŞAMA 14 — DONE
-IMPLEMENTATION_CURSOR: AŞAMA 15 — NOT_STARTED
-A15_GATE: OPEN
-NEXT_ACTION: Sonraki normal BASLA/devam turunda AŞAMA 15'i (Dimension/leader/hatch) başlat.
+IMPLEMENTATION_BASELINE: AŞAMA 15 — DONE
+IMPLEMENTATION_CURSOR: AŞAMA 16 — NOT_STARTED
+A16_GATE: OPEN
+NEXT_ACTION: Sonraki normal BASLA/devam turunda AŞAMA 16'yı (Scene Assembly & Performance Optimization) başlat.
 ```
 

@@ -170,7 +170,7 @@ V09'un ilk run/job'u `32864458158 / 97856153440` Windows PowerShell 5.1 `.Contai
 ANDROID_VALIDATION_V01_V09: CLOSED
 VALIDATION_DEBT: NONE_WITHIN_RECORDED_CLAIMS
 PENDING_EMULATOR_QUEUE: EMPTY
-NEXT_IMPLEMENTATION_STAGE: AŞAMA 10 — NOT_STARTED
+NEXT_IMPLEMENTATION_STAGE: AŞAMA 16 — NOT_STARTED
 ```
 
 AŞAMA 10 başladığında güncel validated `main` baz alınır. A10 exact integration SHA üzerinde etkilediği dependency/fixture/architecture/V09 regresyonları ve gerçek `MobilDwg.App` API36 render gate'i çalıştırılır. Render gate yalnız PID/PNG/crash/ANR değil, non-blank/expected-content pixel probe, Android golden veya kayıtlı görsel incelemeden en az bir expected-content kanıtı içerir. Bu kanıt olmadan A10 `READY_TO_MERGE/DONE` değildir.

@@ -26,18 +26,18 @@ Bu dosya kısa kalıcı tarihçe/checkpoint kaydıdır. Ayrıntılı teknik kan�
 ```text
 ACTIVE_PRODUCT_TARGET: ANDROID_ONLY
 IOS_STATUS: DEFERRED_FUTURE_OPTION
-IMPLEMENTATION_BASELINE: AŞAMA 14 — DONE
+IMPLEMENTATION_BASELINE: AŞAMA 15 — DONE
 ANDROID_VALIDATION_V01_V09: CLOSED / VALIDATED_WITH_CLAIM_LIMITS
-LAST_IMPLEMENTATION: AŞAMA 14 — DONE
-LAST_IMPLEMENTATION_EVIDENCE: docs/evidence/STAGE_14.md
-A14_MAIN_MERGE: 3803f25 (PR #27)
-A14_CLAIM: A14_TEXT_FONT_API36_ONLY_NOT_CAD_PARSE_TO_SCENE_OR_PHYSICAL_DEVICE_FIDELITY
-IMPLEMENTATION_CURSOR: AŞAMA 15 — NOT_STARTED
+LAST_IMPLEMENTATION: AŞAMA 15 — DONE
+LAST_IMPLEMENTATION_EVIDENCE: docs/evidence/STAGE_15.md
+A15_MAIN_MERGE: c99ba86 (PR #28)
+A15_CLAIM: A15_DIMENSION_HATCH_API36_ONLY_NOT_CAD_PARSE_TO_SCENE_OR_PHYSICAL_DEVICE_FIDELITY
+IMPLEMENTATION_CURSOR: AŞAMA 16 — NOT_STARTED
 A10_WORKSTREAM: docs/A10_WORKSTREAM.md (DONE)
 PENDING_EMULATOR_QUEUE: EMPTY
 PHYSICAL_ANDROID: DEFERRED_RELEASE_DEVICE_GATE
-A15_GATE: OPEN
-NEXT_ACTION: Sonraki normal BASLA/devam turunda AŞAMA 15'i (Dimension/leader/hatch) başlat.
+A16_GATE: OPEN
+NEXT_ACTION: Sonraki normal BASLA/devam turunda AŞAMA 16'yı (Scene Assembly & Performance Optimization) başlat.
 LAST_UPDATE: 2026-09-05
 ```
 
@@ -58,7 +58,8 @@ LAST_UPDATE: 2026-09-05
 - AŞAMA 12 — Block / INSERT / Attribute — `DONE`; PR `#25`, main merge `4752a17`, evidence `docs/evidence/STAGE_12.md`.
 - AŞAMA 13 — Layer / Color / Linetype / Lineweight — `DONE`; PR `#26`, main merge `e60e498`, evidence `docs/evidence/STAGE_13.md`.
 - AŞAMA 14 — TEXT / MTEXT / Türkçe / Font / SHX — `DONE`; PR `#27`, main merge `3803f25`, evidence `docs/evidence/STAGE_14.md`.
-- AŞAMA 15–22 — Android viewer/release implementation sırası; cursor AŞAMA 15'te.
+- AŞAMA 15 — Dimension / Leader / Hatch — `DONE`; PR `#28`, main merge `c99ba86`, evidence `docs/evidence/STAGE_15.md`.
+- AŞAMA 16–22 — Android viewer/release implementation sırası; cursor AŞAMA 16'da.
 - AŞAMA 23–24 — future iOS track, deferred.
 - AŞAMA 25–27 — Android beta/freeze/final handoff.
 
