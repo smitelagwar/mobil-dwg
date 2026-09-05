@@ -1,73 +1,64 @@
 # mobil-dwg — Toolchain Baseline
 
-Bu dosya AŞAMA 01 için canlı doğrulanmış geliştirme zinciri hedefini kaydeder. Sürüm yükseltmeleri otomatik yapılmaz; her değişiklik yeniden doğrulanıp bu dosya ve `global.json` birlikte güncellenir.
+Bu dosya mevcut pinli build hattını tanımlar. Otomatik/floating yükseltme yapılmaz; bir pin değişirse build, Android runtime ve dependency/compliance kontrolleri yeniden çalıştırılır.
 
-## Doğrulama tarihi
+## .NET / MAUI
 
-- 2026-08-25 local Android revalidation snapshot; original live-source pins 2026-08-24
-
-## Pinlenen .NET / MAUI hattı
+`global.json` authoritative kaynaktır:
 
 - .NET SDK: `10.0.400`
-- .NET runtime servicing seviyesi: `10.0.11`
-- SDK release tarihi: 2026-08-11
-- Workload update mode: workload-set
-- Workload set: `10.0.400`
-- Active Android-only workload: `maui-android`
-- SDK çözümleme politikası: exact (`rollForward=disable`)
-- Prerelease: kapalı
+- `rollForward`: `disable`
+- prerelease: kapalı
+- workload set: `10.0.400`
+- aktif workload: `maui-android`
 
-Repo kökündeki `global.json` bu pinleri uygular.
+Kurulum kontrolü:
 
-Kurulum doğrulama komutları:
-
-```bash
+```powershell
 dotnet --version
 dotnet --info
-dotnet workload install maui-android
 dotnet workload list
 ```
 
-Önemli: `global.json` içindeki `workloadVersion: 10.0.400` exact workload set'i seçer. Bu repo hattında `dotnet workload install maui-android --version 10.0.400` kullanılmaz; AŞAMA 01 CI sırasında bu ek `--version` biçiminin yanlış olduğu görülmüş ve başarılı hat `dotnet workload install maui-android` olarak doğrulanmıştır.
+Workload kurulumu repo pinine göre yapılır:
 
-Yerel Windows sağlık taraması .NET `10.0.400`, `maui-android`, JDK `21.0.12.1`, API 36, Build-Tools 36.0.0, ADB 37.0.1, emulator/AVD ve runner bileşenlerini gördü. V01 exact self-hosted koşusunda executable harness'lar, byte-safe PNG, numeric PID ve crash/ANR kontrolleriyle `VALIDATED — INFRASTRUCTURE_SMOKE_ONLY` oldu. Gate hâlâ gerçek viewer yerine `Stage01Smoke` kurar; bu nedenle V01 gerçek `MobilDwg.App` veya fiziksel cihaz kanıtı değildir. Gerçek app APK/runtime sınırı V04 kapsamıdır.
+```powershell
+dotnet workload install maui-android
+```
 
-## Java hattı
+## NuGet production pinleri
 
-- Dağıtım: Microsoft Build of OpenJDK
-- Major: `21` LTS
-- Pinlenen güncel patch: `21.0.12`
-- `JAVA_HOME` zorunlu olarak bu JDK'yı göstermeli.
+`Directory.Packages.props` authoritative kaynaktır:
 
-.NET 10'a özel Android belgeleri JDK 21 ile build desteğini doğrular. Genel MAUI kurulum sayfasındaki bazı kurulum örnekleri hâlâ OpenJDK 17 önerebilir; bu proje nihai plan gereği JDK 21 kullanır ve .NET 10 bunu destekler.
+- ACadSharp `[3.7.1]`
+- SkiaSharp `[4.151.1]`
+- Microsoft.Maui.Controls `[10.0.100]`
+- IxMilia.Dxf `[0.8.4]` yalnız test/fallback adayıdır; production runtime baseline değildir.
 
-Doğrulama:
+Direct dependency sürümleri exact tutulur. Lockfile/locked restore ve lisans/native graph politikası `compliance/` altındadır.
 
-```bash
+## Java
+
+- Microsoft Build of OpenJDK 21
+- pinlenen hat: `21.0.12.x`
+- `JAVA_HOME` doğru JDK'yı göstermelidir.
+
+Kontrol:
+
+```powershell
 java -version
 javac -version
 ```
 
-CI notu: 2026-08-24 tarihinde `actions/setup-java@v5` Microsoft kataloğu 21.0.12'yi henüz listelemiyordu. Resmi Microsoft OpenJDK indirme sayfası ise 21.0.12 Linux x64 artifact'ini yayınlıyordu. CI bu nedenle resmi `aka.ms` artifact'ini ve resmi SHA-256 dosyasını kullanarak exact JDK'yı kurar; katalog gecikmesi sürümün var olmadığı anlamına gelmez.
+## Android
 
-## Android SDK hattı
+- minimum API: `24`
+- compile/target API: `36`
+- Build-Tools: `36.0.0`
+- Platform-Tools/ADB baseline: `37.0.1`
+- test AVD: `mobil-dwg-api36`
 
-Aktif ürün Android-only ve Google Play'e yeni uygulama olarak çıkacağı için release çizgisi API 36'ya sabitlenmiştir.
-
-- Minimum OS / `SupportedOSPlatformVersion`: Android 7.0, API `24`
-- Compile SDK: API `36`
-- Target SDK: API `36`
-- Android SDK Platform 36: revision `1`
-- Android SDK Build-Tools: `36.0.0`
-- Android SDK Platform-Tools: `37.0.1` stable
-
-Politika gerekçesi:
-
-- .NET 10 API 21–23'ü Mono ile desteklemeye devam etse de .NET 10 proje şablonları desugaring kaynaklı runtime risklerini azaltmak için API 24'ü önerir.
-- Google Play, 31 Ağustos 2026'dan itibaren yeni uygulama ve güncellemelerin Android 16 / API 36 veya üzerini target etmesini ister. Proje bu tarihten yalnız yedi gün önce başlatıldığı için API 35'e geçici olarak bağlanmak yerine doğrudan API 36 hedeflenir.
-- Android Developers Platform-Tools release notes, `37.0.1` sürümünü Temmuz 2026 stable release olarak listeler. 2026-08-24 CI'da `sdkmanager --channel=0 "platform-tools"` da aynı sürümü çözdü. Bu gerçek kanıt nedeniyle önceki `37.0.0 stable / 37.0.1 Canary` kaydı düzeltilmiştir.
-
-Önerilen Android SDK paketleri:
+Gerekli SDK paketleri:
 
 ```text
 platforms;android-36
@@ -75,102 +66,40 @@ build-tools;36.0.0
 platform-tools
 ```
 
-`platform-tools` paket kurulumundan sonra `adb version` ile `37.0.1` doğrulanmalıdır. Gelecekte SDK Manager daha yeni stable sürüm sunarsa sessiz yükseltme yapılmaz; baseline revizyonu açılır.
+Yeni Android SDK/Build-Tools/Platform-Tools sürümü görünmesi sessiz yükseltme gerekçesi değildir. Upgrade ayrı change olarak yapılır.
 
-## Android command-line tools bootstrap
+## Yerel ortam kontrolü
 
-2026-08-24 tarihli Android Developers stable indirme sayfasında command-line tools arşiv build ID'si `15859902` olarak yayınlanmıştır.
-
-Örnek Linux artifact:
-
-- Dosya: `commandlinetools-linux-15859902_latest.zip`
-- SHA-256: `4e4c464f145a7512b57d088ac6c278c03c9eea610886b35a5e0804e74eedf583`
-
-Bu arşiv yalnız `sdkmanager` bootstrap içindir; release artifact dependency'si değildir.
-
-## Fiziksel cihaz kapısı
-
-Bu tarihsel AŞAMA 01 fiziksel cihaz kapısı ve final release cihaz matrisi ancak aşağıdakilerin tamamı gerçek Android cihaz üzerinde kanıtlanırsa kapanabilir:
-
-1. `dotnet --info` exact SDK/workload set'i gösterir.
-2. `java -version` JDK 21 hattını gösterir.
-3. `adb version` pinlenen stable platform-tools hattını gösterir.
-4. Android API 36 platform ve Build-Tools 36.0.0 kurulu görünür.
-5. Temiz MAUI smoke app Debug build geçer.
-6. Aynı smoke app Release build geçer.
-7. `adb devices` fiziksel telefonu `device` olarak görür.
-8. Uygulama fiziksel telefona yüklenip açılır.
-
-Bu sohbet çalışma konteynerinde fiziksel telefon yoktur; bu nedenle AŞAMA 01'in cihaz kapısı burada tamamlanamaz.
-
-### Otomatik cihaz-gate scriptleri
-
-Repo, gerçek geliştirme makinesindeki zorunlu kontrolleri aynı sırayla uygulayan iki script içerir:
-
-- Windows / PowerShell: `scripts/stage01-device-gate.ps1`
-- Bash: `scripts/stage01-device-gate.sh`
-
-Windows örneği:
+Windows geliştirme/test makinesinde:
 
 ```powershell
-.\scripts\stage01-device-gate.ps1
+.\scripts\doctor-local-environment.ps1
 ```
 
-Bash örneği:
-
-```bash
-bash scripts/stage01-device-gate.sh
-```
-
-Birden fazla yetkili ADB cihazı bağlıysa hedef açıkça seçilir:
+Release build:
 
 ```powershell
-$env:ANDROID_SERIAL = '<adb-serial>'
-.\scripts\stage01-device-gate.ps1
+dotnet build .\MobilDwg.sln -c Release
 ```
 
-```bash
-ANDROID_SERIAL='<adb-serial>' bash scripts/stage01-device-gate.sh
-```
+Android emulator/fiziksel cihaz test akışı `docs/ANDROID_TESTING.md` içindedir.
 
-Scriptler aşağıdaki durumlarda FAIL verir: exact .NET/JDK/ADB sürümü uyuşmazlığı, eksik API 36/Build-Tools 36.0.0, eksik `maui-android` veya yanlış workload set, `unauthorized/offline` cihaz, emülatör, birden çok belirsiz cihaz, Debug/Release build hatası, manifest 24/36 uyuşmazlığı, APK install veya launcher hatası.
+## Dependency yükseltme kuralı
 
-PASS halinde temiz MAUI smoke uygulaması `com.smitelagwar.mobildwg.stage01smoke` kimliğiyle üretilir; Android minimum API 24 açıkça pinlenir; Debug ve Release build edilir; Debug APK fiziksel cihaza kurulur ve launcher `Status: ok` ile açılır. Kanıt çıktısı tam ADB seri numarasını yazmaz.
+Bir package/toolchain yükseltmesinde en az:
 
-Bu scriptlerin sözdizimi CI'da doğrulanır; fakat `STAGE01_DEVICE_GATE_PASS` yalnız gerçek fiziksel cihazda çalıştırıldığında AŞAMA 01 kanıtı sayılır.
+1. exact yeni sürüm,
+2. source/package provenance,
+3. lisans ve transitive/native graph,
+4. locked restore,
+5. full Release build,
+6. etkilenen parser/render/Android regresyonları,
+7. artifact boyutu/bellek/performance etkisi gerekiyorsa ölçüm
 
-## Future iOS erişim envanteri — aktif değil
+kaydedilir.
 
-25.08.2026 kullanıcı kararıyla iOS aktif v1 kapsamı ve Android V01 çıkış kriteri dışındadır. Aşağıdaki kayıt gelecekte açık iOS reactivation kararı verilirse kullanılmak üzere korunur; bugün Mac/Xcode/iPhone araştırması veya komutu çalıştırılmaz.
+Sırf `latest` olduğu için yükseltme yapılmaz.
 
-Future iOS reactivation olursa önce erişim durumu kaydedilir; ardından yeni plan revizyonunda AŞAMA 08 riskleri ve AŞAMA 23 yolu değerlendirilir.
+## Platform kapsamı
 
-Standart kayıt dosyası:
-
-- `docs/STAGE_01_IOS_ACCESS_INVENTORY.md`
-
-Erişilebilir bir Mac üzerinde secretsiz yardımcı envanter:
-
-```bash
-APPLE_DEVELOPER_ACCESS=yes bash scripts/stage01-ios-inventory.sh
-```
-
-Apple Developer erişimi yoksa `APPLE_DEVELOPER_ACCESS=no` kullanılır. Bu değer yalnız kullanıcının manuel `yes/no` teyididir; script Apple hesabına login olmaz ve herhangi bir credential istemez.
-
-Script macOS/Xcode erişimini, fiziksel iPhone sayısını ve code-signing identity sayısını yalnız hassas olmayan özet olarak verir. Apple ID/e-posta, Team ID, UDID/seri numarası, certificate private key, provisioning profile veya token kaydetmez.
-
-`docs/STAGE_01_IOS_ACCESS_INVENTORY.md` alanları tarihsel olarak `UNKNOWN` kalabilir; bu durum Android validation, beta veya release'i bloke etmez. Future iOS track yeniden açılırsa gerçek değerlerle kapanır.
-
-## Resmi kaynaklar — 2026-08-24 snapshot
-
-- .NET 10 download: `https://dotnet.microsoft.com/en-us/download/dotnet/10.0`
-- .NET MAUI .NET 10 yenilikleri / Android API 36 + JDK 21 + min API 24: `https://learn.microsoft.com/dotnet/maui/whats-new/dotnet-10?view=net-maui-10.0`
-- .NET `global.json`: `https://learn.microsoft.com/dotnet/core/tools/global-json`
-- .NET workload install: `https://learn.microsoft.com/dotnet/core/tools/dotnet-workload-install`
-- Microsoft OpenJDK download: `https://learn.microsoft.com/java/openjdk/download`
-- Android 16 SDK setup: `https://developer.android.com/about/versions/16/setup-sdk`
-- Android SDK Platform releases: `https://developer.android.com/tools/releases/platforms`
-- Android Platform-Tools releases: `https://developer.android.com/tools/releases/platform-tools`
-- Android SDK Manager stable-channel behavior: `https://developer.android.com/tools/sdkmanager`
-- Android Studio / command-line tools downloads: `https://developer.android.com/studio/`
-- Google Play target API requirements: `https://support.google.com/googleplay/android-developer/answer/11926878`
+Aktif build hattı Android'dir. iOS workload/Xcode/signing bağımlılığı kullanıcı iOS'u açıkça yeniden etkinleştirmedikçe Android geliştirme makinesinin zorunlu parçası değildir.
