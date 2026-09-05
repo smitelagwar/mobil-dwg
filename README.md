@@ -1,44 +1,97 @@
 # mobil-dwg
 
-Android için tamamen local/offline çalışan, kullanıcıya ücretsiz sunulması hedeflenen 2D DWG/DXF görüntüleyici projesi. iOS aktif v1 kapsamından çıkarılmıştır; shared mimari ileride yeniden etkinleştirilebilecek şekilde korunur.
+Android için local/offline çalışan, read-only 2D DWG/DXF görüntüleyici.
 
-Implementation AŞAMA 27'ye kadar tamamlandı. Android v1.0.0 planı %100 tamamlanmıştır. Android geriye dönük doğrulama programı V01–V09 kapalıdır ve tüm aşamalar kendi claim sınırları içinde `VALIDATED` durumundadır. AŞAMA 27 Android v1 artifact / yayın / handoff API 36 emülatör kabul testiyle (37.96 MB Release APK, 37.54 MB Release AAB, SHA256SUMS, 5 adet docs/release kılavuzu, 88.9 MB Dumpsys PSS, saf üretim uygulaması PID 5339) doğrulanmıştır (`ANDROID_STAGE27_RELEASE_HANDOFF_PASS`). Tüm plan aşamaları tamamlanmış olup üretim paketleri `release/` dizini altındadır. AŞAMA 23–24 (iOS) ertelenmiştir.
+## Güncel durum
 
-V01 yalnız infrastructure smoke'u doğruladı. V04 gerçek `MobilDwg.App` APK build/install/cold-launch/UI/stability gate'ini geçti; V05 production ACadSharp parser'ı gerçek Android process içinde doğruladı. V06 gerçek FilePicker/DocumentsUI/SAF → stream → app-private safe-copy → production parser akışını API36 emulator üzerinde doğruladı. V07 exact unpatched ProCad candidate için `NO-GO` kararını ve production graph/precision izolasyonunu yeniden doğruladı. V08 tarihsel iOS kapsamını yeniden açmadan Android production/CI graph'ının iOS-specific TFM/RID/native/toolchain zorunluluğundan izole olduğunu kanıtladı. V09 ise RenderScene/camera/OCS/diagnostics temelini, deterministic `render-scene/v1` snapshot'ını, survey-origin `0.001` double precision'ı, Core/architecture sınırlarını ve gerçek Android app Release composition build'ini current exact revision üzerinde yeniden doğruladı. AŞAMA 10 platform-neutral P0 geometri primitiflerini, deterministik tessellation'ı, SkiaCadRenderer'ı ve API 36 Android emülatör üzerinde beklenen içerik piksel kabulünü (`56,163` piksel, byte-safe PNG) doğruladı. AŞAMA 11 mobil viewport yönetimini, odak noktası korumalı pinch zoom'u, pan jestini, double-tap ve fit-extents davranışını, ve CAD reparse olmaksızın oryantasyon boyut değişimini API 36 Android emülatör kabul testiyle doğruladı. AŞAMA 12 blok tanımlarını, INSERT referanslarını, 2D afin dönüşüm matrislerini (`Transform2D`), non-uniform scale/mirror ilkel dönüşümlerini, Layer 0/ByBlock mirasını, ATTRIB niteliklerini ve döngü/derinlik/bütçe koruma muhafızlarını API 36 Android emülatör kabul testiyle doğruladı. AŞAMA 13 katman durum yönetimini (`LayerTable`), ACI 1–255 ve TrueColor renk çözümlemesini (`CadColor`), standart kesikli çizgi desenlerini ve karmaşık çizgi tipi denetimli geri çekilmesini (`CadLinetype`), milimetrik çizgi kalınlığı dönüşümünü (`CadLineweight`), merkezi stil çözümleyiciyi (`CadStyleResolver`) ve SkiaSharp render entegrasyonunu API 36 Android emülatör kabul testiyle doğruladı. AŞAMA 14 Windows-1254 (CP1254) ve UTF-8 Türkçe karakter çözümlemesini (`CadTextEncoding`), AutoCAD Unicode (`\U+XXXX`) ve özel simge (`%%d`, `%%p`, `%%c`, `%%%`) kaçışlarını, ReDoS ve aşırı derinlik muhafızına sahip sınırlı MTEXT ayrıştırıcısını (`MTextParser`), telifli AutoCAD SHX dosyaları paketlenmeksizin açık kaynak sistem fontlarına denetimli eşleme tablosunu (`FontSubstitutionResolver`), metin hizalama/rotasyon/aynalama/sınır kutusu modelini (`TextPrimitive`, `CadTextAlignment`) ve SkiaSharp metin çizim entegrasyonunu API 36 Android emülatör kabul testiyle doğruladı. AŞAMA 15 AutoCAD anonim blok ilkliği kuralını (`*D...`), usulsel ölçülendirme geometrisini (Aligned, Rotated Linear, Radial, Diametric), dejenere ölçü korumalarını (`DEGENERATE_DIMENSION_POINTS`, `INVALID_DIMENSION_GEOMETRY`), lider/multileader geometrisini (`LeaderBuilder`), tarama sınır döngüsü otomatik kapanma toleransını (≤ 1 mm) ve kırık sınır teşhisini (`HATCH_BROKEN_BOUNDARY`), EvenOdd ada doldurma mantığını, ANSI31 kırpılmış desen çizgisi üretimini ve SkiaSharp render çıktısını API 36 Android emülatör kabul testiyle doğruladı. AŞAMA 16 Model ve Paper-Space ayrımını, pafta çerçevesi ve başlık bloğunu (`CadLayoutDefinition`), çoklu görünüm pencerelerini (`CadLayoutViewport`), Model -> Kağıt Alanı matris dönüşümünü, viewport bazlı katman dondurma geçersiz kılmalarını (`FrozenLayers`), Skia kırpma sınırlarını (`ClipRect` / `ClipPath`), dejenere viewport korumalarını (`INVALID_VIEWPORT_GEOMETRY`), sıfır-reparse bellek içi pafta geçişini (`CadLayoutManager`), ve deterministik sahne envanterini (`LayoutSceneSemanticSnapshot`) API 36 Android emülatör kabul testiyle doğruladı. AŞAMA 17 ise DWG XREF, Raster Görseller (PNG, JPG, BMP) ve PDF/DWF/DGN altlıklarını, uzak URL otomatik indirme engelini (`XREF_REMOTE_NOT_SUPPORTED`), dizin dışına çıkış güvenlik engelini (`PATH_TRAVERSAL_PREVENTED`), büyük/küçük harf duyarsız yerel dosya eşlemesini (`CadReferenceResolver`), eksik dış referanslar için görsel yer tutucuları (`MissingReferencePrimitive`), SkiaSharp raster görsel render motorunu (`RasterImagePrimitive`, `ClipBoundary`, `Fade`), ve deterministik referans envanterini (`ExternalReferenceSemanticSnapshot` schema `xref-compat/v1`) API 36 Android emülatör kabul testiyle doğruladı. AŞAMA 18 ise son açılan dosyalar havuzunu (`RecentFilesManager` ile max 10 LRU ve JSON kalıcılığı), Android veri güvenliğini (`[Application(AllowBackup = false)]` ve `LogRedactor` yol/URI maskeleme), görüntüleyici oturum yaşam döngüsünü (`CadViewerSession`), kamera pan/zoom/fit navigasyonunu, model yeniden parse edilmeden sıfır-maliyetli katman görünürlüğü değişimini (`SetLayerVisibility`), sıfır-maliyetli pafta geçişini (`SwitchLayout`), oryantasyon boyut değişimini, bellek baskısı yönetimini (`OnTrimMemory`), ve deterministik yaşam döngüsü durum dökümünü (`ViewerLifecycleSemanticSnapshot` schema `viewer-lifecycle/v1`) API 36 Android emülatör kabul testiyle doğruladı. AŞAMA 19 ise DWG sihirli sayıları ve DXF ikili/ASCII imzalarının ön doğrulamasını (`CadPreflightInspector`), yabancı/zararlı dosya formatlarının (PE, ELF, ZIP, PDF, HTML, imajlar) erken reddini, dosya boyutu, varlık sayısı, blok derinliği, metin uzunluğu ve raster boyutu karmaşıklık sınırlarını (`CadResourceBudget`), raster dekompresyon bombası korumasını, blok döngüsel referans tespitini (`CadBudgetGuard`), NaN/Sonsuzluk/$10^{12}$ koordinat muhafızlarını (`CadSanityGuards`), 15 iterasyonluk sınırlı mutasyon/fuzz testini ve deterministik durum dökümünü (`ResourceGuardsSemanticSnapshot` schema `resource-guards/v1`) API 36 Android emülatör kabul testiyle doğruladı. AŞAMA 20 ise Android Release TTFUP, çoklu frame render istatistikleri (p50=4.5ms, p95=12.4ms), GC ve Native Heap bellek takibi, dumpsys meminfo PSS denetimi (129.4 MB), APK boyutu denetimi (39.45 MB), doğrudan çizgi çizimi ve viewport culling ile 12.18x ölçümlü A-B optimizasyon kazancını ve deterministik metrik durum dökümünü (`PerformanceSemanticSnapshot` schema `performance-metrics/v1`) API 36 Android emülatör kabul testiyle doğruladı. AŞAMA 21 ise Android full corpus regresyonunu (14 aşamalı korpus, %100 başarı, C3+ sadakat %85.7), P0 ve P1 uyumluluk matrisini, survey-origin 5.000.000 + 0.001 çift duyarlık korunumunu, Debug vs Release / trimming / AOT analizini, 39.8 MB APK boyutu ve 134.1 MB PSS ölçümünü, deterministik durum dökümünü (`CorpusRegressionSemanticSnapshot` schema `corpus-regression/v1`) ve Android API 36 kabul testiyle beta kapı onayını (`ANDROID_STAGE21_BETA_GATE_PASS`) doğruladı. AŞAMA 22 ise nihai paket metaverisini (1.0.0, SDK 36, minSdk 24), %100 çevrimdışı Data Safety güvencesini (sıfır INTERNET izni), telifsiz bağımlılık ve SPDX-2.3 SBOM denetimini (`SBOM.json`), Autodesk marka feragatnamesini (`LEGAL_NOTICES.txt`), TalkBack erişilebilirlik ve 48dp dokunma alanını, DWG/DXF IntentFilter dosya ilişkilendirmelerini, 37.7 MB Release APK ve 37.1 MB Release AAB üretimlerini, 133.0 MB Dumpsys PSS ölçümünü, deterministik durum dökümünü (`ComplianceRcSemanticSnapshot` schema `compliance-rc/v1`) ve Android API 36 kabul testiyle Release RC onayını (`ANDROID_STAGE22_RELEASE_RC_PASS`) doğruladı. AŞAMA 25 ise Android beta ve blocker düzeltmelerini doğruladı. AŞAMA 26 ise toolchain/bağımlılık dondurma ve final RC onayını (`ANDROID_STAGE26_RC_APPROVAL_PASS`) doğruladı. AŞAMA 27 ile Android v1.0.0 üretim paketleri (`release/`), sağlama toplamları ve yayın kılavuzları eksiksiz üretilmiş, saf üretim uygulaması API 36 üzerinde doğrulanarak plan %100 tamamlanmıştır.
+- Android v1 geliştirme planı AŞAMA 27 ile tamamlandı.
+- Eski V01–V09 doğrulama programı ve A10 paralel workstream kapandı.
+- Bundan sonraki işler **yeni bug fix, kalite, performans ve viewer geliştirmesi** olarak ele alınır; eski stage cursor'ı devam ettirilmez.
+- Aktif platform Android'dir. iOS yalnız ileride açıkça yeniden etkinleştirilirse ele alınır.
+- Son v1 handoff claim'i fiziksel cihaz fidelity iddiası içermez; geçmiş kanıtlar `docs/evidence/` altındadır.
 
-A27 claim'i `A27_RELEASE_HANDOFF_API36_ONLY_NOT_PHYSICAL_DEVICE_FIDELITY` ile sınırlıdır. Tarihsel iOS AŞAMA 08 karakterizasyonu future option olarak arşivde kalır; iOS PASS değildir.
+## Teknoloji ve sınırlar
 
-## Yeni sohbet / yeni AI başlangıcı
+- .NET 10 / .NET MAUI Android
+- ACadSharp `3.7.1` — read-only DWG/DXF parser adapter
+- SkiaSharp `4.151.1` — 2D rendering
+- Android target API 36, minimum API 24
+- `double` world/document coordinates
 
-Normal proje devamı için [BASLA.md](BASLA.md) kullanılır. Android v1.0.0 Nihai Planı kapsamındaki tüm aşamalar (AŞAMA 00–27, ertelenen iOS 23–24 hariç) %100 tamamlanmıştır (`PLAN_COMPLETED`). Üretim paketleri `release/` dizinindedir.
+Production katmanları:
 
-`BASLA_A10.md` yalnız A10'un özel/izole workstream protokolüne ihtiyaç duyulan ayrı çalışma bağlamlarında kullanılabilir. A10 durumu [docs/A10_WORKSTREAM.md](docs/A10_WORKSTREAM.md) üzerinden doğrulanır; hiçbir durumda Android kanıtı olmadan `main` merge veya `DONE` yapılmaz.
+```text
+MobilDwg.Core
+   ↑       ↑
+MobilDwg.Cad   MobilDwg.Rendering
+        ↑       ↑
+          MobilDwg.App
+```
 
-Ana kaynaklar [ANDROID_DOGRULAMA_PLANI.md](ANDROID_DOGRULAMA_PLANI.md), [gecmis.md](gecmis.md) ve [Mobil_DWG_DXF_Royalty_Free_Android_iOS_Nihai_Plan.md](Mobil_DWG_DXF_Royalty_Free_Android_iOS_Nihai_Plan.md) dosyalarıdır. [DEVAM.md](DEVAM.md) anlık handoff snapshot'ıdır. Sohbet/model hafızası süreklilik kaynağı değildir; repo kayıtları esas alınır.
+Ayrıntı: [`docs/ARCHITECTURE.md`](docs/ARCHITECTURE.md)
 
-## Yetkili plan
+## Değiştirilemez temel ilkeler
 
-Uygulama [Mobil_DWG_DXF_Royalty_Free_Android_iOS_Nihai_Plan.md](Mobil_DWG_DXF_Royalty_Free_Android_iOS_Nihai_Plan.md) planına göre geliştirilir. V01–V09 kapanış sonuçları [ANDROID_DOGRULAMA_PLANI.md](ANDROID_DOGRULAMA_PLANI.md) ve `docs/evidence/android-validation/` altında korunur.
+Kullanıcı açıkça değiştirmedikçe:
 
-## Temel ürün ilkeleri
+- Orijinal DWG/DXF immutable kalır; production writer/save yoktur.
+- Temel açma ve görüntüleme local/offline çalışır; zorunlu cloud conversion yoktur.
+- UI doğrudan parser entity tiplerine bağlanmaz.
+- World/document koordinatlarında `double` hassasiyet korunur.
+- Unsupported entity, eksik font, XREF/raster veya compatibility problemi sessizce gizlenmez.
+- Ücretli/trial CAD SDK veya zorunlu runtime servis lisansı eklenmez.
+- GPL/AGPL/SSPL/BUSL/non-commercial/proprietary/unknown runtime dependency release graph'ına alınmaz.
+- Performans optimizasyonu correctness'i değiştiremez; ölçülmüş bottleneck üzerinden yapılır.
 
-- Viewer-first; edit ve save v1 kapsamı dışında
-- Aktif v1 Android-only; iOS future option ve adapter sınırları korunmuş
-- DWG/DXF doğrudan cihazda ve offline işlenir
-- Zorunlu bulut, hesap veya dosya başına servis ücreti yok
-- Ücretli CAD SDK/API ve runtime royalty yok
-- Dependency, native binary, font ve test fixture lisansları release öncesi denetlenir
-- Desteklenmeyen entity, eksik font ve dış referanslar sessizce gizlenmez
-- Original CAD immutable kalır; FilePicker/SAF içeriği immediate app-private safe-copy üzerinden işlenir
+Lisans politikası: [`compliance/LICENSE_POLICY.md`](compliance/LICENSE_POLICY.md)
 
-## Yürütme
+## Yeni bir işe başlarken
 
-Her `BASLA.md dosyasını oku` veya normal `devam` komutunda gerçek `main`, açık PR/CI ve checkpoint doğrulanır. Android v1.0.0 planı AŞAMA 27 ile %100 tamamlanmıştır. AŞAMA 23–24 (iOS) ertelenmiştir. Runner çevrim dışıysa kanıtsız PASS yazılmaz ve aynı test işi çoğaltılmaz.
+Eski `BASLA.md`, `DEVAM.md`, A10 workstream veya VXX cursor dosyaları artık yoktur. Yeni bir AI/ajan ya da geliştirici şu sırayı kullanmalıdır:
 
-## Güvenlik ve özel dosyalar
+1. Gerçek `main` kodunu ve ilgili dosyaları oku.
+2. [`docs/ARCHITECTURE.md`](docs/ARCHITECTURE.md) ile dependency sınırlarını kontrol et.
+3. Render/parser doğruluğu etkileniyorsa [`docs/GOLDEN_CONTRACT.md`](docs/GOLDEN_CONTRACT.md) ve geçmiş `docs/evidence/` kayıtlarını incele.
+4. Dependency/asset değişiyorsa `compliance/` belgelerini kontrol et.
+5. Android davranışı değişiyorsa [`docs/ANDROID_TESTING.md`](docs/ANDROID_TESTING.md) üzerinden değişikliğe özel doğrulama yap.
+6. Yeni iş için gerekiyorsa yeni, küçük ve işe özel plan/evidence oluştur; tamamlanmış eski planları tekrar yürütme.
 
-Gerçek müşteri/kullanıcı DWG-DXF dosyaları, fontlar, imzalama anahtarları ve özel test corpus'u repoya eklenmez. Yalnız redistribution/provenance durumu kaydedilmiş public/synthetic fixture ve asset'ler açıkça onaylanmış yollar altında tutulabilir.
+Sohbet/model belleği repo gerçekliğinin yerine geçmez.
 
-## Lisans
+## Yaşayan dokümantasyon
 
-Uygulama kaynak kodunun dağıtım lisansı henüz seçilmemiştir. Üçüncü taraf bileşenler ve test kaynakları kendi lisans/provenance kayıtlarına tabidir.
+| Dosya | Amaç |
+|---|---|
+| [`docs/ARCHITECTURE.md`](docs/ARCHITECTURE.md) | Güncel production katmanları ve dependency sınırları |
+| [`docs/GOLDEN_CONTRACT.md`](docs/GOLDEN_CONTRACT.md) | Fixture, semantic golden ve render doğruluk kuralları |
+| [`docs/TOOLCHAIN.md`](docs/TOOLCHAIN.md) | Pinli build/toolchain baseline |
+| [`docs/ANDROID_TESTING.md`](docs/ANDROID_TESTING.md) | Tek Android/emulator/fiziksel cihaz test rehberi |
+| [`docs/DEVICE_MATRIX.md`](docs/DEVICE_MATRIX.md) | Emulator ve fiziksel cihaz test sınıfları |
+| [`docs/EVIDENCE_TEMPLATE.md`](docs/EVIDENCE_TEMPLATE.md) | Yeni önemli değişiklikler için kanıt formatı |
+| [`compliance/LICENSE_POLICY.md`](compliance/LICENSE_POLICY.md) | Dependency/asset lisans politikası |
+| [`compliance/DEPENDENCY_EVIDENCE.md`](compliance/DEPENDENCY_EVIDENCE.md) | Dependency provenance/evidence |
+| [`compliance/RISK_REGISTER.md`](compliance/RISK_REGISTER.md) | Güncel açık teknik/ürün riskleri |
+| [`gecmis.md`](gecmis.md) | Kısa v1 tarihçesi ve kalıcı teknik karar özeti |
+
+`docs/ADR/` mimari kararları, `docs/evidence/` ise tarihsel doğrulama kanıtlarını içerir. Bu kayıtlar geçmişi korumak için tutulur; aktif iş listesi değildir.
+
+## Fixture ve özel dosya politikası
+
+- Gerçek müşteri/kullanıcı DWG-DXF dosyaları repoya eklenmez.
+- Proprietary SHX/font, signing key, token veya secret commit edilmez.
+- Public/synthetic fixture yalnız provenance ve yeniden dağıtım hakkı kayıtlıysa kullanılır.
+- Fixture sözleşmesi için [`fixtures/README.md`](fixtures/README.md) ve [`fixtures/public/synthetic/NOTICE.md`](fixtures/public/synthetic/NOTICE.md) esas alınır.
+
+## Build
+
+Pinli SDK kurulu ortamda:
+
+```powershell
+dotnet build .\MobilDwg.sln -c Release
+```
+
+Android testleri ve cihaz ayrımı için [`docs/ANDROID_TESTING.md`](docs/ANDROID_TESTING.md) kullanılır.
+
+## Tarihsel planlar
+
+2026-09-05 dokümantasyon temizliğinde tamamlanmış başlangıç/handoff/validation/implementation plan dosyaları çalışma ağacından kaldırıldı. Gerektiğinde Git geçmişinden erişilebilir; normal geliştirmede okunmaları veya yeniden oluşturulmaları gerekmez.
