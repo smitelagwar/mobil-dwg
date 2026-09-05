@@ -1,5 +1,6 @@
 using System.Collections.ObjectModel;
 using MobilDwg.Rendering.Layouts;
+using MobilDwg.Rendering.References;
 using MobilDwg.Rendering.Scene;
 
 namespace MobilDwg.Rendering.Geometry;
@@ -75,6 +76,20 @@ public static class GeometryTessellator
                     new WorldPoint2(vp.PaperBounds.MaxX, vp.PaperBounds.MinY),
                     new WorldPoint2(vp.PaperBounds.MaxX, vp.PaperBounds.MaxY),
                     new WorldPoint2(vp.PaperBounds.MinX, vp.PaperBounds.MaxY)
+                ], closed: true, filled: false),
+            MissingReferencePrimitive missing => new TessellatedPath(
+                [
+                    new WorldPoint2(missing.PlaceholderBounds.MinX, missing.PlaceholderBounds.MinY),
+                    new WorldPoint2(missing.PlaceholderBounds.MaxX, missing.PlaceholderBounds.MinY),
+                    new WorldPoint2(missing.PlaceholderBounds.MaxX, missing.PlaceholderBounds.MaxY),
+                    new WorldPoint2(missing.PlaceholderBounds.MinX, missing.PlaceholderBounds.MaxY)
+                ], closed: true, filled: false),
+            RasterImagePrimitive img => new TessellatedPath(
+                [
+                    new WorldPoint2(img.ImageBounds.MinX, img.ImageBounds.MinY),
+                    new WorldPoint2(img.ImageBounds.MaxX, img.ImageBounds.MinY),
+                    new WorldPoint2(img.ImageBounds.MaxX, img.ImageBounds.MaxY),
+                    new WorldPoint2(img.ImageBounds.MinX, img.ImageBounds.MaxY)
                 ], closed: true, filled: false),
             _ => throw new NotSupportedException($"Unsupported geometry primitive: {primitive.GetType().Name}"),
         };
