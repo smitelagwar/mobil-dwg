@@ -406,9 +406,13 @@ Giriş kapısı: `AŞAMA 25 DONE ON MAIN`.
 
 Toolchain ve bağımlılık dondurma (.NET SDK 10.0.400, SDK 36, minSdk 24, locked-mode restore, Directory.Packages.props exact freeze), sıfır güvenlik açığı, APK ve AAB envanter denetimi (37.7 MB APK, 37.41 MB AAB < 45 MB bütçesi altında), yerel kütüphane denetimi (yalnızca libSkiaSharp.so ve resmi .NET çalışma zamanı; sıfır kapalı CAD SDK), font asset denetimi (sıfır tescilli AutoCAD SHX fontu; açık kaynak sistem font eşlemesi), %100 çevrimdışı Data Safety (sıfır INTERNET izni), 114.8 MB Dumpsys PSS, deterministik snapshot (`schema=rc-approval/v1`), platform-neutral denetim testleri (`Stage26FinalAuditTests`) ve API 36 emülatör kabul testi ile nihai Release Candidate onayı (`ANDROID_STAGE26_RC_APPROVAL_PASS`). Evidence: `docs/evidence/STAGE_26.md`.
 
-### AŞAMA 27 — Android v1 artifact / yayın / handoff
+### AŞAMA 27 — Android v1 artifact / yayın / handoff — `DONE`
 
-Final APK/AAB/checksums/build instructions, store-ready/submission, clean reproduction, user-approved release snapshot, privacy/compatibility/notices/limitations/support docs.
+Giriş kapısı: `AŞAMA 26 DONE ON MAIN`.
+
+Nihai temiz üretim Release paketleri (`release/MobilDwg-v1.0.0.apk` 37.96 MB, `release/MobilDwg-v1.0.0.aab` 37.54 MB < 45 MB bütçesi altında), SHA-256 sağlama toplamları (`release/SHA256SUMS.txt`), 5 ana başlıkta yayın ve teslimat dokümantasyonu (`BUILD_INSTRUCTIONS.md`, `PLAY_STORE_SUBMISSION_GUIDE.md`, `PRIVACY_POLICY.md`, `COMPATIBILITY_AND_LIMITATIONS.md`, `THIRD_PARTY_NOTICES.md`), API 36 emülatör saf üretim kabul testi (PID: 5339, 88.9 MB PSS, UI hiyerarşi onayı, byte-safe ekran görüntüsü) ve yayın teslimat onayı (`ANDROID_STAGE27_RELEASE_HANDOFF_PASS`). Evidence: `docs/evidence/STAGE_27.md`.
+
+**PLAN KAPSAMI %100 TAMAMLANMIŞTIR.**
 
 ---
 

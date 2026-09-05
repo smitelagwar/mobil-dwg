@@ -391,12 +391,36 @@ NEXT_ACTION: Sonraki normal BASLA/devam turunda AŞAMA 21'i (Android full corpus
 - Claim limit: `CLAIM_LIMIT=A26_FINAL_RC_APPROVAL_API36_ONLY_NOT_PHYSICAL_DEVICE_FIDELITY`.
 - Kanıt belgesi: `docs/evidence/STAGE_26.md`.
 
+### 2026-09-05 — AŞAMA 27: Android v1 artifact / yayın / handoff tamamlandı (PLAN %100 BİTTİ)
+
+- Branch: `stage27-release-handoff`.
+- PR: `#38` (`feat(stage27): android v1 release artifacts and handoff with api36 acceptance gate`).
+- Nihai Üretim Paketleri (Release Artifacts):
+  - İmzalı Üretim APK: `release/MobilDwg-v1.0.0.apk` — Boyut: `37.96 MB` (< 45 MB), SHA-256: `f3fde60a2d6983c3f6d48887453fa06d58f0386131bd18e2645a1e2472b3b8aa`.
+  - İmzalı Üretim AAB: `release/MobilDwg-v1.0.0.aab` — Boyut: `37.54 MB` (< 45 MB), SHA-256: `748bddf4e85c5162301a73cbcf09b488b6c30d631f1301ea353224c5a3b1a7ed`.
+  - Sağlama toplamları: `release/SHA256SUMS.txt` (`A27_CHECKSUMS_PASS`).
+- Yayın ve Teslimat Dokümantasyonu (`docs/release/`):
+  - `BUILD_INSTRUCTIONS.md`: Derleme ve dağıtım kılavuzu.
+  - `PLAY_STORE_SUBMISSION_GUIDE.md`: Google Play Console ve mağaza yayın kılavuzu.
+  - `PRIVACY_POLICY.md`: %100 çevrimdışı, sıfır veri toplama gizlilik politikası.
+  - `COMPATIBILITY_AND_LIMITATIONS.md`: Format uyumluluk ve bilinen sınırlar matrisi.
+  - `THIRD_PARTY_NOTICES.md`: Üçüncü taraf lisans bildirimleri ve yasal uyarılar (`A27_DOCUMENTATION_PASS`).
+- Android Emulator Kabul Testi: `sdk_gphone64_x86_64` (Android 16 / API 36, serial `emulator-5554`).
+- Saf Üretim Uygulaması Başlatma: Test kancası olmaksızın saf üretim APK'sı kuruldu, PID `5339` ile sorunsuz çalıştı (`A27_REAL_APP_PRODUCTION_LAUNCH_PASS`).
+- Dumpsys meminfo Total PSS: `88.9 MB` (< 250 MB bütçesi altında, `A27_MEMINFO_PSS_PASS`).
+- UI Doğrulaması: `a27_window.xml` hiyerarşisinde standart kontroller doğrulandı.
+- Ekran görüntüsü: `artifacts/a27-android-release-handoff/a27-real-app-release-production.png` (64.7 KB, byte-safe PNG).
+- Sonuç belirteçleri: `A27_DOCUMENTATION_PASS`, `A27_HOST_TESTS_PASS`, `A27_CHECKSUMS_PASS`, `A27_REAL_APP_PRODUCTION_LAUNCH_PASS`, `A27_MEMINFO_PSS_PASS`, `ANDROID_STAGE27_RELEASE_HANDOFF_PASS`.
+- Kararlılık: Paket kapsamında crash/ANR yok.
+- Claim limit: `CLAIM_LIMIT=A27_RELEASE_HANDOFF_API36_ONLY_NOT_PHYSICAL_DEVICE_FIDELITY`.
+- Kanıt belgesi: `docs/evidence/STAGE_27.md`.
+
 ```text
-IMPLEMENTATION_BASELINE: AŞAMA 26 — DONE
-IMPLEMENTATION_CURSOR: AŞAMA 27 — NOT_STARTED
-A26_GATE: CLOSED / PASSED
-A27_GATE: OPEN
-NEXT_ACTION: Sonraki normal BASLA/devam turunda AŞAMA 27'yi (Android v1 artifact / yayın / handoff) başlat.
+IMPLEMENTATION_BASELINE: AŞAMA 27 — DONE
+IMPLEMENTATION_CURSOR: PLAN_COMPLETED (100%)
+A27_GATE: CLOSED / PASSED
+PLAN_STATUS: ANDROID_V1_PLAN_COMPLETED_100%
+NEXT_ACTION: Android v1.0.0 planı %100 tamamlandı; tüm aşamalar kapandı. Üretim paketleri release/ dizini altında hazır.
 ```
 
 
