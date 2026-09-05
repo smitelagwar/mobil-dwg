@@ -5,7 +5,7 @@ using Microsoft.Maui.Storage;
 using MobilDwg.App.Opening;
 using MobilDwg.Cad.AcadSharp;
 
-#if V06_VALIDATION || A10_VALIDATION || A11_VALIDATION
+#if V06_VALIDATION || A10_VALIDATION || A11_VALIDATION || A12_VALIDATION
 using Android.Util;
 #endif
 
@@ -27,6 +27,9 @@ public sealed class MainPage : ContentPage
 #endif
 #if A11_VALIDATION
     private bool _a11Started;
+#endif
+#if A12_VALIDATION
+    private bool _a12Started;
 #endif
 
     public MainPage()
@@ -150,6 +153,27 @@ public sealed class MainPage : ContentPage
         layout.Children.Insert(2, a11Status);
         layout.Children.Insert(3, a11Image);
         Loaded += async (_, _) => await RunA11ValidationAsync(a11Status, a11Image);
+#endif
+
+#if A12_VALIDATION
+        var a12Status = new Label
+        {
+            Text = "A12_VALIDATION_PENDING",
+            AutomationId = "a12-validation-status",
+            FontSize = 13,
+            TextColor = Color.FromArgb("#B8C4D8"),
+            HorizontalTextAlignment = TextAlignment.Center,
+        };
+        var a12Image = new Image
+        {
+            AutomationId = "a12-render-image",
+            HeightRequest = 420,
+            Aspect = Aspect.AspectFit,
+            BackgroundColor = Color.FromArgb("#101010"),
+        };
+        layout.Children.Insert(2, a12Status);
+        layout.Children.Insert(3, a12Image);
+        Loaded += async (_, _) => await RunA12ValidationAsync(a12Status, a12Image);
 #endif
 
         Content = new ScrollView { Content = layout };
@@ -409,6 +433,28 @@ public sealed class MainPage : ContentPage
         {
             status.Text = $"ANDROID_STAGE11_VIEWPORT_GESTURE_FAIL type={exception.GetType().Name}";
             Log.Error(A11AndroidValidationRunner.Tag, status.Text);
+        }
+    }
+#endif
+
+#if A12_VALIDATION
+    private async Task RunA12ValidationAsync(Label status, Image image)
+    {
+        if (_a12Started) return;
+        _a12Started = true;
+        status.Text = "A12_VALIDATION_RUNNING";
+        try
+        {
+            var result = await A12AndroidValidationRunner.RunAsync();
+            var png = result.Png;
+            image.Source = ImageSource.FromStream(() => new MemoryStream(png, writable: false));
+            status.Text = $"{result.Marker} entities={result.ExpandedEntityCount}";
+            Log.Info(A12AndroidValidationRunner.Tag, $"A12_REAL_APP_UI_IMAGE_READY sha256={result.PngSha256}");
+        }
+        catch (Exception exception)
+        {
+            status.Text = $"ANDROID_STAGE12_BLOCK_INSERT_FAIL type={exception.GetType().Name}";
+            Log.Error(A12AndroidValidationRunner.Tag, status.Text);
         }
     }
 #endif
