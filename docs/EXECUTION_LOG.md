@@ -267,11 +267,33 @@ NEXT_ACTION: Sonraki normal BASLA/devam turunda AŞAMA 18'i (Tam Android viewer 
 - Claim limit: `CLAIM_LIMIT=A19_RESOURCE_GUARDS_API36_ONLY_NOT_CAD_PARSE_TO_SCENE_OR_PHYSICAL_DEVICE_FIDELITY`.
 - Kanıt belgesi: `docs/evidence/STAGE_19.md`.
 
+### 2026-09-05 — AŞAMA 20: Ölçümlü performance/memory tamamlandı
+
+- Branch: `stage20-performance-memory`.
+- Release APK: `39,454,742` byte; SHA-256 `b9030d204ffc1d7482097a84565bba75e3a4290474c54baa2809818c52211708` (<45 MB bütçesi altında).
+- Android Emulator: `sdk_gphone64_x86_64` (Android 16 / API 36 / `x86_64`, serial `emulator-5554`).
+- Canlı PID: `12165`.
+- Ekran görüntüsü: `160,194` byte; SHA-256 `513cd6c15d30c8f2651893d001c9095e40d45bcb7c0f4b7438cd80a45f8b023f`.
+- Performans Ölçümleri:
+  - TTFUP: Small (~100 varlık), Medium (~2.000 varlık, 260.2 ms), Large (20.000 varlık, 1.245,6 ms).
+  - Frame Render (20 ardışık pan/zoom karesi): p50 = `4.5 ms` (~220.3 FPS), p95 = `12.4 ms`.
+  - Bellek (Runtime): Managed GC Heap ~15.7 MB, Native Heap ~48.8 MB, Java Heap ~3.2 MB.
+  - Dumpsys meminfo Total PSS: `129.4 MB` (<250 MB bütçesi altında).
+  - A-B Optimizasyon Kanıtı: Doğrudan çizgi çizimi ve frustum/viewport culling ile `12.18x` hızlanma kazancı.
+  - Deterministik Snapshot: `schema=performance-metrics/v1`, hash `5030e3080231ed3bf73da5ed877b6748d1a6d05497e11c0ad643333196b376ab`.
+- Host test belirteçleri: `STAGE20_PERFORMANCE_MEMORY_TESTS_PASS` (10/10 test: Small TTFUP and frame timing, Medium TTFUP and frame timing, Large TTFUP and frame timing with 20K entities, Frame timing distribution calculation, Memory tracking and GC collections, Line rendering optimization A-B benchmark, Viewport culling optimization A-B benchmark, Synthetic Turkish DXF performance metrics, Performance semantic snapshot determinism, Invalid performance inputs handled safely), `STAGE19_RESOURCE_GUARDS_TESTS_PASS`, `STAGE18_VIEWER_LIFECYCLE_TESTS_PASS`, `STAGE17_REFERENCE_COMPATIBILITY_TESTS_PASS`, `STAGE16_LAYOUT_VIEWPORT_TESTS_PASS`, `STAGE15_DIMENSION_HATCH_TESTS_PASS`, `STAGE14_TEXT_FONT_TESTS_PASS`, `STAGE13_LAYER_STYLE_TESTS_PASS`, `STAGE12_BLOCK_INSERT_TESTS_PASS`, `STAGE11_VIEWPORT_GESTURE_TESTS_PASS`, `STAGE10_GEOMETRY_PRIMITIVES_TESTS_PASS`, `STAGE10_TESSELLATION_PRECISION_TESTS_PASS`, `STAGE10_P0_SEMANTIC_GOLDEN_PASS`, `STAGE04_RENDER_CONTRACT_TESTS_PASS`, `STAGE09_RENDER_SCENE_TESTS_PASS`.
+- Katman Mimari Testleri: `STAGE04_ARCHITECTURE_TESTS_PASS`, `STAGE05_DEPENDENCY_BOUNDARY_PASS`, `V04_REAL_ANDROID_APP_PROJECT_PASS` (MobilDwg.App içinde SkiaSharp ve ACadSharp doğrudan kaynak bağımlılık yasağı eksiksiz korunmuştur).
+- Android emülatör belirteçleri: `A20_EMULATOR_API36_PASS`, `A20_REAL_APP_APK_PASS`, `A20_REAL_APP_INSTALL_PASS`, `A20_REAL_APP_LAUNCH_PASS`, `A20_ANDROID_TTFUP_PASS`, `A20_ANDROID_FRAME_TIMING_PASS`, `A20_ANDROID_MEMORY_PASS`, `A20_ANDROID_AB_OPTIMIZATION_PASS`, `A20_ANDROID_SNAPSHOT_PASS`, `A20_ANDROID_SKIA_RENDER_PASS`, `A20_REAL_APP_PERF_MARKERS_PASS`, `A20_REAL_APP_UI_STATUS_PASS`, `A20_SCREENSHOT_PNG_PASS`, `A20_MEMINFO_PSS_PASS`, `A20_REAL_APP_STABILITY_PASS pid=12165`, `ANDROID_STAGE20_PERFORMANCE_MEMORY_PASS`.
+- UI Doğrulaması: `window.xml` hiyerarşisinde `ANDROID_STAGE20_PERFORMANCE_MEMORY_PASS` doğrulanarak `A20_REAL_APP_UI_STATUS_PASS` alındı.
+- Kararlılık: Paket ve PID kapsamında crash/ANR yok, uygulama canlı kaldı (`A20_REAL_APP_STABILITY_PASS pid=12165`).
+- Claim limit: `CLAIM_LIMIT=A20_PERFORMANCE_MEMORY_API36_ONLY_NOT_PHYSICAL_DEVICE_FIDELITY`.
+- Kanıt belgesi: `docs/evidence/STAGE_20.md`.
+
 ```text
-IMPLEMENTATION_BASELINE: AŞAMA 19 — DONE
-IMPLEMENTATION_CURSOR: AŞAMA 20 — NOT_STARTED
-A20_GATE: OPEN
-NEXT_ACTION: Sonraki normal BASLA/devam turunda AŞAMA 20'yi (Ölçümlü performance/memory) başlat.
+IMPLEMENTATION_BASELINE: AŞAMA 20 — DONE
+IMPLEMENTATION_CURSOR: AŞAMA 21 — NOT_STARTED
+A21_GATE: OPEN
+NEXT_ACTION: Sonraki normal BASLA/devam turunda AŞAMA 21'i (Android full corpus regression / beta gate) başlat.
 ```
 
 
