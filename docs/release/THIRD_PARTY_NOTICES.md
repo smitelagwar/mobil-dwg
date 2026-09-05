@@ -1,40 +1,53 @@
-﻿# Üçüncü Taraf Bildirimleri ve Lisanslar (Third-Party Notices)
+# Mobil DWG — Third-Party Notices
 
-Bu uygulama, telifsiz (royalty-free) ve izin verilen (permissive) açık kaynaklı üçüncü taraf kütüphaneler kullanılarak geliştirilmiştir.
+Bu dosya release-facing üçüncü taraf bileşen özetidir. Exact resolved dependency/native graph için repo içindeki `compliance/DEPENDENCY_EVIDENCE.md`, package lock kayıtları ve final artifact audit'i esas alınır.
 
----
+## Marka feragatnamesi
 
-## 1. Ticari Marka Feragatnamesi (Autodesk Disclaimer)
+AutoCAD ve DWG, Autodesk, Inc. ile ilişkili ticari markalardır. Mobil DWG bağımsız bir projedir; Autodesk, Inc. tarafından onaylanmış, desteklenmiş veya Autodesk ile bağlantılı olduğu izlenimi verilmez.
 
-AutoCAD ve DWG, Amerika Birleşik Devletleri ve diğer ülkelerde Autodesk, Inc.'in tescilli ticari markalarıdır. Mobil DWG projesi bağımsız bir açık kaynak yazılım çalışmasıdır; Autodesk, Inc. tarafından onaylanmamış, desteklenmemiş veya Autodesk, Inc. ile doğrudan/dolaylı hiçbir şekilde ilişkilendirilmemiştir.
+## Ana üçüncü taraf bileşenler
 
----
+### ACadSharp `3.7.1`
 
-## 2. Kullanılan Üçüncü Taraf Bileşenler ve Lisanslar
+- Lisans: MIT
+- Kullanım: read-only DWG/DXF parser adapter baseline
+- Production sürümü repo package pinleriyle exact tutulur.
 
-### ACadSharp (v3.7.1)
-- **Lisans**: MIT License
-- **Telif**: Copyright (c) ACadSharp Contributors
-- **Kullanım**: Açık CAD dosya formatı ayrıştırma (parsing).
+### SkiaSharp `4.151.1`
 
-### SkiaSharp & SkiaSharp.NativeAssets.Android (v4.151.1)
-- **Lisans**: MIT License
-- **Telif**: Copyright (c) .NET Foundation and Contributors
-- **Kullanım**: Yüksek performanslı 2D vektör render motoru.
+- Lisans: MIT package hattı; native/Skia third-party notices ayrıca artifact/compliance audit kapsamındadır.
+- Kullanım: 2D rendering.
 
-### Microsoft .NET MAUI (v10.0.100)
-- **Lisans**: MIT License
-- **Telif**: Copyright (c) .NET Foundation and Contributors
-- **Kullanım**: Çapraz platform kullanıcı arayüzü çerçevesi.
+### Microsoft .NET MAUI `10.0.100`
 
-### System.Text.Encoding.CodePages (v10.0.1)
-- **Lisans**: MIT License
-- **Telif**: Copyright (c) .NET Foundation and Contributors
-- **Kullanım**: Windows-1254 Türkçe karakter kodlama desteği.
+- Lisans: MIT
+- Kullanım: Android application/UI framework.
 
----
+### System.Text.Encoding.CodePages `10.0.1`
 
-## 3. MIT Lisans Metni Örneği
+- Lisans: MIT
+- Kullanım: legacy Windows code-page desteği, Türkçe/CP1254 dahil ilgili text decoding yolları.
+
+Resolved graph bu kısa listenin transitive bileşenlerinden daha geniş olabilir. Bu nedenle final release'te yalnız bu tabloya bakılarak “tüm lisanslar tamam” sonucu çıkarılmaz.
+
+## Dependency/asset politikası
+
+Production graph için:
+
+- exact version/source/provenance,
+- transitive dependency,
+- native binary,
+- font/asset,
+- redistribution/notice
+
+kontrolleri `compliance/LICENSE_POLICY.md` kurallarına tabidir.
+
+Proprietary/trial CAD SDK, zorunlu ücretli runtime servis veya RED lisanslı dependency production graph'a alınmaz.
+
+Proprietary Autodesk SHX/font dosyaları uygulama bundle'ına eklenmez.
+
+## MIT lisans metni
 
 Permission is hereby granted, free of charge, to any person obtaining a copy
 of this software and associated documentation files (the "Software"), to deal
