@@ -5,7 +5,7 @@ using Microsoft.Maui.Hosting;
 
 namespace MobilDwg.App;
 
-[Application]
+[Application(AllowBackup = false)]
 public sealed class MainApplication : MauiApplication
 {
     public MainApplication(IntPtr handle, JniHandleOwnership ownership)
