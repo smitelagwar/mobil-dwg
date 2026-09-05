@@ -5,7 +5,7 @@ using Microsoft.Maui.Storage;
 using MobilDwg.App.Opening;
 using MobilDwg.Cad.AcadSharp;
 
-#if V06_VALIDATION || A10_VALIDATION || A11_VALIDATION || A12_VALIDATION || A13_VALIDATION || A14_VALIDATION || A15_VALIDATION || A16_VALIDATION || A17_VALIDATION || A18_VALIDATION || A19_VALIDATION || A20_VALIDATION || A21_VALIDATION || A22_VALIDATION
+#if V06_VALIDATION || A10_VALIDATION || A11_VALIDATION || A12_VALIDATION || A13_VALIDATION || A14_VALIDATION || A15_VALIDATION || A16_VALIDATION || A17_VALIDATION || A18_VALIDATION || A19_VALIDATION || A20_VALIDATION || A21_VALIDATION || A22_VALIDATION || A25_VALIDATION
 using Android.Util;
 #endif
 
@@ -57,6 +57,9 @@ public sealed class MainPage : ContentPage
 #endif
 #if A22_VALIDATION
     private bool _a22Started;
+#endif
+#if A25_VALIDATION
+    private bool _a25Started;
 #endif
 
     public MainPage()
@@ -423,6 +426,27 @@ public sealed class MainPage : ContentPage
         Loaded += async (_, _) => await RunA22ValidationAsync(a22Status, a22Image);
 #endif
 
+#if A25_VALIDATION
+        var a25Status = new Label
+        {
+            Text = "A25_VALIDATION_PENDING",
+            AutomationId = "a25-validation-status",
+            FontSize = 13,
+            TextColor = Color.FromArgb("#B8C4D8"),
+            HorizontalTextAlignment = TextAlignment.Center,
+        };
+        var a25Image = new Image
+        {
+            AutomationId = "a25-render-image",
+            HeightRequest = 420,
+            Aspect = Aspect.AspectFit,
+            BackgroundColor = Color.FromArgb("#101010"),
+        };
+        layout.Children.Insert(2, a25Status);
+        layout.Children.Insert(3, a25Image);
+        Loaded += async (_, _) => await RunA25ValidationAsync(a25Status, a25Image);
+#endif
+
         Content = new ScrollView { Content = layout };
     }
 
@@ -548,6 +572,11 @@ public sealed class MainPage : ContentPage
 #if V06_VALIDATION
             LogV06("V06_OPEN_FAIL type=CadFileQuotaExceededException");
 #endif
+#if A25_VALIDATION
+            Log.Warn("MobilDwgA25", "A25_RENDER_ERROR_SURFACE_PASS type=CadFileQuotaExceededException");
+#endif
+            // B5: Reset stale coordinator state so next open attempt starts clean
+            await coordinator.ResetCurrentSessionAsync().ConfigureAwait(false);
         }
         catch (CadFileInsufficientSpaceException)
         {
@@ -555,13 +584,25 @@ public sealed class MainPage : ContentPage
 #if V06_VALIDATION
             LogV06("V06_OPEN_FAIL type=CadFileInsufficientSpaceException");
 #endif
+#if A25_VALIDATION
+            Log.Warn("MobilDwgA25", "A25_RENDER_ERROR_SURFACE_PASS type=CadFileInsufficientSpaceException");
+#endif
+            // B5: Reset stale coordinator state so next open attempt starts clean
+            await coordinator.ResetCurrentSessionAsync().ConfigureAwait(false);
         }
         catch (Exception exception)
         {
-            _status.Text = $"Dosya açılamadı: {exception.GetType().Name}";
+            // B4: Surface render/open error to user via status label (not silently swallowed)
+            var errorKind = exception.GetType().Name;
+            _status.Text = $"Dosya açılamadı: {errorKind} — {exception.Message}";
 #if V06_VALIDATION
             LogV06($"V06_OPEN_FAIL type={exception.GetType().Name}");
 #endif
+#if A25_VALIDATION
+            Log.Warn("MobilDwgA25", $"A25_RENDER_ERROR_SURFACE_PASS type={errorKind}");
+#endif
+            // B5: Reset stale coordinator state so next open attempt starts clean
+            await coordinator.ResetCurrentSessionAsync().ConfigureAwait(false);
         }
     }
 
@@ -992,6 +1033,34 @@ public sealed class MainPage : ContentPage
     private static void LogV06(string marker)
     {
         Log.Info("MobilDwgV06", marker);
+    }
+#endif
+
+#if A25_VALIDATION
+    private async Task RunA25ValidationAsync(Label status, Image image)
+    {
+        if (_a25Started) return;
+        _a25Started = true;
+        status.Text = "A25_VALIDATION_RUNNING";
+        try
+        {
+            var result = await Task.Run(A25AndroidValidationRunner.RunAsync);
+            var png = result.Png;
+            MainThread.BeginInvokeOnMainThread(() =>
+            {
+                image.Source = ImageSource.FromStream(() => new MemoryStream(png, writable: false));
+                status.Text = $"{result.Marker} | {result.BlockerSummary}";
+            });
+            Log.Info(A25AndroidValidationRunner.Tag, $"A25_REAL_APP_UI_IMAGE_READY sha256={result.PngSha256}");
+        }
+        catch (Exception exception)
+        {
+            MainThread.BeginInvokeOnMainThread(() =>
+            {
+                status.Text = $"ANDROID_STAGE25_BETA_BLOCKER_FAIL: {exception.Message}";
+            });
+            Log.Error(A25AndroidValidationRunner.Tag, $"ANDROID_STAGE25_BETA_BLOCKER_FAIL: {exception}");
+        }
     }
 #endif
 }

@@ -247,6 +247,27 @@ public sealed class CadFileOpenCoordinator : IAsyncDisposable
         return true;
     }
 
+    /// <summary>
+    /// Clears any committed session lease after a failed open so that a subsequent
+    /// OpenLatestAsync call starts from a clean state without recreating the coordinator.
+    /// Safe to call from the UI thread after catching an open error.
+    /// </summary>
+    public async ValueTask ResetCurrentSessionAsync()
+    {
+        CadOpenLease? current;
+        lock (_sync)
+        {
+            if (_disposed) return;
+            current = _current;
+            _current = null;
+        }
+
+        if (current is not null)
+        {
+            await current.DisposeAsync().ConfigureAwait(false);
+        }
+    }
+
     public async ValueTask DisposeAsync()
     {
         CancellationTokenSource? cancellation;

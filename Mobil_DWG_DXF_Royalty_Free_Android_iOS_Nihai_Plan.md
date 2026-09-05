@@ -378,7 +378,7 @@ Giriş kapısı: `AŞAMA 20 DONE ON MAIN`.
 
 Full public/private corpus parse/scene/render/golden, P0/P1 matrix (P0 8/8 C3/C4 %100, P1 4/4 C3 %100, negatives 2/2 C2, C3+ %85.7), harita/kadastro 5.000.000 + 0.001 çift duyarlık korunumu, Debug vs Release / trimming / AOT analizi, APK boyutu (39.8 MB < 45 MB), Dumpsys PSS (134.1 MB < 250 MB), deterministik snapshot (`schema=corpus-regression/v1`) ve API 36 emülatör kabul testi ile beta gate onayı (`ANDROID_STAGE21_BETA_GATE_PASS`). Evidence: `docs/evidence/STAGE_21.md`.
 
-### AŞAMA 22 — Android Release/AAB/compliance RC
+### AŞAMA 22 — Android Release/AAB/compliance RC — `DONE`
 
 Giriş kapısı: `AŞAMA 21 DONE ON MAIN`.
 
@@ -388,9 +388,17 @@ Final package/icon/version (1.0.0, SDK 36, minSdk 24), live target SDK/Play/Data
 
 `DEFERRED_FUTURE_IOS / ACTIVE_ANDROID_SEQUENCE_OUT`. Kullanıcı yeniden etkinleştirmeden Mac/Xcode/iPhone/iOS işi yapılmaz.
 
-### AŞAMA 25 — Android beta ve blocker düzeltmeleri
+### AŞAMA 25 — Android beta ve blocker düzeltmeleri — `DONE`
 
-Yalnız crash/privacy/P0 fidelity/open/lifecycle/severe perf blocker; yeni feature/edit/export eklenmez.
+Giriş kapısı: `AŞAMA 22 DONE ON MAIN`.
+
+Yalnız crash/privacy/P0 fidelity/open/lifecycle/severe perf blocker düzeltmeleri:
+- B1: UI-thread kilitlenme kontrolü ve Task.Run işçi iş parçacığı izolasyonu (A20 TTFUP bütçesi korunur)
+- B2: CadViewerSession.Dispose() yaşam döngüsü güvencesi ve deterministik ObjectDisposedException
+- B3: SafeCadFileCache.PurgeAll() ve MainActivity.OnTrimMemory üzerinden orphan geçici dosya temizliği
+- B4: Render ve dosya açma hatalarının kullanıcı arayüzüne görünür yansıtılması (sessiz kayıp/yutma yok)
+- B5: CadFileOpenCoordinator.ResetCurrentSessionAsync() ile hatalı açma sonrası bayat oturum temizliği ve temiz 2. açma
+- Platform-neutral sözleşme testleri (Stage25BetaBlockerTests) ve API 36 emülatör kabul testi ile beta blocker kapı onayı (`ANDROID_STAGE25_BETA_BLOCKER_PASS`). Evidence: `docs/evidence/STAGE_25.md`.
 
 ### AŞAMA 26 — Dependency freeze / final audit / RC approval
 
