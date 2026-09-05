@@ -24,6 +24,7 @@ public sealed class CadViewerSession : IDisposable
     public Camera2D Camera { get; private set; }
     public int ViewportPixelWidth { get; private set; }
     public int ViewportPixelHeight { get; private set; }
+    public SkiaCadRenderer Renderer => _renderer;
 
     public CadViewerSession(
         CadDocumentMetadata metadata,

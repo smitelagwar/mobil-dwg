@@ -72,6 +72,14 @@ public readonly record struct WorldBounds2
         Math.Min(MinY, other.MinY),
         Math.Max(MaxX, other.MaxX),
         Math.Max(MaxY, other.MaxY));
+
+    public bool Intersects(WorldBounds2 other) =>
+        MinX <= other.MaxX && MaxX >= other.MinX &&
+        MinY <= other.MaxY && MaxY >= other.MinY;
+
+    public bool Contains(WorldPoint2 point) =>
+        point.X >= MinX && point.X <= MaxX &&
+        point.Y >= MinY && point.Y <= MaxY;
 }
 
 public readonly record struct RenderEntityId

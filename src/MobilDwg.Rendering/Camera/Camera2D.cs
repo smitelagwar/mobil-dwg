@@ -119,6 +119,18 @@ public readonly record struct Camera2D
         return new RenderViewport(PixelWidth, PixelHeight, Center.X, Center.Y, WorldUnitsPerPixel);
     }
 
+    public WorldBounds2 GetVisibleWorldBounds(double paddingFraction = 0d)
+    {
+        EnsureValid();
+        var halfSpanX = (PixelWidth * (1d + (2d * paddingFraction)) / 2d) * WorldUnitsPerPixel;
+        var halfSpanY = (PixelHeight * (1d + (2d * paddingFraction)) / 2d) * WorldUnitsPerPixel;
+        return new WorldBounds2(
+            Center.X - halfSpanX,
+            Center.Y - halfSpanY,
+            Center.X + halfSpanX,
+            Center.Y + halfSpanY);
+    }
+
     public static Camera2D FromViewport(
         RenderViewport viewport,
         double minWorldUnitsPerPixel = 1e-12,

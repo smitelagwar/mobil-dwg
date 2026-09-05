@@ -5,7 +5,7 @@ using Microsoft.Maui.Storage;
 using MobilDwg.App.Opening;
 using MobilDwg.Cad.AcadSharp;
 
-#if V06_VALIDATION || A10_VALIDATION || A11_VALIDATION || A12_VALIDATION || A13_VALIDATION || A14_VALIDATION || A15_VALIDATION || A16_VALIDATION || A17_VALIDATION || A18_VALIDATION || A19_VALIDATION
+#if V06_VALIDATION || A10_VALIDATION || A11_VALIDATION || A12_VALIDATION || A13_VALIDATION || A14_VALIDATION || A15_VALIDATION || A16_VALIDATION || A17_VALIDATION || A18_VALIDATION || A19_VALIDATION || A20_VALIDATION
 using Android.Util;
 #endif
 
@@ -342,6 +342,27 @@ public sealed class MainPage : ContentPage
         layout.Children.Insert(2, a19Status);
         layout.Children.Insert(3, a19Image);
         Loaded += async (_, _) => await RunA19ValidationAsync(a19Status, a19Image);
+#endif
+
+#if A20_VALIDATION
+        var a20Status = new Label
+        {
+            Text = "A20_VALIDATION_PENDING",
+            AutomationId = "a20-validation-status",
+            FontSize = 13,
+            TextColor = Color.FromArgb("#B8C4D8"),
+            HorizontalTextAlignment = TextAlignment.Center,
+        };
+        var a20Image = new Image
+        {
+            AutomationId = "a20-render-image",
+            HeightRequest = 420,
+            Aspect = Aspect.AspectFit,
+            BackgroundColor = Color.FromArgb("#101010"),
+        };
+        layout.Children.Insert(2, a20Status);
+        layout.Children.Insert(3, a20Image);
+        Loaded += async (_, _) => await RunA20ValidationAsync(a20Status, a20Image);
 #endif
 
         Content = new ScrollView { Content = layout };
@@ -819,6 +840,36 @@ public sealed class MainPage : ContentPage
                 status.Text = $"ANDROID_STAGE19_RESOURCE_GUARDS_FAIL: {exception.Message}";
             });
             Log.Error(A19AndroidValidationRunner.Tag, $"ANDROID_STAGE19_RESOURCE_GUARDS_FAIL: {exception}");
+        }
+    }
+#endif
+
+#if A20_VALIDATION
+    private bool _a20Started;
+
+    private async Task RunA20ValidationAsync(Label status, Image image)
+    {
+        if (_a20Started) return;
+        _a20Started = true;
+        status.Text = "A20_VALIDATION_RUNNING";
+        try
+        {
+            var result = await Task.Run(A20AndroidValidationRunner.RunAsync);
+            var png = result.Png;
+            MainThread.BeginInvokeOnMainThread(() =>
+            {
+                image.Source = ImageSource.FromStream(() => new MemoryStream(png, writable: false));
+                status.Text = $"{result.Marker} | {result.PerformanceSummary} | {result.MemorySummary}";
+            });
+            Log.Info(A20AndroidValidationRunner.Tag, $"A20_REAL_APP_UI_IMAGE_READY sha256={result.PngSha256}");
+        }
+        catch (Exception exception)
+        {
+            MainThread.BeginInvokeOnMainThread(() =>
+            {
+                status.Text = $"ANDROID_STAGE20_PERFORMANCE_MEMORY_FAIL: {exception.Message}";
+            });
+            Log.Error(A20AndroidValidationRunner.Tag, $"ANDROID_STAGE20_PERFORMANCE_MEMORY_FAIL: {exception}");
         }
     }
 #endif

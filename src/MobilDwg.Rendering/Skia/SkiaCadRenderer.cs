@@ -50,8 +50,21 @@ public sealed class SkiaBitmapRenderSurface : IRenderSurface, IDisposable
     }
 }
 
+public enum RenderOptimizationMode
+{
+    Optimized,
+    BaselineUnoptimized
+}
+
 public sealed class SkiaCadRenderer : ICadRenderer
 {
+    public RenderOptimizationMode OptimizationMode { get; set; }
+
+    public SkiaCadRenderer(RenderOptimizationMode optimizationMode = RenderOptimizationMode.Optimized)
+    {
+        OptimizationMode = optimizationMode;
+    }
+
     public ValueTask RenderAsync(
         IRenderScene scene,
         IRenderSurface surface,
@@ -69,6 +82,7 @@ public sealed class SkiaCadRenderer : ICadRenderer
 
         cancellationToken.ThrowIfCancellationRequested();
         var camera = Camera2D.FromViewport(viewport);
+        var visibleWorldBounds = camera.GetVisibleWorldBounds(paddingFraction: 0.05d);
         var canvas = skiaSurface.Canvas;
         canvas.Clear(ToSkColor(renderScene.ColorContext.BackgroundArgb));
         var saveCount = canvas.Save();
@@ -99,6 +113,11 @@ public sealed class SkiaCadRenderer : ICadRenderer
             foreach (var entity in renderScene.Entities)
             {
                 cancellationToken.ThrowIfCancellationRequested();
+
+                if (OptimizationMode == RenderOptimizationMode.Optimized && !entity.Bounds.Intersects(visibleWorldBounds))
+                {
+                    continue;
+                }
 
                 var resolved = CadStyleResolver.Resolve(
                     entity.CadStyle,
@@ -157,7 +176,7 @@ public sealed class SkiaCadRenderer : ICadRenderer
         return ValueTask.CompletedTask;
     }
 
-    private static void DrawPrimitive(
+    private void DrawPrimitive(
         SKCanvas canvas,
         RenderGeometryPrimitive primitive,
         Camera2D camera,
@@ -194,6 +213,24 @@ public sealed class SkiaCadRenderer : ICadRenderer
         {
             DrawRasterImagePrimitive(canvas, rasterImg, camera, strokePaint, density);
             return;
+        }
+
+        if (OptimizationMode == RenderOptimizationMode.Optimized)
+        {
+            if (primitive is LinePrimitive line)
+            {
+                var p0 = CameraTransform.WorldToScreen(line.Start, camera);
+                var p1 = CameraTransform.WorldToScreen(line.End, camera);
+                canvas.DrawLine(ToFloat(p0.X), ToFloat(p0.Y), ToFloat(p1.X), ToFloat(p1.Y), strokePaint);
+                return;
+            }
+
+            if (primitive is PointPrimitive point)
+            {
+                var screen = CameraTransform.WorldToScreen(point.Position, camera);
+                canvas.DrawCircle(ToFloat(screen.X), ToFloat(screen.Y), Math.Max(2f, (float)(2d * density)), fillPaint);
+                return;
+            }
         }
 
         var path = GeometryTessellator.Tessellate(primitive, tessellation);
@@ -318,7 +355,7 @@ public sealed class SkiaCadRenderer : ICadRenderer
         }
     }
 
-    private static void DrawViewportPrimitive(
+    private void DrawViewportPrimitive(
         SKCanvas canvas,
         ViewportPrimitive vp,
         Camera2D camera,
