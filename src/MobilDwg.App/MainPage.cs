@@ -5,7 +5,7 @@ using Microsoft.Maui.Storage;
 using MobilDwg.App.Opening;
 using MobilDwg.Cad.AcadSharp;
 
-#if V06_VALIDATION || A10_VALIDATION || A11_VALIDATION || A12_VALIDATION || A13_VALIDATION || A14_VALIDATION || A15_VALIDATION || A16_VALIDATION || A17_VALIDATION
+#if V06_VALIDATION || A10_VALIDATION || A11_VALIDATION || A12_VALIDATION || A13_VALIDATION || A14_VALIDATION || A15_VALIDATION || A16_VALIDATION || A17_VALIDATION || A18_VALIDATION
 using Android.Util;
 #endif
 
@@ -45,6 +45,9 @@ public sealed class MainPage : ContentPage
 #endif
 #if A17_VALIDATION
     private bool _a17Started;
+#endif
+#if A18_VALIDATION
+    private bool _a18Started;
 #endif
 
     public MainPage()
@@ -294,6 +297,27 @@ public sealed class MainPage : ContentPage
         layout.Children.Insert(2, a17Status);
         layout.Children.Insert(3, a17Image);
         Loaded += async (_, _) => await RunA17ValidationAsync(a17Status, a17Image);
+#endif
+
+#if A18_VALIDATION
+        var a18Status = new Label
+        {
+            Text = "A18_VALIDATION_PENDING",
+            AutomationId = "a18-validation-status",
+            FontSize = 13,
+            TextColor = Color.FromArgb("#B8C4D8"),
+            HorizontalTextAlignment = TextAlignment.Center,
+        };
+        var a18Image = new Image
+        {
+            AutomationId = "a18-render-image",
+            HeightRequest = 420,
+            Aspect = Aspect.AspectFit,
+            BackgroundColor = Color.FromArgb("#101010"),
+        };
+        layout.Children.Insert(2, a18Status);
+        layout.Children.Insert(3, a18Image);
+        Loaded += async (_, _) => await RunA18ValidationAsync(a18Status, a18Image);
 #endif
 
         Content = new ScrollView { Content = layout };
@@ -715,6 +739,34 @@ public sealed class MainPage : ContentPage
                 status.Text = $"ANDROID_STAGE17_XREF_COMPAT_FAIL: {exception.Message}";
             });
             Log.Error(A17AndroidValidationRunner.Tag, $"ANDROID_STAGE17_XREF_COMPAT_FAIL: {exception}");
+        }
+    }
+#endif
+
+#if A18_VALIDATION
+    private async Task RunA18ValidationAsync(Label status, Image image)
+    {
+        if (_a18Started) return;
+        _a18Started = true;
+        status.Text = "A18_VALIDATION_RUNNING";
+        try
+        {
+            var result = await Task.Run(A18AndroidValidationRunner.RunAsync);
+            var png = result.Png;
+            MainThread.BeginInvokeOnMainThread(() =>
+            {
+                image.Source = ImageSource.FromStream(() => new MemoryStream(png, writable: false));
+                status.Text = $"{result.Marker} doc={result.DocumentName} layout={result.ActiveLayoutName} recent={result.RecentCount}";
+            });
+            Log.Info(A18AndroidValidationRunner.Tag, $"A18_REAL_APP_UI_IMAGE_READY sha256={result.PngSha256}");
+        }
+        catch (Exception exception)
+        {
+            MainThread.BeginInvokeOnMainThread(() =>
+            {
+                status.Text = $"ANDROID_STAGE18_VIEWER_LIFECYCLE_FAIL: {exception.Message}";
+            });
+            Log.Error(A18AndroidValidationRunner.Tag, $"ANDROID_STAGE18_VIEWER_LIFECYCLE_FAIL: {exception}");
         }
     }
 #endif
