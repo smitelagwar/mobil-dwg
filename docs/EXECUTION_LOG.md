@@ -197,10 +197,25 @@ PENDING_EMULATOR_QUEUE: EMPTY
 - Claim limit: `CLAIM_LIMIT=A15_DIMENSION_HATCH_API36_ONLY_NOT_CAD_PARSE_TO_SCENE_OR_PHYSICAL_DEVICE_FIDELITY`.
 - Kanıt belgesi: `docs/evidence/STAGE_15.md`.
 
+### 2026-09-05: AŞAMA 16 — Model / Layout / Paper-Space / Viewport Tamamlandı ve Merge Edildi (PR #29)
+
+- PR: `#29` (`feat(stage16): model/layout paper-space and viewport rendering`).
+- `main` merge commit: `b978b84`.
+- Release APK: `39,348,246` byte; SHA-256 `54ff0923b025a34b6cdfb553350b5f857e2a589f74379e2899aa8d4e214235e5`.
+- Android Emulator: `sdk_gphone64_x86_64` (Android 16 / API 36 / `x86_64`, serial `emulator-5554`).
+- Canlı PID: `9804`.
+- Ekran görüntüsü: `110,781` byte; SHA-256 `44766684bf7f285a6edd2eff29fcf36b372004dc43abb36f2d87fcf9078e4e62`.
+- Host test belirteçleri: `STAGE16_LAYOUT_VIEWPORT_TESTS_PASS` (12/12 test: model space direct entities, paper space title block & border, viewport model-to-paper transform matrix with scale, center translation and twist angle rotation, viewport layer overrides via frozen layers, viewport Skia clipping with ClipRect/ClipPath, degenerate viewport zero dimensions guard `INVALID_VIEWPORT_GEOMETRY`, degenerate viewport NaN coordinates guard, zero-reparse layout switching, multiple viewports on single sheet, Skia render paper layout with viewports, deterministic layout scene semantic snapshot `schema=layout-scene/v1`), `STAGE15_DIMENSION_HATCH_TESTS_PASS`, `STAGE14_TEXT_FONT_TESTS_PASS`, `STAGE13_LAYER_STYLE_TESTS_PASS`, `STAGE12_BLOCK_INSERT_TESTS_PASS`, `STAGE11_VIEWPORT_GESTURE_TESTS_PASS`, `STAGE10_GEOMETRY_PRIMITIVES_TESTS_PASS`, `STAGE10_TESSELLATION_PRECISION_TESTS_PASS`, `STAGE10_P0_SEMANTIC_GOLDEN_PASS`, `STAGE04_RENDER_CONTRACT_TESTS_PASS`, `STAGE09_RENDER_SCENE_TESTS_PASS`.
+- Android emülatör belirteçleri: `A16_ANDROID_MODEL_SPACE_PASS`, `A16_ANDROID_ZERO_REPARSE_PASS`, `A16_ANDROID_LAYER_OVERRIDE_PASS`, `A16_ANDROID_DEGENERATE_GUARD_PASS`, `A16_LAYOUT_ACTIVE=Sheet-A101`, `A16_PAPER_ENTITIES_COUNT=5`, `A16_RENDER_PIXELS=47573`, `A16_SNAPSHOT_HASH=d0d21650b2849d413e174b29bbec47867201e51b184f4f7fa873763c3293883a`, `A16_ANDROID_SKIA_RENDER_PASS bytes=15273 sha256=17df0e10b1a03f47c3e38708ba1c3f5d5e53316d29944a9544cce8f6f0cff4cb`, `ANDROID_STAGE16_LAYOUT_VIEWPORT_PASS`, `A16_REAL_APP_UI_IMAGE_READY`, `A16_REAL_APP_UI_STATUS_PASS`, `A16_REAL_APP_STABILITY_PASS`.
+- UI Doğrulaması: `window.xml` hiyerarşisinde `ANDROID_STAGE16_LAYOUT_VIEWPORT_PASS` doğrulanarak `A16_REAL_APP_UI_STATUS_PASS` alındı.
+- Kararlılık: Paket ve PID kapsamında crash/ANR yok, uygulama canlı kaldı (`A16_REAL_APP_STABILITY_PASS pid=9804`).
+- Claim limit: `CLAIM_LIMIT=A16_LAYOUT_VIEWPORT_API36_ONLY_NOT_CAD_PARSE_TO_SCENE_OR_PHYSICAL_DEVICE_FIDELITY`.
+- Kanıt belgesi: `docs/evidence/STAGE_16.md`.
+
 ```text
-IMPLEMENTATION_BASELINE: AŞAMA 15 — DONE
-IMPLEMENTATION_CURSOR: AŞAMA 16 — NOT_STARTED
-A16_GATE: OPEN
-NEXT_ACTION: Sonraki normal BASLA/devam turunda AŞAMA 16'yı (Scene Assembly & Performance Optimization) başlat.
+IMPLEMENTATION_BASELINE: AŞAMA 16 — DONE
+IMPLEMENTATION_CURSOR: AŞAMA 17 — NOT_STARTED
+A17_GATE: OPEN
+NEXT_ACTION: Sonraki normal BASLA/devam turunda AŞAMA 17'yi (Büyük Dosya Streaming & Performans / Mekansal İndeksleme / LOD) başlat.
 ```
 
