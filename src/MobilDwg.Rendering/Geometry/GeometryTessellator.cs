@@ -65,6 +65,9 @@ public static class GeometryTessellator
             PolygonPrimitive polygon => new TessellatedPath(polygon.Vertices, closed: true, filled: true),
             SplinePrimitive spline => TessellateSpline(spline, options),
             TextPrimitive text => new TessellatedPath([text.Position], closed: false, filled: false),
+            HatchPrimitive hatch => hatch.Loops.Count > 0 && hatch.Loops[0].Vertices.Count >= 3
+                ? new TessellatedPath(hatch.Loops[0].Vertices, closed: true, filled: hatch.IsSolid)
+                : new TessellatedPath([new WorldPoint2(0, 0)], closed: false, filled: false),
             _ => throw new NotSupportedException($"Unsupported geometry primitive: {primitive.GetType().Name}"),
         };
     }

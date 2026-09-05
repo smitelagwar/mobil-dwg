@@ -5,7 +5,7 @@ using Microsoft.Maui.Storage;
 using MobilDwg.App.Opening;
 using MobilDwg.Cad.AcadSharp;
 
-#if V06_VALIDATION || A10_VALIDATION || A11_VALIDATION || A12_VALIDATION || A13_VALIDATION || A14_VALIDATION
+#if V06_VALIDATION || A10_VALIDATION || A11_VALIDATION || A12_VALIDATION || A13_VALIDATION || A14_VALIDATION || A15_VALIDATION
 using Android.Util;
 #endif
 
@@ -36,6 +36,9 @@ public sealed class MainPage : ContentPage
 #endif
 #if A14_VALIDATION
     private bool _a14Started;
+#endif
+#if A15_VALIDATION
+    private bool _a15Started;
 #endif
 
     public MainPage()
@@ -222,6 +225,27 @@ public sealed class MainPage : ContentPage
         layout.Children.Insert(2, a14Status);
         layout.Children.Insert(3, a14Image);
         Loaded += async (_, _) => await RunA14ValidationAsync(a14Status, a14Image);
+#endif
+
+#if A15_VALIDATION
+        var a15Status = new Label
+        {
+            Text = "A15_VALIDATION_PENDING",
+            AutomationId = "a15-validation-status",
+            FontSize = 13,
+            TextColor = Color.FromArgb("#B8C4D8"),
+            HorizontalTextAlignment = TextAlignment.Center,
+        };
+        var a15Image = new Image
+        {
+            AutomationId = "a15-render-image",
+            HeightRequest = 420,
+            Aspect = Aspect.AspectFit,
+            BackgroundColor = Color.FromArgb("#101010"),
+        };
+        layout.Children.Insert(2, a15Status);
+        layout.Children.Insert(3, a15Image);
+        Loaded += async (_, _) => await RunA15ValidationAsync(a15Status, a15Image);
 #endif
 
         Content = new ScrollView { Content = layout };
@@ -559,6 +583,34 @@ public sealed class MainPage : ContentPage
                 status.Text = $"ANDROID_STAGE14_TEXT_FONT_FAIL type={exception.GetType().Name}";
             });
             Log.Error(A14AndroidValidationRunner.Tag, $"ANDROID_STAGE14_TEXT_FONT_FAIL type={exception.GetType().Name}");
+        }
+    }
+#endif
+
+#if A15_VALIDATION
+    private async Task RunA15ValidationAsync(Label status, Image image)
+    {
+        if (_a15Started) return;
+        _a15Started = true;
+        status.Text = "A15_VALIDATION_RUNNING";
+        try
+        {
+            var result = await Task.Run(A15AndroidValidationRunner.RunAsync);
+            var png = result.Png;
+            MainThread.BeginInvokeOnMainThread(() =>
+            {
+                image.Source = ImageSource.FromStream(() => new MemoryStream(png, writable: false));
+                status.Text = $"{result.Marker} entities={result.EntityCount}";
+            });
+            Log.Info(A15AndroidValidationRunner.Tag, $"A15_REAL_APP_UI_IMAGE_READY sha256={result.PngSha256}");
+        }
+        catch (Exception exception)
+        {
+            MainThread.BeginInvokeOnMainThread(() =>
+            {
+                status.Text = $"ANDROID_STAGE15_DIMENSION_HATCH_FAIL type={exception.GetType().Name}";
+            });
+            Log.Error(A15AndroidValidationRunner.Tag, $"ANDROID_STAGE15_DIMENSION_HATCH_FAIL type={exception.GetType().Name}");
         }
     }
 #endif
