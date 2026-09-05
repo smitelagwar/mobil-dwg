@@ -83,15 +83,37 @@ Scope: historical AŞAMA 09 RenderScene/camera/OCS/diagnostics foundation + curr
 
 V09 APK install/launch/UI/render-fidelity veya physical-device claim'i değildir. Önceki V04–V06 runtime claim'leri ayrı sınırlarında korunur.
 
-## Program kapanışı
+## Program kapanışı (V01–V09)
 
 ```text
 ANDROID_VALIDATION_V01_V09: CLOSED / VALIDATED_WITH_CLAIM_LIMITS
 PENDING_EMULATOR_QUEUE: EMPTY
-NEXT_IMPLEMENTATION_STAGE: AŞAMA 10 — NOT_STARTED
-A10_MAIN_MERGE: BLOCKED_UNTIL_EXACT_INTEGRATION + REQUIRED_REGRESSIONS + REAL_ANDROID_RENDER_GATE
-A11_GATE: BLOCKED_UNTIL_A10_DONE_ON_MAIN_AND_EMULATOR_QUEUE_EMPTY
-PHYSICAL_ANDROID: DEFERRED_RELEASE_DEVICE_GATE
 ```
 
-Bir sonraki normal `BASLA.md`/`devam` turu live GitHub durumunu yeniden doğruladıktan sonra yalnız AŞAMA 10'u açabilir. Bu V09 kapanış turunda A10 veya A11 başlatılmadı.
+## AŞAMA 10 — P0 Temel Geometri Renderer'ı
+
+- PR: `#23` (`feat(a10): implement P0 geometry renderer and Android render acceptance`) — `MERGED`.
+- Base `main`: `3ebf8226b8f133255e65cafdec9f7f26fbe7afbe`.
+- PR head SHA: `b9ca27e`.
+- Main merge commit: `ddeb975`.
+- Exact .NET SDK: `10.0.400`.
+- Release build: `0 Warning / 0 Error`.
+- Release APK: `39,543,728` byte; SHA-256 `ec35abf74dcefaaa70a29845d32b1791ff3a8160ecb7aad99bcab6c012a89b70`.
+- Android Emulator: `sdk_gphone64_x86_64` (Android 16 / API 36 / `x86_64`).
+- Canlı PID: `6257`.
+- Beklenen içerik piksel sayısı: `56,163` piksel.
+- Ekran görüntüsü: `133,801` byte; SHA-256 `52b14a1e622526163b0ed0e927b7ec0e0a97c9385dc2635d911949c2e1b6ea50`.
+- Host test belirteçleri: `STAGE10_GEOMETRY_PRIMITIVES_TESTS_PASS`, `STAGE10_TESSELLATION_PRECISION_TESTS_PASS`, `STAGE10_P0_SEMANTIC_GOLDEN_PASS`, `STAGE10_CONTROLLED_INVALID_GEOMETRY_WARNING_PASS`, `STAGE10_SKIA_EXPECTED_CONTENT_HOST_PASS`, `STAGE04_ARCHITECTURE_TESTS_PASS`, `STAGE05_DEPENDENCY_BOUNDARY_PASS`, `V04_REAL_ANDROID_APP_PROJECT_PASS`.
+- Android emülatör belirteçleri: `A10_ANDROID_SEMANTIC_GOLDEN_PASS`, `A10_ANDROID_EXPECTED_CONTENT_PASS pixels=56163`, `A10_ANDROID_PNG_PASS`, `ANDROID_STAGE10_P0_GEOMETRY_RENDER_PASS`, `A10_REAL_APP_UI_IMAGE_READY`.
+- UI Doğrulaması: `window.xml` hiyerarşisinde `ANDROID_STAGE10_P0_GEOMETRY_RENDER_PASS` doğrulanarak `A10_REAL_APP_UI_RENDER_STATUS_PASS` alındı.
+- Kararlılık: Paket ve PID kapsamında crash/ANR yok, uygulama canlı kaldı.
+- Claim limit: `P0_SYNTHETIC_SCENE_GEOMETRY_RENDERER_API36_ONLY_NOT_CAD_PARSE_TO_SCENE_OR_PHYSICAL_DEVICE_FIDELITY`.
+- Kanıt belgesi: `docs/evidence/STAGE_10.md`.
+
+```text
+IMPLEMENTATION_BASELINE: AŞAMA 10 — DONE
+IMPLEMENTATION_CURSOR: AŞAMA 11 — NOT_STARTED
+A11_GATE: OPEN
+NEXT_ACTION: Sonraki normal BASLA/devam turunda AŞAMA 11'i (Mobil viewport ve pan/pinch zoom jestleri) başlat.
+```
+

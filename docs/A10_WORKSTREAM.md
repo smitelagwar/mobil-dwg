@@ -6,15 +6,16 @@ Bu dosya, Android V04–V09 geriye dönük doğrulaması sürerken ayrı branch'
 
 ```text
 WORKSTREAM: A10_P0_GEOMETRY_DRAFT
-STATUS: READY_TO_MERGE
-BRANCH: stage10-p0-geometry-draft
+STATUS: DONE
+BRANCH: stage10-p0-geometry-draft (MERGED)
+PR: #23 (MERGED)
+MAIN_MERGE_SHA: ddeb975
 BASE_MAIN_SHA: 3ebf8226b8f133255e65cafdec9f7f26fbe7afbe
 LOCAL_OR_AGENT_HOST_TESTS: PASS
 ANDROID_EMULATOR: PASS (pixels=56163, PNG screenshot, PID=6257, no crash/ANR)
 EVIDENCE: docs/evidence/STAGE_10.md
-MERGE_TO_MAIN: READY_TO_MERGE
-A11_GATE: READY_TO_OPEN_AFTER_MAIN_MERGE
-NEXT_ACTION: Merge PR #23 into main with merge commit, update main checkpoint docs, and mark A10 DONE.
+A11_GATE: OPEN
+NEXT_ACTION: AŞAMA 10 tamamlandı (DONE). Sıradaki normal çalışma AŞAMA 11 (Mobil viewport ve gesture)'dir.
 ```
 
 Bu başlangıç kaydı A10'un başladığı anlamına gelmez. Gerçek branch/commit oluştuğunda A10 sohbeti bu dosyayı kendi branch'inde günceller.

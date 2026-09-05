@@ -280,9 +280,9 @@ Yetkili ayrıntı: `ANDROID_DOGRULAMA_PLANI.md`.
 
 ## 9. Implementation aşamaları
 
-AŞAMA 00–09 tarihsel implementation evidence `docs/evidence/STAGE_XX.md` ve ADR'lerde korunur. V01–V09 validation programı kapandığı için normal implementation cursor artık AŞAMA 10'dur. V09 kapanış turunda A10 başlatılmamıştır.
+AŞAMA 00–10 tarihsel implementation evidence `docs/evidence/STAGE_XX.md` ve ADR'lerde korunur. AŞAMA 10 PR #23 ile tamamlanmış ve `main`e merge edilmiştir. Normal implementation cursor artık AŞAMA 11'dir.
 
-### AŞAMA 10 — P0 temel geometri renderer'ı — `NOT_STARTED`
+### AŞAMA 10 — P0 temel geometri renderer'ı — `DONE`
 
 Amaç: LINE/ARC/CIRCLE/ELLIPSE/POINT, polyline+bulge, SPLINE, SOLID/TRACE/3DFACE 2D görünümü için correctness-first renderer temelini kurmak.
 

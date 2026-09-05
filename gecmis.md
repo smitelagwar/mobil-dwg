@@ -26,19 +26,18 @@ Bu dosya kısa kalıcı tarihçe/checkpoint kaydıdır. Ayrıntılı teknik kan�
 ```text
 ACTIVE_PRODUCT_TARGET: ANDROID_ONLY
 IOS_STATUS: DEFERRED_FUTURE_OPTION
-IMPLEMENTATION_BASELINE: AŞAMA 09 — DONE
+IMPLEMENTATION_BASELINE: AŞAMA 10 — DONE
 ANDROID_VALIDATION_V01_V09: CLOSED / VALIDATED_WITH_CLAIM_LIMITS
-LAST_VALIDATION: V09 — VALIDATED
-IMPLEMENTATION_CURSOR: AŞAMA 10 — NOT_STARTED
-A10_WORKSTREAM: docs/A10_WORKSTREAM.md
-A10_BRANCH_AT_V09_CLOSURE: NONE
-A10_PR_AT_V09_CLOSURE: NONE
+LAST_IMPLEMENTATION: AŞAMA 10 — DONE
+LAST_IMPLEMENTATION_EVIDENCE: docs/evidence/STAGE_10.md
+A10_MAIN_MERGE: ddeb975 (PR #23)
+IMPLEMENTATION_CURSOR: AŞAMA 11 — NOT_STARTED
+A10_WORKSTREAM: docs/A10_WORKSTREAM.md (DONE)
 PENDING_EMULATOR_QUEUE: EMPTY
 PHYSICAL_ANDROID: DEFERRED_RELEASE_DEVICE_GATE
-A10_MAIN_MERGE: BLOCKED_UNTIL_EXACT_INTEGRATION + REQUIRED_REGRESSIONS + REAL_ANDROID_RENDER_GATE
-A11_GATE: BLOCKED_UNTIL_A10_DONE_ON_MAIN_AND_EMULATOR_QUEUE_EMPTY
-NEXT_ACTION: Sonraki normal BASLA/devam turunda yalnız AŞAMA 10'u güncel validated main'den başlat.
-LAST_UPDATE: 2026-08-25
+A11_GATE: OPEN
+NEXT_ACTION: Sonraki normal BASLA/devam turunda AŞAMA 11'i (Mobil viewport ve pan/pinch zoom jestleri) başlat.
+LAST_UPDATE: 2026-09-05
 ```
 
 ## Implementation geçmişi
@@ -53,7 +52,7 @@ LAST_UPDATE: 2026-08-25
 - AŞAMA 07 — ProCad exact source spike — `DONE / NO-GO`.
 - AŞAMA 08 — iOS characterization — historical/future-only; iOS PASS iddiası yok.
 - AŞAMA 09 — immutable RenderScene/camera/diagnostics foundation — `DONE`; historical authoritative run `32815175055`, artifact `9551137293`, main merge `0a2dd886bbe59698a6d2eb4c99f66e7f9270063a`.
-- AŞAMA 10 — P0 geometry renderer — `NOT_STARTED` at V09 closure.
+- AŞAMA 10 — P0 geometry renderer — `DONE`; PR `#23`, main merge `ddeb975`, evidence `docs/evidence/STAGE_10.md`.
 - AŞAMA 11–22 — Android viewer/release implementation sırası; A11 A10 `DONE ON MAIN` olmadan kilitli.
 - AŞAMA 23–24 — future iOS track, deferred.
 - AŞAMA 25–27 — Android beta/freeze/final handoff.

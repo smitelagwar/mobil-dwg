@@ -2,15 +2,15 @@
 
 Android için tamamen local/offline çalışan, kullanıcıya ücretsiz sunulması hedeflenen 2D DWG/DXF görüntüleyici projesi. iOS aktif v1 kapsamından çıkarılmıştır; shared mimari ileride yeniden etkinleştirilebilecek şekilde korunur.
 
-Implementation AŞAMA 09'a kadar tamamlandı. Android geriye dönük doğrulama programı V01–V09 artık kapalıdır; tüm aşamalar kendi claim sınırları içinde `VALIDATED` durumundadır. Implementation cursor AŞAMA 10'dadır ve henüz başlamamış/`main`e merge edilmemiştir. AŞAMA 11, A10 gerçek Android integration gate'i ve `DONE ON MAIN` tamamlanmadan açılamaz.
+Implementation AŞAMA 10'a kadar tamamlandı. Android geriye dönük doğrulama programı V01–V09 kapalıdır ve tüm aşamalar kendi claim sınırları içinde `VALIDATED` durumundadır. AŞAMA 10 P0 geometri renderer'ı PR #23 ile `main`e merge edilmiş ve API 36 emülatör render kabul testiyle doğrulanmıştır. Implementation cursor AŞAMA 11'dedir (mobil viewport ve pan/pinch gesture).
 
-V01 yalnız infrastructure smoke'u doğruladı. V04 gerçek `MobilDwg.App` APK build/install/cold-launch/UI/stability gate'ini geçti; V05 production ACadSharp parser'ı gerçek Android process içinde doğruladı. V06 gerçek FilePicker/DocumentsUI/SAF → stream → app-private safe-copy → production parser akışını API36 emulator üzerinde doğruladı. V07 exact unpatched ProCad candidate için `NO-GO` kararını ve production graph/precision izolasyonunu yeniden doğruladı. V08 tarihsel iOS kapsamını yeniden açmadan Android production/CI graph'ının iOS-specific TFM/RID/native/toolchain zorunluluğundan izole olduğunu kanıtladı. V09 ise RenderScene/camera/OCS/diagnostics temelini, deterministic `render-scene/v1` snapshot'ını, survey-origin `0.001` double precision'ı, Core/architecture sınırlarını ve gerçek Android app Release composition build'ini current exact revision üzerinde yeniden doğruladı.
+V01 yalnız infrastructure smoke'u doğruladı. V04 gerçek `MobilDwg.App` APK build/install/cold-launch/UI/stability gate'ini geçti; V05 production ACadSharp parser'ı gerçek Android process içinde doğruladı. V06 gerçek FilePicker/DocumentsUI/SAF → stream → app-private safe-copy → production parser akışını API36 emulator üzerinde doğruladı. V07 exact unpatched ProCad candidate için `NO-GO` kararını ve production graph/precision izolasyonunu yeniden doğruladı. V08 tarihsel iOS kapsamını yeniden açmadan Android production/CI graph'ının iOS-specific TFM/RID/native/toolchain zorunluluğundan izole olduğunu kanıtladı. V09 ise RenderScene/camera/OCS/diagnostics temelini, deterministic `render-scene/v1` snapshot'ını, survey-origin `0.001` double precision'ı, Core/architecture sınırlarını ve gerçek Android app Release composition build'ini current exact revision üzerinde yeniden doğruladı. AŞAMA 10 ise platform-neutral P0 geometri primitiflerini, deterministik tessellation'ı, SkiaCadRenderer'ı ve API 36 Android emülatör üzerinde beklenen içerik piksel kabulünü (`56,163` piksel, byte-safe PNG) doğruladı.
 
-V09 claim'i `RENDER_SCENE_CAMERA_DIAGNOSTICS_FOUNDATION_AND_ANDROID_COMPOSITION_REVALIDATION_ONLY_NOT_GEOMETRY_RENDER_FIDELITY` ile sınırlıdır. V09 geometri renderer fidelity, emulator UI/runtime veya fiziksel cihaz PASS'i değildir. Tarihsel iOS AŞAMA 08 karakterizasyonu future option olarak arşivde kalır; iOS PASS değildir.
+V10 claim'i `P0_SYNTHETIC_SCENE_GEOMETRY_RENDERER_API36_ONLY_NOT_CAD_PARSE_TO_SCENE_OR_PHYSICAL_DEVICE_FIDELITY` ile sınırlıdır. Tarihsel iOS AŞAMA 08 karakterizasyonu future option olarak arşivde kalır; iOS PASS değildir.
 
 ## Yeni sohbet / yeni AI başlangıcı
 
-Normal proje devamı için [BASLA.md](BASLA.md) kullanılır. Bu dosya gerçek GitHub durumunu okuyup açık validation varsa onu, validation programı kapalıysa sıradaki implementation aşamasını yürütür. Android V01–V09 kapandığı için sıradaki normal implementation cursor AŞAMA 10'dur.
+Normal proje devamı için [BASLA.md](BASLA.md) kullanılır. Bu dosya gerçek GitHub durumunu okuyup açık validation varsa onu, validation programı kapalıysa sıradaki implementation aşamasını yürütür. AŞAMA 10 kapandığı için sıradaki normal implementation cursor AŞAMA 11'dir.
 
 `BASLA_A10.md` yalnız A10'un özel/izole workstream protokolüne ihtiyaç duyulan ayrı çalışma bağlamlarında kullanılabilir. A10 durumu [docs/A10_WORKSTREAM.md](docs/A10_WORKSTREAM.md) üzerinden doğrulanır; hiçbir durumda Android kanıtı olmadan `main` merge veya `DONE` yapılmaz.
 
@@ -33,7 +33,7 @@ Uygulama [Mobil_DWG_DXF_Royalty_Free_Android_iOS_Nihai_Plan.md](Mobil_DWG_DXF_Ro
 
 ## Yürütme
 
-Her `BASLA.md dosyasını oku` veya normal `devam` komutunda gerçek `main`, açık PR/CI ve checkpoint doğrulanır. Android V01–V09 programı kapalı olduğundan bir sonraki normal çalışma AŞAMA 10'u açabilir; fakat V09 kapanış turunun kendisinde A10 başlatılmamıştır. Runner çevrim dışıysa kanıtsız PASS yazılmaz ve aynı test işi çoğaltılmaz. A10 main kapanışı bitmeden A11 açılmaz.
+Her `BASLA.md dosyasını oku` veya normal `devam` komutunda gerçek `main`, açık PR/CI ve checkpoint doğrulanır. AŞAMA 10 tamamlandığından sonraki normal çalışma AŞAMA 11'dir (mobil viewport ve gesture). Runner çevrim dışıysa kanıtsız PASS yazılmaz ve aynı test işi çoğaltılmaz.
 
 ## Güvenlik ve özel dosyalar
 
