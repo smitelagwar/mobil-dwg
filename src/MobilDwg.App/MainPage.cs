@@ -5,7 +5,7 @@ using Microsoft.Maui.Storage;
 using MobilDwg.App.Opening;
 using MobilDwg.Cad.AcadSharp;
 
-#if V06_VALIDATION || A10_VALIDATION || A11_VALIDATION || A12_VALIDATION || A13_VALIDATION || A14_VALIDATION || A15_VALIDATION || A16_VALIDATION || A17_VALIDATION || A18_VALIDATION || A19_VALIDATION || A20_VALIDATION || A21_VALIDATION || A22_VALIDATION || A25_VALIDATION
+#if V06_VALIDATION || A10_VALIDATION || A11_VALIDATION || A12_VALIDATION || A13_VALIDATION || A14_VALIDATION || A15_VALIDATION || A16_VALIDATION || A17_VALIDATION || A18_VALIDATION || A19_VALIDATION || A20_VALIDATION || A21_VALIDATION || A22_VALIDATION || A25_VALIDATION || A26_VALIDATION
 using Android.Util;
 #endif
 
@@ -60,6 +60,9 @@ public sealed class MainPage : ContentPage
 #endif
 #if A25_VALIDATION
     private bool _a25Started;
+#endif
+#if A26_VALIDATION
+    private bool _a26Started;
 #endif
 
     public MainPage()
@@ -445,6 +448,27 @@ public sealed class MainPage : ContentPage
         layout.Children.Insert(2, a25Status);
         layout.Children.Insert(3, a25Image);
         Loaded += async (_, _) => await RunA25ValidationAsync(a25Status, a25Image);
+#endif
+
+#if A26_VALIDATION
+        var a26Status = new Label
+        {
+            Text = "A26_VALIDATION_PENDING",
+            AutomationId = "a26-validation-status",
+            FontSize = 13,
+            TextColor = Color.FromArgb("#B8C4D8"),
+            HorizontalTextAlignment = TextAlignment.Center,
+        };
+        var a26Image = new Image
+        {
+            AutomationId = "a26-render-image",
+            HeightRequest = 420,
+            Aspect = Aspect.AspectFit,
+            BackgroundColor = Color.FromArgb("#101010"),
+        };
+        layout.Children.Insert(2, a26Status);
+        layout.Children.Insert(3, a26Image);
+        Loaded += async (_, _) => await RunA26ValidationAsync(a26Status, a26Image);
 #endif
 
         Content = new ScrollView { Content = layout };
@@ -1060,6 +1084,34 @@ public sealed class MainPage : ContentPage
                 status.Text = $"ANDROID_STAGE25_BETA_BLOCKER_FAIL: {exception.Message}";
             });
             Log.Error(A25AndroidValidationRunner.Tag, $"ANDROID_STAGE25_BETA_BLOCKER_FAIL: {exception}");
+        }
+    }
+#endif
+
+#if A26_VALIDATION
+    private async Task RunA26ValidationAsync(Label status, Image image)
+    {
+        if (_a26Started) return;
+        _a26Started = true;
+        status.Text = "A26_VALIDATION_RUNNING";
+        try
+        {
+            var result = await Task.Run(A26AndroidValidationRunner.RunAsync);
+            var png = result.Png;
+            MainThread.BeginInvokeOnMainThread(() =>
+            {
+                image.Source = ImageSource.FromStream(() => new MemoryStream(png, writable: false));
+                status.Text = $"{result.Marker} | {result.AuditSummary}";
+            });
+            Log.Info(A26AndroidValidationRunner.Tag, $"A26_REAL_APP_UI_IMAGE_READY sha256={result.PngSha256}");
+        }
+        catch (Exception exception)
+        {
+            MainThread.BeginInvokeOnMainThread(() =>
+            {
+                status.Text = $"ANDROID_STAGE26_RC_APPROVAL_FAIL: {exception.Message}";
+            });
+            Log.Error(A26AndroidValidationRunner.Tag, $"ANDROID_STAGE26_RC_APPROVAL_FAIL: {exception}");
         }
     }
 #endif
