@@ -1,41 +1,76 @@
-﻿# Uyumluluk ve Bilinen Kısıtlar (Compatibility & Limitations)
+# Mobil DWG — Uyumluluk ve Bilinen Kısıtlar
 
-Bu belge, Mobil DWG v1.0.0 sürümünün desteklediği CAD formatlarını, varlık (entity) türlerini ve bilinen teknik kısıtları tanımlar.
+Bu belge uygulamanın mevcut hedefini ve güvenle iddia edilebilecek destek sınırlarını açıklar. DWG/DXF ekosistemi geniş olduğu için “her dosya kusursuz açılır” iddiası yapılmaz.
 
----
+## Ürün kapsamı
 
-## 1. Desteklenen CAD Dosya Formatları
+- Android, local/offline, read-only 2D DWG/DXF viewer.
+- Düzenleme, yeni entity oluşturma, DWG/DXF save/export v1 kapsamında yoktur.
+- 3D solid/ACIS/SAT, tam CAD authoring ve plot fidelity hedefi değildir.
 
-- **AutoCAD DWG**: AC1009 (R11/R12), AC1012 (R13), AC1014 (R14), AC1015 (2000), AC1018 (2004), AC1021 (2007), AC1024 (2010), AC1027 (2013), AC1032 (2018+) sürümleri.
-- **AutoCAD DXF**: ASCII ve Binary biçimli tüm DXF sürümleri.
+## DWG / DXF
 
----
+Production parser baseline ACadSharp `3.7.1`'dir. Repo test/evidence seti eski ve modern AutoCAD sürümlerinden çeşitli DWG/DXF girdilerini kapsar; ancak gerçek destek entity kombinasyonu, custom/proxy object, font, XREF, raster ve dosyanın sağlık durumuna bağlıdır.
 
-## 2. Desteklenen 2D Geometri ve CAD Varlıkları
+Bu nedenle:
 
-| Varlık Türü | Sadakat Düzeyi | Notlar |
-|---|---|---|
-| **LINE, POINT** | C4 (Mühendislik) | Çift duyarlıklı koordinat koruması ($10^{-9}$ tolerans). |
-| **LWPOLYLINE, POLYLINE** | C4 (Mühendislik) | Doğrusal ve yay (bulge) segmentleri, kapalı/açık döngüler. |
-| **CIRCLE, ARC, ELLIPSE** | C4 (Mühendislik) | Yarıçap ve açı bazlı deterministik tessellation. |
-| **TEXT, MTEXT** | C3 (Doğrulanmış) | Windows-1254 Türkçe karakter desteği, Unicode kaçışları (`\U+XXXX`), format kodları (`%%d`, `%%p`, `%%c`). |
-| **BLOCK / INSERT / ATTRIB** | C3 (Doğrulanmış) | İçiçe bloklar, 2D afin dönüşümler, döndürme, orantısız ölçekleme ve ayna dönüşümleri. |
-| **DIMENSION, LEADER** | C3 (Doğrulanmış) | Aligned, Rotated Linear, Radial, Diametric ölçülendirmeler. |
-| **HATCH (Tarama)** | C3 (Doğrulanmış) | Katı (Solid) dolgu, ANSI31 çizgisel desenler, EvenOdd ada algılama. |
-| **LAYOUT / VIEWPORT** | C3 (Doğrulanmış) | Model Space ve Paper Space paftaları, çoklu viewport dönüşümü, kırpma sınırları. |
-| **XREF & RASTER IMAGE** | C3 (Doğrulanmış) | PNG, JPG, BMP raster altlıkları ve yerel XREF referansları. |
+- “tüm DXF sürümleri” veya “her DWG eksiksiz” şeklinde sınırsız garanti verilmez,
+- desteklenmeyen/eksik içerik mümkün olduğunca diagnostic/compatibility kaydıyla görünür tutulur,
+- yeni bir format/version claim'i gerçek corpus/evidence ile doğrulanmadan release metnine eklenmez.
 
----
+## Güçlü desteklenen 2D alanlar
 
-## 3. Bilinen Teknik Kısıtlar (Known Limitations)
+Mevcut renderer ve historical evidence aşağıdaki sınıflar için implementasyon içerir:
 
-1. **Yalnızca 2D Görüntüleyici (Viewer-First)**:
-   - 3D tel kafes, mesh, katı modelleme (ACIS/SAT) veya 3D kamera dönüşümleri v1 kapsamında desteklenmez.
-   - Çizim düzenleme, yeni eleman çizme veya DWG/DXF olarak kaydetme/dışa aktarma işlevi yoktur (salt-okunurdur).
-2. **Font Paketleme ve SHX Dosyaları**:
-   - Telif hakkı saklı Autodesk ticari SHX font dosyaları uygulamayla birlikte paketlenmez.
-   - Eksik veya tescilli SHX fontları yerine açık kaynaklı `Roboto` ve sistem sans-serif fontları denetimli biçimde ikame edilir.
-3. **Uzak XREF İndirme Yasağı**:
-   - İnternet erişimi bulunmadığı için uzak URL veya bulut bağlantılı dış referanslar otomatik indirilmez; yalnızca yerel cihazdaki eşleşen dosyalar taranır.
-4. **Proxy ve Özel Nesneler**:
-   - Üçüncü taraf Civil 3D veya Architecture eklentilerine ait özel proxy nesneleri yalnızca standart CAD grafik ilkel sınırları çerçevesinde görüntülenir.
+- LINE / POINT
+- LWPOLYLINE / POLYLINE
+- CIRCLE / ARC / ELLIPSE / SPLINE
+- BLOCK / INSERT / ATTRIB
+- TEXT / MTEXT
+- DIMENSION / LEADER
+- HATCH
+- layer / color / linetype / lineweight
+- Model Space / Paper Space / layout / viewport
+- yerel XREF ve desteklenen raster image yolları
+
+Gerçek fidelity çizimin özelliklerine göre değişebilir. Tarihsel stage evidence bir sınıfın implementasyonunu kanıtlar; her gerçek dünya dosyasının birebir AutoCAD görünümünü garanti etmez.
+
+## Koordinat hassasiyeti
+
+World/document koordinatları `double` tutulur. Büyük survey koordinatlarında erken `float` dönüşümünden kaçınılır. Bununla birlikte son rasterization, ekran çözünürlüğü, antialias ve GPU/backend sınırları görsel piksel sonucunu etkileyebilir.
+
+## Font ve SHX
+
+- Proprietary Autodesk SHX font dosyaları uygulamayla bundle edilmez.
+- Uygun font bulunamazsa substitution/fallback uygulanabilir.
+- Bu nedenle metin metriği, genişlik, satır kırılımı ve görünüm desktop AutoCAD ile birebir aynı olmayabilir.
+- Font fidelity kritik dosyalar ayrıca test edilmelidir.
+
+## XREF / raster / external reference
+
+- Zorunlu internet erişimi yoktur; uzak URL'den external reference otomatik indirilmez.
+- Yerel external reference erişimi Android'in seçilmiş dosya/provider erişim sınırlarına tabidir.
+- Eksik veya erişilemeyen referans sessizce başarılı kabul edilmez.
+
+## Proxy / custom object
+
+Civil 3D, Architecture veya üçüncü taraf eklentilere ait proxy/custom object'lerin tam semantiği garanti edilmez. Standartlaşmış grafik bilgi çıkarılabiliyorsa kısmi görünüm mümkün olabilir; aksi halde compatibility diagnostic beklenir.
+
+## Pan / zoom — mevcut açık kalite alanı
+
+2026-09-05 itibarıyla pan/pinch/render interaction zincirinde iyileştirme çalışması açıktır. Özellikle hareket sırasında yeni görünür alanın canlı render edilmesi, focal drift ve gesture-end jump davranışı güncel risk register'da takip edilmektedir.
+
+Bu sorunlar kapanıp gerçek interaction acceptance geçmeden mağaza metninde “kusursuz/akıcı donanım hızlandırmalı navigasyon” gibi mutlak performans iddiaları kullanılmamalıdır.
+
+Bakınız: `compliance/RISK_REGISTER.md` ve `docs/ANDROID_TESTING.md`.
+
+## Fiziksel cihaz sınırı
+
+API 36 emulator güçlü bir integration test ortamıdır fakat fiziksel Android cihazdaki:
+
+- touch sampling,
+- GPU/driver,
+- SAF/provider,
+- termal/memory pressure
+
+farklarını bütünüyle kanıtlamaz. Fiziksel cihaz sonuçları `docs/DEVICE_MATRIX.md` üzerinden ayrı tutulur.
