@@ -420,45 +420,104 @@ public sealed class MainPage : ContentPage
         {
             Aspect = Aspect.AspectFit,
             HorizontalOptions = LayoutOptions.Fill,
-            VerticalOptions = LayoutOptions.Fill
+            VerticalOptions = LayoutOptions.Fill,
+            InputTransparent = true
         };
         canvasGrid.Children.Add(_viewerImage);
 
+        // 120 FPS Direct Manipulation Pan Gesture
         var panGesture = new PanGestureRecognizer();
-        double panAccumX = 0, panAccumY = 0;
+        double panBaseX = 0, panBaseY = 0;
         panGesture.PanUpdated += async (_, pe) =>
         {
             if (_viewportController is null) return;
+
             if (pe.StatusType == GestureStatus.Started)
             {
-                panAccumX = 0;
-                panAccumY = 0;
+                panBaseX = _viewerImage.TranslationX;
+                panBaseY = _viewerImage.TranslationY;
             }
             else if (pe.StatusType == GestureStatus.Running)
             {
-                double dx = pe.TotalX - panAccumX;
-                double dy = pe.TotalY - panAccumY;
-                panAccumX = pe.TotalX;
-                panAccumY = pe.TotalY;
-                _viewportController.Pan(-dx * 2.0, dy * 2.0);
+                // Real-time 120 FPS GPU translation: follows finger every millisecond
+                _viewerImage.TranslationX = panBaseX + pe.TotalX;
+                _viewerImage.TranslationY = panBaseY + pe.TotalY;
             }
             else if (pe.StatusType == GestureStatus.Completed || pe.StatusType == GestureStatus.Canceled)
             {
+                double finalDx = _viewerImage.TranslationX;
+                double finalDy = _viewerImage.TranslationY;
+
+                double density = 1.0;
+                try
+                {
+                    density = Microsoft.Maui.Devices.DeviceDisplay.Current.MainDisplayInfo.Density;
+                    if (density <= 0 || !double.IsFinite(density)) density = 1.0;
+                }
+                catch
+                {
+                    density = 1.0;
+                }
+
+                // Camera PanBy: positive delta in screen pixels moves camera in direction of finger
+                _viewportController.Pan(finalDx * density, finalDy * density);
+
+                _viewerImage.TranslationX = 0;
+                _viewerImage.TranslationY = 0;
+
                 await ReRenderAsync();
             }
         };
         canvasGrid.GestureRecognizers.Add(panGesture);
 
+        // 120 FPS Direct Manipulation Pinch-to-Zoom Gesture
         var pinchGesture = new PinchGestureRecognizer();
+        double pinchBaseScale = 1.0;
+        Point pinchFocalDips = new Point(0.5, 0.5);
         pinchGesture.PinchUpdated += async (_, pne) =>
         {
             if (_viewportController is null) return;
-            if (pne.Status == GestureStatus.Running && pne.Scale > 0.5 && pne.Scale < 2.0)
+
+            if (pne.Status == GestureStatus.Started)
             {
-                _viewportController.PinchZoom(new ScreenPoint2(pne.ScaleOrigin.X * 1080, pne.ScaleOrigin.Y * 1080), pne.Scale);
+                pinchBaseScale = _viewerImage.Scale;
+                pinchFocalDips = pne.ScaleOrigin;
+                _viewerImage.AnchorX = pne.ScaleOrigin.X;
+                _viewerImage.AnchorY = pne.ScaleOrigin.Y;
             }
-            else if (pne.Status == GestureStatus.Completed)
+            else if (pne.Status == GestureStatus.Running)
             {
+                // Real-time GPU scale: smooth optical zoom preview
+                double targetScale = pinchBaseScale * pne.Scale;
+                if (targetScale >= 0.2 && targetScale <= 8.0)
+                {
+                    _viewerImage.Scale = targetScale;
+                }
+            }
+            else if (pne.Status == GestureStatus.Completed || pne.Status == GestureStatus.Canceled)
+            {
+                double netScaleFactor = _viewerImage.Scale / pinchBaseScale;
+
+                double density = 1.0;
+                try
+                {
+                    density = Microsoft.Maui.Devices.DeviceDisplay.Current.MainDisplayInfo.Density;
+                    if (density <= 0 || !double.IsFinite(density)) density = 1.0;
+                }
+                catch
+                {
+                    density = 1.0;
+                }
+
+                double focalPixelX = pinchFocalDips.X * Math.Max(1, _viewerImage.Width) * density;
+                double focalPixelY = pinchFocalDips.Y * Math.Max(1, _viewerImage.Height) * density;
+
+                if (Math.Abs(netScaleFactor - 1.0) > 0.005)
+                {
+                    _viewportController.PinchZoom(new ScreenPoint2(focalPixelX, focalPixelY), netScaleFactor);
+                }
+
+                _viewerImage.Scale = 1.0;
                 await ReRenderAsync();
             }
         };
@@ -468,6 +527,9 @@ public sealed class MainPage : ContentPage
         doubleTap.Tapped += async (_, _) =>
         {
             if (_viewportController is null) return;
+            _viewerImage.TranslationX = 0;
+            _viewerImage.TranslationY = 0;
+            _viewerImage.Scale = 1.0;
             _viewportController.FitExtents();
             await ReRenderAsync();
         };
@@ -490,6 +552,7 @@ public sealed class MainPage : ContentPage
             HorizontalOptions = LayoutOptions.Start,
             VerticalOptions = LayoutOptions.Start,
             Margin = new Thickness(14),
+            InputTransparent = true,
             Content = _zoomLabel
         };
         canvasGrid.Children.Add(zoomPill);
@@ -505,18 +568,27 @@ public sealed class MainPage : ContentPage
         var btnZoomIn = CreateFloatingButton("＋", async () =>
         {
             if (_viewportController is null) return;
+            _viewerImage.TranslationX = 0;
+            _viewerImage.TranslationY = 0;
+            _viewerImage.Scale = 1.0;
             _viewportController.ZoomIn(1.25);
             await ReRenderAsync();
         });
         var btnFit = CreateFloatingButton("⤢", async () =>
         {
             if (_viewportController is null) return;
+            _viewerImage.TranslationX = 0;
+            _viewerImage.TranslationY = 0;
+            _viewerImage.Scale = 1.0;
             _viewportController.FitExtents();
             await ReRenderAsync();
         });
         var btnZoomOut = CreateFloatingButton("－", async () =>
         {
             if (_viewportController is null) return;
+            _viewerImage.TranslationX = 0;
+            _viewerImage.TranslationY = 0;
+            _viewerImage.Scale = 1.0;
             _viewportController.ZoomOut(1.25);
             await ReRenderAsync();
         });
@@ -1186,6 +1258,9 @@ public sealed class MainPage : ContentPage
 
         _viewerView.IsVisible = false;
         _dashboardView.IsVisible = true;
+        _viewerImage.TranslationX = 0;
+        _viewerImage.TranslationY = 0;
+        _viewerImage.Scale = 1.0;
         _navLayerButton.IsVisible = false;
         _navInfoButton.IsVisible = false;
         _navCloseButton.IsVisible = false;
