@@ -1,4 +1,5 @@
 using System.Collections.ObjectModel;
+using MobilDwg.Rendering.Layouts;
 using MobilDwg.Rendering.Scene;
 
 namespace MobilDwg.Rendering.Geometry;
@@ -68,6 +69,13 @@ public static class GeometryTessellator
             HatchPrimitive hatch => hatch.Loops.Count > 0 && hatch.Loops[0].Vertices.Count >= 3
                 ? new TessellatedPath(hatch.Loops[0].Vertices, closed: true, filled: hatch.IsSolid)
                 : new TessellatedPath([new WorldPoint2(0, 0)], closed: false, filled: false),
+            ViewportPrimitive vp => new TessellatedPath(
+                [
+                    new WorldPoint2(vp.PaperBounds.MinX, vp.PaperBounds.MinY),
+                    new WorldPoint2(vp.PaperBounds.MaxX, vp.PaperBounds.MinY),
+                    new WorldPoint2(vp.PaperBounds.MaxX, vp.PaperBounds.MaxY),
+                    new WorldPoint2(vp.PaperBounds.MinX, vp.PaperBounds.MaxY)
+                ], closed: true, filled: false),
             _ => throw new NotSupportedException($"Unsupported geometry primitive: {primitive.GetType().Name}"),
         };
     }

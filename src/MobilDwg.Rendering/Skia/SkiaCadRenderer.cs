@@ -1,6 +1,7 @@
 using MobilDwg.Core.Rendering;
 using MobilDwg.Rendering.Camera;
 using MobilDwg.Rendering.Geometry;
+using MobilDwg.Rendering.Layouts;
 using MobilDwg.Rendering.Scene;
 using MobilDwg.Rendering.Styles;
 using MobilDwg.Rendering.Text;
@@ -176,6 +177,12 @@ public sealed class SkiaCadRenderer : ICadRenderer
             return;
         }
 
+        if (primitive is ViewportPrimitive viewportPrimitive)
+        {
+            DrawViewportPrimitive(canvas, viewportPrimitive, camera, tessellation, strokePaint, fillPaint, density);
+            return;
+        }
+
         var path = GeometryTessellator.Tessellate(primitive, tessellation);
         if (primitive is PointPrimitive)
         {
@@ -295,6 +302,58 @@ public sealed class SkiaCadRenderer : ICadRenderer
                 var p2 = CameraTransform.WorldToScreen(line.End, camera);
                 canvas.DrawLine(ToFloat(p1.X), ToFloat(p1.Y), ToFloat(p2.X), ToFloat(p2.Y), strokePaint);
             }
+        }
+    }
+
+    private static void DrawViewportPrimitive(
+        SKCanvas canvas,
+        ViewportPrimitive vp,
+        Camera2D camera,
+        GeometryTessellationOptions tessellation,
+        SKPaint strokePaint,
+        SKPaint fillPaint,
+        double density)
+    {
+        var minScreen = CameraTransform.WorldToScreen(new WorldPoint2(vp.PaperBounds.MinX, vp.PaperBounds.MaxY), camera);
+        var maxScreen = CameraTransform.WorldToScreen(new WorldPoint2(vp.PaperBounds.MaxX, vp.PaperBounds.MinY), camera);
+
+        var left = ToFloat(Math.Min(minScreen.X, maxScreen.X));
+        var top = ToFloat(Math.Min(minScreen.Y, maxScreen.Y));
+        var right = ToFloat(Math.Max(minScreen.X, maxScreen.X));
+        var bottom = ToFloat(Math.Max(minScreen.Y, maxScreen.Y));
+
+        var clipRect = new SKRect(left, top, right, bottom);
+
+        var saveCount = canvas.Save();
+        try
+        {
+            if (vp.ClipBoundary != null && vp.ClipBoundary.Count >= 3)
+            {
+                using var clipBuilder = new SKPathBuilder();
+                var p0 = CameraTransform.WorldToScreen(vp.ClipBoundary[0], camera);
+                clipBuilder.MoveTo(ToFloat(p0.X), ToFloat(p0.Y));
+                for (var i = 1; i < vp.ClipBoundary.Count; i++)
+                {
+                    var pt = CameraTransform.WorldToScreen(vp.ClipBoundary[i], camera);
+                    clipBuilder.LineTo(ToFloat(pt.X), ToFloat(pt.Y));
+                }
+                clipBuilder.Close();
+                using var clipPath = clipBuilder.Detach();
+                canvas.ClipPath(clipPath, SKClipOperation.Intersect, antialias: true);
+            }
+            else
+            {
+                canvas.ClipRect(clipRect, SKClipOperation.Intersect, antialias: true);
+            }
+
+            foreach (var inner in vp.InnerPrimitives)
+            {
+                DrawPrimitive(canvas, inner, camera, tessellation, strokePaint, fillPaint, density);
+            }
+        }
+        finally
+        {
+            canvas.RestoreToCount(saveCount);
         }
     }
 

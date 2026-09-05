@@ -5,7 +5,7 @@ using Microsoft.Maui.Storage;
 using MobilDwg.App.Opening;
 using MobilDwg.Cad.AcadSharp;
 
-#if V06_VALIDATION || A10_VALIDATION || A11_VALIDATION || A12_VALIDATION || A13_VALIDATION || A14_VALIDATION || A15_VALIDATION
+#if V06_VALIDATION || A10_VALIDATION || A11_VALIDATION || A12_VALIDATION || A13_VALIDATION || A14_VALIDATION || A15_VALIDATION || A16_VALIDATION
 using Android.Util;
 #endif
 
@@ -39,6 +39,9 @@ public sealed class MainPage : ContentPage
 #endif
 #if A15_VALIDATION
     private bool _a15Started;
+#endif
+#if A16_VALIDATION
+    private bool _a16Started;
 #endif
 
     public MainPage()
@@ -246,6 +249,27 @@ public sealed class MainPage : ContentPage
         layout.Children.Insert(2, a15Status);
         layout.Children.Insert(3, a15Image);
         Loaded += async (_, _) => await RunA15ValidationAsync(a15Status, a15Image);
+#endif
+
+#if A16_VALIDATION
+        var a16Status = new Label
+        {
+            Text = "A16_VALIDATION_PENDING",
+            AutomationId = "a16-validation-status",
+            FontSize = 13,
+            TextColor = Color.FromArgb("#B8C4D8"),
+            HorizontalTextAlignment = TextAlignment.Center,
+        };
+        var a16Image = new Image
+        {
+            AutomationId = "a16-render-image",
+            HeightRequest = 420,
+            Aspect = Aspect.AspectFit,
+            BackgroundColor = Color.FromArgb("#101010"),
+        };
+        layout.Children.Insert(2, a16Status);
+        layout.Children.Insert(3, a16Image);
+        Loaded += async (_, _) => await RunA16ValidationAsync(a16Status, a16Image);
 #endif
 
         Content = new ScrollView { Content = layout };
@@ -611,6 +635,34 @@ public sealed class MainPage : ContentPage
                 status.Text = $"ANDROID_STAGE15_DIMENSION_HATCH_FAIL type={exception.GetType().Name}";
             });
             Log.Error(A15AndroidValidationRunner.Tag, $"ANDROID_STAGE15_DIMENSION_HATCH_FAIL type={exception.GetType().Name}");
+        }
+    }
+#endif
+
+#if A16_VALIDATION
+    private async Task RunA16ValidationAsync(Label status, Image image)
+    {
+        if (_a16Started) return;
+        _a16Started = true;
+        status.Text = "A16_VALIDATION_RUNNING";
+        try
+        {
+            var result = await Task.Run(A16AndroidValidationRunner.RunAsync);
+            var png = result.Png;
+            MainThread.BeginInvokeOnMainThread(() =>
+            {
+                image.Source = ImageSource.FromStream(() => new MemoryStream(png, writable: false));
+                status.Text = $"{result.Marker} layout={result.ActiveLayoutName} entities={result.EntityCount}";
+            });
+            Log.Info(A16AndroidValidationRunner.Tag, $"A16_REAL_APP_UI_IMAGE_READY sha256={result.PngSha256}");
+        }
+        catch (Exception exception)
+        {
+            MainThread.BeginInvokeOnMainThread(() =>
+            {
+                status.Text = $"ANDROID_STAGE16_LAYOUT_VIEWPORT_FAIL: {exception.Message}";
+            });
+            Log.Error(A16AndroidValidationRunner.Tag, $"ANDROID_STAGE16_LAYOUT_VIEWPORT_FAIL: {exception}");
         }
     }
 #endif
