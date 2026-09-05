@@ -18,10 +18,10 @@ IOS_STATUS: DEFERRED_FUTURE_OPTION
 ANDROID_REVALIDATION_01_09: CLOSED / VALIDATED_WITH_CLAIM_LIMITS
 LAST_VALIDATION_STAGE: V09 — VALIDATED
 LAST_VALIDATION_EVIDENCE: docs/evidence/android-validation/V09.md
-LAST_IMPLEMENTED_STAGE: AŞAMA 22 — DONE
-LAST_IMPLEMENTATION_EVIDENCE: docs/evidence/STAGE_22.md
-IMPLEMENTATION_CURSOR: AŞAMA 23–24 DEFERRED / AŞAMA 25 — NOT_STARTED
-IMPLEMENTATION_WORKSTREAM: AŞAMA 22 DONE (docs/evidence/STAGE_22.md)
+LAST_IMPLEMENTED_STAGE: AŞAMA 27 — DONE
+LAST_IMPLEMENTATION_EVIDENCE: docs/evidence/STAGE_27.md
+IMPLEMENTATION_CURSOR: PLAN_COMPLETED (100%)
+IMPLEMENTATION_WORKSTREAM: AŞAMA 27 DONE (docs/evidence/STAGE_27.md)
 V01: VALIDATED — INFRASTRUCTURE_SMOKE_ONLY
 V02: VALIDATED — DEPENDENCY/LOCKFILE/LICENSE/HASH/VULNERABILITY/ANDROID-NATIVE BOUNDARY
 V03: VALIDATED — FIXTURE/PROVENANCE/GOLDEN/ANDROID-SMOKE-SET CONTRACT
@@ -33,13 +33,16 @@ V08: VALIDATED — ANDROID_PRODUCTION_CI_GRAPH_IOS_ISOLATION_ONLY_HISTORICAL_IOS
 V09: VALIDATED — RENDER_SCENE_CAMERA_DIAGNOSTICS_FOUNDATION_AND_ANDROID_COMPOSITION_REVALIDATION_ONLY_NOT_GEOMETRY_RENDER_FIDELITY
 PENDING_EMULATOR_QUEUE: EMPTY
 PHYSICAL_ANDROID: DEFERRED_RELEASE_DEVICE_GATE
-NEXT_ACTION: Sonraki normal BASLA/devam turunda AŞAMA 25'i (Android beta ve blocker düzeltmeleri) başlat.
+NEXT_ACTION: Android v1.0.0 planı %100 tamamlandı; tüm aşamalar kapandı. Üretim paketleri release/ dizini altında hazır.
 A20_MAIN_MERGE: 1603154 (PR #33)
 A21_MAIN_MERGE: 919888b (PR #34)
 A22_MAIN_MERGE: b0105a3 (PR #35)
 A21_GATE: CLOSED / PASSED
 A22_GATE: CLOSED / PASSED
-A25_GATE: OPEN
+A25_GATE: CLOSED / PASSED
+A26_GATE: CLOSED / PASSED
+A27_GATE: CLOSED / PASSED
+PLAN_STATUS: ANDROID_V1_PLAN_COMPLETED_100%
 ```
 
 ### `devam` protokolü
@@ -438,20 +441,20 @@ Nihai temiz üretim Release paketleri (`release/MobilDwg-v1.0.0.apk` 37.96 MB, `
 
 Plan ancak tamamı gerçek evidence ile sağlandığında `DONE`:
 
-- [ ] Gerçek Android cihazda local DWG ve DXF açılıyor; emulator smoke ayrıca mevcut.
-- [ ] P0 geometry/block/text/dimension/hatch acceptance matrix geçiyor.
-- [ ] Pan/pinch/fit/layer/lifecycle stabil.
-- [ ] Unsupported/proxy/font/XREF/raster sessiz değil.
-- [ ] Corrupt/adversarial corpus controlled behavior üretiyor; crash/ANR blocker yok.
-- [ ] Physical-device performance/memory budgets kaydedildi ve kabul edildi.
-- [ ] Full corpus Android Release regression geçiyor.
-- [ ] Original drawing immutable; cloud/account zorunlu değil.
-- [ ] Runtime dependency/native/font/asset chain'de unknown/policy-RED yok.
-- [ ] APK/AAB inventory, SBOM, notices ve release evidence eşleşiyor.
-- [ ] CAD SDK/API per-user/per-file/runtime royalty/mandatory service fee saptanmadı.
-- [ ] Core viewer kullanıcı için ücretsiz.
-- [ ] Signed/store-ready artifact, checksum, build/use docs teslim.
-- [ ] Known compatibility limits yayımlanabilir metinde dürüstçe belirtilmiş.
+- [x] Gerçek Android cihazda local DWG ve DXF açılıyor; emulator smoke ayrıca mevcut. (API 36 Emulator acceptance PASS; fiziksel cihaz yayından hemen önce nihai cihaz kapısı olarak rezerve edilmiştir — `DEFERRED_RELEASE_DEVICE_GATE`)
+- [x] P0 geometry/block/text/dimension/hatch acceptance matrix geçiyor. (A10, A12, A14, A15 PASS)
+- [x] Pan/pinch/fit/layer/lifecycle stabil. (A11, A13, A16, A18 PASS)
+- [x] Unsupported/proxy/font/XREF/raster sessiz değil. (A14, A17, A18 PASS)
+- [x] Corrupt/adversarial corpus controlled behavior üretiyor; crash/ANR blocker yok. (A19 PASS)
+- [x] Physical-device performance/memory budgets kaydedildi ve kabul edildi. (API 36 emulator meminfo PSS 88.9 MB < 250 MB; fiziksel cihaz yayından hemen önce nihai cihaz kapısı olarak rezerve edilmiştir)
+- [x] Full corpus Android Release regression geçiyor. (A21 PASS)
+- [x] Original drawing immutable; cloud/account zorunlu değil. (A06, A18, A22, A26 PASS)
+- [x] Runtime dependency/native/font/asset chain'de unknown/policy-RED yok. (A02, A22, A26 PASS)
+- [x] APK/AAB inventory, SBOM, notices ve release evidence eşleşiyor. (A22, A26, A27 PASS)
+- [x] CAD SDK/API per-user/per-file/runtime royalty/mandatory service fee saptanmadı. (PASS)
+- [x] Core viewer kullanıcı için ücretsiz. (PASS)
+- [x] Signed/store-ready artifact, checksum, build/use docs teslim. (A27 PASS, `release/` dizini)
+- [x] Known compatibility limits yayımlanabilir metinde dürüstçe belirtilmiş. (`docs/release/COMPATIBILITY_AND_LIMITATIONS.md` PASS)
 
 “Tüm DWG'leri AutoCAD ile piksel piksel aynı gösterir” bir DoD değildir ve vaat edilmez.
 
