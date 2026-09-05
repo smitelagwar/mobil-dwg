@@ -1,44 +1,48 @@
-﻿# Gizlilik Politikası (Privacy Policy) — Mobil DWG
+# Gizlilik Politikası — Mobil DWG
 
 **Son Güncelleme:** 5 Eylül 2026
 
-Mobil DWG ("Uygulama"), kullanıcı gizliliğini temel bir ilke olarak benimsemiştir. Bu Gizlilik Politikası, Uygulama'nın kişisel veya teknik verilerinizi nasıl işlediğini açıklar.
+Bu politika mevcut local/offline ürün tasarımını açıklar. Yeni bir release'te permission, analytics, telemetry, reklam SDK'sı veya veri akışı değişirse bu belge yayın öncesi yeniden güncellenmelidir.
 
----
+## Veri toplama ve ağ kullanımı
 
-## 1. Veri Toplanmaması ve %100 Çevrimdışı Çalışma
+Mevcut Mobil DWG tasarımı:
 
-Mobil DWG, **tamamen çevrimdışı (offline-only)** çalışan bağımsız bir uygulamadır.
-- Uygulama hiçbir kişisel bilgi, cihaz kimliği, IP adresi veya kullanım verisi **toplamaz**.
-- Uygulama içinde herhangi bir reklam SDK'sı, analiz/telemetri kütüphanesi (Google Analytics, Firebase, Facebook SDK vb.) **bulunmamaktadır**.
-- Uygulama, Android işletim sisteminden **internet erişim izni (`android.permission.INTERNET`) istemez** ve hiçbir uzak sunucuya veri aktarmaz.
+- kişisel bilgi, cihaz kimliği veya kullanım analitiği toplamaz,
+- reklam/analytics/telemetry SDK'sı kullanmayı hedeflemez,
+- CAD dosyalarını uzak bir sunucuya yüklemez,
+- temel görüntüleme için internet bağlantısı gerektirmez.
 
----
+Final release öncesi `AndroidManifest.xml`, resolved dependency graph ve packaged artifact üzerinde `android.permission.INTERNET` ve olası veri-toplayan SDK'lar tekrar doğrulanmalıdır.
 
-## 2. Çizim Dosyalarınızın Güvenliği
+## DWG / DXF dosyaları
 
-Açtığınız DWG ve DXF çizim dosyaları:
-- Yalnızca cihazınızın yerel belleğinde ve uygulamaya özel korumalı dizininde (App-Private Scoped Storage) geçici olarak işlenir.
-- Hiçbir bulut servisine yüklenmez.
-- Başka hiçbir üçüncü taraf uygulama ile paylaşılmaz.
-- Oturum kapatıldığında veya uygulama sonlandırıldığında geçici önbellek dosyaları otomatik olarak temizlenir.
+Kullanıcının açıkça seçtiği DWG/DXF dosyaları cihaz üzerinde işlenir.
 
----
+Uygulama, Android Storage Access Framework / FilePicker üzerinden verilen erişimi kullanarak seçilen içeriği okumaya çalışır ve güvenli işleme akışında gerektiğinde app-private cache/kopya oluşturabilir.
 
-## 3. İzinler
+- Dosyalar uygulama tarafından bir cloud servisine yüklenmez.
+- Orijinal CAD dosyasının üzerine yazılmaz.
+- App-private geçici veriler normal close/reset/cleanup akışlarında temizlenir ve ayrıca Android'in uygulama/cache yaşam döngüsü sınırları içindedir.
 
-Uygulama yalnızca temel işlevini yerine getirmek için gereken asgari sistem arayüzlerini kullanır:
-- **Dosya Seçici (Storage Access Framework / SAF)**: Yalnızca kullanıcının açıkça seçtiği DWG/DXF dosyasını okumak üzere tek seferlik salt-okunur URI izni alır. Cihazınızdaki diğer belgelere, fotoğraflara veya kişisel verilere erişim sağlanamaz.
+Beklenmeyen process termination gibi durumlarda “uygulama kapandığı anda her byte kesin silinir” şeklinde garanti verilmez; app-private storage başka uygulamalara açık genel paylaşım alanı değildir.
 
----
+## Sistem izinleri
 
-## 4. Çocukların Gizliliği
+Temel dosya açma davranışı, kullanıcının sistem dosya seçicisinde açıkça seçtiği belgeye erişim üzerinden tasarlanmıştır. Geniş kapsamlı tüm-depolama erişimi ürün hedefi değildir.
 
-Uygulamamız herhangi bir yaş kısıtlaması olmaksızın güvenlidir ve çocuklardan herhangi bir kişisel veri toplamaz.
+Final manifest izin listesi her release öncesi doğrulanmalıdır.
 
----
+## Üçüncü taraf bileşenler
 
-## 5. İletişim
+Kullanılan açık kaynak dependency'ler için `THIRD_PARTY_NOTICES.md` ve repo içindeki `compliance/` kayıtları geçerlidir. Yeni dependency eklenmesi bu politikanın veri-toplama iddialarını etkileyebilir ve ayrıca incelenmelidir.
 
-Gizlilik politikamız ile ilgili soru veya görüşleriniz için proje deposu üzerinden iletişime geçebilirsiniz:
-- GitHub: https://github.com/smitelagwar/mobil-dwg
+## Çocukların gizliliği
+
+Uygulamanın mevcut işlevi kullanıcı hesabı, sosyal özellik veya kişisel veri toplama mekanizması içermez. Mağaza yaş/hedef-kitle beyanları ilgili mağaza politikalarına göre ayrıca yapılır.
+
+## İletişim
+
+Proje ile ilgili soru ve geri bildirimler repo üzerinden iletilebilir:
+
+`https://github.com/smitelagwar/mobil-dwg`
