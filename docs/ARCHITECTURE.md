@@ -1,33 +1,37 @@
-# mobil-dwg architecture boundary — AŞAMA 04
+# mobil-dwg — Güncel Mimari Sözleşmesi
 
-Bu belge AŞAMA 04'te kurulan minimal production sınırlarını tanımlar. Bu aşamada parser veya renderer implementation paketi production projelerine eklenmez.
+Bu belge geçmiş bir aşama planı değil, mevcut production dependency sınırıdır. Yeni geliştirmeler bu sınırı bilinçsizce bozmamalıdır.
 
 ## Production projeleri
 
-Tam olarak dört production projesi vardır:
+### `src/MobilDwg.Core`
 
-1. `src/MobilDwg.Core`
-   - BCL-only domain/contracts.
-   - ProjectReference yok.
-   - PackageReference yok.
-   - MAUI, SkiaSharp veya ACadSharp referansı yok.
+- Domain/contracts ve teknoloji-bağımsız temel tipler.
+- ProjectReference yok.
+- PackageReference yok.
+- MAUI, SkiaSharp ve ACadSharp referansı yok.
 
-2. `src/MobilDwg.Cad`
-   - CAD parser adapter boundary.
-   - Yalnız `MobilDwg.Core` referansı.
-   - ACadSharp concrete adapter AŞAMA 05'te bu sınırın içine eklenir.
+### `src/MobilDwg.Cad`
 
-3. `src/MobilDwg.Rendering`
-   - Render scene builder/renderer adapter boundary.
-   - Yalnız `MobilDwg.Core` referansı.
-   - SkiaSharp implementation sonraki renderer aşamalarında bu sınırın içine eklenir.
+- CAD parser/adapter katmanı.
+- `MobilDwg.Core` referansı.
+- ACadSharp production parser dependency'si burada tutulur.
+- Parser'a özgü concrete tipler App/UI sınırına sızdırılmaz.
 
-4. `src/MobilDwg.App`
-   - Composition/UI boundary.
-   - `Core`, `Cad`, `Rendering` referansları.
-   - Parser entity veya Skia type'ına doğrudan bağlanmaz.
-   - **Gerçek mevcut durum:** Android V04'te aynı production boundary `net10.0-android36.0` MAUI executable'a dönüştürüldü; beşinci production proje açılmadı.
-   - Shared Core/Cad/Rendering katmanları future iOS dönüşü için platform-neutral kalır; aktif Android döneminde iOS implementasyonu veya workload zorunluluğu eklenmez.
+### `src/MobilDwg.Rendering`
+
+- RenderScene, kamera, geometry, style, text, layout ve Skia rendering katmanı.
+- `MobilDwg.Core` referansı.
+- SkiaSharp dependency'si burada tutulur.
+- World/document verisi `double` kalır; float/GPU tipine dönüşüm yalnız render sınırında yapılır.
+
+### `src/MobilDwg.App`
+
+- Android .NET MAUI composition/UI katmanı.
+- `Core`, `Cad` ve `Rendering` projelerine referans verir.
+- MAUI dependency'si burada tutulur.
+- Dosya seçimi, viewer lifecycle, UI state ve composition bu katmandadır.
+- Parser entity tipleri veya parser internal model'i UI API'si haline getirilmez.
 
 Dependency yönü:
 
@@ -41,37 +45,57 @@ MobilDwg.Cad   MobilDwg.Rendering
 
 `Core` dış teknolojiye doğru bağımlılık taşımaz.
 
-## Kontratlar
+## Temel kontratlar
 
-`MobilDwg.Core` şu boundary'leri taşır:
+`MobilDwg.Core` ve ortak boundary'ler aşağıdaki sorumlulukları ayırır:
 
 - `ICadDocumentReader`
-- `CadDocumentSession` + `ICadDocumentHandle`
-- diagnostics/compatibility kayıtları
-- `IRenderSceneBuilder`
-- `ICadRenderer`
-- `IRenderScene` / `IRenderSurface`
-- `RenderViewport`
+- document/session/handle sahipliği
+- diagnostics ve compatibility kayıtları
+- render scene / render surface / viewport kontratları
+- cancellation ve progress capability tanımı
 
-Session, parser-specific handle'ın tek sahibidir ve handle'ı tam bir kez dispose eder. UI concrete parser entity'sini görmez.
+Bir parser gerçek cooperative cancellation sağlamıyorsa capability bunu iddia edemez. Kesirli progress bilinmiyorsa sahte yüzde üretilmez.
 
-## Cancellation ve progress doğruluğu
+## Veri ve hassasiyet kuralları
 
-`ICadDocumentReader.Capabilities` gerçek destek düzeyini açıkça ilan eder:
+- World/document coordinates `double`.
+- Büyük survey koordinatlarında küçük detay kaybına yol açacak erken `float` dönüşümü yasaktır.
+- Original CAD dosyası immutable kalır.
+- Parser sonucu doğrudan UI state olarak tutulmaz; render için normalize edilmiş scene/primitive sınırı kullanılır.
+- Unsupported veya compatibility problemi diagnostics üzerinden görünür tutulur.
 
-- Cancellation: `None`, `BeforeStartOnly`, `Cooperative`
-- Progress: `None`, `StagesOnly`, `Fractional`
+## Rendering sınırı
 
-Bir adapter cooperative parser abort sağlayamıyorsa `Cooperative` ilan edemez. Kesir bilinmiyorsa `CadReadProgress.Fraction` `null` kalır; sahte yüzde üretilmez.
+Rendering katmanı:
 
-## Test projeleri
+- kamera/world-screen dönüşümünü,
+- viewport culling'i,
+- geometry tessellation/draw işlemlerini,
+- style/text/hatch/layout/reference davranışını
 
-Tam olarak üç test projesi vardır ve Stage 04'te yeni test framework dependency'si eklenmez:
+merkezi şekilde yönetmelidir.
 
-- `MobilDwg.Core.Tests`
-- `MobilDwg.Rendering.Tests`
-- `MobilDwg.Architecture.Tests`
+Yeni bir viewer surface, GPU backend, render scheduler, spatial index veya cache sistemi eklenirse mevcut scene/camera sözleşmesi bypass edilmemeli; architecture değişikliği gerekiyorsa bu dosya aynı değişiklikte güncellenmelidir.
 
-Bunlar deterministic executable test harness'larıdır. CI `scripts/stage04-test.sh` ile restore, Release build ve üç harness'ı çalıştırır. Architecture harness proje sayısını, ProjectReference yönlerini, PackageReference yokluğunu ve Core/App forbidden dependency terimlerini otomatik denetler.
+## Test yapısı
 
-Standart bir test framework'ü daha sonra gerekirse ayrı dependency/lisans değerlendirmesiyle eklenebilir.
+Repo, ayrı Core/Rendering/Architecture test harness'ları ve Android'e özel gate scriptleri içerir. Eski stage testleri regresyon referansıdır; yeni davranış eski marker ile otomatik doğrulanmış sayılmaz.
+
+Android test politikası: `docs/ANDROID_TESTING.md`.
+
+## Future iOS
+
+Aktif production hedef Android'dir. Core/Cad/Rendering katmanları mümkün olduğunca platform-neutral tutulur; ancak iOS workload, signing veya platform implementation'ı kullanıcı açıkça yeniden etkinleştirmedikçe Android graph'ına zorunlu dependency olarak eklenmez.
+
+## Değişiklik kontrolü
+
+Aşağıdakiler mimari değişiklik sayılır ve bilinçli inceleme gerektirir:
+
+- yeni production proje,
+- dependency yönünün değişmesi,
+- Core'a harici package eklenmesi,
+- App'in parser concrete tiplerine bağlanması,
+- Rendering dışına Skia-specific render mantığının yayılması,
+- world coordinate precision'ın `double` dışına düşmesi,
+- local/offline viewer akışına zorunlu servis/cloud dependency eklenmesi.
