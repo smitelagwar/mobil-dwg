@@ -1,6 +1,7 @@
 using System.Collections.ObjectModel;
 using MobilDwg.Core.Rendering;
 using MobilDwg.Rendering.Diagnostics;
+using MobilDwg.Rendering.Styles;
 
 namespace MobilDwg.Rendering.Scene;
 
@@ -27,11 +28,13 @@ public sealed class RenderScene : IRenderScene
     internal RenderScene(
         IEnumerable<RenderSceneEntity> entities,
         SceneDiagnostics diagnostics,
-        RenderColorContext colorContext)
+        RenderColorContext colorContext,
+        LayerTable? layerTable = null)
     {
         ArgumentNullException.ThrowIfNull(entities);
         Diagnostics = diagnostics ?? throw new ArgumentNullException(nameof(diagnostics));
         ColorContext = colorContext ?? throw new ArgumentNullException(nameof(colorContext));
+        LayerTable = layerTable ?? new LayerTable();
 
         // SourceIndex is the parser/scene-builder draw-order contract when available.
         // Stable ID remains the deterministic fallback for synthetic or source-less entities.
@@ -47,6 +50,7 @@ public sealed class RenderScene : IRenderScene
     public WorldBounds2? WorldBounds { get; }
     public SceneDiagnostics Diagnostics { get; }
     public RenderColorContext ColorContext { get; }
+    public LayerTable LayerTable { get; }
 
     private static WorldBounds2? CalculateBounds(IReadOnlyList<RenderSceneEntity> entities)
     {
@@ -70,6 +74,7 @@ public sealed class RenderSceneAssembler
     private readonly List<RenderSceneEntity> _entities = new();
     private readonly List<SceneDiagnostic> _diagnostics = new();
     private readonly HashSet<string> _stableIds = new(StringComparer.Ordinal);
+    private LayerTable _layerTable = new();
 
     public RenderSceneAssembler(RenderColorContext? colorContext = null)
     {
@@ -77,6 +82,18 @@ public sealed class RenderSceneAssembler
     }
 
     public RenderColorContext ColorContext { get; }
+    public LayerTable LayerTable => _layerTable;
+
+    public void AddLayer(LayerDefinition layer)
+    {
+        ArgumentNullException.ThrowIfNull(layer);
+        _layerTable.AddOrUpdate(layer);
+    }
+
+    public void SetLayerTable(LayerTable layerTable)
+    {
+        _layerTable = layerTable ?? throw new ArgumentNullException(nameof(layerTable));
+    }
 
     public void AddEntity(RenderSceneEntity entity)
     {
@@ -98,5 +115,6 @@ public sealed class RenderSceneAssembler
     public RenderScene Build() => new(
         _entities,
         new SceneDiagnostics(_diagnostics),
-        ColorContext);
+        ColorContext,
+        _layerTable);
 }

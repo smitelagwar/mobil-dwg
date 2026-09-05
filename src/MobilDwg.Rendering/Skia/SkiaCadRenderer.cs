@@ -2,6 +2,7 @@ using MobilDwg.Core.Rendering;
 using MobilDwg.Rendering.Camera;
 using MobilDwg.Rendering.Geometry;
 using MobilDwg.Rendering.Scene;
+using MobilDwg.Rendering.Styles;
 using SkiaSharp;
 
 namespace MobilDwg.Rendering.Skia;
@@ -95,10 +96,52 @@ public sealed class SkiaCadRenderer : ICadRenderer
             foreach (var entity in renderScene.Entities)
             {
                 cancellationToken.ThrowIfCancellationRequested();
-                foreach (var primitive in entity.Geometry)
+
+                var resolved = CadStyleResolver.Resolve(
+                    entity.CadStyle,
+                    entity.Layer,
+                    renderScene.LayerTable,
+                    renderScene.ColorContext,
+                    viewport.WorldUnitsPerPixel,
+                    surface.Density,
+                    displayLineweights: true);
+
+                if (!resolved.IsVisible)
                 {
-                    cancellationToken.ThrowIfCancellationRequested();
-                    DrawPrimitive(canvas, primitive, camera, tessellation, strokePaint, fillPaint, surface.Density);
+                    continue;
+                }
+
+                var entityColor = ToSkColor(resolved.ArgbColor);
+                strokePaint.Color = entityColor;
+                strokePaint.StrokeWidth = resolved.StrokeWidthPixels;
+                fillPaint.Color = entityColor;
+
+                SKPathEffect? pathEffect = null;
+                if (resolved.DashPatternPixels is { Length: > 0 } pattern)
+                {
+                    pathEffect = SKPathEffect.CreateDash(pattern, 0);
+                    strokePaint.PathEffect = pathEffect;
+                }
+                else
+                {
+                    strokePaint.PathEffect = null;
+                }
+
+                try
+                {
+                    foreach (var primitive in entity.Geometry)
+                    {
+                        cancellationToken.ThrowIfCancellationRequested();
+                        DrawPrimitive(canvas, primitive, camera, tessellation, strokePaint, fillPaint, surface.Density);
+                    }
+                }
+                finally
+                {
+                    if (pathEffect is not null)
+                    {
+                        strokePaint.PathEffect = null;
+                        pathEffect.Dispose();
+                    }
                 }
             }
         }

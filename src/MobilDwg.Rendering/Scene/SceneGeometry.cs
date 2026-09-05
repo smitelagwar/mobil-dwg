@@ -1,5 +1,6 @@
 using System.Collections.ObjectModel;
 using MobilDwg.Rendering.Geometry;
+using MobilDwg.Rendering.Styles;
 
 namespace MobilDwg.Rendering.Scene;
 
@@ -137,7 +138,7 @@ public sealed record RenderSceneEntity
         RenderLayerToken layer,
         RenderStyleToken style,
         RenderSourceReference source)
-        : this(id, bounds, layer, style, source, Array.Empty<RenderGeometryPrimitive>())
+        : this(id, bounds, layer, style, source, Array.Empty<RenderGeometryPrimitive>(), null)
     {
     }
 
@@ -148,6 +149,18 @@ public sealed record RenderSceneEntity
         RenderStyleToken style,
         RenderSourceReference source,
         IEnumerable<RenderGeometryPrimitive> geometry)
+        : this(id, bounds, layer, style, source, geometry, null)
+    {
+    }
+
+    public RenderSceneEntity(
+        RenderEntityId id,
+        WorldBounds2 bounds,
+        RenderLayerToken layer,
+        RenderStyleToken style,
+        RenderSourceReference source,
+        IEnumerable<RenderGeometryPrimitive> geometry,
+        CadEntityStyle? cadStyle)
     {
         if (string.IsNullOrWhiteSpace(id.Value)) throw new ArgumentException("Stable entity ID is required.", nameof(id));
         if (string.IsNullOrWhiteSpace(layer.Value)) throw new ArgumentException("Layer token is required.", nameof(layer));
@@ -163,6 +176,7 @@ public sealed record RenderSceneEntity
         Layer = layer;
         Style = style;
         Source = source;
+        CadStyle = cadStyle;
         _geometry = Array.AsReadOnly(geometryCopy);
     }
 
@@ -171,8 +185,9 @@ public sealed record RenderSceneEntity
         RenderLayerToken layer,
         RenderStyleToken style,
         RenderSourceReference source,
-        IEnumerable<RenderGeometryPrimitive> geometry)
-        : this(id, CalculateGeometryBounds(geometry), layer, style, source, geometry)
+        IEnumerable<RenderGeometryPrimitive> geometry,
+        CadEntityStyle? cadStyle = null)
+        : this(id, CalculateGeometryBounds(geometry), layer, style, source, geometry, cadStyle)
     {
     }
 
@@ -181,6 +196,7 @@ public sealed record RenderSceneEntity
     public RenderLayerToken Layer { get; }
     public RenderStyleToken Style { get; }
     public RenderSourceReference Source { get; }
+    public CadEntityStyle? CadStyle { get; }
     public IReadOnlyList<RenderGeometryPrimitive> Geometry => _geometry;
 
     private static WorldBounds2 CalculateGeometryBounds(IEnumerable<RenderGeometryPrimitive> geometry)
