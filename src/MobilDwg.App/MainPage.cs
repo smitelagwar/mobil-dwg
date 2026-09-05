@@ -1227,14 +1227,24 @@ public sealed class MainPage : ContentPage
             var camera = _viewportController.CurrentCamera;
             var scene = _currentScene;
 
-            var result = await Task.Run(async () =>
+            double density = 1.0;
+            try
             {
-                return await SkiaScenePngRenderer.RenderCameraWithStatsAsync(scene, camera).ConfigureAwait(false);
+                density = Microsoft.Maui.Devices.DeviceDisplay.Current.MainDisplayInfo.Density;
+                if (density <= 0 || !double.IsFinite(density)) density = 1.0;
+            }
+            catch
+            {
+                density = 1.0;
+            }
+
+            var imageBytes = await Task.Run(async () =>
+            {
+                return await SkiaFastRenderer.RenderCameraJpegAsync(scene, camera, quality: 85, density: density).ConfigureAwait(false);
             });
             sw.Stop();
 
-            var png = result.Png;
-            _viewerImage.Source = ImageSource.FromStream(() => new MemoryStream(png, writable: false));
+            _viewerImage.Source = ImageSource.FromStream(() => new MemoryStream(imageBytes, writable: false));
 
             var bounds = _viewportController.SceneBounds ?? new WorldBounds2(0, 0, 100, 100);
             var fitCamera = Camera2D.Fit(bounds, camera.PixelWidth, camera.PixelHeight);

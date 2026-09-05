@@ -41,6 +41,14 @@ public sealed class SkiaBitmapRenderSurface : IRenderSurface, IDisposable
         return data.ToArray();
     }
 
+    public byte[] EncodeJpeg(int quality = 85)
+    {
+        ObjectDisposedException.ThrowIf(_disposed, this);
+        using var image = SKImage.FromBitmap(Bitmap);
+        using var data = image.Encode(SKEncodedImageFormat.Jpeg, Math.Clamp(quality, 1, 100));
+        return data.ToArray();
+    }
+
     public void Dispose()
     {
         if (_disposed) return;
@@ -230,6 +238,62 @@ public sealed class SkiaCadRenderer : ICadRenderer
                 var screen = CameraTransform.WorldToScreen(point.Position, camera);
                 canvas.DrawCircle(ToFloat(screen.X), ToFloat(screen.Y), Math.Max(2f, (float)(2d * density)), fillPaint);
                 return;
+            }
+
+            if (primitive is ArcPrimitive arc)
+            {
+                var screenCenter = CameraTransform.WorldToScreen(arc.Center, camera);
+                var screenRadius = ToFloat(arc.Radius / camera.WorldUnitsPerPixel);
+                if (screenRadius > 0.05f)
+                {
+                    if (Math.Abs(arc.SweepRadians) >= GeometryMath.Tau - 1e-4)
+                    {
+                        canvas.DrawCircle(ToFloat(screenCenter.X), ToFloat(screenCenter.Y), screenRadius, strokePaint);
+                        return;
+                    }
+                    else
+                    {
+                        var oval = new SKRect(
+                            ToFloat(screenCenter.X - screenRadius),
+                            ToFloat(screenCenter.Y - screenRadius),
+                            ToFloat(screenCenter.X + screenRadius),
+                            ToFloat(screenCenter.Y + screenRadius));
+                        var startDeg = ToFloat(-arc.StartRadians * (180.0 / Math.PI));
+                        var sweepDeg = ToFloat(-arc.SweepRadians * (180.0 / Math.PI));
+                        canvas.DrawArc(oval, startDeg, sweepDeg, false, strokePaint);
+                        return;
+                    }
+                }
+                return;
+            }
+
+            if (primitive is PolylinePrimitive polyline)
+            {
+                bool hasBulge = false;
+                for (int i = 0; i < polyline.Vertices.Count; i++)
+                {
+                    if (polyline.Vertices[i].Bulge != 0)
+                    {
+                        hasBulge = true;
+                        break;
+                    }
+                }
+
+                if (!hasBulge && polyline.Vertices.Count > 1)
+                {
+                    using var polyBuilder = new SKPathBuilder();
+                    var p0 = CameraTransform.WorldToScreen(polyline.Vertices[0].Position, camera);
+                    polyBuilder.MoveTo(ToFloat(p0.X), ToFloat(p0.Y));
+                    for (int i = 1; i < polyline.Vertices.Count; i++)
+                    {
+                        var pi = CameraTransform.WorldToScreen(polyline.Vertices[i].Position, camera);
+                        polyBuilder.LineTo(ToFloat(pi.X), ToFloat(pi.Y));
+                    }
+                    if (polyline.Closed) polyBuilder.Close();
+                    using var polySkPath = polyBuilder.Detach();
+                    canvas.DrawPath(polySkPath, strokePaint);
+                    return;
+                }
             }
         }
 
@@ -589,3 +653,38 @@ public static class SkiaScenePngRenderer
     private static uint ToArgb(SKColor color) =>
         ((uint)color.Alpha << 24) | ((uint)color.Red << 16) | ((uint)color.Green << 8) | color.Blue;
 }
+
+public static class SkiaFastRenderer
+{
+    public static async ValueTask<byte[]> RenderCameraJpegAsync(
+        RenderScene scene,
+        Camera2D camera,
+        int quality = 85,
+        double density = 1d,
+        CancellationToken cancellationToken = default)
+    {
+        ArgumentNullException.ThrowIfNull(scene);
+        if (!camera.IsValid) throw new ArgumentException("Camera must be valid.", nameof(camera));
+
+        using var surface = new SkiaBitmapRenderSurface(camera.PixelWidth, camera.PixelHeight, density);
+        await new SkiaCadRenderer().RenderAsync(scene, surface, camera.ToViewport(), cancellationToken).ConfigureAwait(false);
+        return surface.EncodeJpeg(quality);
+    }
+
+    public static async ValueTask<byte[]> RenderFitJpegAsync(
+        RenderScene scene,
+        int pixelWidth,
+        int pixelHeight,
+        int quality = 85,
+        double density = 1d,
+        double paddingFraction = 0.08,
+        CancellationToken cancellationToken = default)
+    {
+        ArgumentNullException.ThrowIfNull(scene);
+        if (scene.WorldBounds is not { } bounds) throw new ArgumentException("Cannot fit-render an empty scene.", nameof(scene));
+
+        var camera = Camera2D.Fit(bounds, pixelWidth, pixelHeight, paddingFraction);
+        return await RenderCameraJpegAsync(scene, camera, quality, density, cancellationToken).ConfigureAwait(false);
+    }
+}
+
