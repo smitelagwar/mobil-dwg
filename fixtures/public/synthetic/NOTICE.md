@@ -1,6 +1,6 @@
 # Synthetic fixture notice
 
-Bu klasördeki CAD dosyaları gerçek müşteri/kullanıcı çizimi değildir. AŞAMA 03 için mobil-dwg tarafından elle oluşturulmuş küçük test verileridir.
+Bu klasördeki CAD dosyaları gerçek müşteri/kullanıcı çizimi değildir. mobil-dwg tarafından kontrollü test ve regresyon amacıyla elle oluşturulmuş küçük sentetik verilerdir.
 
 Bu klasördeki `.dxf` fixture içerikleri 0BSD altında kullanılabilir, kopyalanabilir, değiştirilebilir ve yeniden dağıtılabilir. Bu izin yalnız bu klasörde açıkça yer alan sentetik fixture verilerine uygulanır; mobil-dwg kaynak kodunun genel dağıtım lisansı seçildiği anlamına gelmez.
 
