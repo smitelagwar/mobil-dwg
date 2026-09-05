@@ -1,9 +1,19 @@
 using Microsoft.Maui;
 using Microsoft.Maui.Controls;
+using Microsoft.Maui.Controls.Shapes;
 using Microsoft.Maui.Graphics;
 using Microsoft.Maui.Storage;
 using MobilDwg.App.Opening;
 using MobilDwg.Cad.AcadSharp;
+using MobilDwg.Core.Diagnostics;
+using MobilDwg.Core.Documents;
+using MobilDwg.Core.Reading;
+using MobilDwg.Core.Storage;
+using MobilDwg.Rendering.Camera;
+using MobilDwg.Rendering.Coordinates;
+using MobilDwg.Rendering.Scene;
+using MobilDwg.Rendering.Skia;
+using MobilDwg.Rendering.Styles;
 
 #if V06_VALIDATION || A10_VALIDATION || A11_VALIDATION || A12_VALIDATION || A13_VALIDATION || A14_VALIDATION || A15_VALIDATION || A16_VALIDATION || A17_VALIDATION || A18_VALIDATION || A19_VALIDATION || A20_VALIDATION || A21_VALIDATION || A22_VALIDATION || A25_VALIDATION || A26_VALIDATION
 using Android.Util;
@@ -17,7 +27,31 @@ public sealed class MainPage : ContentPage
     private readonly Button _cancelButton;
     private readonly Button _closeButton;
     private readonly Label _status;
+    private readonly Label _titleLabel;
+    private readonly Label _shellReadyLabel;
     private CadFileOpenCoordinator _coordinator;
+
+    private RenderScene? _currentScene;
+    private ViewportController? _viewportController;
+    private string? _activeDocumentName;
+    private string? _activeDocumentVersion;
+    private readonly RecentFilesManager _recentManager = new();
+
+    private readonly ScrollView _dashboardView;
+    private readonly Grid _viewerView;
+    private readonly Image _viewerImage;
+    private readonly Label _viewerTitleLabel;
+    private readonly Label _viewerVersionBadge;
+    private readonly Label _zoomLabel;
+    private readonly Label _statsLabel;
+    private readonly Button _navCloseButton;
+    private readonly Button _navLayerButton;
+    private readonly Button _navInfoButton;
+
+    private readonly Grid _layerModalView;
+    private readonly VerticalStackLayout _layerStackLayout;
+    private readonly Grid _infoModalView;
+    private readonly Label _infoContentLabel;
 
 #if V05_VALIDATION
     private bool _v05Started;
@@ -69,77 +103,580 @@ public sealed class MainPage : ContentPage
     {
         AutomationId = "v04-real-app-main-page";
         Title = "Mobil DWG";
-        BackgroundColor = Color.FromArgb("#0B1220");
+        BackgroundColor = Color.FromArgb("#0B0F19");
         _coordinator = CreateCoordinator();
+
+        _titleLabel = new Label
+        {
+            Text = "Mobil DWG",
+            AutomationId = "v04-app-title",
+            FontSize = 22,
+            FontAttributes = FontAttributes.Bold,
+            TextColor = Colors.White,
+            VerticalOptions = LayoutOptions.Center
+        };
+
+        _shellReadyLabel = new Label
+        {
+            Text = "Android app shell ready",
+            AutomationId = "v04-shell-ready",
+            FontSize = 11,
+            TextColor = Color.FromArgb("#0EA5E9"),
+            VerticalOptions = LayoutOptions.Center
+        };
 
         _openButton = new Button
         {
             Text = "DWG/DXF seç",
             AutomationId = "v06-open-button",
+            BackgroundColor = Color.FromArgb("#2563EB"),
+            TextColor = Colors.White,
+            FontAttributes = FontAttributes.Bold,
+            FontSize = 16,
+            CornerRadius = 12,
+            HeightRequest = 52,
+            MinimumHeightRequest = 48
         };
+        AutomationProperties.SetName(_openButton, "DWG veya DXF cizim dosyasi sec");
+        AutomationProperties.SetHelpText(_openButton, "Sistem dosya secicisini acarak cihazdan guvenli CAD cizim dosyasi secer");
+        _openButton.Clicked += OpenClicked;
+
         _cancelButton = new Button
         {
             Text = "İptal iste",
             AutomationId = "v06-cancel-button",
+            BackgroundColor = Color.FromArgb("#1E293B"),
+            TextColor = Color.FromArgb("#94A3B8"),
+            FontSize = 13,
+            CornerRadius = 8,
+            HeightRequest = 40,
+            MinimumHeightRequest = 40
         };
+        AutomationProperties.SetName(_cancelButton, "Cizim acma islemini iptal et");
+        AutomationProperties.SetHelpText(_cancelButton, "Devam eden cizim okuma islemini guvenle iptal eder");
+        _cancelButton.Clicked += CancelClicked;
+
         _closeButton = new Button
         {
             Text = "Çizimi kapat",
             AutomationId = "v06-close-button",
+            BackgroundColor = Color.FromArgb("#1E293B"),
+            TextColor = Color.FromArgb("#EF4444"),
+            FontSize = 13,
+            CornerRadius = 8,
+            HeightRequest = 40,
+            MinimumHeightRequest = 40
         };
+        AutomationProperties.SetName(_closeButton, "Mevcut cizimi kapat");
+        AutomationProperties.SetHelpText(_closeButton, "Acik cizim oturumunu kapatir ve bellegi temizler");
+        _closeButton.Clicked += CloseClicked;
+
         _status = new Label
         {
             Text = "Dosya seçilmedi.",
             AutomationId = "v06-open-status",
-            FontSize = 13,
-            TextColor = Color.FromArgb("#B8C4D8"),
-            HorizontalTextAlignment = TextAlignment.Center,
+            FontSize = 12,
+            TextColor = Color.FromArgb("#94A3B8"),
+            HorizontalTextAlignment = TextAlignment.Center
         };
 
-        AutomationProperties.SetName(_openButton, "DWG veya DXF cizim dosyasi sec");
-        AutomationProperties.SetHelpText(_openButton, "Sistem dosya secicisini acarak cihazdan guvenli CAD cizim dosyasi secer");
-        _openButton.MinimumHeightRequest = 48;
-
-        AutomationProperties.SetName(_cancelButton, "Cizim acma islemini iptal et");
-        AutomationProperties.SetHelpText(_cancelButton, "Devam eden cizim okuma islemini guvenle iptal eder");
-        _cancelButton.MinimumHeightRequest = 48;
-
-        AutomationProperties.SetName(_closeButton, "Mevcut cizimi kapat");
-        AutomationProperties.SetHelpText(_closeButton, "Acik cizim oturumunu kapatir ve bellegi temizler");
-        _closeButton.MinimumHeightRequest = 48;
-
-        _openButton.Clicked += OpenClicked;
-        _cancelButton.Clicked += CancelClicked;
-        _closeButton.Clicked += CloseClicked;
-
-        var layout = new VerticalStackLayout
+        var topHeader = new Grid
         {
-            Padding = new Thickness(32),
-            Spacing = 14,
-            VerticalOptions = LayoutOptions.Center,
+            ColumnDefinitions =
+            {
+                new ColumnDefinition(GridLength.Star),
+                new ColumnDefinition(GridLength.Auto)
+            },
+            Padding = new Thickness(16, 12),
+            BackgroundColor = Color.FromArgb("#111827")
         };
 
-        layout.Children.Add(new Label
+        var titleStack = new VerticalStackLayout { Spacing = 2 };
+        titleStack.Children.Add(_titleLabel);
+        titleStack.Children.Add(_shellReadyLabel);
+        topHeader.Add(titleStack, 0, 0);
+
+        var headerActions = new HorizontalStackLayout { Spacing = 8, VerticalOptions = LayoutOptions.Center };
+
+        var offlineBadge = new Border
         {
-            Text = "Mobil DWG",
-            AutomationId = "v04-app-title",
-            FontSize = 30,
+            Stroke = Color.FromArgb("#059669"),
+            StrokeThickness = 1,
+            StrokeShape = new RoundRectangle { CornerRadius = 12 },
+            BackgroundColor = Color.FromArgb("#064E3B"),
+            Padding = new Thickness(10, 4),
+            Content = new Label
+            {
+                Text = "🔒 %100 Çevrimdışı",
+                TextColor = Color.FromArgb("#34D399"),
+                FontSize = 11,
+                FontAttributes = FontAttributes.Bold
+            }
+        };
+        headerActions.Children.Add(offlineBadge);
+
+        _navLayerButton = new Button
+        {
+            Text = "📑 Katmanlar",
+            BackgroundColor = Color.FromArgb("#1E293B"),
+            TextColor = Color.FromArgb("#38BDF8"),
+            FontSize = 12,
+            CornerRadius = 8,
+            HeightRequest = 36,
+            IsVisible = false
+        };
+        _navLayerButton.Clicked += (_, _) => OpenLayerModal();
+        headerActions.Children.Add(_navLayerButton);
+
+        _navInfoButton = new Button
+        {
+            Text = "ℹ️ Bilgi",
+            BackgroundColor = Color.FromArgb("#1E293B"),
+            TextColor = Color.FromArgb("#A78BFA"),
+            FontSize = 12,
+            CornerRadius = 8,
+            HeightRequest = 36,
+            IsVisible = false
+        };
+        _navInfoButton.Clicked += (_, _) => OpenInfoModal();
+        headerActions.Children.Add(_navInfoButton);
+
+        _navCloseButton = new Button
+        {
+            Text = "✕ Kapat",
+            BackgroundColor = Color.FromArgb("#371B1B"),
+            TextColor = Color.FromArgb("#F87171"),
+            FontSize = 12,
+            CornerRadius = 8,
+            HeightRequest = 36,
+            IsVisible = false
+        };
+        _navCloseButton.Clicked += (_, _) => CloseActiveDrawing();
+        headerActions.Children.Add(_navCloseButton);
+
+        topHeader.Add(headerActions, 1, 0);
+
+        var dashContent = new VerticalStackLayout
+        {
+            Padding = new Thickness(16, 20),
+            Spacing = 20
+        };
+
+        var heroCard = new Border
+        {
+            Stroke = Color.FromArgb("#2563EB"),
+            StrokeThickness = 1.5,
+            StrokeShape = new RoundRectangle { CornerRadius = 16 },
+            BackgroundColor = Color.FromArgb("#161F30"),
+            Padding = new Thickness(20)
+        };
+        var heroStack = new VerticalStackLayout { Spacing = 12 };
+        heroStack.Children.Add(new Label
+        {
+            Text = "Cihazınızdaki CAD Çizimlerini Açın",
+            FontSize = 18,
             FontAttributes = FontAttributes.Bold,
-            TextColor = Colors.White,
-            HorizontalTextAlignment = TextAlignment.Center,
+            TextColor = Colors.White
         });
-        layout.Children.Add(new Label
+        heroStack.Children.Add(new Label
         {
-            Text = "Android app shell ready",
-            AutomationId = "v04-shell-ready",
-            FontSize = 16,
-            TextColor = Color.FromArgb("#B8C4D8"),
-            HorizontalTextAlignment = TextAlignment.Center,
+            Text = "AutoCAD 2D DWG (R12–2018+) ve DXF dosyalarını internet bağlantısına ihtiyaç duymadan, sıfır veri sızıntısıyla doğrudan cihazınızda yüksek hızda görüntüleyin.",
+            FontSize = 13,
+            TextColor = Color.FromArgb("#94A3B8"),
+            LineHeight = 1.3
         });
-        layout.Children.Add(_openButton);
-        layout.Children.Add(_cancelButton);
-        layout.Children.Add(_closeButton);
-        layout.Children.Add(_status);
+        heroStack.Children.Add(_openButton);
+
+        var contractActionsRow = new HorizontalStackLayout
+        {
+            Spacing = 10,
+            HorizontalOptions = LayoutOptions.Center
+        };
+        contractActionsRow.Children.Add(_cancelButton);
+        contractActionsRow.Children.Add(_closeButton);
+        heroStack.Children.Add(contractActionsRow);
+        heroStack.Children.Add(_status);
+
+        heroCard.Content = heroStack;
+        dashContent.Children.Add(heroCard);
+
+        dashContent.Children.Add(new Label
+        {
+            Text = "HIZLI TEST İÇİN ÖRNEK ÇİZİMLER",
+            FontSize = 12,
+            FontAttributes = FontAttributes.Bold,
+            TextColor = Color.FromArgb("#64748B"),
+            Margin = new Thickness(4, 4, 0, 0)
+        });
+
+        dashContent.Children.Add(CreateSampleCard(
+            "🏢",
+            "Apartman 3+1 Kat Planı (Mimari)",
+            "Duvarlar, pencereler, kapı yayları, mobilyalar ve ölçülendirmeler",
+            "180 Varlık  •  6 Katman",
+            async () =>
+            {
+                var scene = SampleCadDrawings.CreateArchitecturalPlan();
+                await DisplayCadSceneAsync(scene, "apartman_kat_plani.dwg", "AutoCAD 2018");
+            }));
+
+        dashContent.Children.Add(CreateSampleCard(
+            "⚙️",
+            "Mekanik Bağlantı Flanşı DN150 (İmalat)",
+            "Flanş dairesi, 8 cıvata deliği, merkez eksenleri ve PCD ölçüleri",
+            "95 Varlık  •  5 Katman",
+            async () =>
+            {
+                var scene = SampleCadDrawings.CreateMechanicalPart();
+                await DisplayCadSceneAsync(scene, "baglanti_flansi_dn150.dwg", "AutoCAD 2018");
+            }));
+
+        dashContent.Children.Add(CreateSampleCard(
+            "🗺️",
+            "Kadastro & İmar Çap Planı (Harita)",
+            "Ada ve parsel sınırları, Atatürk Bulvarı ve ED50 poligon noktaları",
+            "140 Varlık  •  4 Katman",
+            async () =>
+            {
+                var scene = SampleCadDrawings.CreateSurveyMap();
+                await DisplayCadSceneAsync(scene, "kadastro_imar_plani.dxf", "AutoCAD R14");
+            }));
+
+        var engineCard = new Border
+        {
+            Stroke = Color.FromArgb("#1E293B"),
+            StrokeThickness = 1,
+            StrokeShape = new RoundRectangle { CornerRadius = 12 },
+            BackgroundColor = Color.FromArgb("#0F172A"),
+            Padding = new Thickness(16, 12),
+            Margin = new Thickness(0, 10, 0, 20)
+        };
+        var engineStack = new VerticalStackLayout { Spacing = 4 };
+        engineStack.Children.Add(new Label
+        {
+            Text = "⚙️ Motor ve Performans Bilgisi",
+            FontSize = 12,
+            FontAttributes = FontAttributes.Bold,
+            TextColor = Color.FromArgb("#38BDF8")
+        });
+        engineStack.Children.Add(new Label
+        {
+            Text = ".NET 10 MAUI • Skia 2D Çizim Motoru • ACadSharp Okuyucu\nHedef Platform: Android 16 (API 36) • Min: API 24",
+            FontSize = 11,
+            TextColor = Color.FromArgb("#64748B")
+        });
+        engineCard.Content = engineStack;
+        dashContent.Children.Add(engineCard);
+
+        _dashboardView = new ScrollView { Content = dashContent, IsVisible = true };
+
+        _viewerView = new Grid
+        {
+            RowDefinitions =
+            {
+                new RowDefinition(GridLength.Auto),
+                new RowDefinition(GridLength.Star),
+                new RowDefinition(GridLength.Auto)
+            },
+            IsVisible = false
+        };
+
+        var docBar = new Grid
+        {
+            ColumnDefinitions =
+            {
+                new ColumnDefinition(GridLength.Star),
+                new ColumnDefinition(GridLength.Auto)
+            },
+            Padding = new Thickness(16, 8),
+            BackgroundColor = Color.FromArgb("#161F30")
+        };
+        _viewerTitleLabel = new Label
+        {
+            Text = "Cizim",
+            TextColor = Colors.White,
+            FontSize = 15,
+            FontAttributes = FontAttributes.Bold,
+            VerticalOptions = LayoutOptions.Center
+        };
+        _viewerVersionBadge = new Label
+        {
+            Text = "DWG 2018",
+            TextColor = Color.FromArgb("#38BDF8"),
+            FontSize = 11,
+            FontAttributes = FontAttributes.Bold,
+            VerticalOptions = LayoutOptions.Center
+        };
+        docBar.Add(_viewerTitleLabel, 0, 0);
+        docBar.Add(_viewerVersionBadge, 1, 0);
+        _viewerView.Add(docBar, 0, 0);
+
+        var canvasGrid = new Grid
+        {
+            BackgroundColor = Color.FromArgb("#0A0D14")
+        };
+
+        _viewerImage = new Image
+        {
+            Aspect = Aspect.AspectFit,
+            HorizontalOptions = LayoutOptions.Fill,
+            VerticalOptions = LayoutOptions.Fill
+        };
+        canvasGrid.Children.Add(_viewerImage);
+
+        var panGesture = new PanGestureRecognizer();
+        double panAccumX = 0, panAccumY = 0;
+        panGesture.PanUpdated += async (_, pe) =>
+        {
+            if (_viewportController is null) return;
+            if (pe.StatusType == GestureStatus.Started)
+            {
+                panAccumX = 0;
+                panAccumY = 0;
+            }
+            else if (pe.StatusType == GestureStatus.Running)
+            {
+                double dx = pe.TotalX - panAccumX;
+                double dy = pe.TotalY - panAccumY;
+                panAccumX = pe.TotalX;
+                panAccumY = pe.TotalY;
+                _viewportController.Pan(-dx * 2.0, dy * 2.0);
+            }
+            else if (pe.StatusType == GestureStatus.Completed || pe.StatusType == GestureStatus.Canceled)
+            {
+                await ReRenderAsync();
+            }
+        };
+        canvasGrid.GestureRecognizers.Add(panGesture);
+
+        var pinchGesture = new PinchGestureRecognizer();
+        pinchGesture.PinchUpdated += async (_, pne) =>
+        {
+            if (_viewportController is null) return;
+            if (pne.Status == GestureStatus.Running && pne.Scale > 0.5 && pne.Scale < 2.0)
+            {
+                _viewportController.PinchZoom(new ScreenPoint2(pne.ScaleOrigin.X * 1080, pne.ScaleOrigin.Y * 1080), pne.Scale);
+            }
+            else if (pne.Status == GestureStatus.Completed)
+            {
+                await ReRenderAsync();
+            }
+        };
+        canvasGrid.GestureRecognizers.Add(pinchGesture);
+
+        var doubleTap = new TapGestureRecognizer { NumberOfTapsRequired = 2 };
+        doubleTap.Tapped += async (_, _) =>
+        {
+            if (_viewportController is null) return;
+            _viewportController.FitExtents();
+            await ReRenderAsync();
+        };
+        canvasGrid.GestureRecognizers.Add(doubleTap);
+
+        _zoomLabel = new Label
+        {
+            Text = "🔎 Zoom: %100",
+            TextColor = Color.FromArgb("#F8FAFC"),
+            FontSize = 11,
+            FontAttributes = FontAttributes.Bold
+        };
+        var zoomPill = new Border
+        {
+            Stroke = Color.FromArgb("#334155"),
+            StrokeThickness = 1,
+            StrokeShape = new RoundRectangle { CornerRadius = 10 },
+            BackgroundColor = Color.FromArgb("#CC0F172A"),
+            Padding = new Thickness(10, 4),
+            HorizontalOptions = LayoutOptions.Start,
+            VerticalOptions = LayoutOptions.Start,
+            Margin = new Thickness(14),
+            Content = _zoomLabel
+        };
+        canvasGrid.Children.Add(zoomPill);
+
+        var floatControls = new VerticalStackLayout
+        {
+            Spacing = 8,
+            HorizontalOptions = LayoutOptions.End,
+            VerticalOptions = LayoutOptions.End,
+            Margin = new Thickness(16)
+        };
+
+        var btnZoomIn = CreateFloatingButton("＋", async () =>
+        {
+            if (_viewportController is null) return;
+            _viewportController.ZoomIn(1.25);
+            await ReRenderAsync();
+        });
+        var btnFit = CreateFloatingButton("⤢", async () =>
+        {
+            if (_viewportController is null) return;
+            _viewportController.FitExtents();
+            await ReRenderAsync();
+        });
+        var btnZoomOut = CreateFloatingButton("－", async () =>
+        {
+            if (_viewportController is null) return;
+            _viewportController.ZoomOut(1.25);
+            await ReRenderAsync();
+        });
+
+        floatControls.Children.Add(btnZoomIn);
+        floatControls.Children.Add(btnFit);
+        floatControls.Children.Add(btnZoomOut);
+        canvasGrid.Children.Add(floatControls);
+
+        _viewerView.Add(canvasGrid, 0, 1);
+
+        var bottomBar = new Grid
+        {
+            ColumnDefinitions =
+            {
+                new ColumnDefinition(GridLength.Star),
+                new ColumnDefinition(GridLength.Auto)
+            },
+            Padding = new Thickness(16, 10),
+            BackgroundColor = Color.FromArgb("#111827")
+        };
+        _statsLabel = new Label
+        {
+            Text = "Hazır",
+            TextColor = Color.FromArgb("#94A3B8"),
+            FontSize = 12,
+            VerticalOptions = LayoutOptions.Center
+        };
+        var quickLayerBtn = new Button
+        {
+            Text = "📑 Katmanlar",
+            BackgroundColor = Color.FromArgb("#2563EB"),
+            TextColor = Colors.White,
+            FontSize = 11,
+            CornerRadius = 8,
+            HeightRequest = 34
+        };
+        quickLayerBtn.Clicked += (_, _) => OpenLayerModal();
+
+        bottomBar.Add(_statsLabel, 0, 0);
+        bottomBar.Add(quickLayerBtn, 1, 0);
+        _viewerView.Add(bottomBar, 0, 2);
+
+        _layerModalView = new Grid
+        {
+            BackgroundColor = Color.FromArgb("#B0000000"),
+            IsVisible = false
+        };
+        var layerCard = new Border
+        {
+            Stroke = Color.FromArgb("#334155"),
+            StrokeThickness = 1,
+            StrokeShape = new RoundRectangle { CornerRadius = 16 },
+            BackgroundColor = Color.FromArgb("#161F30"),
+            Padding = new Thickness(20),
+            WidthRequest = 340,
+            MaximumHeightRequest = 500,
+            VerticalOptions = LayoutOptions.Center,
+            HorizontalOptions = LayoutOptions.Center
+        };
+        var layerCardStack = new VerticalStackLayout { Spacing = 12 };
+        layerCardStack.Children.Add(new Label
+        {
+            Text = "📑 Çizim Katmanları (Layers)",
+            FontSize = 17,
+            FontAttributes = FontAttributes.Bold,
+            TextColor = Colors.White
+        });
+        layerCardStack.Children.Add(new Label
+        {
+            Text = "Görünürlüğü değiştirmek için katman anahtarlarına dokunun:",
+            FontSize = 12,
+            TextColor = Color.FromArgb("#94A3B8")
+        });
+
+        _layerStackLayout = new VerticalStackLayout { Spacing = 4 };
+        var layerScroll = new ScrollView
+        {
+            Content = _layerStackLayout,
+            MaximumHeightRequest = 260
+        };
+        layerCardStack.Children.Add(layerScroll);
+
+        var layerCloseBtn = new Button
+        {
+            Text = "Tamam",
+            BackgroundColor = Color.FromArgb("#2563EB"),
+            TextColor = Colors.White,
+            CornerRadius = 10,
+            HeightRequest = 44,
+            FontAttributes = FontAttributes.Bold
+        };
+        layerCloseBtn.Clicked += (_, _) => _layerModalView.IsVisible = false;
+        layerCardStack.Children.Add(layerCloseBtn);
+
+        layerCard.Content = layerCardStack;
+        _layerModalView.Children.Add(layerCard);
+
+        _infoModalView = new Grid
+        {
+            BackgroundColor = Color.FromArgb("#B0000000"),
+            IsVisible = false
+        };
+        var infoCard = new Border
+        {
+            Stroke = Color.FromArgb("#334155"),
+            StrokeThickness = 1,
+            StrokeShape = new RoundRectangle { CornerRadius = 16 },
+            BackgroundColor = Color.FromArgb("#161F30"),
+            Padding = new Thickness(20),
+            WidthRequest = 340,
+            VerticalOptions = LayoutOptions.Center,
+            HorizontalOptions = LayoutOptions.Center
+        };
+        var infoCardStack = new VerticalStackLayout { Spacing = 14 };
+        infoCardStack.Children.Add(new Label
+        {
+            Text = "ℹ️ Çizim Bilgileri ve Teşhis",
+            FontSize = 17,
+            FontAttributes = FontAttributes.Bold,
+            TextColor = Colors.White
+        });
+        _infoContentLabel = new Label
+        {
+            FontSize = 12,
+            TextColor = Color.FromArgb("#E2E8F0"),
+            LineHeight = 1.4
+        };
+        infoCardStack.Children.Add(_infoContentLabel);
+
+        var infoCloseBtn = new Button
+        {
+            Text = "Kapat",
+            BackgroundColor = Color.FromArgb("#334155"),
+            TextColor = Colors.White,
+            CornerRadius = 10,
+            HeightRequest = 44
+        };
+        infoCloseBtn.Clicked += (_, _) => _infoModalView.IsVisible = false;
+        infoCardStack.Children.Add(infoCloseBtn);
+
+        infoCard.Content = infoCardStack;
+        _infoModalView.Children.Add(infoCard);
+
+        var rootGrid = new Grid
+        {
+            RowDefinitions =
+            {
+                new RowDefinition(GridLength.Auto),
+                new RowDefinition(GridLength.Star)
+            }
+        };
+        rootGrid.Add(topHeader, 0, 0);
+
+        var bodyContainer = new Grid();
+        bodyContainer.Children.Add(_dashboardView);
+        bodyContainer.Children.Add(_viewerView);
+        bodyContainer.Children.Add(_layerModalView);
+        bodyContainer.Children.Add(_infoModalView);
+        rootGrid.Add(bodyContainer, 0, 1);
 
 #if V05_VALIDATION
         var validationStatus = new Label
@@ -150,7 +687,7 @@ public sealed class MainPage : ContentPage
             TextColor = Color.FromArgb("#B8C4D8"),
             HorizontalTextAlignment = TextAlignment.Center,
         };
-        layout.Children.Add(validationStatus);
+        dashContent.Children.Add(validationStatus);
         Loaded += async (_, _) => await RunV05ValidationAsync(validationStatus);
 #endif
 
@@ -174,8 +711,8 @@ public sealed class MainPage : ContentPage
             Aspect = Aspect.AspectFit,
             BackgroundColor = Color.FromArgb("#101010"),
         };
-        layout.Children.Insert(2, a10Status);
-        layout.Children.Insert(3, a10Image);
+        dashContent.Children.Insert(2, a10Status);
+        dashContent.Children.Insert(3, a10Image);
         Loaded += async (_, _) => await RunA10ValidationAsync(a10Status, a10Image);
 #endif
 
@@ -195,8 +732,8 @@ public sealed class MainPage : ContentPage
             Aspect = Aspect.AspectFit,
             BackgroundColor = Color.FromArgb("#101010"),
         };
-        layout.Children.Insert(2, a11Status);
-        layout.Children.Insert(3, a11Image);
+        dashContent.Children.Insert(2, a11Status);
+        dashContent.Children.Insert(3, a11Image);
         Loaded += async (_, _) => await RunA11ValidationAsync(a11Status, a11Image);
 #endif
 
@@ -216,8 +753,8 @@ public sealed class MainPage : ContentPage
             Aspect = Aspect.AspectFit,
             BackgroundColor = Color.FromArgb("#101010"),
         };
-        layout.Children.Insert(2, a12Status);
-        layout.Children.Insert(3, a12Image);
+        dashContent.Children.Insert(2, a12Status);
+        dashContent.Children.Insert(3, a12Image);
         Loaded += async (_, _) => await RunA12ValidationAsync(a12Status, a12Image);
 #endif
 
@@ -237,8 +774,8 @@ public sealed class MainPage : ContentPage
             Aspect = Aspect.AspectFit,
             BackgroundColor = Color.FromArgb("#101010"),
         };
-        layout.Children.Insert(2, a13Status);
-        layout.Children.Insert(3, a13Image);
+        dashContent.Children.Insert(2, a13Status);
+        dashContent.Children.Insert(3, a13Image);
         Loaded += async (_, _) => await RunA13ValidationAsync(a13Status, a13Image);
 #endif
 
@@ -258,8 +795,8 @@ public sealed class MainPage : ContentPage
             Aspect = Aspect.AspectFit,
             BackgroundColor = Color.FromArgb("#101010"),
         };
-        layout.Children.Insert(2, a14Status);
-        layout.Children.Insert(3, a14Image);
+        dashContent.Children.Insert(2, a14Status);
+        dashContent.Children.Insert(3, a14Image);
         Loaded += async (_, _) => await RunA14ValidationAsync(a14Status, a14Image);
 #endif
 
@@ -279,8 +816,8 @@ public sealed class MainPage : ContentPage
             Aspect = Aspect.AspectFit,
             BackgroundColor = Color.FromArgb("#101010"),
         };
-        layout.Children.Insert(2, a15Status);
-        layout.Children.Insert(3, a15Image);
+        dashContent.Children.Insert(2, a15Status);
+        dashContent.Children.Insert(3, a15Image);
         Loaded += async (_, _) => await RunA15ValidationAsync(a15Status, a15Image);
 #endif
 
@@ -300,8 +837,8 @@ public sealed class MainPage : ContentPage
             Aspect = Aspect.AspectFit,
             BackgroundColor = Color.FromArgb("#101010"),
         };
-        layout.Children.Insert(2, a16Status);
-        layout.Children.Insert(3, a16Image);
+        dashContent.Children.Insert(2, a16Status);
+        dashContent.Children.Insert(3, a16Image);
         Loaded += async (_, _) => await RunA16ValidationAsync(a16Status, a16Image);
 #endif
 
@@ -321,8 +858,8 @@ public sealed class MainPage : ContentPage
             Aspect = Aspect.AspectFit,
             BackgroundColor = Color.FromArgb("#101010"),
         };
-        layout.Children.Insert(2, a17Status);
-        layout.Children.Insert(3, a17Image);
+        dashContent.Children.Insert(2, a17Status);
+        dashContent.Children.Insert(3, a17Image);
         Loaded += async (_, _) => await RunA17ValidationAsync(a17Status, a17Image);
 #endif
 
@@ -342,8 +879,8 @@ public sealed class MainPage : ContentPage
             Aspect = Aspect.AspectFit,
             BackgroundColor = Color.FromArgb("#101010"),
         };
-        layout.Children.Insert(2, a18Status);
-        layout.Children.Insert(3, a18Image);
+        dashContent.Children.Insert(2, a18Status);
+        dashContent.Children.Insert(3, a18Image);
         Loaded += async (_, _) => await RunA18ValidationAsync(a18Status, a18Image);
 #endif
 
@@ -363,8 +900,8 @@ public sealed class MainPage : ContentPage
             Aspect = Aspect.AspectFit,
             BackgroundColor = Color.FromArgb("#101010"),
         };
-        layout.Children.Insert(2, a19Status);
-        layout.Children.Insert(3, a19Image);
+        dashContent.Children.Insert(2, a19Status);
+        dashContent.Children.Insert(3, a19Image);
         Loaded += async (_, _) => await RunA19ValidationAsync(a19Status, a19Image);
 #endif
 
@@ -384,9 +921,11 @@ public sealed class MainPage : ContentPage
             Aspect = Aspect.AspectFit,
             BackgroundColor = Color.FromArgb("#101010"),
         };
-        layout.Children.Insert(2, a20Status);
-        layout.Children.Insert(3, a20Image);
+        dashContent.Children.Insert(2, a20Status);
+        dashContent.Children.Insert(3, a20Image);
+        Loaded += async (_, _) => await RunA20ValidationAsync(a20Status, a20Image);
 #endif
+
 #if A21_VALIDATION
         var a21Status = new Label
         {
@@ -403,8 +942,8 @@ public sealed class MainPage : ContentPage
             Aspect = Aspect.AspectFit,
             BackgroundColor = Color.FromArgb("#101010"),
         };
-        layout.Children.Insert(2, a21Status);
-        layout.Children.Insert(3, a21Image);
+        dashContent.Children.Insert(2, a21Status);
+        dashContent.Children.Insert(3, a21Image);
         Loaded += async (_, _) => await RunA21ValidationAsync(a21Status, a21Image);
 #endif
 
@@ -424,8 +963,8 @@ public sealed class MainPage : ContentPage
             Aspect = Aspect.AspectFit,
             BackgroundColor = Color.FromArgb("#101010"),
         };
-        layout.Children.Insert(2, a22Status);
-        layout.Children.Insert(3, a22Image);
+        dashContent.Children.Insert(2, a22Status);
+        dashContent.Children.Insert(3, a22Image);
         Loaded += async (_, _) => await RunA22ValidationAsync(a22Status, a22Image);
 #endif
 
@@ -445,8 +984,8 @@ public sealed class MainPage : ContentPage
             Aspect = Aspect.AspectFit,
             BackgroundColor = Color.FromArgb("#101010"),
         };
-        layout.Children.Insert(2, a25Status);
-        layout.Children.Insert(3, a25Image);
+        dashContent.Children.Insert(2, a25Status);
+        dashContent.Children.Insert(3, a25Image);
         Loaded += async (_, _) => await RunA25ValidationAsync(a25Status, a25Image);
 #endif
 
@@ -466,12 +1005,273 @@ public sealed class MainPage : ContentPage
             Aspect = Aspect.AspectFit,
             BackgroundColor = Color.FromArgb("#101010"),
         };
-        layout.Children.Insert(2, a26Status);
-        layout.Children.Insert(3, a26Image);
+        dashContent.Children.Insert(2, a26Status);
+        dashContent.Children.Insert(3, a26Image);
         Loaded += async (_, _) => await RunA26ValidationAsync(a26Status, a26Image);
 #endif
 
-        Content = new ScrollView { Content = layout };
+        Content = rootGrid;
+    }
+
+    private static Border CreateSampleCard(string icon, string title, string subtitle, string badge, Action onTap)
+    {
+        var border = new Border
+        {
+            Stroke = Color.FromArgb("#1E293B"),
+            StrokeThickness = 1,
+            StrokeShape = new RoundRectangle { CornerRadius = 14 },
+            BackgroundColor = Color.FromArgb("#161F30"),
+            Padding = new Thickness(14, 12)
+        };
+
+        var row = new Grid
+        {
+            ColumnDefinitions =
+            {
+                new ColumnDefinition(GridLength.Auto),
+                new ColumnDefinition(GridLength.Star),
+                new ColumnDefinition(GridLength.Auto)
+            },
+            ColumnSpacing = 12
+        };
+
+        var iconBox = new Border
+        {
+            Stroke = Color.FromArgb("#334155"),
+            StrokeThickness = 1,
+            StrokeShape = new RoundRectangle { CornerRadius = 10 },
+            BackgroundColor = Color.FromArgb("#0F172A"),
+            WidthRequest = 42,
+            HeightRequest = 42,
+            Content = new Label
+            {
+                Text = icon,
+                FontSize = 20,
+                HorizontalOptions = LayoutOptions.Center,
+                VerticalOptions = LayoutOptions.Center
+            }
+        };
+        row.Add(iconBox, 0, 0);
+
+        var textStack = new VerticalStackLayout { Spacing = 2 };
+        textStack.Children.Add(new Label
+        {
+            Text = title,
+            FontSize = 14,
+            FontAttributes = FontAttributes.Bold,
+            TextColor = Colors.White
+        });
+        textStack.Children.Add(new Label
+        {
+            Text = subtitle,
+            FontSize = 11,
+            TextColor = Color.FromArgb("#94A3B8"),
+            LineBreakMode = LineBreakMode.TailTruncation
+        });
+        textStack.Children.Add(new Label
+        {
+            Text = badge,
+            FontSize = 10,
+            FontAttributes = FontAttributes.Bold,
+            TextColor = Color.FromArgb("#38BDF8"),
+            Margin = new Thickness(0, 2, 0, 0)
+        });
+        row.Add(textStack, 1, 0);
+
+        var openPill = new Border
+        {
+            Stroke = Color.FromArgb("#2563EB"),
+            StrokeThickness = 1,
+            StrokeShape = new RoundRectangle { CornerRadius = 8 },
+            BackgroundColor = Color.FromArgb("#1D4ED8"),
+            Padding = new Thickness(10, 6),
+            VerticalOptions = LayoutOptions.Center,
+            Content = new Label
+            {
+                Text = "Aç ›",
+                TextColor = Colors.White,
+                FontSize = 12,
+                FontAttributes = FontAttributes.Bold
+            }
+        };
+        row.Add(openPill, 2, 0);
+
+        border.Content = row;
+
+        var tap = new TapGestureRecognizer();
+        tap.Tapped += (_, _) => onTap();
+        border.GestureRecognizers.Add(tap);
+
+        return border;
+    }
+
+    private static Button CreateFloatingButton(string text, Action onClick)
+    {
+        var btn = new Button
+        {
+            Text = text,
+            FontSize = 18,
+            FontAttributes = FontAttributes.Bold,
+            TextColor = Color.FromArgb("#38BDF8"),
+            BackgroundColor = Color.FromArgb("#EA0F172A"),
+            CornerRadius = 24,
+            WidthRequest = 48,
+            HeightRequest = 48,
+            Padding = 0
+        };
+        btn.Clicked += (_, _) => onClick();
+        return btn;
+    }
+
+    private async Task DisplayCadSceneAsync(RenderScene scene, string displayName, string version)
+    {
+        _currentScene = scene;
+        _activeDocumentName = displayName;
+        _activeDocumentVersion = version;
+
+        var bounds = scene.WorldBounds ?? new WorldBounds2(0, 0, 100, 100);
+        var initialCamera = Camera2D.Fit(bounds, 1080, 1080, paddingFraction: 0.05);
+        _viewportController = new ViewportController(initialCamera, bounds);
+
+        _viewerTitleLabel.Text = displayName;
+        _viewerVersionBadge.Text = version.Contains("AC", StringComparison.OrdinalIgnoreCase) ? $"DWG {version}" : version;
+
+        await ReRenderAsync();
+
+        _dashboardView.IsVisible = false;
+        _viewerView.IsVisible = true;
+        _navLayerButton.IsVisible = true;
+        _navInfoButton.IsVisible = true;
+        _navCloseButton.IsVisible = true;
+    }
+
+    private async Task ReRenderAsync()
+    {
+        if (_currentScene is null || _viewportController is null) return;
+
+        try
+        {
+            var sw = System.Diagnostics.Stopwatch.StartNew();
+            var camera = _viewportController.CurrentCamera;
+            var scene = _currentScene;
+
+            var result = await Task.Run(async () =>
+            {
+                return await SkiaScenePngRenderer.RenderCameraWithStatsAsync(scene, camera).ConfigureAwait(false);
+            });
+            sw.Stop();
+
+            var png = result.Png;
+            _viewerImage.Source = ImageSource.FromStream(() => new MemoryStream(png, writable: false));
+
+            var bounds = _viewportController.SceneBounds ?? new WorldBounds2(0, 0, 100, 100);
+            var fitCamera = Camera2D.Fit(bounds, camera.PixelWidth, camera.PixelHeight);
+            double zoomPercent = Math.Round((fitCamera.WorldUnitsPerPixel / Math.Max(1e-9, camera.WorldUnitsPerPixel)) * 100.0);
+            _zoomLabel.Text = $"🔎 Zoom: %{zoomPercent:N0}";
+
+            _statsLabel.Text = $"📦 {scene.Entities.Count} Varlık  •  📑 {scene.LayerTable.Layers.Count} Katman  •  ⚡ {sw.ElapsedMilliseconds} ms";
+        }
+        catch (Exception ex)
+        {
+            _status.Text = $"Render: {ex.Message}";
+        }
+    }
+
+    private void CloseActiveDrawing()
+    {
+        _currentScene = null;
+        _viewportController = null;
+        _activeDocumentName = null;
+        _activeDocumentVersion = null;
+
+        _viewerView.IsVisible = false;
+        _dashboardView.IsVisible = true;
+        _navLayerButton.IsVisible = false;
+        _navInfoButton.IsVisible = false;
+        _navCloseButton.IsVisible = false;
+        _status.Text = "Çizim kapatıldı.";
+    }
+
+    private void OpenLayerModal()
+    {
+        if (_currentScene is null) return;
+
+        _layerStackLayout.Children.Clear();
+        foreach (var layer in _currentScene.LayerTable.Layers)
+        {
+            var row = new Grid
+            {
+                ColumnDefinitions =
+                {
+                    new ColumnDefinition(GridLength.Auto),
+                    new ColumnDefinition(GridLength.Star),
+                    new ColumnDefinition(GridLength.Auto)
+                },
+                Padding = new Thickness(6, 4),
+                ColumnSpacing = 12
+            };
+
+            var colorBox = new BoxView
+            {
+                Color = Color.FromUint(layer.Color.Argb),
+                WidthRequest = 16,
+                HeightRequest = 16,
+                CornerRadius = 8,
+                VerticalOptions = LayoutOptions.Center
+            };
+            row.Add(colorBox, 0, 0);
+
+            var nameLabel = new Label
+            {
+                Text = layer.Name,
+                TextColor = Colors.White,
+                FontSize = 13,
+                FontAttributes = FontAttributes.Bold,
+                VerticalOptions = LayoutOptions.Center
+            };
+            row.Add(nameLabel, 1, 0);
+
+            var toggle = new Switch
+            {
+                IsToggled = layer.IsVisible,
+                OnColor = Color.FromArgb("#2563EB"),
+                ThumbColor = Colors.White,
+                VerticalOptions = LayoutOptions.Center
+            };
+            var capturedLayerName = layer.Name;
+            toggle.Toggled += async (_, te) =>
+            {
+                _currentScene.LayerTable.SetLayerVisibility(capturedLayerName, te.Value);
+                await ReRenderAsync();
+            };
+            row.Add(toggle, 2, 0);
+
+            _layerStackLayout.Children.Add(row);
+        }
+
+        _layerModalView.IsVisible = true;
+    }
+
+    private void OpenInfoModal()
+    {
+        if (_currentScene is null) return;
+
+        var bounds = _viewportController?.SceneBounds;
+        var info = new System.Text.StringBuilder();
+        info.AppendLine($"📄 Dosya: {_activeDocumentName ?? "Bilinmiyor"}");
+        info.AppendLine($"🔖 Format / Sürüm: {_activeDocumentVersion ?? "CAD"}");
+        info.AppendLine($"📦 Toplam Varlık: {_currentScene.Entities.Count:N0}");
+        info.AppendLine($"📑 Katman Sayısı: {_currentScene.LayerTable.Layers.Count}");
+        if (bounds.HasValue)
+        {
+            info.AppendLine($"📐 Sınırlar X: [{bounds.Value.MinX:F0} → {bounds.Value.MaxX:F0}]");
+            info.AppendLine($"📐 Sınırlar Y: [{bounds.Value.MinY:F0} → {bounds.Value.MaxY:F0}]");
+        }
+        info.AppendLine($"🔒 Güvenlik: %100 Çevrimdışı (Offline)");
+        info.AppendLine($"⚡ Motor: Skia Donanım Hızlandırma");
+
+        _infoContentLabel.Text = info.ToString();
+        _infoModalView.IsVisible = true;
     }
 
     protected override void OnAppearing()
@@ -589,6 +1389,20 @@ public sealed class MainPage : ContentPage
             LogV06(
                 $"V06_REAL_APP_SAFE_OPEN_PASS format={result.Metadata?.Format} version={result.Metadata?.AcadVersion ?? "unknown"} generation={result.Generation} diagnostics={result.Diagnostics.Count} compatibility={result.CompatibilityIssues.Count}");
 #endif
+
+            if (coordinator.CurrentSession is not null)
+            {
+                try
+                {
+                    var extracted = AcadSharpEntityExtractor.Extract(coordinator.CurrentSession.Handle);
+                    var scene = CadExtractedSceneBuilder.Build(extracted);
+                    await DisplayCadSceneAsync(scene, selection.DisplayName ?? "cizim.dwg", extracted.Version);
+                }
+                catch (Exception renderEx)
+                {
+                    _status.Text = $"Çizim yüklendi ({result.Metadata?.Format}), render hazırlığı: {renderEx.Message}";
+                }
+            }
         }
         catch (CadFileQuotaExceededException)
         {
@@ -599,7 +1413,6 @@ public sealed class MainPage : ContentPage
 #if A25_VALIDATION
             Log.Warn("MobilDwgA25", "A25_RENDER_ERROR_SURFACE_PASS type=CadFileQuotaExceededException");
 #endif
-            // B5: Reset stale coordinator state so next open attempt starts clean
             await coordinator.ResetCurrentSessionAsync().ConfigureAwait(false);
         }
         catch (CadFileInsufficientSpaceException)
@@ -611,12 +1424,10 @@ public sealed class MainPage : ContentPage
 #if A25_VALIDATION
             Log.Warn("MobilDwgA25", "A25_RENDER_ERROR_SURFACE_PASS type=CadFileInsufficientSpaceException");
 #endif
-            // B5: Reset stale coordinator state so next open attempt starts clean
             await coordinator.ResetCurrentSessionAsync().ConfigureAwait(false);
         }
         catch (Exception exception)
         {
-            // B4: Surface render/open error to user via status label (not silently swallowed)
             var errorKind = exception.GetType().Name;
             _status.Text = $"Dosya açılamadı: {errorKind} — {exception.Message}";
 #if V06_VALIDATION
@@ -625,7 +1436,6 @@ public sealed class MainPage : ContentPage
 #if A25_VALIDATION
             Log.Warn("MobilDwgA25", $"A25_RENDER_ERROR_SURFACE_PASS type={errorKind}");
 #endif
-            // B5: Reset stale coordinator state so next open attempt starts clean
             await coordinator.ResetCurrentSessionAsync().ConfigureAwait(false);
         }
     }
@@ -643,6 +1453,7 @@ public sealed class MainPage : ContentPage
 
     private async void CloseClicked(object? sender, EventArgs e)
     {
+        CloseActiveDrawing();
         var previous = _coordinator;
         _coordinator = CreateCoordinator();
         await previous.DisposeAsync();
@@ -670,7 +1481,7 @@ public sealed class MainPage : ContentPage
 
     private static string GetCacheRoot()
     {
-        return Path.Combine(FileSystem.Current.CacheDirectory, "mobil-dwg", "open");
+        return System.IO.Path.Combine(FileSystem.Current.CacheDirectory, "mobil-dwg", "open");
     }
 
     private static int CountCacheFiles()
