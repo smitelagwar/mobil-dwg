@@ -2,6 +2,7 @@ using MobilDwg.Core.Rendering;
 using MobilDwg.Rendering.Camera;
 using MobilDwg.Rendering.Geometry;
 using MobilDwg.Rendering.Layouts;
+using MobilDwg.Rendering.References;
 using MobilDwg.Rendering.Scene;
 using MobilDwg.Rendering.Styles;
 using MobilDwg.Rendering.Text;
@@ -183,6 +184,18 @@ public sealed class SkiaCadRenderer : ICadRenderer
             return;
         }
 
+        if (primitive is MissingReferencePrimitive missingRef)
+        {
+            DrawMissingReferencePrimitive(canvas, missingRef, camera, strokePaint, density);
+            return;
+        }
+
+        if (primitive is RasterImagePrimitive rasterImg)
+        {
+            DrawRasterImagePrimitive(canvas, rasterImg, camera, strokePaint, density);
+            return;
+        }
+
         var path = GeometryTessellator.Tessellate(primitive, tessellation);
         if (primitive is PointPrimitive)
         {
@@ -350,6 +363,116 @@ public sealed class SkiaCadRenderer : ICadRenderer
             {
                 DrawPrimitive(canvas, inner, camera, tessellation, strokePaint, fillPaint, density);
             }
+        }
+        finally
+        {
+            canvas.RestoreToCount(saveCount);
+        }
+    }
+
+    private static void DrawMissingReferencePrimitive(
+        SKCanvas canvas,
+        MissingReferencePrimitive missing,
+        Camera2D camera,
+        SKPaint strokePaint,
+        double density)
+    {
+        // 1. Draw placeholder border box
+        foreach (var borderLine in missing.GenerateBorderLines())
+        {
+            var p1 = CameraTransform.WorldToScreen(borderLine.Start, camera);
+            var p2 = CameraTransform.WorldToScreen(borderLine.End, camera);
+            canvas.DrawLine(ToFloat(p1.X), ToFloat(p1.Y), ToFloat(p2.X), ToFloat(p2.Y), strokePaint);
+        }
+
+        // 2. Draw diagonal cross
+        foreach (var crossLine in missing.GenerateCrossLines())
+        {
+            var p1 = CameraTransform.WorldToScreen(crossLine.Start, camera);
+            var p2 = CameraTransform.WorldToScreen(crossLine.End, camera);
+            canvas.DrawLine(ToFloat(p1.X), ToFloat(p1.Y), ToFloat(p2.X), ToFloat(p2.Y), strokePaint);
+        }
+
+        // 3. Draw warning text label inside/below placeholder
+        var labelWorldPoint = new WorldPoint2(missing.PlaceholderBounds.MinX, missing.PlaceholderBounds.MinY);
+        var labelScreen = CameraTransform.WorldToScreen(labelWorldPoint, camera);
+
+        using var font = new SKFont(SKTypeface.Default, Math.Max(10f, (float)(10d * density)));
+        canvas.DrawText(missing.Label, ToFloat(labelScreen.X + 4), ToFloat(labelScreen.Y - 6), SKTextAlign.Left, font, strokePaint);
+    }
+
+    private static void DrawRasterImagePrimitive(
+        SKCanvas canvas,
+        RasterImagePrimitive raster,
+        Camera2D camera,
+        SKPaint strokePaint,
+        double density)
+    {
+        byte[]? bytes = raster.ImageBytes;
+        if (bytes == null && raster.ResolvedPath != null && File.Exists(raster.ResolvedPath))
+        {
+            try
+            {
+                bytes = File.ReadAllBytes(raster.ResolvedPath);
+            }
+            catch
+            {
+                // File read fallback
+            }
+        }
+
+        if (bytes == null || bytes.Length == 0)
+        {
+            var b = raster.ImageBounds;
+            var p1 = CameraTransform.WorldToScreen(new WorldPoint2(b.MinX, b.MinY), camera);
+            var p2 = CameraTransform.WorldToScreen(new WorldPoint2(b.MaxX, b.MaxY), camera);
+            canvas.DrawRect(new SKRect(ToFloat(Math.Min(p1.X, p2.X)), ToFloat(Math.Min(p1.Y, p2.Y)), ToFloat(Math.Max(p1.X, p2.X)), ToFloat(Math.Max(p1.Y, p2.Y))), strokePaint);
+            return;
+        }
+
+        using var bitmap = SKBitmap.Decode(bytes);
+        if (bitmap == null) return;
+
+        var saveCount = canvas.Save();
+        try
+        {
+            if (raster.ClipBoundary != null && raster.ClipBoundary.Count >= 3)
+            {
+                using var clipBuilder = new SKPathBuilder();
+                var p0 = CameraTransform.WorldToScreen(raster.ClipBoundary[0], camera);
+                clipBuilder.MoveTo(ToFloat(p0.X), ToFloat(p0.Y));
+                for (var i = 1; i < raster.ClipBoundary.Count; i++)
+                {
+                    var pt = CameraTransform.WorldToScreen(raster.ClipBoundary[i], camera);
+                    clipBuilder.LineTo(ToFloat(pt.X), ToFloat(pt.Y));
+                }
+                clipBuilder.Close();
+                using var clipPath = clipBuilder.Detach();
+                canvas.ClipPath(clipPath, SKClipOperation.Intersect, antialias: true);
+            }
+
+            var minScreen = CameraTransform.WorldToScreen(new WorldPoint2(raster.ImageBounds.MinX, raster.ImageBounds.MaxY), camera);
+            var maxScreen = CameraTransform.WorldToScreen(new WorldPoint2(raster.ImageBounds.MaxX, raster.ImageBounds.MinY), camera);
+
+            var left = ToFloat(Math.Min(minScreen.X, maxScreen.X));
+            var top = ToFloat(Math.Min(minScreen.Y, maxScreen.Y));
+            var right = ToFloat(Math.Max(minScreen.X, maxScreen.X));
+            var bottom = ToFloat(Math.Max(minScreen.Y, maxScreen.Y));
+
+            var destRect = new SKRect(left, top, right, bottom);
+
+            using var imagePaint = new SKPaint
+            {
+                IsAntialias = true
+            };
+
+            if (raster.Fade > 0)
+            {
+                var alpha = (byte)Math.Clamp((1d - (raster.Fade / 100d)) * 255d, 0d, 255d);
+                imagePaint.Color = new SKColor(255, 255, 255, alpha);
+            }
+
+            canvas.DrawBitmap(bitmap, destRect, new SKSamplingOptions(SKFilterMode.Linear), imagePaint);
         }
         finally
         {
