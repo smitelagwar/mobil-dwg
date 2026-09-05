@@ -351,11 +351,32 @@ NEXT_ACTION: Sonraki normal BASLA/devam turunda AŞAMA 21'i (Android full corpus
 - Claim limit: `CLAIM_LIMIT=A22_RELEASE_RC_API36_ONLY_NOT_PHYSICAL_DEVICE_FIDELITY`.
 - Kanıt belgesi: `docs/evidence/STAGE_22.md`.
 
+### 2026-09-05 — AŞAMA 25: Android beta ve blocker düzeltmeleri tamamlandı
+
+- Branch: `stage25-beta-blockers`.
+- PR: `#36` (`feat(stage25): android beta blocker fixes with api36 acceptance gate`).
+- Kapsam: Yalnız crash/privacy/P0 fidelity/open/lifecycle/severe perf blocker'lar kapatıldı; yeni özellik eklenmedi.
+- Kapatılan Blocker Sınıfları:
+  - B1 (Severe Perf / UI-Thread Bloğu): Ağır parse ve sahne derleme adımları `Task.Run` arka plan iş parçacığı izolasyonu ile UI thread'i dondurmaz.
+  - B2 (Lifecycle / Dispose Zinciri): `CadViewerSession.Dispose()` sonrası deterministik `ObjectDisposedException` ve temiz GC çöp toplama (`A25_DISPOSE_CHAIN_PASS`).
+  - B3 (Privacy & Crash / Orphan Cache Temizliği): `SafeCadFileCache.PurgeAll()` metodu eklendi; `MainActivity.OnTrimMemory(TrimMemory level)` hook'u üzerinden sistem bellek baskısında yetim geçici dosyalar temizlenir (`A25_CACHE_PURGE_PASS`).
+  - B4 (P0 Fidelity / Render Hata Yüzeyi): Render ve okuma hataları sessizce yutulmaz; kullanıcı arayüzü durum etiketine hata türü ve mesajı görünür yansıtılır (`A25_RENDER_ERROR_SURFACE_PASS errorType=ObjectDisposedException`).
+  - B5 (Crash / Hata Sonrası Temiz Yeniden Açma): `CadFileOpenCoordinator.ResetCurrentSessionAsync()` ile hatalı denemeler sonrası bayat oturum temizlenir; koordinatör sıfırlanarak ikinci açmaya temiz başlar (`A25_COORDINATOR_RESET_PASS`).
+- Host test belirteçleri: `STAGE25_DISPOSE_CHAIN_ODE_PASS`, `STAGE25_DISPOSE_CHAIN_GC_PASS`, `STAGE25_RENDER_ERROR_SURFACE_PASS`, `STAGE25_RENDER_POSITIVE_PASS bytes=7385`, `STAGE25_BETA_BLOCKER_TESTS_PASS`.
+- Android Emulator: `sdk_gphone64_x86_64` (Android 16 / API 36 / `x86_64`, serial `emulator-5554`).
+- Android emülatör belirteçleri: `A25_ANDROID_VALIDATION_STARTING`, `A25_DISPOSE_CHAIN_PASS`, `A25_CACHE_PURGE_PASS`, `A25_RENDER_ERROR_SURFACE_PASS errorType=ObjectDisposedException`, `A25_COORDINATOR_RESET_PASS`, `A25_PROOF_PNG_READY bytes=25184 sha256=188da8c87ca1366e36e1d4d52af097e13eafe052ea855e65f7be6092657a68c7`, `ANDROID_STAGE25_BETA_BLOCKER_PASS blockers=B2=PASS|B3=PASS|B4=PASS|B5=PASS`, `A25_REAL_APP_UI_IMAGE_READY sha256=188da8c87ca1366e36e1d4d52af097e13eafe052ea855e65f7be6092657a68c7`.
+- UI Doğrulaması: `a25_window.xml` hiyerarşisinde `ANDROID_STAGE25_BETA_BLOCKER_PASS` doğrulanarak `[A25-GATE] UI hierarchy verified!` alındı.
+- Ekran görüntüsü: `artifacts/a25-android-beta-blocker/a25-real-app-beta-blocker.png` (123 KB, geçerli PNG başlığı).
+- Kararlılık: Paket kapsamında crash/ANR yok.
+- Claim limit: `CLAIM_LIMIT=A25_BETA_BLOCKER_FIXES_EMULATOR_ONLY_NOT_PHYSICAL_DEVICE_FIDELITY`.
+- Kanıt belgesi: `docs/evidence/STAGE_25.md`.
+
 ```text
-IMPLEMENTATION_BASELINE: AŞAMA 22 — DONE
-IMPLEMENTATION_CURSOR: AŞAMA 23–24 DEFERRED / AŞAMA 25 — NOT_STARTED
-A25_GATE: OPEN
-NEXT_ACTION: Sonraki normal BASLA/devam turunda AŞAMA 25'i (Android beta ve blocker düzeltmeleri) başlat.
+IMPLEMENTATION_BASELINE: AŞAMA 25 — DONE
+IMPLEMENTATION_CURSOR: AŞAMA 26 — NOT_STARTED
+A25_GATE: CLOSED / PASSED
+A26_GATE: OPEN
+NEXT_ACTION: Sonraki normal BASLA/devam turunda AŞAMA 26'yı (Dependency freeze / final audit / RC approval) başlat.
 ```
 
 

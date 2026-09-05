@@ -26,17 +26,18 @@ Bu dosya kısa kalıcı tarihçe/checkpoint kaydıdır. Ayrıntılı teknik kan�
 ```text
 ACTIVE_PRODUCT_TARGET: ANDROID_ONLY
 IOS_STATUS: DEFERRED_FUTURE_OPTION
-IMPLEMENTATION_BASELINE: AŞAMA 22 — DONE
+IMPLEMENTATION_BASELINE: AŞAMA 25 — DONE
 ANDROID_VALIDATION_V01_V09: CLOSED / VALIDATED_WITH_CLAIM_LIMITS
-LAST_IMPLEMENTATION: AŞAMA 22 — DONE
-LAST_IMPLEMENTATION_EVIDENCE: docs/evidence/STAGE_22.md
-A22_CLAIM: A22_RELEASE_RC_API36_ONLY_NOT_PHYSICAL_DEVICE_FIDELITY
-IMPLEMENTATION_CURSOR: AŞAMA 23–24 DEFERRED / AŞAMA 25 — NOT_STARTED
+LAST_IMPLEMENTATION: AŞAMA 25 — DONE
+LAST_IMPLEMENTATION_EVIDENCE: docs/evidence/STAGE_25.md
+A25_CLAIM: A25_BETA_BLOCKER_FIXES_EMULATOR_ONLY_NOT_PHYSICAL_DEVICE_FIDELITY
+IMPLEMENTATION_CURSOR: AŞAMA 26 — NOT_STARTED
 A10_WORKSTREAM: docs/A10_WORKSTREAM.md (DONE)
 PENDING_EMULATOR_QUEUE: EMPTY
 PHYSICAL_ANDROID: DEFERRED_RELEASE_DEVICE_GATE
-A25_GATE: OPEN
-NEXT_ACTION: Sonraki normal BASLA/devam turunda AŞAMA 25'i (Android beta ve blocker düzeltmeleri) başlat.
+A25_GATE: CLOSED / PASSED
+A26_GATE: OPEN
+NEXT_ACTION: Sonraki normal BASLA/devam turunda AŞAMA 26'yı (Dependency freeze / final audit / RC approval) başlat.
 LAST_UPDATE: 2026-09-05
 ```
 
@@ -66,7 +67,9 @@ LAST_UPDATE: 2026-09-05
 - AŞAMA 21 — Android full corpus regression / beta gate — `DONE`; PR `#34`, main merge `919888b`, evidence `docs/evidence/STAGE_21.md`.
 - AŞAMA 22 — Android Release/AAB/compliance RC — `DONE`; PR `#35`, main merge `b0105a3`, evidence `docs/evidence/STAGE_22.md`.
 - AŞAMA 23–24 — future iOS track, deferred.
-- AŞAMA 25–27 — Android beta/freeze/final handoff; cursor AŞAMA 25'te.
+- AŞAMA 25 — Android beta ve blocker düzeltmeleri — `DONE`; evidence `docs/evidence/STAGE_25.md`.
+- AŞAMA 26–27 — Dependency freeze / final audit / RC approval ve artifact handoff; cursor AŞAMA 26'da.
+
 
 ## Android revalidation geçmişi
 

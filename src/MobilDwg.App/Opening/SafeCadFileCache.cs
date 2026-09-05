@@ -66,6 +66,34 @@ public sealed class SafeCadFileCache
     private readonly CadFileOpenLimits _limits;
     private readonly Func<string, long> _availableBytesProvider;
 
+    /// <summary>
+    /// Purges all leftover files in the private cache root directory.
+    /// Safe to call from OnTrimMemory or application teardown.
+    /// Individual CachedCadFile instances handle their own deletion on DisposeAsync;
+    /// PurgeAll is a belt-and-suspenders sweep for orphaned temporaries.
+    /// </summary>
+    public void PurgeAll()
+    {
+        if (!Directory.Exists(_rootDirectory))
+        {
+            return;
+        }
+
+        try
+        {
+            foreach (var file in Directory.EnumerateFiles(_rootDirectory, "*", SearchOption.TopDirectoryOnly))
+            {
+                TryDelete(file);
+            }
+        }
+        catch (DirectoryNotFoundException)
+        {
+        }
+        catch (UnauthorizedAccessException)
+        {
+        }
+    }
+
     public SafeCadFileCache(
         string rootDirectory,
         CadFileOpenLimits? limits = null,
