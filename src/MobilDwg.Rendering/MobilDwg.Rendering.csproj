@@ -3,6 +3,9 @@
     <TargetFramework>net10.0</TargetFramework>
   </PropertyGroup>
   <ItemGroup>
+    <PackageReference Include="SkiaSharp" />
+  </ItemGroup>
+  <ItemGroup>
     <ProjectReference Include="../MobilDwg.Core/MobilDwg.Core.csproj" />
   </ItemGroup>
 </Project>

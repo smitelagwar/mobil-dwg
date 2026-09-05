@@ -21,6 +21,10 @@
     <DefineConstants>$(DefineConstants);V06_VALIDATION</DefineConstants>
   </PropertyGroup>
 
+  <PropertyGroup Condition="'$(A10Validation)' == 'true'">
+    <DefineConstants>$(DefineConstants);A10_VALIDATION</DefineConstants>
+  </PropertyGroup>
+
   <ItemGroup>
     <PackageReference Include="Microsoft.Maui.Controls" />
   </ItemGroup>

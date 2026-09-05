@@ -32,7 +32,8 @@ internal static class V05AndroidValidationRunner
                 ["TEXT"] = 1,
                 ["INSERT"] = 2,
             });
-        Log.Info(Tag, $"V05_DXF_PARSE_PASS version={dxf.Version} entities={dxf.EntityCount}");
+        var dxfMarker = $"V05_DXF_PARSE_PASS version={dxf.Version} entities={dxf.EntityCount}";
+        Log.Info(Tag, dxfMarker);
 
         var dwg = await ParsePositiveAsync(
             reader,
@@ -47,16 +48,38 @@ internal static class V05AndroidValidationRunner
                 ["TEXT"] = 1,
                 ["INSERT"] = 2,
             });
-        Log.Info(Tag, $"V05_DWG_PARSE_PASS version={dwg.Version} entities={dwg.EntityCount}");
+        var dwgMarker = $"V05_DWG_PARSE_PASS version={dwg.Version} entities={dwg.EntityCount}";
+        Log.Info(Tag, dwgMarker);
 
         await ParseNegativeAsync(reader, "v05_missing_font.dxf", "missing-font");
-        Log.Info(Tag, "V05_NEGATIVE_PASS id=missing-font");
+        const string missingFontMarker = "V05_NEGATIVE_PASS id=missing-font";
+        Log.Info(Tag, missingFontMarker);
 
         await ParseNegativeAsync(reader, "v05_missing_xref.dxf", "missing-xref");
-        Log.Info(Tag, "V05_NEGATIVE_PASS id=missing-xref");
+        const string missingXrefMarker = "V05_NEGATIVE_PASS id=missing-xref";
+        Log.Info(Tag, missingXrefMarker);
 
-        Log.Info(Tag, "V05_INPUT_IMMUTABLE_PASS fixtures=4");
-        Log.Info(Tag, "V05_REDACTED_DIAGNOSTICS_PASS codes=missing-font,missing-xref");
+        const string immutableMarker = "V05_INPUT_IMMUTABLE_PASS fixtures=4";
+        const string diagnosticsMarker = "V05_REDACTED_DIAGNOSTICS_PASS codes=missing-font,missing-xref";
+        Log.Info(Tag, immutableMarker);
+        Log.Info(Tag, diagnosticsMarker);
+
+        // Replay the complete validation evidence contiguously at the end of the run.
+        // Android's shared log buffer can roll over the earlier parser markers while the
+        // validation APK is busy parsing. Replaying only already-proven markers preserves
+        // the original gate semantics without weakening any parser/negative assertion.
+        foreach (var evidenceMarker in new[]
+                 {
+                     dxfMarker,
+                     dwgMarker,
+                     missingFontMarker,
+                     missingXrefMarker,
+                     immutableMarker,
+                     diagnosticsMarker,
+                 })
+        {
+            Log.Info(Tag, evidenceMarker);
+        }
 
         var marker = $"ANDROID_VALIDATION_V05_PASS dxf_entities={dxf.EntityCount} dwg_entities={dwg.EntityCount} negatives=2";
         Log.Info(Tag, marker);

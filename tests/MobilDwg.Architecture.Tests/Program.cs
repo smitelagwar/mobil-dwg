@@ -26,7 +26,7 @@ AssertProjectReferences("src/MobilDwg.App/MobilDwg.App.csproj",
 
 AssertPackageReferences("src/MobilDwg.Core/MobilDwg.Core.csproj", []);
 AssertPackageReferences("src/MobilDwg.Cad/MobilDwg.Cad.csproj", ["ACadSharp"]);
-AssertPackageReferences("src/MobilDwg.Rendering/MobilDwg.Rendering.csproj", []);
+AssertPackageReferences("src/MobilDwg.Rendering/MobilDwg.Rendering.csproj", ["SkiaSharp"]);
 AssertPackageReferences("src/MobilDwg.App/MobilDwg.App.csproj", ["Microsoft.Maui.Controls"]);
 
 AssertProjectProperty("src/MobilDwg.App/MobilDwg.App.csproj", "TargetFramework", "net10.0-android36.0");

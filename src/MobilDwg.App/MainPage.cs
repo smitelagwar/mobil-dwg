@@ -5,7 +5,7 @@ using Microsoft.Maui.Storage;
 using MobilDwg.App.Opening;
 using MobilDwg.Cad.AcadSharp;
 
-#if V06_VALIDATION
+#if V06_VALIDATION || A10_VALIDATION
 using Android.Util;
 #endif
 
@@ -21,6 +21,9 @@ public sealed class MainPage : ContentPage
 
 #if V05_VALIDATION
     private bool _v05Started;
+#endif
+#if A10_VALIDATION
+    private bool _a10Started;
 #endif
 
     public MainPage()
@@ -102,6 +105,27 @@ public sealed class MainPage : ContentPage
 
 #if V06_VALIDATION
         Loaded += (_, _) => LogV06("V06_REAL_APP_READY");
+#endif
+
+#if A10_VALIDATION
+        var a10Status = new Label
+        {
+            Text = "A10_VALIDATION_PENDING",
+            AutomationId = "a10-validation-status",
+            FontSize = 13,
+            TextColor = Color.FromArgb("#B8C4D8"),
+            HorizontalTextAlignment = TextAlignment.Center,
+        };
+        var a10Image = new Image
+        {
+            AutomationId = "a10-render-image",
+            HeightRequest = 420,
+            Aspect = Aspect.AspectFit,
+            BackgroundColor = Color.FromArgb("#101010"),
+        };
+        layout.Children.Insert(2, a10Status);
+        layout.Children.Insert(3, a10Image);
+        Loaded += async (_, _) => await RunA10ValidationAsync(a10Status, a10Image);
 #endif
 
         Content = new ScrollView { Content = layout };
@@ -317,6 +341,28 @@ public sealed class MainPage : ContentPage
             var safeType = ex.GetType().Name;
             status.Text = $"ANDROID_VALIDATION_V05_FAIL type={safeType}";
             Android.Util.Log.Error("MobilDwgV05", status.Text);
+        }
+    }
+#endif
+
+#if A10_VALIDATION
+    private async Task RunA10ValidationAsync(Label status, Image image)
+    {
+        if (_a10Started) return;
+        _a10Started = true;
+        status.Text = "A10_VALIDATION_RUNNING";
+        try
+        {
+            var result = await A10AndroidValidationRunner.RunAsync();
+            var png = result.Png;
+            image.Source = ImageSource.FromStream(() => new MemoryStream(png, writable: false));
+            status.Text = $"{result.Marker} pixels={result.NonBackgroundPixels}";
+            Log.Info(A10AndroidValidationRunner.Tag, $"A10_REAL_APP_UI_IMAGE_READY sha256={result.PngSha256}");
+        }
+        catch (Exception exception)
+        {
+            status.Text = $"ANDROID_STAGE10_P0_GEOMETRY_RENDER_FAIL type={exception.GetType().Name}";
+            Log.Error(A10AndroidValidationRunner.Tag, status.Text);
         }
     }
 #endif

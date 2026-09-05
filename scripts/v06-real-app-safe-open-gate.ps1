@@ -45,9 +45,19 @@ function Get-UiXml {
 }
 
 function Find-UiBounds {
-    param([xml]$Xml, [string]$Text, [switch]$Contains)
+    param(
+        [xml]$Xml,
+        [string]$Text,
+        [switch]$Contains,
+        [string]$ResourceId = '',
+        [switch]$ClickableAncestor
+    )
     if ($null -eq $Xml) { return $null }
     foreach ($node in $Xml.SelectNodes('//node')) {
+        if ($ResourceId -and -not [string]::Equals([string]$node.GetAttribute('resource-id'), $ResourceId, [StringComparison]::Ordinal)) {
+            continue
+        }
+
         $nodeText = [string]$node.GetAttribute('text')
         $nodeDesc = [string]$node.GetAttribute('content-desc')
         $match = if ($Contains) {
@@ -57,10 +67,21 @@ function Find-UiBounds {
             [string]::Equals($nodeText, $Text, [StringComparison]::OrdinalIgnoreCase) -or
             [string]::Equals($nodeDesc, $Text, [StringComparison]::OrdinalIgnoreCase)
         }
-        if ($match) {
-            $bounds = [string]$node.GetAttribute('bounds')
-            if ($bounds -match '^\[(\d+),(\d+)\]\[(\d+),(\d+)\]$') { return $bounds }
+        if (-not $match) { continue }
+
+        $target = $node
+        if ($ClickableAncestor) {
+            while ($null -ne $target -and $target.NodeType -eq [System.Xml.XmlNodeType]::Element -and
+                   -not [string]::Equals([string]$target.GetAttribute('clickable'), 'true', [StringComparison]::OrdinalIgnoreCase)) {
+                $target = $target.ParentNode
+            }
+            if ($null -eq $target -or $target.NodeType -ne [System.Xml.XmlNodeType]::Element) {
+                $target = $node
+            }
         }
+
+        $bounds = [string]$target.GetAttribute('bounds')
+        if ($bounds -match '^\[(\d+),(\d+)\]\[(\d+),(\d+)\]$') { return $bounds }
     }
     return $null
 }
@@ -79,9 +100,16 @@ function Click-Bounds {
 }
 
 function Try-ClickUiText {
-    param([string]$Serial, [string]$Text, [string]$Stem, [switch]$Contains)
+    param(
+        [string]$Serial,
+        [string]$Text,
+        [string]$Stem,
+        [switch]$Contains,
+        [string]$ResourceId = '',
+        [switch]$ClickableAncestor
+    )
     $xml = Get-UiXml -Serial $Serial -Stem $Stem
-    $bounds = Find-UiBounds -Xml $xml -Text $Text -Contains:$Contains
+    $bounds = Find-UiBounds -Xml $xml -Text $Text -Contains:$Contains -ResourceId $ResourceId -ClickableAncestor:$ClickableAncestor
     if (-not $bounds) { return $false }
     return Click-Bounds -Serial $Serial -Bounds $bounds
 }
@@ -121,9 +149,14 @@ function Select-Document {
     $openedRoots = $false
     $clickedDownloads = $false
     for ($i = 0; $i -lt 40; $i++) {
-        if (Try-ClickUiText -Serial $Serial -Text $FileName -Stem "$Stem-file-$i") { return }
-
+        # When the picker already opens in Downloads, select the document directly.
+        # Once the roots drawer is opened, never tap a file card behind that drawer.
         if (-not $openedRoots) {
+            if (Try-ClickUiText -Serial $Serial -Text $FileName -Stem "$Stem-file-direct-$i" -ClickableAncestor) {
+                Start-Sleep -Milliseconds 500
+                return
+            }
+
             if (Try-ClickUiText -Serial $Serial -Text 'Show roots' -Stem "$Stem-roots-$i") {
                 $openedRoots = $true
                 Start-Sleep -Milliseconds 750
@@ -131,10 +164,27 @@ function Select-Document {
             }
         }
 
-        if ($openedRoots -and -not $clickedDownloads -and (Try-ClickUiText -Serial $Serial -Text 'Downloads' -Stem "$Stem-downloads-$i" -Contains)) {
-            $clickedDownloads = $true
-            Start-Sleep -Seconds 1
+        # The drawer exposes several visible strings containing "Downloads" while the
+        # background grid can already contain the target file. Select the actual drawer
+        # row first, using android:id/title and its clickable ancestor, before considering
+        # any document card. This prevents taps landing on a file hidden behind the drawer.
+        if ($openedRoots -and -not $clickedDownloads) {
+            if (Try-ClickUiText -Serial $Serial -Text 'Downloads' -Stem "$Stem-downloads-$i" -ResourceId 'android:id/title' -ClickableAncestor) {
+                $clickedDownloads = $true
+                Start-Sleep -Milliseconds 1500
+                continue
+            }
+
+            Start-Sleep -Milliseconds 500
             continue
+        }
+
+        # DocumentsUI grid titles are not themselves clickable. Use the nearest clickable
+        # card ancestor after the Downloads drawer row has been selected and the drawer closed.
+        if ($clickedDownloads -and
+            (Try-ClickUiText -Serial $Serial -Text $FileName -Stem "$Stem-file-$i" -ClickableAncestor)) {
+            Start-Sleep -Milliseconds 500
+            return
         }
 
         Start-Sleep -Milliseconds 500
