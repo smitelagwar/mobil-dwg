@@ -5,7 +5,7 @@ using Microsoft.Maui.Storage;
 using MobilDwg.App.Opening;
 using MobilDwg.Cad.AcadSharp;
 
-#if V06_VALIDATION || A10_VALIDATION || A11_VALIDATION || A12_VALIDATION || A13_VALIDATION || A14_VALIDATION || A15_VALIDATION || A16_VALIDATION || A17_VALIDATION || A18_VALIDATION || A19_VALIDATION || A20_VALIDATION || A21_VALIDATION
+#if V06_VALIDATION || A10_VALIDATION || A11_VALIDATION || A12_VALIDATION || A13_VALIDATION || A14_VALIDATION || A15_VALIDATION || A16_VALIDATION || A17_VALIDATION || A18_VALIDATION || A19_VALIDATION || A20_VALIDATION || A21_VALIDATION || A22_VALIDATION
 using Android.Util;
 #endif
 
@@ -55,6 +55,9 @@ public sealed class MainPage : ContentPage
 #if A21_VALIDATION
     private bool _a21Started;
 #endif
+#if A22_VALIDATION
+    private bool _a22Started;
+#endif
 
     public MainPage()
     {
@@ -86,6 +89,18 @@ public sealed class MainPage : ContentPage
             TextColor = Color.FromArgb("#B8C4D8"),
             HorizontalTextAlignment = TextAlignment.Center,
         };
+
+        AutomationProperties.SetName(_openButton, "DWG veya DXF cizim dosyasi sec");
+        AutomationProperties.SetHelpText(_openButton, "Sistem dosya secicisini acarak cihazdan guvenli CAD cizim dosyasi secer");
+        _openButton.MinimumHeightRequest = 48;
+
+        AutomationProperties.SetName(_cancelButton, "Cizim acma islemini iptal et");
+        AutomationProperties.SetHelpText(_cancelButton, "Devam eden cizim okuma islemini guvenle iptal eder");
+        _cancelButton.MinimumHeightRequest = 48;
+
+        AutomationProperties.SetName(_closeButton, "Mevcut cizimi kapat");
+        AutomationProperties.SetHelpText(_closeButton, "Acik cizim oturumunu kapatir ve bellegi temizler");
+        _closeButton.MinimumHeightRequest = 48;
 
         _openButton.Clicked += OpenClicked;
         _cancelButton.Clicked += CancelClicked;
@@ -385,6 +400,27 @@ public sealed class MainPage : ContentPage
         layout.Children.Insert(2, a21Status);
         layout.Children.Insert(3, a21Image);
         Loaded += async (_, _) => await RunA21ValidationAsync(a21Status, a21Image);
+#endif
+
+#if A22_VALIDATION
+        var a22Status = new Label
+        {
+            Text = "A22_VALIDATION_PENDING",
+            AutomationId = "a22-validation-status",
+            FontSize = 13,
+            TextColor = Color.FromArgb("#B8C4D8"),
+            HorizontalTextAlignment = TextAlignment.Center,
+        };
+        var a22Image = new Image
+        {
+            AutomationId = "a22-render-image",
+            HeightRequest = 420,
+            Aspect = Aspect.AspectFit,
+            BackgroundColor = Color.FromArgb("#101010"),
+        };
+        layout.Children.Insert(2, a22Status);
+        layout.Children.Insert(3, a22Image);
+        Loaded += async (_, _) => await RunA22ValidationAsync(a22Status, a22Image);
 #endif
 
         Content = new ScrollView { Content = layout };
@@ -920,6 +956,34 @@ public sealed class MainPage : ContentPage
                 status.Text = $"ANDROID_STAGE21_CORPUS_REGRESSION_FAIL: {exception.Message}";
             });
             Log.Error(A21AndroidValidationRunner.Tag, $"ANDROID_STAGE21_CORPUS_REGRESSION_FAIL: {exception}");
+        }
+    }
+#endif
+
+#if A22_VALIDATION
+    private async Task RunA22ValidationAsync(Label status, Image image)
+    {
+        if (_a22Started) return;
+        _a22Started = true;
+        status.Text = "A22_VALIDATION_RUNNING";
+        try
+        {
+            var result = await Task.Run(A22AndroidValidationRunner.RunAsync);
+            var png = result.Png;
+            MainThread.BeginInvokeOnMainThread(() =>
+            {
+                image.Source = ImageSource.FromStream(() => new MemoryStream(png, writable: false));
+                status.Text = $"{result.Marker} | {result.PackageSummary} | {result.ComplianceSummary}";
+            });
+            Log.Info(A22AndroidValidationRunner.Tag, $"A22_REAL_APP_UI_IMAGE_READY sha256={result.PngSha256}");
+        }
+        catch (Exception exception)
+        {
+            MainThread.BeginInvokeOnMainThread(() =>
+            {
+                status.Text = $"ANDROID_STAGE22_RELEASE_RC_FAIL: {exception.Message}";
+            });
+            Log.Error(A22AndroidValidationRunner.Tag, $"ANDROID_STAGE22_RELEASE_RC_FAIL: {exception}");
         }
     }
 #endif
