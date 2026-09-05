@@ -1,20 +1,26 @@
-# mobil-dwg — Risk Register
+# mobil-dwg — Aktif Risk Register
 
-Snapshot: 2026-08-25
+Son güncelleme: 2026-09-05
 
-| ID | Risk | Sinyal / kanıt | Etki | Durum | Zorunlu tepki |
-|---|---|---|---|---|---|
-| R-DEP-001 | ACadSharp belirli DWG/DXF'lerde fidelity kaybı | 3.7.1 mini corpus AŞAMA 05'te geçti; full fidelity/corpus henüz yok | Yanlış/eksik CAD görünümü | `CONTROLLED / OPEN_FOR_FULL_CORPUS` | Exact 3.7.1 pinini koru; V05 ve sonraki fidelity gate'lerinde sistematik hata varsa sürüm A/B ve known-failure listesi |
-| R-DEP-002 | ACadSharp source submodule provenance | Source build `CSUtilities` submodule kullanıyor | Source build/notice zinciri eksik kalabilir | `CONTROLLED` | CSUtilities MIT kaydı korunur; production source fork yapılırsa exact submodule SHA ayrıca dondurulur |
-| R-DEP-003 | SkiaSharp native artifact/third-party lisans zinciri | NuGet MIT, platform native asset; upstream Skia BSD-3-Clause | Native binary içinde gözden kaçan third-party notice/asset olabilir | `OPEN / REVIEW` | CI package graph + RC artifact extraction + third-party notices; unknown varsa release NO-GO |
-| R-DEP-004 | ProCad ACadSharp lineage farkı | AŞAMA 07 exact source/fork lineage kaydedildi; candidate precision blocker ile reddedildi | Official ACadSharp candidate ile davranış/API farkı | `CONTROLLED / NO_GO` | Production graph dışında tut; yalnız açık karar ve yeni evidence ile yeniden aç |
-| R-DEP-005 | ProCad MAUI/Skia version skew | AŞAMA 07 source/package graph farkı kaydedildi; production reuse NO-GO | Restore/runtime/preview riski | `CONTROLLED / NO_GO` | Production graph'a ekleme; V07 yalnız karar/graph regresyonunu doğrular |
-| R-DEP-006 | ProCad package publication/lineage belirsizliği | Exact source-pinned candidate değerlendirildi ve reddedildi | Reproducibility ve supply-chain riski | `CONTROLLED / NO_GO` | Reddedilmiş package/source hattını runtime'a alma |
-| R-DEP-007 | IxMilia.Dxf teknik/yaş riski | Latest NuGet 0.8.4 (2024), source repo daha sonra değişmiş | Test oracle/fallback davranışı eski olabilir | `CONTROLLED` | Runtime'a baştan ekleme; yalnız fixture/test oracle veya ayrı DXF fallback spike |
-| R-DEP-008 | IxMilia.Dwg modern DWG kapsamı yetersizliği | Plan ve repo konumu modern production fallback'i desteklemiyor | Yanlış fallback güveni | `CONTROLLED` | Runtime fallback olarak kullanma |
-| R-DEP-009 | IxMilia.Shx parser ile font lisansının karıştırılması | Parser MIT olsa da SHX font dosyaları ayrı asset | Proprietary font bundle riski | `CONTROLLED` | Parser lisansı ile font asset provenance ayrı tutulur; AutoCAD SHX bundle edilmez |
-| R-DEP-010 | Floating/transitive dependency drift | NuGet alt sınırları ve future restore değişebilir | Tekrar üretilemeyen build | `MITIGATING` | CPM exact direct pins + `packages.lock.json` + CI `--locked-mode` |
-| R-DEP-011 | Unknown/RED license runtime graph'a girer | Transitive/native package eklenmesi | Release policy ihlali | `MITIGATING` | Stage 02 CI license allowlist; RC artifact inventory; unknown/RED = fail |
-| R-EXT-001 | Fiziksel Android kanıtı eksik | Emulator kuruludur fakat fiziksel cihaz matrisi açık | Üretici SAF/performance/lifecycle farkları doğrulanamaz | `DEFERRED_RELEASE_DEVICE_GATE` | Emulatoru fiziksel cihaz sayma; AŞAMA 20–22/final öncesi gerçek Android kanıtı al |
-| R-EXT-002 | Self-hosted runner çevrim dışı veya kanıt kapsamının yanlış yorumlanması | Listener yok, queued/zero-step job veya Stage01Smoke sonucunun gerçek app sanılması | Yanlış PASS ya da gereksiz test kuyruğu | `CONTROLLED / V01_HARDENED; V04_VALIDATED` | Exact SHA kuyruğu; Stage01Smoke'u yalnız infrastructure say; V04 real-app claim'ini viewer fidelity veya fiziksel cihaz PASS'ine genişletme |
-| R-EXT-003 | Future iOS erişimi ve fizibilitesi açık | Mac/Xcode/iPhone yok; AŞAMA 08 yalnız partial characterization | Gelecekte iOS'a dönüş ek çalışma ister | `DEFERRED_FUTURE_IOS` | Android release'i bloke etme; shared sınırları koru; yalnız kullanıcı reactivation kararıyla AŞAMA 23–24'ü aç |
+Bu dosya yalnız hâlâ anlamlı olan riskleri taşır. Tamamlanmış eski stage/validation riskleri tarihsel evidence içinde kalır.
+
+| ID | Risk | Etki | Durum | Zorunlu tepki |
+|---|---|---|---|---|
+| `R-VIEW-001` | Mevcut viewer pan/pinch sırasında gerçek kamerayı her frame render etmek yerine görüntü katmanını geçici transform edip gesture sonunda yeniden render edebiliyor | Hareket sırasında yeni görünür alan boş/eski kalabilir; release anında görsel sıçrama oluşabilir | `OPEN` | Interaction/render zincirini canlı camera state + frame-scheduled rendering modeline geçir; gesture sırasında görünür alanı doğrula |
+| `R-VIEW-002` | MAUI DIP, physical pixel, display density, image layout/AspectFit ve camera viewport koordinatlarının karışması | Pinch focal drift, zoom merkezinin kaçması, farklı cihazlarda tutarsızlık | `OPEN` | Tek bir açık screen-coordinate contract kullan; focal world-point preservation'ı gerçek UI zincirinde test et |
+| `R-VIEW-003` | Gesture testlerinin yalnız camera matematiğini doğrulayıp gerçek touch → UI → renderer zincirini kapsamaması | Unit test PASS iken cihazda gesture bozuk olabilir | `OPEN` | Gerçek emulator/fiziksel interaction acceptance ekle; 1→2→1 pointer transition ve jump/drift ölç |
+| `R-PERF-001` | Büyük scene'de entity görünürlük seçimi/çizim maliyeti ölçeklenebilir | Pan/zoom jank, yüksek p95 frame time | `OPEN / MEASURE_FIRST` | Önce profil/metric; gerekirse spatial index, caching, LOD veya batching ekle; correctness regression yapma |
+| `R-PERF-002` | Interaction sırasında tam kalite render maliyeti düşük/orta cihazlarda frame budget'ı aşabilir | Touch hissi gecikir | `OPEN` | Preview/refinement veya progressive kalite ancak ölçümle ve görüntü doğruluğu korunarak uygulanır |
+| `R-DEP-001` | ACadSharp 3.7.1 bazı gerçek dünya DWG/DXF'lerde fidelity sınırına sahip olabilir | Eksik/yanlış CAD görünümü | `CONTROLLED` | Exact pini koru; sistematik hata varsa bağımsız fixture/corpus ile A/B doğrula; sessiz fallback yapma |
+| `R-DEP-002` | SkiaSharp native/third-party artifact zinciri değişebilir | License/native runtime riski | `CONTROLLED / REVIEW_ON_CHANGE` | Package/version değişiminde transitive/native inventory ve notice kontrolü |
+| `R-DEP-003` | Reddedilmiş ProCad veya başka CAD viewer kaynaklarından kod kopyalanması | Lisans/politika ve bakım riski | `CONTROLLED / NO_GO_FOR_COPY` | Fikir/algoritma deseni incelenebilir; satır-satır port/kopya yok; özgün implementasyon |
+| `R-EXT-001` | Android v1 tarihsel kabulü ağırlıklı API 36 emulator kanıtına dayanır; fiziksel cihaz matrisi açık | Gerçek touch/GPU/SAF/thermal/perf farkları bilinmez | `OPEN_PHYSICAL_DEVICE_COVERAGE` | Önemli viewer değişikliklerinde en az güncel fiziksel Android slotunda doğrulama; emulatoru fiziksel cihaz sayma |
+| `R-EXT-002` | Self-hosted runner çevrim dışı veya eski marker yanlış yorumlanabilir | Yanlış PASS / test kuyruğu | `CONTROLLED` | Exact SHA; zero-step/queued PASS değil; yalnız değişikliği gerçekten kapsayan gate kullan |
+| `R-IOS-001` | iOS aktif değil ama shared sınırlar future dönüş için korunuyor | Android odaklı refactor future portability'yi zorlaştırabilir | `DEFERRED_FUTURE_IOS` | Android'i bloke etme; Core/Cad/Rendering'e gereksiz Android-only bağımlılık yayma |
+| `R-DATA-001` | Gerçek müşteri CAD/font/asset'in repo veya public artifact'e sızması | Gizlilik/telif riski | `CONTROLLED` | Private corpus Git dışında; public fixture yalnız provenance/redistribution kanıtlı |
+
+## Risk kapatma kuralı
+
+Bir risk yalnız kod değiştiği için `CLOSED` olmaz. İlgili failure mode'u doğrudan sınayan test/ölçüm PASS olmalı ve claim sınırı kaydedilmelidir.
+
+Yeni bir risk mevcut tabloyu büyütmek yerine geçici bir uygulama planında kalıyorsa, ürün seviyesinde tekrarlama ihtimali ortaya çıktığında bu register'a alınır.
