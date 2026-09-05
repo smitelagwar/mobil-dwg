@@ -1,68 +1,68 @@
-# Android cihaz matrisi ve provisional benchmark profilleri
+# mobil-dwg — Android Cihaz ve Benchmark Matrisi
 
-İlk kayıt: 2026-08-24  
-Android kapsam güncellemesi: 2026-08-25  
-Son doğrulanan aşama: V04; aktif validation cursor: V05
-
-Bu belge emulator ile fiziksel cihaz kanıtını birbirine karıştırmaz. Android Emulator sürekli ve hedefli smoke için kullanılabilir; fiziksel Android slotları beta/release çeşitliliği, gerçek SAF ve performans için ayrıca açıktır. iOS aktif v1 dışında future option olarak korunur.
+Bu belge emulator ile fiziksel cihaz kanıtını ayırır. Eski VXX/stage cursor'ı içermez.
 
 ## Cihaz slotları
 
-| Slot | Platform | Amaç | Minimum özellik | Gerçek cihaz | Durum |
-|---|---|---|---|---|---|
-| E-API36 | Android Emulator | self-hosted sürekli build/install/launch ve hedefli runtime smoke | `mobil-dwg-api36`, API 36, x86_64 | AVD mevcut | `AVAILABLE / V01_VALIDATED_INFRASTRUCTURE_SMOKE` |
-| A-LOW | Android | düşük kaynak / min-supported doğrulama | Android API 24+, arm64 tercih, 3–4 GiB RAM sınıfı | UNKNOWN | `DEFERRED_PHYSICAL_ANDROID` |
-| A-CURRENT | Android | güncel orta sınıf ana regresyon | target API 36 sınıfı, arm64, 6+ GiB RAM sınıfı | UNKNOWN | `DEFERRED_PHYSICAL_ANDROID` |
-| A-LARGE | Android | büyük corpus/perf karşılaştırma | arm64, 8+ GiB RAM sınıfı | UNKNOWN | `OPTIONAL / NOT_ASSIGNED` |
-| I-OLDEST | Future iOS | yeniden etkinleştirilirse en eski gerçek iPhone sınıfı | future Stage 23'te pinlenecek | UNKNOWN | `DEFERRED_FUTURE_IOS` |
-| I-CURRENT | Future iOS | yeniden etkinleştirilirse güncel cihaz regresyonu | future supported iOS, arm64 | UNKNOWN | `DEFERRED_FUTURE_IOS` |
+| Slot | Platform | Amaç | Minimum profil | Durum |
+|---|---|---|---|---|
+| `E-API36` | Android Emulator | sürekli build/install/runtime ve hedefli regression | `mobil-dwg-api36`, API 36, x86_64 | `AVAILABLE` |
+| `A-LOW` | Fiziksel Android | düşük kaynak / min-supported davranış | API 24+, arm64 tercih, 3–4 GiB RAM sınıfı | `UNASSIGNED` |
+| `A-CURRENT` | Fiziksel Android | güncel orta sınıf ana regression | arm64, 6+ GiB RAM sınıfı | `UNASSIGNED` |
+| `A-LARGE` | Fiziksel Android | büyük corpus/performance | arm64, 8+ GiB RAM sınıfı | `OPTIONAL / UNASSIGNED` |
+| `I-OLDEST` | Future iOS | future minimum-device slot | ileride pinlenecek | `DEFERRED_FUTURE_IOS` |
+| `I-CURRENT` | Future iOS | future current-device regression | ileride pinlenecek | `DEFERRED_FUTURE_IOS` |
 
-E-API36 için V01 yalnız `Stage01Smoke` infrastructure smoke kanıtıdır. V04 gerçek installable `MobilDwg.App` shell runtime'ını ayrıca doğruladı; bu sonuç parser/render fidelity veya fiziksel Android PASS değildir.
+Android v1 tarihsel release handoff API 36 emulator üzerinde doğrulandı; bu fiziksel cihaz gesture/GPU/SAF/performance fidelity iddiası değildir.
 
-## V03 Android smoke input seti
+## Fiziksel cihazın özellikle gerekli olduğu alanlar
 
-V04–V09 doğrulamalarında hak durumu açık küçük test girdisi gerektiğinde manifestteki `android_smoke_set` kullanılır:
+- touch sampling ve pinch/pan hissi,
+- üreticiye özgü GPU/driver davranışı,
+- SAF/content-provider farkları,
+- gerçek memory pressure ve termal throttling,
+- background/process death,
+- düşük/orta/yüksek cihaz performans farkı,
+- uzun süreli repeat-open/close ve lifecycle davranışı.
 
-- committed 0BSD DXF: `synthetic-turkish-basic-ac1015`;
-- validation-time generated 0BSD DWG: `synthetic-turkish-basic-ac1015-dwg`;
-- kontrollü negatif committed DXF'ler: `negative-missing-font-ac1015`, `negative-missing-xref-ac1015`.
+## Benchmark profilleri
 
-Generated DWG, committed sentetik DXF'den exact ACadSharp `3.7.1` fixture generator ile üretilir; `AC1015` magic ve `DwgReader` read-back doğrulanır. Bu artifact open-path smoke girdisidir, bağımsız DWG engineering-fidelity goldeni değildir. Remote-pinned ACadSharp sample DWG/DXF corpus'u fidelity/parser regresyonu için korunur fakat mobil-dwg tarafından yeniden dağıtılabilir bundle olarak sınıflandırılmaz.
+Bunlar tek başına PASS eşiği değil, karşılaştırmalı ölçüm sınıflarıdır.
 
-## Provisional corpus profilleri
+| Profil | Dosya sınıfı | Zorunlu ölçümler |
+|---|---|---|
+| `P-SMALL` | <= 2 MiB veya küçük sentetik fixture | parse, scene-build, first-frame, warning/diagnostic |
+| `P-MEDIUM` | >2–20 MiB | aynı metrikler + pan/pinch frame p50/p95 |
+| `P-LARGE` | >20–100 MiB | aynı metrikler + peak memory/PSS + repeat-open/close |
+| `P-ADVERSARIAL` | corrupt/truncated/resource-limit | fail latency, peak memory, diagnostic category, cleanup |
 
-Bunlar performans kabul eşiği değil, ölçüm örnekleme sınıfıdır. AŞAMA 20'den önce sayısal FAIL bütçesi uydurulmaz.
-
-| Profil | Dosya sınıfı | Zorunlu ölçümler | Kullanım |
-|---|---|---|---|
-| P-SMALL | <= 2 MiB veya küçük sentetik/mini fixture | open-to-parse, scene-build, first-frame, peak RSS, warning count | her parser/render smoke |
-| P-MEDIUM | >2–20 MiB | aynı metrikler + pan/pinch p50/p95 frame time | fidelity milestone |
-| P-LARGE | >20–100 MiB | aynı metrikler + GC/native memory delta + close/reopen cleanup | AŞAMA 20/21 |
-| P-ADVERSARIAL | corrupt/truncated veya resource-limit fixture | fail latency, peak RSS, exception/warning category, cleanup | AŞAMA 19/21 |
+Entity sayısı dosya boyutundan daha belirleyici olabildiği için test raporunda entity/primitive sayısı da kaydedilir.
 
 ## Ölçüm kayıt formatı
 
-Her cihaz koşusu en az şunları kaydeder:
+Her anlamlı cihaz koşusunda mümkün olduğunca:
 
 - `device_slot`
-- gerçek modelin hassas olmayan adı ve OS/API sürümü
-- app revision / configuration (`Debug` veya `Release`)
-- fixture ID ve manifest hash/provenance
+- model sınıfı ve Android/API sürümü
+- app commit SHA ve configuration
+- fixture ID / provenance
 - `file_bytes`
-- `parse_ms`
-- `scene_build_ms`
-- `first_frame_ms`
-- `peak_rss_mib`
-- frame p50/p95 (renderer/gesture aşamasında)
+- entity/primitive count
+- parse/scene/first-frame süreleri
+- frame p50/p95
+- peak RSS/PSS/native memory gerekiyorsa
 - warning/error kategorileri
-- close/reopen sonrası gözlenen memory delta
-- PASS/FAIL'i belirleyen aşama kriteri
+- close/reopen memory delta gerekiyorsa
+- testin gerçek PASS/FAIL kriteri
 
-Seri numarası, UDID, hesap bilgisi, kullanıcı yolu veya müşteri dosya adı kaydedilmez.
+kaydedilir.
 
-## Şimdiki durum
+Seri numarası, hesap bilgisi, kullanıcı yolu veya müşteri dosya adı kaydedilmez.
 
-- E-API36: V04 gerçek-app shell runtime gate'i doğrulandı; V05+ parser/viewer fidelity kapıları ayrıdır.
-- Fiziksel Android: release/beta kapılarında zorunlu farkları kanıtlamak üzere deferred.
-- iOS: future/inactive; Android release'i bloke etmez.
-- V03: fixture ve test-matrix sözleşmesini doğrular; bu aşamada gereksiz emulator koşusu yapılmaz.
+## Fixture seçimi
+
+Public/synthetic fixture için `docs/GOLDEN_CONTRACT.md` ve `fixtures/` provenance kayıtları uygulanır. Gerçek müşteri çizimleri yerel/private testte kullanılabilir fakat repoya veya public CI artifact'ine yüklenmez.
+
+## Güncelleme kuralı
+
+Yeni bir fiziksel cihaz gerçekten test edildiğinde ilgili slot `UNASSIGNED` bırakılmaz; test tarihi, Android sürümü, commit SHA ve claim sınırı evidence kaydına eklenir. Emulator sonucu fiziksel slotu kapatmaz.
