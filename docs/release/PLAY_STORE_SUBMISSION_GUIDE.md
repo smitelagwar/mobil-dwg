@@ -1,64 +1,83 @@
-﻿# Google Play Console Yayın ve Teslim Kılavuzu
+# Mobil DWG — Google Play Yayın Kılavuzu
 
-Bu belge, **Mobil DWG** uygulamasının Google Play Console üzerinde yayınlanması için gereken form, metaveri ve uyumluluk bilgilerini içerir.
+Bu belge mağaza yayını için çalışma taslağıdır. Google Play'e gönderimden hemen önce package, permission, Data Safety, pricing ve feature claim'leri **gerçek release artifact'i üzerinde yeniden doğrulanmalıdır**.
 
----
+## Temel uygulama bilgileri
 
-## 1. Temel Uygulama Bilgileri
+- Uygulama adı: Mobil DWG
+- Paket kimliği: `com.smitelagwar.mobildwg`
+- Varsayılan dil: Türkçe (`tr-TR`)
+- Kategori adayı: Productivity / Tools
+- Min SDK: 24
+- Target SDK: 36
+- Yayın paketi: Android App Bundle (`.aab`)
 
-- **Uygulama Adı**: Mobil DWG
-- **Varsayılan Dil**: Türkçe (tr-TR)
-- **Paket Kimliği (Package ID)**: `com.smitelagwar.mobildwg`
-- **Kategori**: Üretkenlik / Araçlar (Productivity / Tools)
-- **Fiyatlandırma**: Ücretsiz (Free, Reklamsız, Aboneliksiz)
-- **Min SDK**: 24 (Android 7.0 Nougat)
-- **Target SDK**: 36 (Android 16 Vanilla Ice Cream)
-- **Paket Türü**: Android App Bundle (`.aab`)
+Fiyat, reklam, abonelik ve mağaza politikası yayın anındaki gerçek ürün kararıyla eşleştirilmelidir; eski bir doküman otomatik doğruluk kaynağı değildir.
 
----
+## Data Safety kontrolü
 
-## 2. Veri Güvenliği Formu (Data Safety Section)
+Mevcut ürün tasarımı local/offline viewer'dır ve tarihsel release evidence internet izni/telemetri olmadan hazırlanmıştır. Yine de her yeni release öncesi final manifest ve dependency graph üzerinde doğrula:
 
-Mobil DWG %100 çevrimdışı çalışacak şekilde tasarlanmıştır.
+- `android.permission.INTERNET` var mı?
+- analytics/telemetry/ad SDK eklendi mi?
+- kullanıcı verisi veya identifier toplanıyor mu?
+- veri üçüncü tarafa aktarılıyor mu?
+- yalnız kullanıcının seçtiği CAD dosyasına mı erişiliyor?
 
-- **Veri Toplama veya Paylaşımı Var mı?**: **HAYIR (No)**
-  - Uygulama herhangi bir kullanıcı verisi toplamaz.
-  - Uygulama herhangi bir üçüncü tarafla veri paylaşmaz.
-- **Ağ Erişimi (Internet Permission)**: **YOK (None)**
-  - `AndroidManifest.xml` içinde `android.permission.INTERNET` izni kesinlikle bulunmaz.
-- **Depolama Modeli**: **Uygulamaya Özel Kapsamlı Depolama (App-Private Scoped Storage)**
-  - `MANAGE_EXTERNAL_STORAGE` veya `READ_EXTERNAL_STORAGE` gerektirmez.
-  - Dosyalar Android Storage Access Framework (SAF) ve FilePicker aracılığıyla güvenli açılır.
-- **Kullanıcı Hesabı veya Giriş**: **YOK**
-- **Konum, Kişiler, Kamera, Mikrofon İzni**: **YOK**
+Bu maddelerden biri değiştiyse Data Safety ve `PRIVACY_POLICY.md` aynı release'te güncellenmelidir.
 
----
+## İçerik derecelendirmesi
 
-## 3. İçerik Derecelendirmesi (IARC Content Rating)
+Viewer'ın kendisi şiddet, cinsellik, kumar veya kullanıcılar arası iletişim özelliği sunmaz. Ancak Google Play/IARC soruları yayın sırasında gerçek feature set'e göre cevaplanır.
 
-- Şiddet, Cinsellik, Küfür, Kumar veya Uyuşturucu: **YOK**
-- Kullanıcılar Arası İletişim / Sohbet: **YOK**
-- Fiziksel Konum Paylaşımı: **YOK**
-- Dijital Malzeme Alımı (In-App Purchases): **YOK**
-- Beklenen Sonuç: **PEGI 3 / Everyone (Tüm Yaş Grupları)**
+## Mağaza metni için güvenli taslak
 
----
+### Kısa açıklama
 
-## 4. Uygulama Açıklaması ve Tanıtım Metinleri
+Android cihazınızda DWG ve DXF teknik çizimlerini yerel ve çevrimdışı görüntüleyin.
 
-### Kısa Açıklama (Short Description)
-Hızlı, telifsiz ve %100 çevrimdışı 2D DWG/DXF teknik çizim görüntüleyici.
+### Tam açıklama
 
-### Tam Açıklama (Full Description)
-Mobil DWG, Android cihazınızda AutoCAD® formatındaki 2D DWG ve DXF çizimlerini tamamen yerel, güvenli ve internet bağlantısına ihtiyaç duymadan incelemenizi sağlayan hafif ve modern bir teknik çizim görüntüleyicidir.
+Mobil DWG, Android cihazlarda 2D DWG ve DXF teknik çizimlerini yerel olarak açmak ve incelemek için geliştirilmiş salt-okunur bir görüntüleyicidir.
 
-**Öne Çıkan Özellikler:**
-- **%100 Çevrimdışı ve Güvenli:** Dosyalarınız cihazınızdan asla ayrılmaz, internet izni dahi istemez.
-- **Geniş Format Desteği:** AutoCAD R12'den 2018+'e kadar DWG ve DXF dosyalarını destekler.
-- **Model ve Pafta (Layout) Desteği:** Model alanı ile Paper-Space paftalar arasında anında geçiş yapın.
-- **Katman (Layer) Yönetimi:** Katmanları tek dokunuşla açıp kapatın.
-- **Yüksek Performans:** Donanım hızlandırmalı vektör motoru ile akıcı pan, pinch-to-zoom ve fit navigasyonu.
-- **Harita ve Kadastro Hassasiyeti:** Çift duyarlıklı (double-precision) koordinat koruması.
-- **Türkçe Karakter Desteği:** CP1254 ve UTF-8 kodlama desteği.
+Öne çıkan mevcut ürün özellikleri:
 
-*Yasal Bildirim: AutoCAD ve DWG, Autodesk, Inc.'in ticari markalarıdır. Mobil DWG bağımsız bir açık kaynak projedir ve Autodesk, Inc. ile ilişkisi bulunmamaktadır.*
+- yerel/offline dosya açma,
+- 2D DWG/DXF görüntüleme,
+- katman görünürlüğü,
+- model/layout görüntüleme altyapısı,
+- pan, zoom ve fit navigasyonu,
+- büyük koordinatlarda `double` tabanlı world-coordinate işleme,
+- unsupported/eksik external-resource durumlarını diagnostic olarak yüzeye çıkarma yaklaşımı.
+
+### Claim kuralları
+
+Aşağıdaki ifadeleri gerçek release testi olmadan kullanma:
+
+- “tüm DWG/DXF dosyalarını kusursuz açar”,
+- “AutoCAD ile birebir aynı”,
+- “%100 uyumluluk”,
+- “en hızlı”,
+- “kusursuz/akıcı 120 FPS”,
+- “donanım hızlandırmalı ve her cihazda akıcı”.
+
+2026-09-05 itibarıyla pan/pinch/render interaction kalitesi üzerinde açık iyileştirme çalışması olduğu için navigasyon performansı mutlak sıfatlarla pazarlanmamalıdır.
+
+## Marka notu
+
+AutoCAD ve DWG, Autodesk, Inc. ile ilişkili ticari markalardır. Mobil DWG bağımsız bir projedir; Autodesk tarafından onaylanmış veya desteklenmiş olduğu izlenimi verilmemelidir.
+
+Projenin kendi dağıtım lisansı açıkça seçilmeden mağaza metninde “açık kaynak uygulama” ifadesi kullanılmamalıdır.
+
+## Yayın öncesi checklist
+
+- signed final AAB gerçek artifact olarak üretildi,
+- package ID/version code/version name doğru,
+- target/min SDK doğrulandı,
+- manifest permission listesi çıkarıldı,
+- Data Safety gerçek dependency/permission graph ile eşleşiyor,
+- privacy policy feature set ile eşleşiyor,
+- third-party notices güncel,
+- compatibility/limitations metni güncel,
+- screenshot ve mağaza metni gerçekten çalışan release davranışını gösteriyor,
+- pan/zoom gibi kullanıcıya görünür claim'ler fiziksel/emulator acceptance ile destekleniyor.
