@@ -296,4 +296,40 @@ A21_GATE: OPEN
 NEXT_ACTION: Sonraki normal BASLA/devam turunda AŞAMA 21'i (Android full corpus regression / beta gate) başlat.
 ```
 
+### 2026-09-05 — AŞAMA 21: Android full corpus regression / beta gate tamamlandı
+
+- Branch: `stage21-corpus-regression`.
+- PR: `#34` (`feat(stage21): full corpus regression and beta gate with api36 acceptance gate`).
+- `main` merge commit: `919888b`.
+- Release APK: `39,806,156` byte; SHA-256 `cbd0ea099db7ca58f95b8a0c083c6482c1bc8a3d99202f532c996b371c9ec249` (<45 MB bütçesi altında).
+- Android Emulator: `sdk_gphone64_x86_64` (Android 16 / API 36 / `x86_64`, serial `emulator-5554`).
+- Canlı PID: `13377`.
+- Ekran görüntüsü: `166,890` byte; SHA-256 `148d783e8800e391ee75fe1efc49c0961f6570603395c338759b0e95636d6224`.
+- Corpus Regresyonu ve Sadakat Katmanları:
+  - Toplam 14/14 aşama eksiksiz PASS (%100 başarı).
+  - P0 Geometri ve Çekirdek Varlıklar: 8/8 PASS (%100) — Temel Geometri ve Kadastro Precision C4 mühendislik sadakatinde, diğerleri $\ge$ C3.
+  - P1 Alt Sistemleri: 4/4 PASS (%100) — Layouts, XREFs, Resource Guards, Performance Stress $\ge$ C3.
+  - Kontrollü Negatif Fikstürler: 2/2 C2 — Eksik font ve eksik XREF kontrollü tanı kodları ve görsel fallback ile karşılandı.
+  - $\ge$ C3 Sadakat Oranı: %85,7 (Gereksinim: $\ge$ %75,0).
+  - Harita/Kadastro Çift Duyarlık: `(5,000,000.001, 5,000,000)` koordinatında 1 mm fark $10^{-9}$ tolerans ile ekrandan dünyaya geri dönüşümde tam korundu.
+  - Debug vs Release / Trimming / AOT: `A21_TRIMMING_AOT_PASS` ile SkiaSharp ve ACadSharp yansıma/çizim sembolleri tam korundu.
+  - Dumpsys meminfo Total PSS: `134.1 MB` (<250 MB bütçesi altında).
+  - Deterministik Snapshot: `schema=corpus-regression/v1`, hash `8edc8ac4fd5cb3de65e6ff66eb0bcee7254ae842cf3c57dbb2cb1b26054e4152`.
+  - Beta Kapı Kararı: `ANDROID_STAGE21_BETA_GATE_PASS` (`isPass=True`, `blockers=0`, `score=100/100`).
+- Host test belirteçleri: `STAGE21_CORPUS_REGRESSION_TESTS_PASS` (7/7 test: Full corpus regression summary passes, Beta gate verdict evaluation, Survey origin double precision integrity, P0 entity fidelity coverage, Controlled negative guards, Semantic snapshot determinism, Debug vs Release pipeline integrity), `STAGE20_PERFORMANCE_MEMORY_TESTS_PASS`, `STAGE19_RESOURCE_GUARDS_TESTS_PASS`, `STAGE18_VIEWER_LIFECYCLE_TESTS_PASS`, `STAGE17_REFERENCE_COMPATIBILITY_TESTS_PASS`, `STAGE16_LAYOUT_VIEWPORT_TESTS_PASS`, `STAGE15_DIMENSION_HATCH_TESTS_PASS`, `STAGE14_TEXT_FONT_TESTS_PASS`, `STAGE13_LAYER_STYLE_TESTS_PASS`, `STAGE12_BLOCK_INSERT_TESTS_PASS`, `STAGE11_VIEWPORT_GESTURE_TESTS_PASS`, `STAGE10_GEOMETRY_PRIMITIVES_TESTS_PASS`, `STAGE10_TESSELLATION_PRECISION_TESTS_PASS`, `STAGE10_P0_SEMANTIC_GOLDEN_PASS`, `STAGE04_RENDER_CONTRACT_TESTS_PASS`, `STAGE09_RENDER_SCENE_TESTS_PASS`.
+- Katman Mimari Testleri: `STAGE04_ARCHITECTURE_TESTS_PASS`, `STAGE05_DEPENDENCY_BOUNDARY_PASS`, `V04_REAL_ANDROID_APP_PROJECT_PASS` (MobilDwg.App içinde SkiaSharp ve ACadSharp doğrudan kaynak bağımlılık yasağı eksiksiz korunmuştur).
+- Android emülatör belirteçleri: `A21_EMULATOR_API36_PASS`, `A21_REAL_APP_APK_PASS`, `A21_REAL_APP_INSTALL_PASS`, `A21_REAL_APP_LAUNCH_PASS`, `A21_CORPUS_REGRESSION_PASS`, `A21_P0_P1_MATRIX_PASS`, `A21_BETA_GATE_VERDICT_PASS`, `A21_TRIMMING_AOT_PASS`, `A21_SNAPSHOT_PASS`, `A21_ANDROID_SKIA_RENDER_PASS`, `A21_REAL_APP_STABILITY_PASS pid=13377`, `ANDROID_STAGE21_CORPUS_REGRESSION_PASS`, `A21_REAL_APP_UI_IMAGE_READY`, `A21_REAL_APP_REGRESSION_MARKERS_PASS`, `A21_REAL_APP_UI_STATUS_PASS`, `A21_SCREENSHOT_PNG_PASS`, `A21_MEMINFO_PSS_PASS total_pss=134.1 MB`.
+- UI Doğrulaması: `a21_window.xml` hiyerarşisinde `ANDROID_STAGE21_CORPUS_REGRESSION_PASS` doğrulanarak `A21_REAL_APP_UI_STATUS_PASS` alındı.
+- Kararlılık: Paket ve PID kapsamında crash/ANR yok, uygulama canlı kaldı (`A21_REAL_APP_STABILITY_PASS pid=13377`).
+- Claim limit: `CLAIM_LIMIT=A21_FULL_CORPUS_REGRESSION_API36_ONLY_NOT_PHYSICAL_DEVICE_FIDELITY`.
+- Kanıt belgesi: `docs/evidence/STAGE_21.md`.
+
+```text
+IMPLEMENTATION_BASELINE: AŞAMA 21 — DONE
+IMPLEMENTATION_CURSOR: AŞAMA 22 — NOT_STARTED
+A22_GATE: OPEN
+NEXT_ACTION: Sonraki normal BASLA/devam turunda AŞAMA 22'yi (Android Release/AAB/compliance RC) başlat.
+```
+
+
 

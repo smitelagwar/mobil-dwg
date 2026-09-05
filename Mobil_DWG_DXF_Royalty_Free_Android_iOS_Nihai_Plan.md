@@ -18,10 +18,10 @@ IOS_STATUS: DEFERRED_FUTURE_OPTION
 ANDROID_REVALIDATION_01_09: CLOSED / VALIDATED_WITH_CLAIM_LIMITS
 LAST_VALIDATION_STAGE: V09 — VALIDATED
 LAST_VALIDATION_EVIDENCE: docs/evidence/android-validation/V09.md
-LAST_IMPLEMENTED_STAGE: AŞAMA 20 — DONE
-LAST_IMPLEMENTATION_EVIDENCE: docs/evidence/STAGE_20.md
-IMPLEMENTATION_CURSOR: AŞAMA 21 — NOT_STARTED
-IMPLEMENTATION_WORKSTREAM: AŞAMA 20 DONE (docs/evidence/STAGE_20.md)
+LAST_IMPLEMENTED_STAGE: AŞAMA 21 — DONE
+LAST_IMPLEMENTATION_EVIDENCE: docs/evidence/STAGE_21.md
+IMPLEMENTATION_CURSOR: AŞAMA 22 — NOT_STARTED
+IMPLEMENTATION_WORKSTREAM: AŞAMA 21 DONE (docs/evidence/STAGE_21.md)
 V01: VALIDATED — INFRASTRUCTURE_SMOKE_ONLY
 V02: VALIDATED — DEPENDENCY/LOCKFILE/LICENSE/HASH/VULNERABILITY/ANDROID-NATIVE BOUNDARY
 V03: VALIDATED — FIXTURE/PROVENANCE/GOLDEN/ANDROID-SMOKE-SET CONTRACT
@@ -33,9 +33,11 @@ V08: VALIDATED — ANDROID_PRODUCTION_CI_GRAPH_IOS_ISOLATION_ONLY_HISTORICAL_IOS
 V09: VALIDATED — RENDER_SCENE_CAMERA_DIAGNOSTICS_FOUNDATION_AND_ANDROID_COMPOSITION_REVALIDATION_ONLY_NOT_GEOMETRY_RENDER_FIDELITY
 PENDING_EMULATOR_QUEUE: EMPTY
 PHYSICAL_ANDROID: DEFERRED_RELEASE_DEVICE_GATE
-NEXT_ACTION: Sonraki normal BASLA/devam turunda AŞAMA 21'i (Android full corpus regression / beta gate) başlat.
+NEXT_ACTION: Sonraki normal BASLA/devam turunda AŞAMA 22'yi (Android Release/AAB/compliance RC) başlat.
 A20_MAIN_MERGE: 1603154 (PR #33)
-A21_GATE: OPEN
+A21_MAIN_MERGE: 919888b (PR #34)
+A21_GATE: CLOSED / PASSED
+A22_GATE: OPEN
 ```
 
 ### `devam` protokolü
@@ -368,9 +370,11 @@ Giriş kapısı: `AŞAMA 19 DONE ON MAIN`. PR #33 ile tamamlandı.
 
 Physical Android Release TTFUP/frame p50/p95/PSS/GC/artifact size; small/medium/large corpus; yalnız profiler/A-B evidence ile optimization.
 
-### AŞAMA 21 — Android full corpus regression / beta gate
+### AŞAMA 21 — Android full corpus regression / beta gate — `DONE`
 
-Full public/private corpus parse/scene/render/golden, P0/P1 matrix, physical Android, Debug/Release/trimming/AOT/artifact farkları.
+Giriş kapısı: `AŞAMA 20 DONE ON MAIN`.
+
+Full public/private corpus parse/scene/render/golden, P0/P1 matrix (P0 8/8 C3/C4 %100, P1 4/4 C3 %100, negatives 2/2 C2, C3+ %85.7), harita/kadastro 5.000.000 + 0.001 çift duyarlık korunumu, Debug vs Release / trimming / AOT analizi, APK boyutu (39.8 MB < 45 MB), Dumpsys PSS (134.1 MB < 250 MB), deterministik snapshot (`schema=corpus-regression/v1`) ve API 36 emülatör kabul testi ile beta gate onayı (`ANDROID_STAGE21_BETA_GATE_PASS`). Evidence: `docs/evidence/STAGE_21.md`.
 
 ### AŞAMA 22 — Android Release/AAB/compliance RC
 

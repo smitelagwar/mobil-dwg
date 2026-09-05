@@ -26,17 +26,17 @@ Bu dosya kısa kalıcı tarihçe/checkpoint kaydıdır. Ayrıntılı teknik kan�
 ```text
 ACTIVE_PRODUCT_TARGET: ANDROID_ONLY
 IOS_STATUS: DEFERRED_FUTURE_OPTION
-IMPLEMENTATION_BASELINE: AŞAMA 20 — DONE
+IMPLEMENTATION_BASELINE: AŞAMA 21 — DONE
 ANDROID_VALIDATION_V01_V09: CLOSED / VALIDATED_WITH_CLAIM_LIMITS
-LAST_IMPLEMENTATION: AŞAMA 20 — DONE
-LAST_IMPLEMENTATION_EVIDENCE: docs/evidence/STAGE_20.md
-A20_CLAIM: A20_PERFORMANCE_MEMORY_API36_ONLY_NOT_PHYSICAL_DEVICE_FIDELITY
-IMPLEMENTATION_CURSOR: AŞAMA 21 — NOT_STARTED
+LAST_IMPLEMENTATION: AŞAMA 21 — DONE
+LAST_IMPLEMENTATION_EVIDENCE: docs/evidence/STAGE_21.md
+A21_CLAIM: A21_FULL_CORPUS_REGRESSION_API36_ONLY_NOT_PHYSICAL_DEVICE_FIDELITY
+IMPLEMENTATION_CURSOR: AŞAMA 22 — NOT_STARTED
 A10_WORKSTREAM: docs/A10_WORKSTREAM.md (DONE)
 PENDING_EMULATOR_QUEUE: EMPTY
 PHYSICAL_ANDROID: DEFERRED_RELEASE_DEVICE_GATE
-A21_GATE: OPEN
-NEXT_ACTION: Sonraki normal BASLA/devam turunda AŞAMA 21'i (Android full corpus regression / beta gate) başlat.
+A22_GATE: OPEN
+NEXT_ACTION: Sonraki normal BASLA/devam turunda AŞAMA 22'yi (Android accessibility, dark/light theme, localization) başlat.
 LAST_UPDATE: 2026-09-05
 ```
 
@@ -63,7 +63,8 @@ LAST_UPDATE: 2026-09-05
 - AŞAMA 18 — Tam Android viewer UX / lifecycle — `DONE`; PR `#31`, main merge `ab3a768`, evidence `docs/evidence/STAGE_18.md`.
 - AŞAMA 19 — Malicious/corrupt input ve resource guards — `DONE`; PR `#32`, main merge `9483e7a`, evidence `docs/evidence/STAGE_19.md`.
 - AŞAMA 20 — Ölçümlü performance/memory — `DONE`; PR `#33`, main merge `1603154`, evidence `docs/evidence/STAGE_20.md`.
-- AŞAMA 21–22 — Android viewer/release implementation sırası; cursor AŞAMA 21'de.
+- AŞAMA 21 — Android full corpus regression / beta gate — `DONE`; PR `#34`, main merge `919888b`, evidence `docs/evidence/STAGE_21.md`.
+- AŞAMA 22 — Android Release/AAB/compliance RC; cursor AŞAMA 22'de.
 - AŞAMA 23–24 — future iOS track, deferred.
 - AŞAMA 25–27 — Android beta/freeze/final handoff.
 
