@@ -18,10 +18,10 @@ IOS_STATUS: DEFERRED_FUTURE_OPTION
 ANDROID_REVALIDATION_01_09: CLOSED / VALIDATED_WITH_CLAIM_LIMITS
 LAST_VALIDATION_STAGE: V09 — VALIDATED
 LAST_VALIDATION_EVIDENCE: docs/evidence/android-validation/V09.md
-LAST_IMPLEMENTED_STAGE: AŞAMA 16 — DONE
-LAST_IMPLEMENTATION_EVIDENCE: docs/evidence/STAGE_16.md
-IMPLEMENTATION_CURSOR: AŞAMA 17 — NOT_STARTED
-IMPLEMENTATION_WORKSTREAM: AŞAMA 16 DONE (docs/evidence/STAGE_16.md)
+LAST_IMPLEMENTED_STAGE: AŞAMA 17 — DONE
+LAST_IMPLEMENTATION_EVIDENCE: docs/evidence/STAGE_17.md
+IMPLEMENTATION_CURSOR: AŞAMA 18 — NOT_STARTED
+IMPLEMENTATION_WORKSTREAM: AŞAMA 17 DONE (docs/evidence/STAGE_17.md)
 V01: VALIDATED — INFRASTRUCTURE_SMOKE_ONLY
 V02: VALIDATED — DEPENDENCY/LOCKFILE/LICENSE/HASH/VULNERABILITY/ANDROID-NATIVE BOUNDARY
 V03: VALIDATED — FIXTURE/PROVENANCE/GOLDEN/ANDROID-SMOKE-SET CONTRACT
@@ -33,9 +33,9 @@ V08: VALIDATED — ANDROID_PRODUCTION_CI_GRAPH_IOS_ISOLATION_ONLY_HISTORICAL_IOS
 V09: VALIDATED — RENDER_SCENE_CAMERA_DIAGNOSTICS_FOUNDATION_AND_ANDROID_COMPOSITION_REVALIDATION_ONLY_NOT_GEOMETRY_RENDER_FIDELITY
 PENDING_EMULATOR_QUEUE: EMPTY
 PHYSICAL_ANDROID: DEFERRED_RELEASE_DEVICE_GATE
-NEXT_ACTION: Sonraki normal BASLA/devam turunda AŞAMA 17'yi (Büyük Dosya Streaming & Performans / Mekansal İndeksleme / LOD) başlat.
-A16_MAIN_MERGE: b978b84 (PR #29)
-A17_GATE: OPEN
+NEXT_ACTION: Sonraki normal BASLA/devam turunda AŞAMA 18'i (Tam Android viewer UX / lifecycle) başlat.
+A17_MAIN_MERGE: dd9727b (PR #30)
+A18_GATE: OPEN
 ```
 
 ### `devam` protokolü
@@ -338,11 +338,15 @@ Giriş kapısı: `AŞAMA 14 DONE ON MAIN`. PR #28 ile tamamlandı.
 
 Önce anonymous dimension block (`*D...`), temel dimension types (Aligned, Rotated Linear, Radial, Diametric), dejenere ölçü korumaları (`DEGENERATE_DIMENSION_POINTS`, `INVALID_DIMENSION_GEOMETRY`), leader/multileader geometrisi, hatch 1mm kapanma toleransı ve kırık sınır teşhisi, EvenOdd ada doldurma, ANSI31 kırpılmış desen çizgisi üretimi.
 
-### AŞAMA 16 — Model/layout/paper-space/viewport
+### AŞAMA 16 — Model/layout/paper-space/viewport — `DONE`
+
+Giriş kapısı: `AŞAMA 15 DONE ON MAIN`. PR #29 ile tamamlandı.
 
 Layout selector, paper-space entity, viewport clip/center/height/twist ve layer override; layout change reparse yapmaz.
 
-### AŞAMA 17 — XREF/raster/underlay/compatibility
+### AŞAMA 17 — XREF/raster/underlay/compatibility — `DONE`
+
+Giriş kapısı: `AŞAMA 16 DONE ON MAIN`. PR #30 ile tamamlandı.
 
 Detect/warn; remote auto-download yok; explicit folder grant varsa bounded mapping; external kaynak eksikliği sessiz değil.
 

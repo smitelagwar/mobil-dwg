@@ -212,10 +212,27 @@ PENDING_EMULATOR_QUEUE: EMPTY
 - Claim limit: `CLAIM_LIMIT=A16_LAYOUT_VIEWPORT_API36_ONLY_NOT_CAD_PARSE_TO_SCENE_OR_PHYSICAL_DEVICE_FIDELITY`.
 - Kanıt belgesi: `docs/evidence/STAGE_16.md`.
 
+### 2026-09-05: AŞAMA 17 — XREF / Raster Image / Underlay / External References & Compatibility Tamamlandı ve Merge Edildi (PR #30)
+
+- PR: `#30` (`feat(stage17): xref raster underlay references and compatibility rendering`).
+- `main` merge commit: `dd9727b`.
+- Release APK: `39,389,206` byte; SHA-256 `376cdfd354b35e587e4bf2d8e2317a377a77f29446a1d85f4005983c4b2c3c3c`.
+- Android Emulator: `sdk_gphone64_x86_64` (Android 16 / API 36 / `x86_64`, serial `emulator-5554`).
+- Canlı PID: `10383`.
+- Ekran görüntüsü: `155,161` byte; SHA-256 `9c011820b640080acfd3500272a0a578a57b9b381d874fe459af14b289ed59f5`.
+- Host test belirteçleri: `STAGE17_REFERENCE_COMPATIBILITY_TESTS_PASS` (12/12 test: unresolved XREF emits diagnostic and generates placeholder border+cross+label, missing raster image placeholder, missing PDF underlay placeholder, remote URL rejected `XREF_REMOTE_NOT_SUPPORTED` with zero network calls, bounded directory resolver case-insensitive file matching, path traversal attempt blocked `PATH_TRAVERSAL_PREVENTED`, resolved local raster image primitive creation, Skia render raster image non-background pixels, raster clipping boundary, raster fade/transparency, composite scene with resolved raster and missing references, deterministic external reference snapshot `schema=xref-compat/v1`), `STAGE16_LAYOUT_VIEWPORT_TESTS_PASS`, `STAGE15_DIMENSION_HATCH_TESTS_PASS`, `STAGE14_TEXT_FONT_TESTS_PASS`, `STAGE13_LAYER_STYLE_TESTS_PASS`, `STAGE12_BLOCK_INSERT_TESTS_PASS`, `STAGE11_VIEWPORT_GESTURE_TESTS_PASS`, `STAGE10_GEOMETRY_PRIMITIVES_TESTS_PASS`, `STAGE10_TESSELLATION_PRECISION_TESTS_PASS`, `STAGE10_P0_SEMANTIC_GOLDEN_PASS`, `STAGE04_RENDER_CONTRACT_TESTS_PASS`, `STAGE09_RENDER_SCENE_TESTS_PASS`.
+- Katman Mimari Testleri: `STAGE04_ARCHITECTURE_TESTS_PASS`, `STAGE05_DEPENDENCY_BOUNDARY_PASS`, `V04_REAL_ANDROID_APP_PROJECT_PASS`.
+- Android emülatör belirteçleri: `A17_ANDROID_REMOTE_REJECTED_PASS`, `A17_ANDROID_SECURITY_TRAVERSAL_PASS`, `A17_RENDER_PIXELS=43820`, `A17_SNAPSHOT_HASH=1c4f5ea78d46db132488880e46b9a89c9e88bf4b98687a412e8b28cf9ff7036a`, `A17_ANDROID_SKIA_RENDER_PASS bytes=17942 sha256=d32ef7ef0ad3ad0f70a1a8c04ec4283bba8c919d71457199c4c478a87383fc44`, `ANDROID_STAGE17_XREF_COMPAT_PASS`, `A17_REAL_APP_UI_IMAGE_READY`, `A17_REAL_APP_UI_STATUS_PASS`, `A17_REAL_APP_STABILITY_PASS`.
+- UI Doğrulaması: `window.xml` hiyerarşisinde `ANDROID_STAGE17_XREF_COMPAT_PASS` doğrulanarak `A17_REAL_APP_UI_STATUS_PASS` alındı.
+- Kararlılık: Paket ve PID kapsamında crash/ANR yok, uygulama canlı kaldı (`A17_REAL_APP_STABILITY_PASS pid=10383`).
+- Claim limit: `CLAIM_LIMIT=A17_XREF_COMPAT_API36_ONLY_NOT_CAD_PARSE_TO_SCENE_OR_PHYSICAL_DEVICE_FIDELITY`.
+- Kanıt belgesi: `docs/evidence/STAGE_17.md`.
+
 ```text
-IMPLEMENTATION_BASELINE: AŞAMA 16 — DONE
-IMPLEMENTATION_CURSOR: AŞAMA 17 — NOT_STARTED
-A17_GATE: OPEN
-NEXT_ACTION: Sonraki normal BASLA/devam turunda AŞAMA 17'yi (Büyük Dosya Streaming & Performans / Mekansal İndeksleme / LOD) başlat.
+IMPLEMENTATION_BASELINE: AŞAMA 17 — DONE
+IMPLEMENTATION_CURSOR: AŞAMA 18 — NOT_STARTED
+A18_GATE: OPEN
+NEXT_ACTION: Sonraki normal BASLA/devam turunda AŞAMA 18'i (Tam Android viewer UX / lifecycle) başlat.
 ```
+
 
