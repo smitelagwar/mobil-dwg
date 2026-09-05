@@ -26,17 +26,17 @@ Bu dosya kısa kalıcı tarihçe/checkpoint kaydıdır. Ayrıntılı teknik kan�
 ```text
 ACTIVE_PRODUCT_TARGET: ANDROID_ONLY
 IOS_STATUS: DEFERRED_FUTURE_OPTION
-IMPLEMENTATION_BASELINE: AŞAMA 11 — DONE
+IMPLEMENTATION_BASELINE: AŞAMA 12 — DONE
 ANDROID_VALIDATION_V01_V09: CLOSED / VALIDATED_WITH_CLAIM_LIMITS
-LAST_IMPLEMENTATION: AŞAMA 11 — DONE
-LAST_IMPLEMENTATION_EVIDENCE: docs/evidence/STAGE_11.md
-A11_MAIN_MERGE: 51e8b5b (PR #24)
-IMPLEMENTATION_CURSOR: AŞAMA 12 — NOT_STARTED
+LAST_IMPLEMENTATION: AŞAMA 12 — DONE
+LAST_IMPLEMENTATION_EVIDENCE: docs/evidence/STAGE_12.md
+A12_MAIN_MERGE: 4752a17 (PR #25)
+IMPLEMENTATION_CURSOR: AŞAMA 13 — NOT_STARTED
 A10_WORKSTREAM: docs/A10_WORKSTREAM.md (DONE)
 PENDING_EMULATOR_QUEUE: EMPTY
 PHYSICAL_ANDROID: DEFERRED_RELEASE_DEVICE_GATE
-A12_GATE: OPEN
-NEXT_ACTION: Sonraki normal BASLA/devam turunda AŞAMA 12'yi (DWG R13–R2018 Parser Çekirdeği) başlat.
+A13_GATE: OPEN
+NEXT_ACTION: Sonraki normal BASLA/devam turunda AŞAMA 13'ü (Layer/color/linetype/lineweight) başlat.
 LAST_UPDATE: 2026-09-05
 ```
 
@@ -54,7 +54,8 @@ LAST_UPDATE: 2026-09-05
 - AŞAMA 09 — immutable RenderScene/camera/diagnostics foundation — `DONE`; historical authoritative run `32815175055`, artifact `9551137293`, main merge `0a2dd886bbe59698a6d2eb4c99f66e7f9270063a`.
 - AŞAMA 10 — P0 geometry renderer — `DONE`; PR `#23`, main merge `ddeb975`, evidence `docs/evidence/STAGE_10.md`.
 - AŞAMA 11 — Mobil viewport ve gesture — `DONE`; PR `#24`, main merge `51e8b5b`, evidence `docs/evidence/STAGE_11.md`.
-- AŞAMA 12–22 — Android viewer/release implementation sırası; cursor AŞAMA 12'de.
+- AŞAMA 12 — Block / INSERT / Attribute — `DONE`; PR `#25`, main merge `4752a17`, evidence `docs/evidence/STAGE_12.md`.
+- AŞAMA 13–22 — Android viewer/release implementation sırası; cursor AŞAMA 13'te.
 - AŞAMA 23–24 — future iOS track, deferred.
 - AŞAMA 25–27 — Android beta/freeze/final handoff.
 

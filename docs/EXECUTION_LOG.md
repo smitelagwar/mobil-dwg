@@ -129,10 +129,29 @@ PENDING_EMULATOR_QUEUE: EMPTY
 - Claim limit: `A11_VIEWPORT_GESTURE_API36_ONLY_NOT_CAD_PARSE_TO_SCENE_OR_PHYSICAL_DEVICE_FIDELITY`.
 - Kanıt belgesi: `docs/evidence/STAGE_11.md`.
 
+## AŞAMA 12 — Block / INSERT / Attribute
+
+- PR: `#25` (`feat(a12): implement block, insert, and attribute expansion`) — `MERGED`.
+- Base `main`: `62104933af8ca1066c9870dce6099c8732f65fb7`.
+- PR head SHA: `e1ae799`.
+- Main merge commit: `4752a17`.
+- Exact .NET SDK: `10.0.400`.
+- Release build: `0 Warning / 0 Error`.
+- Release APK: `39,270,422` byte; SHA-256 `b9acd8f1de0d847b2ac5a6492d587b0594782d77fab9fbd1c6c0bc2dafd8c155`.
+- Android Emulator: `sdk_gphone64_x86_64` (Android 16 / API 36 / `x86_64`, serial `emulator-5554`).
+- Canlı PID: `7926`.
+- Ekran görüntüsü: `96,079` byte; SHA-256 `7ef1abd77ce9f0d052775e9aeb79cea81bae2eba078205ba41cc2ecc0b9761b5`.
+- Host test belirteçleri: `STAGE12_BLOCK_INSERT_TESTS_PASS` (Transform2D, Non-uniform scale, mirror, nested hierarchy, Layer 0, ByBlock, attributes, cycle guard, depth guard, budget guard, semantic golden snapshot), `STAGE11_VIEWPORT_GESTURE_TESTS_PASS`, `STAGE10_GEOMETRY_PRIMITIVES_TESTS_PASS`, `STAGE10_TESSELLATION_PRECISION_TESTS_PASS`, `STAGE10_P0_SEMANTIC_GOLDEN_PASS`, `STAGE04_RENDER_CONTRACT_TESTS_PASS`, `STAGE09_RENDER_SCENE_TESTS_PASS`, `STAGE04_ARCHITECTURE_TESTS_PASS`, `STAGE05_DEPENDENCY_BOUNDARY_PASS`, `V04_REAL_ANDROID_APP_PROJECT_PASS`.
+- Android emülatör belirteçleri: `A12_ANDROID_NESTED_TRANSFORM_PASS`, `A12_ANDROID_NON_UNIFORM_SCALE_MIRROR_PASS`, `A12_ANDROID_LAYER0_BYBLOCK_INHERITANCE_PASS`, `A12_ANDROID_ATTRIB_PASS`, `A12_ANDROID_CYCLE_DEPTH_BUDGET_GUARDS_PASS`, `A12_ANDROID_PNG_PASS`, `ANDROID_STAGE12_BLOCK_INSERT_PASS`, `A12_REAL_APP_UI_IMAGE_READY`, `A12_REAL_APP_UI_STATUS_PASS`, `A12_REAL_APP_STABILITY_PASS`.
+- UI Doğrulaması: `window.xml` hiyerarşisinde `ANDROID_STAGE12_BLOCK_INSERT_PASS` doğrulanarak `A12_REAL_APP_UI_STATUS_PASS` alındı.
+- Kararlılık: Paket ve PID kapsamında crash/ANR yok, uygulama canlı kaldı (`A12_REAL_APP_STABILITY_PASS pid=7926`).
+- Claim limit: `CLAIM_LIMIT=A12_BLOCK_INSERT_API36_ONLY_NOT_CAD_PARSE_TO_SCENE_OR_PHYSICAL_DEVICE_FIDELITY`.
+- Kanıt belgesi: `docs/evidence/STAGE_12.md`.
+
 ```text
-IMPLEMENTATION_BASELINE: AŞAMA 11 — DONE
-IMPLEMENTATION_CURSOR: AŞAMA 12 — NOT_STARTED
-A12_GATE: OPEN
-NEXT_ACTION: Sonraki normal BASLA/devam turunda AŞAMA 12'yi (DWG R13–R2018 Parser Çekirdeği) başlat.
+IMPLEMENTATION_BASELINE: AŞAMA 12 — DONE
+IMPLEMENTATION_CURSOR: AŞAMA 13 — NOT_STARTED
+A13_GATE: OPEN
+NEXT_ACTION: Sonraki normal BASLA/devam turunda AŞAMA 13'ü (Layer/color/linetype/lineweight) başlat.
 ```
 

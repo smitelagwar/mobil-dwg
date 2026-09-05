@@ -18,10 +18,10 @@ IOS_STATUS: DEFERRED_FUTURE_OPTION
 ANDROID_REVALIDATION_01_09: CLOSED / VALIDATED_WITH_CLAIM_LIMITS
 LAST_VALIDATION_STAGE: V09 — VALIDATED
 LAST_VALIDATION_EVIDENCE: docs/evidence/android-validation/V09.md
-LAST_IMPLEMENTED_STAGE: AŞAMA 11 — DONE
-LAST_IMPLEMENTATION_EVIDENCE: docs/evidence/STAGE_11.md
-IMPLEMENTATION_CURSOR: AŞAMA 12 — NOT_STARTED
-IMPLEMENTATION_WORKSTREAM: AŞAMA 11 DONE (docs/evidence/STAGE_11.md)
+LAST_IMPLEMENTED_STAGE: AŞAMA 12 — DONE
+LAST_IMPLEMENTATION_EVIDENCE: docs/evidence/STAGE_12.md
+IMPLEMENTATION_CURSOR: AŞAMA 13 — NOT_STARTED
+IMPLEMENTATION_WORKSTREAM: AŞAMA 12 DONE (docs/evidence/STAGE_12.md)
 V01: VALIDATED — INFRASTRUCTURE_SMOKE_ONLY
 V02: VALIDATED — DEPENDENCY/LOCKFILE/LICENSE/HASH/VULNERABILITY/ANDROID-NATIVE BOUNDARY
 V03: VALIDATED — FIXTURE/PROVENANCE/GOLDEN/ANDROID-SMOKE-SET CONTRACT
@@ -33,9 +33,9 @@ V08: VALIDATED — ANDROID_PRODUCTION_CI_GRAPH_IOS_ISOLATION_ONLY_HISTORICAL_IOS
 V09: VALIDATED — RENDER_SCENE_CAMERA_DIAGNOSTICS_FOUNDATION_AND_ANDROID_COMPOSITION_REVALIDATION_ONLY_NOT_GEOMETRY_RENDER_FIDELITY
 PENDING_EMULATOR_QUEUE: EMPTY
 PHYSICAL_ANDROID: DEFERRED_RELEASE_DEVICE_GATE
-NEXT_ACTION: Sonraki normal BASLA/devam turunda AŞAMA 12 DWG R13–R2018 Parser Çekirdeğini başlat.
-A11_MAIN_MERGE: 51e8b5b (PR #24)
-A12_GATE: OPEN
+NEXT_ACTION: Sonraki normal BASLA/devam turunda AŞAMA 13 Layer/color/linetype/lineweight'i başlat.
+A12_MAIN_MERGE: 4752a17 (PR #25)
+A13_GATE: OPEN
 ```
 
 ### `devam` protokolü
@@ -303,9 +303,9 @@ A10 merge kapısı:
 7. PR normal merge commit ile `main`e alınır; post-merge evidence/checkpoint kapanır.
 8. Ancak bundan sonra A10 `DONE ON MAIN` olur.
 
-### AŞAMA 11 — Mobil viewport ve gesture
+### AŞAMA 11 — Mobil viewport ve gesture — `DONE`
 
-Giriş kapısı: `AŞAMA 10 DONE ON MAIN` + `PENDING_EMULATOR_QUEUE EMPTY`. AŞAMA 11, A10 kapanış turunda başlatılmaz.
+Giriş kapısı: `AŞAMA 10 DONE ON MAIN` + `PENDING_EMULATOR_QUEUE EMPTY`. PR #24 ile tamamlandı.
 
 - pan, pinch zoom, fit extents, gerekirse double-tap fit
 - pinch focal point preservation
@@ -314,7 +314,9 @@ Giriş kapısı: `AŞAMA 10 DONE ON MAIN` + `PENDING_EMULATOR_QUEUE EMPTY`. AŞA
 - rotation reparse yapmaz
 - debug-only frame timing
 
-### AŞAMA 12 — Block/INSERT/attribute
+### AŞAMA 12 — Block/INSERT/attribute — `DONE`
+
+Giriş kapısı: `AŞAMA 11 DONE ON MAIN`. PR #25 ile tamamlandı.
 
 Nested transform order, mirror/non-uniform scale, ATTRIB/ATTDEF, Layer0/ByBlock/ByLayer context, cycle/depth/instance guards.
 
