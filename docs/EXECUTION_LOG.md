@@ -324,11 +324,37 @@ NEXT_ACTION: Sonraki normal BASLA/devam turunda AŞAMA 21'i (Android full corpus
 - Claim limit: `CLAIM_LIMIT=A21_FULL_CORPUS_REGRESSION_API36_ONLY_NOT_PHYSICAL_DEVICE_FIDELITY`.
 - Kanıt belgesi: `docs/evidence/STAGE_21.md`.
 
+### 2026-09-05 — AŞAMA 22: Android Release/AAB/compliance RC tamamlandı
+
+- Branch: `stage22-release-rc`.
+- PR: `#35` (`feat(stage22): android release aab and compliance rc with api36 acceptance gate`).
+- Release APK: `39,524,374` byte (~37.7 MB, <45 MB bütçesi altında, SHA-256 `97d0e544d64cb20fdf9cc08948e8174e6d3e61a7621761ddf2fa7dca905b1cc9`).
+- Release AAB: `38,978,709` byte (~37.1 MB, multi-ABI universal arm64-v8a + x86_64, <45 MB bütçesi altında, SHA-256 `c8dcb33f925bbd3df43a96ae7b1dff90d1f7bebb6c8889c0953184cfb786fa0b`).
+- Android Emulator: `sdk_gphone64_x86_64` (Android 16 / API 36 / `x86_64`, serial `emulator-5554`).
+- Canlı PID: `3791`.
+- Ekran görüntüsü: `214,908` byte; SHA-256 `f62f5405c778d1e7e29ad78e6b5a4d6d185db7efcc29a16adde9699cb8dee4fa`.
+- Nihai Paket Metaverisi: `com.smitelagwar.mobildwg`, Version `1.0.0`, VersionCode `1`, TargetSdk `36`, MinSdk `24`.
+- Veri Güvenliği ve Gizlilik: 100% çevrimdışı, sıfır `android.permission.INTERNET`, sıfır kullanıcı verisi/telemetri/reklam, Scoped Storage uyumlu.
+- Bağımlılık Envanteri & SPDX-2.3 SBOM: ACadSharp 3.7.1 [MIT], SkiaSharp 4.151.1 [MIT], SkiaSharp.NativeAssets.Android 4.151.1 [MIT], Microsoft.Maui.Controls 10.0.100 [MIT], Microsoft.Maui.Core 10.0.100 [MIT], System.Text.Encoding.CodePages 10.0.1 [MIT]; sıfır kapalı CAD SDK, sıfır GPL/AGPL, sıfır telif yükümlülüğü.
+- Yasal Bildirimler ve Ticari Marka: Autodesk DWG/AutoCAD marka feragatnamesi ve telifsiz güvence metni (`LEGAL_NOTICES.txt`, `SBOM.json`).
+- Erişilebilirlik ve Tema: TalkBack / Accessibility özellikleri tanımlı, tüm butonlar min 48dp dokunma alanı (`MinimumHeightRequest=48`), Koyu (`#101010`) ve Açık (`#FAFAFA`) tema çözücüsü.
+- DWG/DXF IntentFilters: `MainActivity.cs` üzerinde `ACTION_VIEW`, MIME türleri `application/acad`, `image/vnd.dwg`, `application/dxf` vb., `file` ve `content` şemaları.
+- Dumpsys meminfo Total PSS: `133.0 MB` (<250 MB bütçesi altında).
+- Deterministik Snapshot: `schema=compliance-rc/v1`, hash `30bc1164cdb5406e0e79b0730b9fb2e77292cb89cebdce7359654c392b7eb439`.
+- Release RC Kararı: `ANDROID_STAGE22_RELEASE_RC_PASS` (`isPass=True`, `score=100/100`, `blockers=0`).
+- Host test belirteçleri: `STAGE22_RELEASE_RC_TESTS_PASS` (7/7 test), `A22_COMPLIANCE_REPORTS_EXPORTED_PASS`, `STAGE21_CORPUS_REGRESSION_TESTS_PASS`, `STAGE20_PERFORMANCE_MEMORY_TESTS_PASS` ve tüm aşama 10-19 testleri.
+- Katman Mimari Testleri: `STAGE04_ARCHITECTURE_TESTS_PASS`, `STAGE05_DEPENDENCY_BOUNDARY_PASS`, `V04_REAL_ANDROID_APP_PROJECT_PASS` (%100 PASS).
+- Android emülatör belirteçleri: `A22_EMULATOR_API36_PASS`, `A22_RELEASE_AAB_PASS`, `A22_RELEASE_APK_PASS`, `A22_MANIFEST_DATA_SAFETY_PASS`, `A22_MANIFEST_SDK_PASS`, `A22_MANIFEST_INTENT_FILTER_PASS`, `A22_REAL_APP_INSTALL_PASS`, `A22_REAL_APP_LAUNCH_PASS`, `A22_PACKAGE_METADATA_PASS`, `A22_DATA_SAFETY_PASS`, `A22_DEPENDENCY_SBOM_PASS`, `A22_TRADEMARK_NOTICES_PASS`, `A22_ACCESSIBILITY_THEME_PASS`, `A22_RC_GATE_VERDICT_PASS`, `A22_SNAPSHOT_PASS`, `A22_ANDROID_RENDER_PASS`, `A22_REAL_APP_STABILITY_PASS pid=3791`, `A22_REAL_APP_UI_IMAGE_READY`, `A22_REAL_APP_RC_MARKERS_PASS`, `A22_REAL_APP_UI_STATUS_PASS`, `A22_SCREENSHOT_PNG_PASS`, `A22_MEMINFO_PSS_PASS total_pss=133 MB`, `A22_COMPLIANCE_REPORTS_PASS`, `ANDROID_STAGE22_RELEASE_RC_PASS`.
+- UI Doğrulaması: `a22_window.xml` hiyerarşisinde `ANDROID_STAGE22_RELEASE_RC_PASS` doğrulanarak `A22_REAL_APP_UI_STATUS_PASS` alındı.
+- Kararlılık: Paket ve PID kapsamında crash/ANR yok, uygulama canlı kaldı (`A22_REAL_APP_STABILITY_PASS pid=3791`).
+- Claim limit: `CLAIM_LIMIT=A22_RELEASE_RC_API36_ONLY_NOT_PHYSICAL_DEVICE_FIDELITY`.
+- Kanıt belgesi: `docs/evidence/STAGE_22.md`.
+
 ```text
-IMPLEMENTATION_BASELINE: AŞAMA 21 — DONE
-IMPLEMENTATION_CURSOR: AŞAMA 22 — NOT_STARTED
-A22_GATE: OPEN
-NEXT_ACTION: Sonraki normal BASLA/devam turunda AŞAMA 22'yi (Android Release/AAB/compliance RC) başlat.
+IMPLEMENTATION_BASELINE: AŞAMA 22 — DONE
+IMPLEMENTATION_CURSOR: AŞAMA 23–24 DEFERRED / AŞAMA 25 — NOT_STARTED
+A25_GATE: OPEN
+NEXT_ACTION: Sonraki normal BASLA/devam turunda AŞAMA 25'i (Android beta ve blocker düzeltmeleri) başlat.
 ```
 
 

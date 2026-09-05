@@ -18,10 +18,10 @@ IOS_STATUS: DEFERRED_FUTURE_OPTION
 ANDROID_REVALIDATION_01_09: CLOSED / VALIDATED_WITH_CLAIM_LIMITS
 LAST_VALIDATION_STAGE: V09 — VALIDATED
 LAST_VALIDATION_EVIDENCE: docs/evidence/android-validation/V09.md
-LAST_IMPLEMENTED_STAGE: AŞAMA 21 — DONE
-LAST_IMPLEMENTATION_EVIDENCE: docs/evidence/STAGE_21.md
-IMPLEMENTATION_CURSOR: AŞAMA 22 — NOT_STARTED
-IMPLEMENTATION_WORKSTREAM: AŞAMA 21 DONE (docs/evidence/STAGE_21.md)
+LAST_IMPLEMENTED_STAGE: AŞAMA 22 — DONE
+LAST_IMPLEMENTATION_EVIDENCE: docs/evidence/STAGE_22.md
+IMPLEMENTATION_CURSOR: AŞAMA 23–24 DEFERRED / AŞAMA 25 — NOT_STARTED
+IMPLEMENTATION_WORKSTREAM: AŞAMA 22 DONE (docs/evidence/STAGE_22.md)
 V01: VALIDATED — INFRASTRUCTURE_SMOKE_ONLY
 V02: VALIDATED — DEPENDENCY/LOCKFILE/LICENSE/HASH/VULNERABILITY/ANDROID-NATIVE BOUNDARY
 V03: VALIDATED — FIXTURE/PROVENANCE/GOLDEN/ANDROID-SMOKE-SET CONTRACT
@@ -33,11 +33,12 @@ V08: VALIDATED — ANDROID_PRODUCTION_CI_GRAPH_IOS_ISOLATION_ONLY_HISTORICAL_IOS
 V09: VALIDATED — RENDER_SCENE_CAMERA_DIAGNOSTICS_FOUNDATION_AND_ANDROID_COMPOSITION_REVALIDATION_ONLY_NOT_GEOMETRY_RENDER_FIDELITY
 PENDING_EMULATOR_QUEUE: EMPTY
 PHYSICAL_ANDROID: DEFERRED_RELEASE_DEVICE_GATE
-NEXT_ACTION: Sonraki normal BASLA/devam turunda AŞAMA 22'yi (Android Release/AAB/compliance RC) başlat.
+NEXT_ACTION: Sonraki normal BASLA/devam turunda AŞAMA 25'i (Android beta ve blocker düzeltmeleri) başlat.
 A20_MAIN_MERGE: 1603154 (PR #33)
 A21_MAIN_MERGE: 919888b (PR #34)
 A21_GATE: CLOSED / PASSED
-A22_GATE: OPEN
+A22_GATE: CLOSED / PASSED
+A25_GATE: OPEN
 ```
 
 ### `devam` protokolü
@@ -378,7 +379,9 @@ Full public/private corpus parse/scene/render/golden, P0/P1 matrix (P0 8/8 C3/C4
 
 ### AŞAMA 22 — Android Release/AAB/compliance RC
 
-Final package/icon/version, live target SDK/Play/Data Safety/privacy, accessibility/licenses, secure signing, signed APK+AAB physical smoke, artifact inventory, SBOM/notices/compliance/trademark review.
+Giriş kapısı: `AŞAMA 21 DONE ON MAIN`.
+
+Final package/icon/version (1.0.0, SDK 36, minSdk 24), live target SDK/Play/Data Safety/privacy (100% offline, zero INTERNET permission, app-private scoped storage), accessibility (TalkBack/AutomationProperties, min touch target 48dp), dark/light theme, secure signing, signed APK (37.7 MB < 45 MB) + AAB (37.1 MB < 45 MB multi-arch universal bundle) physical smoke, artifact inventory, SPDX-2.3 SBOM (`SBOM.json`), third-party legal notices (`LEGAL_NOTICES.txt`), Autodesk trademark disclaimer, DWG/DXF IntentFilters, deterministik compliance snapshot (`schema=compliance-rc/v1`) ve API 36 emülatör kabul testi ile Release RC onayı (`ANDROID_STAGE22_RELEASE_RC_PASS`). Evidence: `docs/evidence/STAGE_22.md`.
 
 ### AŞAMA 23–24 — Future iOS track
 

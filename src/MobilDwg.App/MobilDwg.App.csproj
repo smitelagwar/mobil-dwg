@@ -7,9 +7,10 @@
     <SingleProject>true</SingleProject>
     <ApplicationTitle>Mobil DWG</ApplicationTitle>
     <ApplicationId>com.smitelagwar.mobildwg</ApplicationId>
-    <ApplicationDisplayVersion>0.1</ApplicationDisplayVersion>
+    <ApplicationDisplayVersion>1.0.0</ApplicationDisplayVersion>
     <ApplicationVersion>1</ApplicationVersion>
     <SupportedOSPlatformVersion>24.0</SupportedOSPlatformVersion>
+    <TargetSdkVersion>36</TargetSdkVersion>
     <EmbedAssembliesIntoApk>true</EmbedAssembliesIntoApk>
   </PropertyGroup>
 
@@ -67,6 +68,10 @@
 
   <PropertyGroup Condition="'$(A21Validation)' == 'true'">
     <DefineConstants>$(DefineConstants);A21_VALIDATION</DefineConstants>
+  </PropertyGroup>
+
+  <PropertyGroup Condition="'$(A22Validation)' == 'true'">
+    <DefineConstants>$(DefineConstants);A22_VALIDATION</DefineConstants>
   </PropertyGroup>
 
   <ItemGroup Condition="'$(A21Validation)' == 'true'">
