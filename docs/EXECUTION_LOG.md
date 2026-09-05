@@ -148,10 +148,29 @@ PENDING_EMULATOR_QUEUE: EMPTY
 - Claim limit: `CLAIM_LIMIT=A12_BLOCK_INSERT_API36_ONLY_NOT_CAD_PARSE_TO_SCENE_OR_PHYSICAL_DEVICE_FIDELITY`.
 - Kanıt belgesi: `docs/evidence/STAGE_12.md`.
 
+## AŞAMA 13 — Layer / Color / Linetype / Lineweight
+
+- PR: `#26` (`feat(a13): implement layer, color, linetype, and lineweight styling`) — `MERGED`.
+- Base `main`: `9861b0d729ba28dc8dbfb813be00b0caf31ca8d6`.
+- PR head SHA: `f2126fe`.
+- Main merge commit: `e60e498`.
+- Exact .NET SDK: `10.0.400`.
+- Release build: `0 Warning / 0 Error`.
+- Release APK: `39,282,710` byte; SHA-256 `530571d2a269ccb52d8752b73de693deb69dab67b6137309f3845158c0bb0b6c`.
+- Android Emulator: `sdk_gphone64_x86_64` (Android 16 / API 36 / `x86_64`, serial `emulator-5554`).
+- Canlı PID: `8595`.
+- Ekran görüntüsü: `86,413` byte; SHA-256 `f51bbfa1d5536c5c1ccd61be120831a7bdaaa0171812b6813bc5845774ee79b0`.
+- Host test belirteçleri: `STAGE13_LAYER_STYLE_TESTS_PASS` (ACI 1-255 palette lookup, ACI 7 dynamic contrast inversion, TrueColor RGB, ByLayer inheritance, ByBlock inheritance, Layer visibility toggle, Layer freeze toggle, standard linetypes, complex linetype fallback warning, lineweight pixel conversion, unknown layer fallback, deterministic layer-style semantic snapshot), `STAGE12_BLOCK_INSERT_TESTS_PASS`, `STAGE11_VIEWPORT_GESTURE_TESTS_PASS`, `STAGE10_GEOMETRY_PRIMITIVES_TESTS_PASS`, `STAGE10_TESSELLATION_PRECISION_TESTS_PASS`, `STAGE10_P0_SEMANTIC_GOLDEN_PASS`, `STAGE04_RENDER_CONTRACT_TESTS_PASS`, `STAGE09_RENDER_SCENE_TESTS_PASS`, `STAGE04_ARCHITECTURE_TESTS_PASS`, `STAGE05_DEPENDENCY_BOUNDARY_PASS`, `V04_REAL_ANDROID_APP_PROJECT_PASS`.
+- Android emülatör belirteçleri: `A13_ANDROID_ACI_TRUECOLOR_PASS`, `A13_ANDROID_BYLAYER_BYBLOCK_PASS`, `A13_ANDROID_LAYER_VISIBILITY_FREEZE_PASS`, `A13_ANDROID_LINETYPE_LINEWEIGHT_PASS`, `A13_ANDROID_COMPLEX_STYLE_WARNING_PASS`, `A13_ANDROID_PNG_PASS`, `ANDROID_STAGE13_LAYER_STYLE_PASS`, `A13_REAL_APP_UI_IMAGE_READY`, `A13_REAL_APP_UI_STATUS_PASS`, `A13_REAL_APP_STABILITY_PASS`.
+- UI Doğrulaması: `window.xml` hiyerarşisinde `ANDROID_STAGE13_LAYER_STYLE_PASS` doğrulanarak `A13_REAL_APP_UI_STATUS_PASS` alındı.
+- Kararlılık: Paket ve PID kapsamında crash/ANR yok, uygulama canlı kaldı (`A13_REAL_APP_STABILITY_PASS pid=8595`).
+- Claim limit: `CLAIM_LIMIT=A13_LAYER_STYLE_API36_ONLY_NOT_CAD_PARSE_TO_SCENE_OR_PHYSICAL_DEVICE_FIDELITY`.
+- Kanıt belgesi: `docs/evidence/STAGE_13.md`.
+
 ```text
-IMPLEMENTATION_BASELINE: AŞAMA 12 — DONE
-IMPLEMENTATION_CURSOR: AŞAMA 13 — NOT_STARTED
-A13_GATE: OPEN
-NEXT_ACTION: Sonraki normal BASLA/devam turunda AŞAMA 13'ü (Layer/color/linetype/lineweight) başlat.
+IMPLEMENTATION_BASELINE: AŞAMA 13 — DONE
+IMPLEMENTATION_CURSOR: AŞAMA 14 — NOT_STARTED
+A14_GATE: OPEN
+NEXT_ACTION: Sonraki normal BASLA/devam turunda AŞAMA 14'ü (TEXT/MTEXT/Türkçe/font/SHX) başlat.
 ```
 

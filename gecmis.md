@@ -26,17 +26,17 @@ Bu dosya kısa kalıcı tarihçe/checkpoint kaydıdır. Ayrıntılı teknik kan�
 ```text
 ACTIVE_PRODUCT_TARGET: ANDROID_ONLY
 IOS_STATUS: DEFERRED_FUTURE_OPTION
-IMPLEMENTATION_BASELINE: AŞAMA 12 — DONE
+IMPLEMENTATION_BASELINE: AŞAMA 13 — DONE
 ANDROID_VALIDATION_V01_V09: CLOSED / VALIDATED_WITH_CLAIM_LIMITS
-LAST_IMPLEMENTATION: AŞAMA 12 — DONE
-LAST_IMPLEMENTATION_EVIDENCE: docs/evidence/STAGE_12.md
-A12_MAIN_MERGE: 4752a17 (PR #25)
-IMPLEMENTATION_CURSOR: AŞAMA 13 — NOT_STARTED
+LAST_IMPLEMENTATION: AŞAMA 13 — DONE
+LAST_IMPLEMENTATION_EVIDENCE: docs/evidence/STAGE_13.md
+A13_MAIN_MERGE: e60e498 (PR #26)
+IMPLEMENTATION_CURSOR: AŞAMA 14 — NOT_STARTED
 A10_WORKSTREAM: docs/A10_WORKSTREAM.md (DONE)
 PENDING_EMULATOR_QUEUE: EMPTY
 PHYSICAL_ANDROID: DEFERRED_RELEASE_DEVICE_GATE
-A13_GATE: OPEN
-NEXT_ACTION: Sonraki normal BASLA/devam turunda AŞAMA 13'ü (Layer/color/linetype/lineweight) başlat.
+A14_GATE: OPEN
+NEXT_ACTION: Sonraki normal BASLA/devam turunda AŞAMA 14'ü (TEXT/MTEXT/Türkçe/font/SHX) başlat.
 LAST_UPDATE: 2026-09-05
 ```
 
@@ -55,7 +55,8 @@ LAST_UPDATE: 2026-09-05
 - AŞAMA 10 — P0 geometry renderer — `DONE`; PR `#23`, main merge `ddeb975`, evidence `docs/evidence/STAGE_10.md`.
 - AŞAMA 11 — Mobil viewport ve gesture — `DONE`; PR `#24`, main merge `51e8b5b`, evidence `docs/evidence/STAGE_11.md`.
 - AŞAMA 12 — Block / INSERT / Attribute — `DONE`; PR `#25`, main merge `4752a17`, evidence `docs/evidence/STAGE_12.md`.
-- AŞAMA 13–22 — Android viewer/release implementation sırası; cursor AŞAMA 13'te.
+- AŞAMA 13 — Layer / Color / Linetype / Lineweight — `DONE`; PR `#26`, main merge `e60e498`, evidence `docs/evidence/STAGE_13.md`.
+- AŞAMA 14–22 — Android viewer/release implementation sırası; cursor AŞAMA 14'te.
 - AŞAMA 23–24 — future iOS track, deferred.
 - AŞAMA 25–27 — Android beta/freeze/final handoff.
 
