@@ -3,6 +3,7 @@ using MobilDwg.Rendering.Camera;
 using MobilDwg.Rendering.Geometry;
 using MobilDwg.Rendering.Scene;
 using MobilDwg.Rendering.Styles;
+using MobilDwg.Rendering.Text;
 using SkiaSharp;
 
 namespace MobilDwg.Rendering.Skia;
@@ -163,6 +164,12 @@ public sealed class SkiaCadRenderer : ICadRenderer
         SKPaint fillPaint,
         double density)
     {
+        if (primitive is TextPrimitive textPrimitive)
+        {
+            DrawTextPrimitive(canvas, textPrimitive, camera, fillPaint);
+            return;
+        }
+
         var path = GeometryTessellator.Tessellate(primitive, tessellation);
         if (primitive is PointPrimitive)
         {
@@ -184,6 +191,63 @@ public sealed class SkiaCadRenderer : ICadRenderer
 
         if (path.Filled) canvas.DrawPath(skPath, fillPaint);
         else canvas.DrawPath(skPath, strokePaint);
+    }
+
+    private static void DrawTextPrimitive(
+        SKCanvas canvas,
+        TextPrimitive textPrimitive,
+        Camera2D camera,
+        SKPaint fillPaint)
+    {
+        if (string.IsNullOrEmpty(textPrimitive.Text)) return;
+
+        var screenHeight = textPrimitive.Height / camera.WorldUnitsPerPixel;
+        if (screenHeight < 0.5d) return;
+
+        var screenPos = CameraTransform.WorldToScreen(textPrimitive.Position, camera);
+        var typeface = FontSubstitutionResolver.GetSkiaTypeface(textPrimitive.ResolvedFont);
+
+        using var font = new SKFont(typeface, ToFloat(screenHeight));
+        font.ScaleX = ToFloat(textPrimitive.WidthFactor * (textPrimitive.MirrorFlags.HasFlag(CadTextMirrorFlags.Backward) ? -1d : 1d));
+        font.SkewX = ToFloat(-Math.Tan(textPrimitive.ObliqueAngleRadians));
+
+        font.MeasureText(textPrimitive.Text, out var textBounds, fillPaint);
+        var height = textBounds.Height;
+
+        var textAlign = textPrimitive.HorizontalAlignment switch
+        {
+            CadTextHorizontalAlignment.Center or CadTextHorizontalAlignment.Middle => SKTextAlign.Center,
+            CadTextHorizontalAlignment.Right => SKTextAlign.Right,
+            _ => SKTextAlign.Left,
+        };
+
+        float offsetY = textPrimitive.VerticalAlignment switch
+        {
+            CadTextVerticalAlignment.Top => height,
+            CadTextVerticalAlignment.Middle => height / 2f,
+            CadTextVerticalAlignment.Bottom => 0f,
+            _ => 0f,
+        };
+
+        var saveCount = canvas.Save();
+        try
+        {
+            canvas.Translate(ToFloat(screenPos.X), ToFloat(screenPos.Y));
+
+            var rotationDegrees = (float)-(textPrimitive.RotationRadians * (180.0 / Math.PI));
+            canvas.RotateDegrees(rotationDegrees);
+
+            if (textPrimitive.MirrorFlags.HasFlag(CadTextMirrorFlags.UpsideDown))
+            {
+                canvas.Scale(1f, -1f);
+            }
+
+            canvas.DrawText(textPrimitive.Text, 0f, offsetY, textAlign, font, fillPaint);
+        }
+        finally
+        {
+            canvas.RestoreToCount(saveCount);
+        }
     }
 
     private static float ToFloat(double value)
