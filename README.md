@@ -33,7 +33,7 @@ Uygulama [Mobil_DWG_DXF_Royalty_Free_Android_iOS_Nihai_Plan.md](Mobil_DWG_DXF_Ro
 
 ## Yürütme
 
-Her `BASLA.md dosyasını oku` veya normal `devam` komutunda gerçek `main`, açık PR/CI ve checkpoint doğrulanır. AŞAMA 19 tamamlandığından sonraki normal çalışma AŞAMA 20'dir (Ölçümlü performance/memory). Runner çevrim dışıysa kanıtsız PASS yazılmaz ve aynı test işi çoğaltılmaz.
+Her `BASLA.md dosyasını oku` veya normal `devam` komutunda gerçek `main`, açık PR/CI ve checkpoint doğrulanır. AŞAMA 22 tamamlandığından, AŞAMA 23–24 (iOS) ertelenmiş olup sonraki normal çalışma AŞAMA 25'tir (Android beta ve blocker düzeltmeleri). Runner çevrim dışıysa kanıtsız PASS yazılmaz ve aynı test işi çoğaltılmaz.
 
 ## Güvenlik ve özel dosyalar
 

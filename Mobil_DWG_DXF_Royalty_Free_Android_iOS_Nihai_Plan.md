@@ -280,7 +280,7 @@ Yetkili ayrıntı: `ANDROID_DOGRULAMA_PLANI.md`.
 
 ## 9. Implementation aşamaları
 
-AŞAMA 00–19 tarihsel implementation evidence `docs/evidence/STAGE_XX.md` ve ADR'lerde korunur. AŞAMA 19 PR #32 ile tamamlanmış ve `main`e merge edilmiştir. Normal implementation cursor artık AŞAMA 20'dir.
+AŞAMA 00–22 tarihsel implementation evidence `docs/evidence/STAGE_XX.md` ve ADR'lerde korunur. AŞAMA 22 PR #35 ile tamamlanmış ve `main`e merge edilmiştir. AŞAMA 23–24 (iOS) ertelenmiş olup normal implementation cursor artık AŞAMA 25'tir.
 
 ### AŞAMA 10 — P0 temel geometri renderer'ı — `DONE`
 
