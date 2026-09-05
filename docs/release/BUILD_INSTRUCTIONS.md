@@ -1,84 +1,113 @@
-﻿# Mobil DWG — Derleme ve Tekrarlama Yönergeleri (Build Instructions)
+# Mobil DWG — Build / Release Yönergeleri
 
-Bu belge, **Mobil DWG** projesinin temiz bir ortamda kaynaktan birebir tekrarlanabilir biçimde derlenmesi için gereken ortam gereksinimlerini ve komut adımlarını tanımlar.
+Bu belge mevcut Android build hattını özetler. Exact toolchain baseline için `docs/TOOLCHAIN.md` ve `global.json` authoritative kaynaktır.
 
----
+## Ön gereksinimler
 
-## 1. Ön Gereksinimler
+- .NET SDK `10.0.400`
+- workload set `10.0.400`
+- `maui-android`
+- Microsoft OpenJDK 21 (`21.0.12.x` baseline)
+- Android SDK Platform 36
+- Build-Tools `36.0.0`
+- Platform-Tools / ADB
 
-- **İşletim Sistemi**: Windows 10/11 x64, macOS (Apple Silicon/Intel) veya Linux x64
-- **.NET SDK**: `10.0.400` (sabitlenmiş sürüm)
-- **.NET MAUI Android Workload**: `maui-android`
-- **Android SDK Platform**: API 36 (Android 16) ve Platform-Tools (ADB)
-- **Java SDK**: OpenJDK 17 veya 21 (Android derleme aracı için)
+Kontrol:
 
-İş yükünü doğrulamak ve kurmak için:
+```powershell
+dotnet --version
+dotnet --info
+dotnet workload list
+java -version
+adb version
+```
+
+Eksik MAUI workload:
+
 ```powershell
 dotnet workload install maui-android
 ```
 
----
+## Restore ve Release build
 
-## 2. Kilitli Paket Geri Yükleme (Locked Restore)
+Dependency audit projesini locked mode ile doğrula:
 
-Bağımlılıkların NuGet üzerinden kilitli ve değişmez sürümleriyle geri yüklenmesi için:
 ```powershell
-dotnet restore compliance/Stage02.DependencyProbe/Stage02.DependencyProbe.csproj --locked-mode
-dotnet restore src/MobilDwg.App/MobilDwg.App.csproj
+dotnet restore .\compliance\Stage02.DependencyProbe\Stage02.DependencyProbe.csproj --locked-mode
 ```
 
----
+Ana solution:
 
-## 3. Testlerin Çalıştırılması
-
-Tüm platform-neutral mimari ve CAD render sözleşme testlerini koşturmak için:
 ```powershell
-# Mimari ve sınır testleri
-dotnet test tests/MobilDwg.Architecture.Tests/MobilDwg.Architecture.Tests.csproj -c Release
-
-# Core mantık testleri
-dotnet test tests/MobilDwg.Core.Tests/MobilDwg.Core.Tests.csproj -c Release
-
-# Rendering ve aşama testleri (Stage 04, 09, 10–22, 25, 26)
-dotnet run --project tests/MobilDwg.Rendering.Tests/MobilDwg.Rendering.Tests.csproj -c Release
+dotnet build .\MobilDwg.sln -c Release
 ```
 
----
+## Platform-neutral executable test harness'ları
 
-## 4. Üretim Android Paketlerinin Derlenmesi
+Bu test projeleri executable harness'tır; `dotnet test` yerine `dotnet run` kullanılır:
 
-### A. Android App Bundle (AAB — Google Play Yayını İçin)
 ```powershell
-dotnet build src/MobilDwg.App/MobilDwg.App.csproj `
+dotnet run --project .\tests\MobilDwg.Architecture.Tests\MobilDwg.Architecture.Tests.csproj -c Release
+dotnet run --project .\tests\MobilDwg.Core.Tests\MobilDwg.Core.Tests.csproj -c Release
+dotnet run --project .\tests\MobilDwg.Rendering.Tests\MobilDwg.Rendering.Tests.csproj -c Release
+```
+
+Android davranışını değiştiren işler için yalnız bu host testleri yeterli değildir; `docs/ANDROID_TESTING.md` uygulanır.
+
+## Android AAB
+
+Google Play için unsigned/yerel package build örneği:
+
+```powershell
+dotnet build .\src\MobilDwg.App\MobilDwg.App.csproj `
   -c Release `
   -f net10.0-android36.0 `
   -p:AndroidPackageFormat=aab `
   -p:AndroidKeyStore=false
 ```
-Çıktı: `src/MobilDwg.App/bin/Release/net10.0-android36.0/com.smitelagwar.mobildwg.aab`
 
-### B. Bağımsız APK (Doğrudan Cihaza Kurulum / Sideload İçin)
+Çıktı yolu SDK/MAUI packaging ayrıntısına göre `src/MobilDwg.App/bin/Release/net10.0-android36.0/` altındadır. Dosya adı sabit varsayılmamalı; üretilen artifact build sonrasında gerçek dizinden doğrulanmalıdır.
+
+## Android APK
+
 ```powershell
-dotnet build src/MobilDwg.App/MobilDwg.App.csproj `
+dotnet build .\src\MobilDwg.App\MobilDwg.App.csproj `
   -c Release `
   -f net10.0-android36.0 `
   -p:AndroidKeyStore=false
 ```
-Çıktı: `src/MobilDwg.App/bin/Release/net10.0-android36.0/com.smitelagwar.mobildwg-Signed.apk`
 
----
+Artifact boyutu, package ID ve gerekiyorsa install/launch sonucu ayrıca doğrulanır.
 
-## 5. İmzalı Yayın Paketleri (Production Release Signing)
+## Production signing
 
-Üretim anahtarıyla imzalamak için `AndroidKeyStore=true` ve keystore parametreleri verilir:
+Signing secret, parola, private key veya keystore repoya commit edilmez.
+
+Örnek:
+
 ```powershell
-dotnet build src/MobilDwg.App/MobilDwg.App.csproj `
+dotnet build .\src\MobilDwg.App\MobilDwg.App.csproj `
   -c Release `
   -f net10.0-android36.0 `
   -p:AndroidPackageFormat=aab `
   -p:AndroidKeyStore=true `
-  -p:AndroidSigningKeyStore="path/to/release.keystore" `
-  -p:AndroidSigningStorePass="[STORE_PASSWORD]" `
-  -p:AndroidSigningKeyAlias="[KEY_ALIAS]" `
-  -p:AndroidSigningKeyPass="[KEY_PASSWORD]"
+  -p:AndroidSigningKeyStore="<secure-local-path>" `
+  -p:AndroidSigningStorePass="<secret>" `
+  -p:AndroidSigningKeyAlias="<alias>" `
+  -p:AndroidSigningKeyPass="<secret>"
 ```
+
+Secret değerleri shell history/log/artifact içine sızdırılmamalıdır.
+
+## Release öncesi minimum kontrol
+
+- exact toolchain ve dependency graph,
+- Release build,
+- executable Core/Rendering/Architecture harness'ları,
+- değiştirilen davranışa özel Android gate,
+- package permission/data-safety kontrolü,
+- dependency/native/license inventory,
+- artifact checksum,
+- bilinen limitation'ların güncelliği.
+
+Tarihsel v1 package/evidence kayıtları `docs/evidence/` ve `release/` altında korunur; yeni build onların byte-for-byte aynısı varsayılmaz.
