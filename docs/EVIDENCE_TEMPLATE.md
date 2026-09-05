@@ -1,51 +1,78 @@
-# Evidence Template
+# mobil-dwg — Evidence Template
 
-Bu şablon normal implementation aşaması ve `ANDROID_DOGRULAMA_PLANI.md` VXX çıkış kriterlerinin kanıtını standartlaştırır. Tarihsel STAGE evidence dosyası yeni VXX sonucu varmış gibi geriye dönük değiştirilmez.
+Bu şablon gelecekteki önemli bug fix, performance, dependency, parser veya viewer değişikliklerinin doğrulama kaydı içindir. Eski VXX/A10 cursor modeli artık kullanılmaz.
 
 ## Kimlik
 
-- Tarih:
-- Aşama / alt adım:
-- Cursor: `ANDROID_VALIDATION` / `IMPLEMENTATION`
-- Workstream durumu: `IN_PROGRESS_UNVALIDATED` / `FIX_REQUIRED` / `FIX_IN_PROGRESS` / `CODED_PENDING_HOST_TESTS` / `CODED_PENDING_EMULATOR` / `READY_FOR_EMULATOR` / `READY_TO_MERGE` / `WAITING_RUNNER` / `VALIDATED` / `DONE`
+- Tarih / timezone:
+- İş / issue / kısa başlık:
+- Durum: `IN_PROGRESS` / `BLOCKED` / `VALIDATED` / `DONE`
 - Repo / branch:
 - Başlangıç revision:
 - Son revision:
 - Test edilen exact revision:
-- Ortam / cihaz:
-- Runner durumu:
-- Kanıt kapsamı: host / infrastructure smoke / real app emulator / physical Android
+- Ortam: host / Android emulator / physical Android / diğer
+- Cihaz slotu gerekiyorsa:
+
+## Problem ve beklenen davranış
+
+- Gözlenen problem:
+- Beklenen davranış:
+- Kök neden:
+- Claim sınırı:
 
 ## Değişiklik
 
-Değiştirilen dosyalar ve amaçları.
+Değiştirilen dosyalar, mimari etkisi ve nedenleri.
 
 ## Komutlar ve testler
 
-| Komut/Test | Sonuç | Not |
+| Komut / test / senaryo | Sonuç | Not / metric |
 |---|---|---|
-|  | PASS/FAIL/BLOCKED/WAITING_RUNNER |  |
+|  | `PASS` / `FAIL` / `BLOCKED` |  |
 
 ## Artifact / ölçüm
 
-- Build/artifact:
-- Hash/checksum:
-- Artifact format/okunabilirlik doğrulaması:
-- Gerçek app/package adı ve process PID (runtime testi ise):
-- Süre/bellek/frame metriği gerekiyorsa:
+Gerekiyorsa:
+
+- APK/AAB/build artifact:
+- SHA-256/checksum:
+- screenshot/video/log:
+- process/PID/runtime kanıtı:
+- parse/scene/first-frame:
+- frame p50/p95:
+- PSS/native memory:
+- entity/primitive count:
+
+## Regression kapsamı
+
+- Etkilenen eski davranışlar:
+- Çalıştırılan ilgili historical gate/test:
+- Bilerek değiştirilen expectation varsa nedeni:
+
+Eski stage/evidence sonucu yeni implementasyona göre geriye dönük değiştirilmez. Yeni hata yeni commit ve yeni evidence ile kaydedilir.
 
 ## Lisans / provenance
 
-Dependency, native binary, font, fixture veya asset eklendiyse exact kaynak ve lisans kanıtı.
+Dependency, native binary, font, fixture veya asset eklendiyse:
+
+- exact sürüm / commit,
+- source,
+- lisans,
+- transitive/native etkisi,
+- redistribution durumu
+
+kaydedilir.
 
 ## Risk / blocker
 
-Bilinen sınırlamalar ve nedenleri.
+Bilinen sınırlamalar, test edilemeyen ortamlar ve açık riskler.
 
-Runner çevrim dışıysa `PENDING_EMULATOR_QUEUE` için exact SHA, workflow/script, configuration ve beklenen marker burada yazılır; PASS yazılmaz.
+Runner çevrim dışıysa PASS yazılmaz; test edilecek exact SHA ve gerekli koşu kaydedilir.
 
-A10 paralel draft kaydıysa ayrıca base `main` SHA, source branch/head SHA, `merge_allowed: false`, `blocked_by: V04_V09_PROGRAM + LATEST_MAIN_INTEGRATION + A10_ANDROID_GATE` ve varsa `superseded_by` yazılır. Draft SHA, V09 sonrası integration SHA yerine geçmez.
+## Sonuç
 
-## Sonraki eylem
-
-Tek somut `NEXT_ACTION`.
+- Final status:
+- Kanıtlanan şey:
+- Kanıtlanmayan şey:
+- Sonraki somut eylem:
