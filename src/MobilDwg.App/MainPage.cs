@@ -5,7 +5,7 @@ using Microsoft.Maui.Storage;
 using MobilDwg.App.Opening;
 using MobilDwg.Cad.AcadSharp;
 
-#if V06_VALIDATION || A10_VALIDATION
+#if V06_VALIDATION || A10_VALIDATION || A11_VALIDATION
 using Android.Util;
 #endif
 
@@ -24,6 +24,9 @@ public sealed class MainPage : ContentPage
 #endif
 #if A10_VALIDATION
     private bool _a10Started;
+#endif
+#if A11_VALIDATION
+    private bool _a11Started;
 #endif
 
     public MainPage()
@@ -126,6 +129,27 @@ public sealed class MainPage : ContentPage
         layout.Children.Insert(2, a10Status);
         layout.Children.Insert(3, a10Image);
         Loaded += async (_, _) => await RunA10ValidationAsync(a10Status, a10Image);
+#endif
+
+#if A11_VALIDATION
+        var a11Status = new Label
+        {
+            Text = "A11_VALIDATION_PENDING",
+            AutomationId = "a11-validation-status",
+            FontSize = 13,
+            TextColor = Color.FromArgb("#B8C4D8"),
+            HorizontalTextAlignment = TextAlignment.Center,
+        };
+        var a11Image = new Image
+        {
+            AutomationId = "a11-render-image",
+            HeightRequest = 420,
+            Aspect = Aspect.AspectFit,
+            BackgroundColor = Color.FromArgb("#101010"),
+        };
+        layout.Children.Insert(2, a11Status);
+        layout.Children.Insert(3, a11Image);
+        Loaded += async (_, _) => await RunA11ValidationAsync(a11Status, a11Image);
 #endif
 
         Content = new ScrollView { Content = layout };
@@ -363,6 +387,28 @@ public sealed class MainPage : ContentPage
         {
             status.Text = $"ANDROID_STAGE10_P0_GEOMETRY_RENDER_FAIL type={exception.GetType().Name}";
             Log.Error(A10AndroidValidationRunner.Tag, status.Text);
+        }
+    }
+#endif
+
+#if A11_VALIDATION
+    private async Task RunA11ValidationAsync(Label status, Image image)
+    {
+        if (_a11Started) return;
+        _a11Started = true;
+        status.Text = "A11_VALIDATION_RUNNING";
+        try
+        {
+            var result = await A11AndroidValidationRunner.RunAsync();
+            var png = result.Png;
+            image.Source = ImageSource.FromStream(() => new MemoryStream(png, writable: false));
+            status.Text = $"{result.Marker} pixels={result.NonBackgroundPixels}";
+            Log.Info(A11AndroidValidationRunner.Tag, $"A11_REAL_APP_UI_IMAGE_READY sha256={result.PngSha256}");
+        }
+        catch (Exception exception)
+        {
+            status.Text = $"ANDROID_STAGE11_VIEWPORT_GESTURE_FAIL type={exception.GetType().Name}";
+            Log.Error(A11AndroidValidationRunner.Tag, status.Text);
         }
     }
 #endif
