@@ -4,6 +4,7 @@ using MobilDwg.Rendering.Coordinates;
 using MobilDwg.Rendering.Diagnostics;
 using MobilDwg.Rendering.Scene;
 using MobilDwg.Rendering.Snapshots;
+using MobilDwg.Rendering.Tests;
 
 var viewport = new RenderViewport(
     pixelWidth: 1080,
@@ -124,6 +125,8 @@ AssertThrows<ArgumentException>(() => new SceneDiagnostic(SceneDiagnosticKind.Er
 var duplicateBuilder = new RenderSceneAssembler();
 duplicateBuilder.AddEntity(CreateEntity("DUP", 0, 0, 1, 1));
 AssertThrows<InvalidOperationException>(() => duplicateBuilder.AddEntity(CreateEntity("DUP", 1, 1, 2, 2)), "duplicate stable ID must fail");
+
+ViewportCameraTests.Run();
 
 Console.WriteLine("STAGE04_RENDER_CONTRACT_TESTS_PASS");
 Console.WriteLine("STAGE09_RENDER_SCENE_TESTS_PASS");

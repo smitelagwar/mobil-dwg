@@ -114,6 +114,23 @@ if ($stageNum -ge 2) {
     Pass "VIEWER_STABILITY_STAGE02_PASS"
 }
 
+# Stage 03 checks
+if ($stageNum -ge 3) {
+    Write-Host "Verifying Stage 03 Camera & Numerical Contracts..."
+    if (-not ($rendText -match "STAGE03_VIEWPORT_CAMERA_TESTS_PASS")) { Fail "STAGE03_VIEWPORT_CAMERA_TESTS_PASS marker missing" }
+    Pass "STAGE03_VIEWPORT_CAMERA_TESTS_PASS"
+
+    $zoomPolicyFile = Join-Path $repoRoot "src/MobilDwg.Rendering/Camera/ViewerZoomPolicy.cs"
+    if (-not (Test-Path $zoomPolicyFile)) { Fail "ViewerZoomPolicy.cs missing" }
+    Pass "STAGE03_VIEWER_ZOOM_POLICY_SOURCE_PASS"
+
+    $inputContractsFile = Join-Path $repoRoot "src/MobilDwg.Rendering/Interaction/ViewportInputContracts.cs"
+    if (-not (Test-Path $inputContractsFile)) { Fail "ViewportInputContracts.cs missing" }
+    Pass "STAGE03_VIEWPORT_INPUT_CONTRACTS_SOURCE_PASS"
+
+    Pass "VIEWER_STABILITY_STAGE03_PASS"
+}
+
 Write-Host "=== Viewer Stability Gate Passed for Stage $Stage ==="
 exit 0
 

@@ -18,6 +18,10 @@ public sealed class ViewportController
 
         _camera = initialCamera;
         _sceneBounds = sceneBounds;
+        if (sceneBounds.HasValue)
+        {
+            UpdateLimitsForCurrentCenter();
+        }
     }
 
     public Camera2D CurrentCamera => _camera;
@@ -31,6 +35,7 @@ public sealed class ViewportController
     public void SetSceneBounds(WorldBounds2 bounds)
     {
         _sceneBounds = bounds;
+        UpdateLimitsForCurrentCenter();
     }
 
     public void BeginInteraction()
@@ -43,70 +48,96 @@ public sealed class ViewportController
         _isInteracting = false;
     }
 
+    public Camera2D Manipulate(ScreenPoint2 previousCentroid, ScreenPoint2 currentCentroid, double factor)
+    {
+        var anchorWorld = CameraTransform.ScreenToWorld(previousCentroid, _camera);
+        var (minWupp, maxWupp) = ViewerZoomPolicy.CalculateZoomLimits(
+            _sceneBounds, _camera.Center, anchorWorld, _camera.PixelWidth, _camera.PixelHeight);
+
+        var currentWupp = Math.Clamp(_camera.WorldUnitsPerPixel, minWupp, maxWupp);
+        if (currentWupp != _camera.WorldUnitsPerPixel || _camera.MinWorldUnitsPerPixel != minWupp || _camera.MaxWorldUnitsPerPixel != maxWupp)
+        {
+            _camera = new Camera2D(_camera.PixelWidth, _camera.PixelHeight, _camera.Center, currentWupp, minWupp, maxWupp);
+        }
+
+        _camera = _camera.Manipulate(previousCentroid, currentCentroid, factor, minWupp, maxWupp);
+        EnforceCoordinateGuard();
+        _updateCount++;
+        return _camera;
+    }
+
     public Camera2D Pan(double deltaScreenX, double deltaScreenY)
     {
         _camera = _camera.PanBy(deltaScreenX, deltaScreenY);
+        EnforceCoordinateGuard();
+        UpdateLimitsForCurrentCenter();
         _updateCount++;
         return _camera;
     }
 
     public Camera2D PinchZoom(ScreenPoint2 focalPoint, double scaleFactor)
     {
-        _camera = _camera.ZoomAt(focalPoint, scaleFactor);
-        _updateCount++;
-        return _camera;
+        return Manipulate(focalPoint, focalPoint, scaleFactor);
     }
 
-    public Camera2D ZoomIn(double factor = 2.0)
+    public Camera2D ZoomIn(double factor = ViewerZoomPolicy.ButtonZoomFactor)
     {
-        _camera = _camera.ZoomBy(factor);
-        _updateCount++;
-        return _camera;
+        var centerScreen = new ScreenPoint2(_camera.PixelWidth / 2d, _camera.PixelHeight / 2d);
+        return Manipulate(centerScreen, centerScreen, factor);
     }
 
-    public Camera2D ZoomOut(double factor = 2.0)
+    public Camera2D ZoomOut(double factor = ViewerZoomPolicy.ButtonZoomFactor)
     {
-        _camera = _camera.ZoomBy(1.0 / factor);
-        _updateCount++;
-        return _camera;
+        var centerScreen = new ScreenPoint2(_camera.PixelWidth / 2d, _camera.PixelHeight / 2d);
+        return Manipulate(centerScreen, centerScreen, 1.0 / factor);
     }
 
-    public Camera2D DoubleTap(ScreenPoint2 tapPoint, double zoomMultiplier = 2.0)
+    public Camera2D DoubleTap(ScreenPoint2 tapPoint, double zoomMultiplier = ViewerZoomPolicy.DoubleTapZoomFactor)
     {
-        if (_sceneBounds.HasValue)
-        {
-            var fitCamera = Camera2D.Fit(_sceneBounds.Value, _camera.PixelWidth, _camera.PixelHeight);
-            // If already significantly zoomed in compared to fit extents, reset to fit extents
-            if (_camera.WorldUnitsPerPixel < fitCamera.WorldUnitsPerPixel * 0.7)
-            {
-                _camera = fitCamera;
-                _updateCount++;
-                return _camera;
-            }
-        }
-
-        // Otherwise zoom in at the tap point
-        _camera = _camera.ZoomAt(tapPoint, zoomMultiplier);
-        _updateCount++;
-        return _camera;
+        // DoubleTap is always a 2x zoom at the tap point per audited specification; Fit is a separate control.
+        return Manipulate(tapPoint, tapPoint, zoomMultiplier);
     }
 
-    public Camera2D FitExtents(double paddingFraction = 0.05)
+    public Camera2D FitExtents(double paddingFraction = ViewerZoomPolicy.DefaultPaddingFraction)
     {
         if (!_sceneBounds.HasValue)
         {
             return _camera;
         }
 
-        _camera = Camera2D.Fit(_sceneBounds.Value, _camera.PixelWidth, _camera.PixelHeight, paddingFraction);
+        _camera = ViewerZoomPolicy.CreateFitCamera(_sceneBounds.Value, _camera.PixelWidth, _camera.PixelHeight, paddingFraction);
         _updateCount++;
         return _camera;
     }
 
     public Camera2D Resize(int newPixelWidth, int newPixelHeight)
     {
-        _camera = _camera.Resize(newPixelWidth, newPixelHeight);
+        var (minWupp, maxWupp) = ViewerZoomPolicy.CalculateZoomLimits(
+            _sceneBounds, _camera.Center, null, newPixelWidth, newPixelHeight);
+        var clampedWupp = Math.Clamp(_camera.WorldUnitsPerPixel, minWupp, maxWupp);
+        _camera = new Camera2D(newPixelWidth, newPixelHeight, _camera.Center, clampedWupp, minWupp, maxWupp);
         _updateCount++;
         return _camera;
+    }
+
+    private void EnforceCoordinateGuard()
+    {
+        var cx = Math.Clamp(_camera.Center.X, -ViewerZoomPolicy.CoordinateLimit, ViewerZoomPolicy.CoordinateLimit);
+        var cy = Math.Clamp(_camera.Center.Y, -ViewerZoomPolicy.CoordinateLimit, ViewerZoomPolicy.CoordinateLimit);
+        if (cx != _camera.Center.X || cy != _camera.Center.Y)
+        {
+            _camera = new Camera2D(_camera.PixelWidth, _camera.PixelHeight, new WorldPoint2(cx, cy), _camera.WorldUnitsPerPixel, _camera.MinWorldUnitsPerPixel, _camera.MaxWorldUnitsPerPixel);
+        }
+    }
+
+    private void UpdateLimitsForCurrentCenter()
+    {
+        var (minWupp, maxWupp) = ViewerZoomPolicy.CalculateZoomLimits(
+            _sceneBounds, _camera.Center, null, _camera.PixelWidth, _camera.PixelHeight);
+        if (_camera.MinWorldUnitsPerPixel != minWupp || _camera.MaxWorldUnitsPerPixel != maxWupp)
+        {
+            var clampedWupp = Math.Clamp(_camera.WorldUnitsPerPixel, minWupp, maxWupp);
+            _camera = new Camera2D(_camera.PixelWidth, _camera.PixelHeight, _camera.Center, clampedWupp, minWupp, maxWupp);
+        }
     }
 }

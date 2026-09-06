@@ -11,8 +11,8 @@
 |---|---|---|
 | 01 | Güncel kaynak tabanı ve ölçüm | TAMAMLANDI |
 | 02 | Paket sınırları ve ortak doğrudan Skia painter | TAMAMLANDI |
-| 03 | Kamera ve sayısal sözleşme | BAŞLANIYOR |
-| 04 | Native input ve gesture state machine | BAŞLAMADI |
+| 03 | Kamera ve sayısal sözleşme | TAMAMLANDI |
+| 04 | Native input ve gesture state machine | BAŞLANIYOR |
 | 05 | Session, scheduler ve üretim viewer bağlantısı | BAŞLAMADI |
 | 06 | Muhafazakâr bounds ve mekânsal indeks | BAŞLAMADI |
 | 07 | Cache, geometri hazırlığı ve kontrollü ayrıntı | BAŞLAMADI |
@@ -68,7 +68,7 @@ Bir sonraki aşama: Aşama 02 — Ortak painter ve doğrudan Skia yüzeyi
 
 Aşama: 02 — Ortak painter ve doğrudan Skia yüzeyi  
 Durum: TAMAMLANDI  
-Son HEAD: bekliyor (commit: `refactor(render): introduce audited direct Skia painter`)  
+Son HEAD: `d96c294d13540eb487f9855590983cf434a94ec3` (commit: `refactor(render): introduce audited direct Skia painter`)  
 Değişen dosyalar:
 - `Directory.Packages.props`
 - `compliance/DEPENDENCY_EVIDENCE.md`
@@ -112,6 +112,45 @@ Fixture / APK / lock hash'leri:
 - `artifacts/viewer-stability/stage02/rendering-tests.log`  
 Geçmeyen veya çalıştırılamayan koşullar: Yok.  
 Bir sonraki aşama: Aşama 03 — Kamera ve sayısal sözleşme  
+
+---
+
+### Aşama 03 Raporu
+
+Aşama: 03 — Kamera ve sayısal sözleşme  
+Durum: TAMAMLANDI  
+Son HEAD: bekliyor (commit: `fix(camera): define focal manipulation and precision limits`)  
+Değişen dosyalar:
+- `scripts/viewer-stability-gate.ps1`
+- `src/MobilDwg.Rendering/Camera/Camera2D.cs`
+- `src/MobilDwg.Rendering/Camera/ViewportController.cs`
+- `src/MobilDwg.Rendering/Camera/ViewerZoomPolicy.cs`
+- `src/MobilDwg.Rendering/Interaction/ViewportInputContracts.cs`
+- `tests/MobilDwg.Rendering.Tests/Program.cs`
+- `tests/MobilDwg.Rendering.Tests/Stage11ViewportGestureTests.cs`
+- `tests/MobilDwg.Rendering.Tests/ViewportCameraTests.cs`
+(Kullanıcı başlangıç değişiklikleri `src/MobilDwg.App/MainPage.cs`, `src/MobilDwg.Rendering/Scene/RenderScene.cs`, `release/SHA256SUMS.txt` bozulmadan çalışma ağacında korundu.)  
+Kullanıcıya yansıyan davranış:
+- Hareket eden merkez (moving centroid) formülü `Camera2D.Manipulate(previousCentroid, currentCentroid, factor)` ile uygulandı. İki parmakla yakınlaştırıp kaydırırken odak noktası parmakların altından kaçmaz.
+- `ViewerZoomPolicy` ile ULP tabanlı yerel sayısal hassasiyet (`minWupp = max(1e-12, 8 * ulp(M))`, `maxWupp = min(1e12, 16 * fitWupp)`) kuralları bağlandı; 5.000.000 kadastro koordinatında 1 mm (0.001) detay titremesiz çizilebilir kılındı.
+- Boş sahne, tek noktalı sahne (1 birim sanal Fit) ve tek boyutlu (yatay/dikey) sahneler için Fit kararlılığı sağlandı.
+- Çift dokunma (DoubleTap) her zaman odak noktasında 2× yakınlaştırma yapacak şekilde kesinleştirildi; Fit eylemi ayrı buton olarak korundu.
+- 15, 30, 60 ve 120 Hz giriş hızlarında aynı hareket yolunun tam aynı geometrik sonucu ürettiği (örnekleme hızı bağımsızlığı) kanıtlandı.
+- 1000 kontrollü pinch in/out döngüsünde toplam sapmanın <1e-6 px kaldığı (kriter: <= 0.5 px) doğrulandı.
+Çalıştırılan gerçek komutlar ve exit code:
+- `dotnet run --project tests/MobilDwg.Rendering.Tests/MobilDwg.Rendering.Tests.csproj -c Release` (exit code: 0, STAGE03_VIEWPORT_CAMERA_TESTS_PASS)
+- `dotnet run --project tests/MobilDwg.Architecture.Tests/MobilDwg.Architecture.Tests.csproj -c Release` (exit code: 0)
+- `dotnet run --project tests/MobilDwg.Core.Tests/MobilDwg.Core.Tests.csproj -c Release` (exit code: 0)
+- `dotnet run --project tests/MobilDwg.Integration.Tests/MobilDwg.Integration.Tests.csproj -c Release` (exit code: 0)
+- `powershell -ExecutionPolicy Bypass -File scripts/viewer-stability-gate.ps1 -Stage 03` (exit code: 0, VIEWER_STABILITY_STAGE03_PASS)  
+Ölçülen metrikler ve kanıt dosyaları:
+- `artifacts/viewer-stability/stage03/gate-summary.txt`
+- `artifacts/viewer-stability/stage03/rendering-tests.log`
+- `artifacts/viewer-stability/stage03/architecture-tests.log`
+- `artifacts/viewer-stability/stage03/core-tests.log`
+- `artifacts/viewer-stability/stage03/integration-tests.log`  
+Geçmeyen veya çalıştırılamayan koşullar: Yok.  
+Bir sonraki aşama: Aşama 04 — Native input ve gesture state machine  
 
 ---
 

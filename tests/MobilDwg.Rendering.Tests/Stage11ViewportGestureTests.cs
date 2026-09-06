@@ -181,10 +181,14 @@ internal static class Stage11ViewportGestureTests
             throw new InvalidOperationException("DoubleTap should have zoomed in.");
         }
 
-        // Multiple DoubleTaps should eventually trigger reset to fit extents
+        // Multiple DoubleTaps should continue zooming in deterministically (conscious product decision: Fit is a separate control)
         controller.DoubleTap(new ScreenPoint2(540, 1200), 2.0);
         controller.DoubleTap(new ScreenPoint2(540, 1200), 2.0);
         controller.DoubleTap(new ScreenPoint2(540, 1200), 2.0);
+        if (controller.CurrentCamera.WorldUnitsPerPixel >= preTapWupp / 4.0)
+        {
+            throw new InvalidOperationException("Consecutive DoubleTaps should progressively zoom in.");
+        }
 
         // Fit extents
         var fitCamera = controller.FitExtents();

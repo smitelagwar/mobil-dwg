@@ -95,6 +95,42 @@ public readonly record struct Camera2D
         return new Camera2D(PixelWidth, PixelHeight, new WorldPoint2(newCenterX, newCenterY), nextWupp, MinWorldUnitsPerPixel, MaxWorldUnitsPerPixel);
     }
 
+    public Camera2D Manipulate(
+        ScreenPoint2 previousCentroid,
+        ScreenPoint2 currentCentroid,
+        double factor) =>
+        Manipulate(previousCentroid, currentCentroid, factor, MinWorldUnitsPerPixel, MaxWorldUnitsPerPixel);
+
+    public Camera2D Manipulate(
+        ScreenPoint2 previousCentroid,
+        ScreenPoint2 currentCentroid,
+        double factor,
+        double minWorldUnitsPerPixel,
+        double maxWorldUnitsPerPixel)
+    {
+        EnsureValid();
+        if (!double.IsFinite(factor) || factor <= 0) throw new ArgumentOutOfRangeException(nameof(factor));
+        if (!double.IsFinite(previousCentroid.X) || !double.IsFinite(previousCentroid.Y)) throw new ArgumentOutOfRangeException(nameof(previousCentroid));
+        if (!double.IsFinite(currentCentroid.X) || !double.IsFinite(currentCentroid.Y)) throw new ArgumentOutOfRangeException(nameof(currentCentroid));
+        if (!double.IsFinite(minWorldUnitsPerPixel) || minWorldUnitsPerPixel <= 0) throw new ArgumentOutOfRangeException(nameof(minWorldUnitsPerPixel));
+        if (!double.IsFinite(maxWorldUnitsPerPixel) || maxWorldUnitsPerPixel < minWorldUnitsPerPixel) throw new ArgumentOutOfRangeException(nameof(maxWorldUnitsPerPixel));
+
+        var worldFocal = CameraTransform.ScreenToWorld(previousCentroid, this);
+        var nextWupp = Math.Clamp(WorldUnitsPerPixel / factor, minWorldUnitsPerPixel, maxWorldUnitsPerPixel);
+        var newCenterX = worldFocal.X - ((currentCentroid.X - (PixelWidth / 2d)) * nextWupp);
+        var newCenterY = worldFocal.Y + ((currentCentroid.Y - (PixelHeight / 2d)) * nextWupp);
+        return new Camera2D(PixelWidth, PixelHeight, new WorldPoint2(newCenterX, newCenterY), nextWupp, minWorldUnitsPerPixel, maxWorldUnitsPerPixel);
+    }
+
+    public Camera2D WithLimits(double minWorldUnitsPerPixel, double maxWorldUnitsPerPixel)
+    {
+        EnsureValid();
+        if (!double.IsFinite(minWorldUnitsPerPixel) || minWorldUnitsPerPixel <= 0) throw new ArgumentOutOfRangeException(nameof(minWorldUnitsPerPixel));
+        if (!double.IsFinite(maxWorldUnitsPerPixel) || maxWorldUnitsPerPixel < minWorldUnitsPerPixel) throw new ArgumentOutOfRangeException(nameof(maxWorldUnitsPerPixel));
+        var clampedWupp = Math.Clamp(WorldUnitsPerPixel, minWorldUnitsPerPixel, maxWorldUnitsPerPixel);
+        return new Camera2D(PixelWidth, PixelHeight, Center, clampedWupp, minWorldUnitsPerPixel, maxWorldUnitsPerPixel);
+    }
+
     public Camera2D PanBy(double deltaScreenX, double deltaScreenY)
     {
         EnsureValid();
@@ -158,9 +194,32 @@ public readonly record struct Camera2D
 
         var usableWidth = pixelWidth * (1d - (2d * paddingFraction));
         var usableHeight = pixelHeight * (1d - (2d * paddingFraction));
-        var byWidth = bounds.Width / usableWidth;
-        var byHeight = bounds.Height / usableHeight;
-        var scale = Math.Max(byWidth, byHeight);
+        if (usableWidth <= 0) usableWidth = 1.0;
+        if (usableHeight <= 0) usableHeight = 1.0;
+
+        double scale;
+        if (bounds.Width <= 0 && bounds.Height <= 0)
+        {
+            // Single point: virtual 1 drawing unit extent
+            scale = Math.Max(1.0 / usableWidth, 1.0 / usableHeight);
+        }
+        else if (bounds.Width > 0 && bounds.Height <= 0)
+        {
+            // Horizontal line: positive width determines fit
+            scale = bounds.Width / usableWidth;
+        }
+        else if (bounds.Width <= 0 && bounds.Height > 0)
+        {
+            // Vertical line: positive height determines fit
+            scale = bounds.Height / usableHeight;
+        }
+        else
+        {
+            var byWidth = bounds.Width / usableWidth;
+            var byHeight = bounds.Height / usableHeight;
+            scale = Math.Max(byWidth, byHeight);
+        }
+
         if (!double.IsFinite(scale) || scale <= 0)
         {
             scale = minWorldUnitsPerPixel;
