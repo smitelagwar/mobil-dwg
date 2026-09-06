@@ -103,14 +103,10 @@ public sealed class BlockExpander
 
         try
         {
-            var localTransform = Transform2D.CreateBlockTransform(
-                reference.InsertionPoint,
-                reference.ScaleX,
-                reference.ScaleY,
-                reference.RotationRadians,
-                blockDef.BasePoint);
-
-            var effectiveTransform = parentTransform * localTransform;
+            var colCount = Math.Max(1, reference.ColumnCount);
+            var rowCount = Math.Max(1, reference.RowCount);
+            var cosR = Math.Cos(reference.RotationRadians);
+            var sinR = Math.Sin(reference.RotationRadians);
 
             // Effective layer for Layer 0 inheritance:
             // If the reference specifies a layer other than 0, that becomes the container layer.
@@ -124,70 +120,97 @@ public sealed class BlockExpander
                 ? inheritedStyle
                 : reference.Style;
 
-            // 1. Expand template entities in this block
-            foreach (var template in blockDef.Entities)
+            for (int r = 0; r < rowCount; r++)
             {
-                if (_expanded.Count >= _options.MaxExpansionEntityBudget)
+                for (int c = 0; c < colCount; c++)
                 {
-                    _diagnostics.Add(new SceneDiagnostic(
-                        SceneDiagnosticKind.Dropped,
-                        "BLOCK_EXPANSION_BUDGET_EXCEEDED",
-                        $"Block expansion budget reached.",
-                        new RenderEntityId(template.Handle ?? reference.BlockName)));
-                    break;
+                    var gridX = c * reference.ColumnSpacing;
+                    var gridY = r * reference.RowSpacing;
+                    var rotGridX = (gridX * cosR) - (gridY * sinR);
+                    var rotGridY = (gridX * sinR) + (gridY * cosR);
+
+                    var cellInsertionPoint = new WorldPoint2(
+                        reference.InsertionPoint.X + rotGridX,
+                        reference.InsertionPoint.Y + rotGridY);
+
+                    var localTransform = Transform2D.CreateBlockTransform(
+                        cellInsertionPoint,
+                        reference.ScaleX,
+                        reference.ScaleY,
+                        reference.RotationRadians,
+                        blockDef.BasePoint);
+
+                    var effectiveTransform = parentTransform * localTransform;
+
+                    // 1. Expand template entities in this block
+                    foreach (var template in blockDef.Entities)
+                    {
+                        if (_expanded.Count >= _options.MaxExpansionEntityBudget)
+                        {
+                            _diagnostics.Add(new SceneDiagnostic(
+                                SceneDiagnosticKind.Dropped,
+                                "BLOCK_EXPANSION_BUDGET_EXCEEDED",
+                                $"Block expansion budget reached.",
+                                new RenderEntityId(template.Handle ?? reference.BlockName)));
+                            break;
+                        }
+
+                        // Layer 0 inheritance rule:
+                        // An entity inside a block on Layer "0" adopts the container layer.
+                        var effectiveEntityLayer = string.Equals(template.Layer.Value, "0", StringComparison.OrdinalIgnoreCase)
+                            ? containerLayer
+                            : template.Layer;
+
+                        // ByBlock style inheritance rule:
+                        // An entity inside a block with ByBlock style adopts the container style.
+                        var effectiveEntityStyle = string.Equals(template.Style.Value, "BYBLOCK", StringComparison.OrdinalIgnoreCase)
+                            ? containerStyle
+                            : template.Style;
+
+                        // Transform primitive
+                        var transformedPrimitive = PrimitiveTransformer.Transform(template.Primitive, effectiveTransform);
+
+                        var id = new RenderEntityId($"BLK-{reference.BlockName}-{++_entityCounter:D5}");
+                        var entity = new RenderSceneEntity(
+                            id,
+                            effectiveEntityLayer,
+                            effectiveEntityStyle,
+                            new RenderSourceReference("INSERT_PRIMITIVE", template.Handle, template.SourceIndex ?? reference.SourceIndex),
+                            new[] { transformedPrimitive });
+
+                        _expanded.Add(entity);
+                    }
+
+                    // 2. Expand visible attributes attached to this reference (on root instance)
+                    if (c == 0 && r == 0)
+                    {
+                        foreach (var attr in reference.Attributes)
+                        {
+                            if (attr.IsInvisible) continue;
+
+                            var transformedPos = parentTransform.TransformPoint(attr.Position);
+                            _attributesIncluded++;
+
+                            // Attribute text represented as marker/point geometry
+                            var attrPoint = new PointPrimitive(transformedPos);
+                            var id = new RenderEntityId($"ATTRIB-{attr.Tag}-{++_entityCounter:D5}");
+                            var entity = new RenderSceneEntity(
+                                id,
+                                containerLayer,
+                                containerStyle,
+                                new RenderSourceReference("ATTRIB", reference.Handle, reference.SourceIndex),
+                                new[] { attrPoint });
+
+                            _expanded.Add(entity);
+                        }
+                    }
+
+                    // 3. Expand nested block references
+                    foreach (var nestedRef in blockDef.NestedReferences)
+                    {
+                        ExpandReference(nestedRef, effectiveTransform, containerLayer, containerStyle, depth + 1);
+                    }
                 }
-
-                // Layer 0 inheritance rule:
-                // An entity inside a block on Layer "0" adopts the container layer.
-                var effectiveEntityLayer = string.Equals(template.Layer.Value, "0", StringComparison.OrdinalIgnoreCase)
-                    ? containerLayer
-                    : template.Layer;
-
-                // ByBlock style inheritance rule:
-                // An entity inside a block with ByBlock style adopts the container style.
-                var effectiveEntityStyle = string.Equals(template.Style.Value, "BYBLOCK", StringComparison.OrdinalIgnoreCase)
-                    ? containerStyle
-                    : template.Style;
-
-                // Transform primitive
-                var transformedPrimitive = PrimitiveTransformer.Transform(template.Primitive, effectiveTransform);
-
-                var id = new RenderEntityId($"BLK-{reference.BlockName}-{++_entityCounter:D5}");
-                var entity = new RenderSceneEntity(
-                    id,
-                    effectiveEntityLayer,
-                    effectiveEntityStyle,
-                    new RenderSourceReference("INSERT_PRIMITIVE", template.Handle, template.SourceIndex ?? reference.SourceIndex),
-                    new[] { transformedPrimitive });
-
-                _expanded.Add(entity);
-            }
-
-            // 2. Expand visible attributes attached to this reference
-            foreach (var attr in reference.Attributes)
-            {
-                if (attr.IsInvisible) continue;
-
-                var transformedPos = parentTransform.TransformPoint(attr.Position);
-                _attributesIncluded++;
-
-                // Attribute text represented as marker/point geometry
-                var attrPoint = new PointPrimitive(transformedPos);
-                var id = new RenderEntityId($"ATTRIB-{attr.Tag}-{++_entityCounter:D5}");
-                var entity = new RenderSceneEntity(
-                    id,
-                    containerLayer,
-                    containerStyle,
-                    new RenderSourceReference("ATTRIB", reference.Handle, reference.SourceIndex),
-                    new[] { attrPoint });
-
-                _expanded.Add(entity);
-            }
-
-            // 3. Expand nested block references
-            foreach (var nestedRef in blockDef.NestedReferences)
-            {
-                ExpandReference(nestedRef, effectiveTransform, containerLayer, containerStyle, depth + 1);
             }
         }
         finally

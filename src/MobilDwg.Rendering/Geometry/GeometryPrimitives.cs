@@ -120,7 +120,8 @@ public sealed record PolylinePrimitive : RenderGeometryPrimitive
         ArgumentNullException.ThrowIfNull(vertices);
         var copy = vertices.ToArray();
         if (copy.Length < 2) throw new ArgumentException("Polyline requires at least two vertices.", nameof(vertices));
-        if (closed && copy.Length < 3) throw new ArgumentException("Closed polyline requires at least three vertices.", nameof(vertices));
+        if (closed && copy.Length == 2 && copy[0].Bulge == 0 && copy[1].Bulge == 0)
+            throw new ArgumentException("Closed polyline without bulges requires at least three vertices.", nameof(vertices));
 
         _vertices = Array.AsReadOnly(copy);
         Closed = closed;
@@ -336,6 +337,9 @@ internal static class GeometryBounds
             var start = vertices[i];
             var end = vertices[(i + 1) % vertices.Count];
             if (start.Bulge == 0) continue;
+            var dx = end.Position.X - start.Position.X;
+            var dy = end.Position.Y - start.Position.Y;
+            if ((dx * dx) + (dy * dy) < 1e-24) continue;
             var arc = BulgeArc(start.Position, end.Position, start.Bulge);
             bounds = bounds.Union(arc.Bounds);
         }
@@ -348,7 +352,11 @@ internal static class GeometryBounds
         var dx = end.X - start.X;
         var dy = end.Y - start.Y;
         var chord = Math.Sqrt((dx * dx) + (dy * dy));
-        if (!double.IsFinite(chord) || chord <= 0) throw new ArgumentException("Bulged polyline segment must have nonzero finite chord length.");
+        if (!double.IsFinite(chord) || chord <= 1e-12)
+        {
+            // Degenerate segment fallback: minimal point arc
+            return new ArcPrimitive(start, 1e-6, 0d, GeometryMath.Tau);
+        }
 
         var midpointX = (start.X / 2d) + (end.X / 2d);
         var midpointY = (start.Y / 2d) + (end.Y / 2d);

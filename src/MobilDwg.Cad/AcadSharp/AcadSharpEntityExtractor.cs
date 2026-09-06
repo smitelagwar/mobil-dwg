@@ -282,74 +282,134 @@ public static class AcadSharpEntityExtractor
             double cos = Math.Cos(rotRad);
             double sin = Math.Sin(rotRad);
 
-            (double X, double Y) TransformPoint(double lx, double ly)
+            // Block definition base point subtraction
+            double bx = block.BlockEntity?.BasePoint.X ?? 0.0;
+            double by = block.BlockEntity?.BasePoint.Y ?? 0.0;
+
+            int colCount = Math.Max(1, (int)insert.ColumnCount);
+            int rowCount = Math.Max(1, (int)insert.RowCount);
+            double colSpacing = insert.ColumnSpacing;
+            double rowSpacing = insert.RowSpacing;
+
+            for (int r = 0; r < rowCount; r++)
             {
-                // Scale
-                double sx = lx * scaleX;
-                double sy = ly * scaleY;
-                // Rotate
-                double rx = sx * cos - sy * sin;
-                double ry = sx * sin + sy * cos;
-                // Translate via OCS
-                var (ox, oy, _) = ocs.Transform(rx, ry, 0);
-                return (ox + insX, oy + insY);
-            }
-
-            foreach (var child in block.Entities)
-            {
-                refOrder++;
-
-                if (!budgetGuard.CheckEntityCount(extractedEntities.Count + 1, out var quotaDiag))
+                for (int c = 0; c < colCount; c++)
                 {
-                    diagnostics.Add(new CadExtractedDiagnostic(
-                        quotaDiag!.Code,
-                        quotaDiag.Severity.ToString(),
-                        quotaDiag.Message));
-                    break;
-                }
+                    double gridX = c * colSpacing;
+                    double gridY = r * rowSpacing;
+                    double rotGridX = (gridX * cos) - (gridY * sin);
+                    double rotGridY = (gridX * sin) + (gridY * cos);
 
-                if (child is Insert nestedInsert)
-                {
-                    ExpandBlockInsert(
-                        nestedInsert,
-                        document,
-                        parentInstancePath: $"{parentInstancePath}/{block.Name}:{nestedInsert.Handle:X}",
-                        currentDepth: currentDepth + 1,
-                        inheritedLayer: string.Equals(nestedInsert.Layer?.Name, "0", StringComparison.OrdinalIgnoreCase) ? inheritedLayer : nestedInsert.Layer?.Name ?? inheritedLayer,
-                        inheritedColor: nestedInsert.Color.IsByBlock ? inheritedColor : ResolveColor(nestedInsert),
-                        extractedEntities: extractedEntities,
-                        refOrder: ref refOrder,
-                        updateBounds: updateBounds,
-                        diagnostics: diagnostics,
-                        budgetGuard: budgetGuard,
-                        activeBlockChain: activeBlockChain);
-                    continue;
-                }
+                    (double X, double Y) TransformPoint(double lx, double ly)
+                    {
+                        // 1. Base point subtraction
+                        double px = lx - bx;
+                        double py = ly - by;
+                        // 2. Scale
+                        double sx = px * scaleX;
+                        double sy = py * scaleY;
+                        // 3. Rotate
+                        double rx = (sx * cos) - (sy * sin);
+                        double ry = (sx * sin) + (sy * cos);
+                        // 4. Translate via OCS + grid offset
+                        var (ox, oy, _) = ocs.Transform(rx, ry, 0);
+                        return (ox + insX + rotGridX, oy + insY + rotGridY);
+                    }
 
-                // Transform child entity
-                string childHandleStr = $"{parentInstancePath}/{block.Name}:{insert.Handle:X}:{child.Handle:X}";
-                string childLayer = string.Equals(child.Layer?.Name, "0", StringComparison.OrdinalIgnoreCase)
-                    ? inheritedLayer
-                    : child.Layer?.Name ?? inheritedLayer;
-                CadEntityColor childColor = child.Color.IsByBlock ? inheritedColor : ResolveColor(child);
+                    foreach (var child in block.Entities)
+                    {
+                        refOrder++;
 
-                var transformedChild = TransformAndExtractEntity(
-                    child,
-                    childHandleStr,
-                    childLayer,
-                    childColor,
-                    refOrder,
-                    block.Name,
-                    TransformPoint,
-                    scaleX,
-                    rotRad,
-                    diagnostics,
-                    budgetGuard);
+                        if (!budgetGuard.CheckEntityCount(extractedEntities.Count + 1, out var quotaDiag))
+                        {
+                            diagnostics.Add(new CadExtractedDiagnostic(
+                                quotaDiag!.Code,
+                                quotaDiag.Severity.ToString(),
+                                quotaDiag.Message));
+                            break;
+                        }
 
-                if (transformedChild is not null)
-                {
-                    extractedEntities.Add(transformedChild);
-                    UpdateEntityBounds(transformedChild, updateBounds);
+                        if (child is Insert nestedInsert)
+                        {
+                            string nestedPath = (colCount > 1 || rowCount > 1)
+                                ? $"{parentInstancePath}/{block.Name}:{nestedInsert.Handle:X}_c{c}_r{r}"
+                                : $"{parentInstancePath}/{block.Name}:{nestedInsert.Handle:X}";
+
+                            ExpandBlockInsert(
+                                nestedInsert,
+                                document,
+                                parentInstancePath: nestedPath,
+                                currentDepth: currentDepth + 1,
+                                inheritedLayer: string.Equals(nestedInsert.Layer?.Name, "0", StringComparison.OrdinalIgnoreCase) ? inheritedLayer : nestedInsert.Layer?.Name ?? inheritedLayer,
+                                inheritedColor: nestedInsert.Color.IsByBlock ? inheritedColor : ResolveColor(nestedInsert),
+                                extractedEntities: extractedEntities,
+                                refOrder: ref refOrder,
+                                updateBounds: updateBounds,
+                                diagnostics: diagnostics,
+                                budgetGuard: budgetGuard,
+                                activeBlockChain: activeBlockChain);
+                            continue;
+                        }
+
+                        // Transform child entity
+                        string suffix = (colCount > 1 || rowCount > 1) ? $"_c{c}_r{r}" : string.Empty;
+                        string childHandleStr = $"{parentInstancePath}/{block.Name}:{insert.Handle:X}:{child.Handle:X}{suffix}";
+                        string childLayer = string.Equals(child.Layer?.Name, "0", StringComparison.OrdinalIgnoreCase)
+                            ? inheritedLayer
+                            : child.Layer?.Name ?? inheritedLayer;
+                        CadEntityColor childColor = child.Color.IsByBlock ? inheritedColor : ResolveColor(child);
+
+                        var transformedChild = TransformAndExtractEntity(
+                            child,
+                            childHandleStr,
+                            childLayer,
+                            childColor,
+                            refOrder,
+                            block.Name,
+                            TransformPoint,
+                            scaleX,
+                            scaleY,
+                            rotRad,
+                            diagnostics,
+                            budgetGuard);
+
+                        if (transformedChild is not null)
+                        {
+                            extractedEntities.Add(transformedChild);
+                            UpdateEntityBounds(transformedChild, updateBounds);
+                        }
+                    }
+
+                    // Expand visible attributes attached to this insert on root instance
+                    if (c == 0 && r == 0 && insert.Attributes != null)
+                    {
+                        foreach (var attr in insert.Attributes)
+                        {
+                            if (attr.IsInvisible) continue;
+                            refOrder++;
+                            var (atx, aty) = TransformPoint(attr.InsertPoint.X, attr.InsertPoint.Y);
+                            string attrText = DecodeCadText(attr.Value);
+                            double ah = (attr.Height > 0 ? attr.Height : 10.0) * Math.Abs(scaleY);
+                            double arot = attr.Rotation + rotRad;
+                            string attrHandle = $"{parentInstancePath}/{block.Name}:{insert.Handle:X}:ATTR:{attr.Handle:X}";
+
+                            var attrEntity = new CadExtractedEntity(
+                                attrHandle,
+                                inheritedLayer,
+                                CadExtractedEntityType.Text,
+                                inheritedColor,
+                                sourceOrder: refOrder,
+                                blockOwner: block.Name,
+                                payload: new CadTextPayload(attrText, new CadPoint3D(atx, aty), ah, arot, attr.Style?.Name),
+                                points: new[] { new CadExtractedPoint(atx, aty) },
+                                text: attrText,
+                                textHeight: ah,
+                                rotation: arot);
+
+                            extractedEntities.Add(attrEntity);
+                            UpdateEntityBounds(attrEntity, updateBounds);
+                        }
+                    }
                 }
             }
         }
@@ -509,8 +569,9 @@ public static class AcadSharpEntityExtractor
             var ctrlPts = spline.ControlPoints?.Select(p => new CadPoint3D(p.X, p.Y, p.Z)).ToArray() ?? Array.Empty<CadPoint3D>();
             var fitPts = spline.FitPoints?.Select(p => new CadPoint3D(p.X, p.Y, p.Z)).ToArray() ?? Array.Empty<CadPoint3D>();
             var knots = spline.Knots?.ToArray() ?? Array.Empty<double>();
+            var weights = spline.Weights?.ToArray() ?? Array.Empty<double>();
 
-            var payload = new CadSplinePayload(spline.Degree, spline.IsClosed, ctrlPts, fitPts, knots);
+            var payload = new CadSplinePayload(spline.Degree, spline.IsClosed, ctrlPts, fitPts, knots, weights.Length > 0 ? weights : null);
 
             var vertices = (ctrlPts.Length > 0 ? ctrlPts : fitPts).Select(p => new CadExtractedVertex(p.X, p.Y)).ToArray();
 
@@ -687,14 +748,53 @@ public static class AcadSharpEntityExtractor
                 new CadPoint3D(p3x, p3y, solid.ThirdCorner.Z),
                 new CadPoint3D(p4x, p4y, solid.FourthCorner.Z));
 
-            var vertices = new[]
-            {
-                new CadExtractedVertex(p1x, p1y),
-                new CadExtractedVertex(p2x, p2y),
-                new CadExtractedVertex(p4x, p4y),
-                new CadExtractedVertex(p3x, p3y)
-            };
+            bool isTri = Math.Abs(p4x - p3x) < 1e-9 && Math.Abs(p4y - p3y) < 1e-9;
+            var vertices = isTri
+                ? new[]
+                {
+                    new CadExtractedVertex(p1x, p1y),
+                    new CadExtractedVertex(p2x, p2y),
+                    new CadExtractedVertex(p3x, p3y)
+                }
+                : new[]
+                {
+                    new CadExtractedVertex(p1x, p1y),
+                    new CadExtractedVertex(p2x, p2y),
+                    new CadExtractedVertex(p4x, p4y),
+                    new CadExtractedVertex(p3x, p3y)
+                };
 
+            return new CadExtractedEntity(
+                handleStr, layer, CadExtractedEntityType.Solid, color,
+                sourceOrder: sourceOrder, lineweight: lineweight, transparency: transparency,
+                linetype: linetype, linetypeScale: linetypeScale, blockOwner: blockOwner,
+                payload: payload,
+                vertices: vertices);
+        }
+        else if (entity is Face3D face)
+        {
+            var p1 = new CadPoint3D(face.FirstCorner.X, face.FirstCorner.Y, face.FirstCorner.Z);
+            var p2 = new CadPoint3D(face.SecondCorner.X, face.SecondCorner.Y, face.SecondCorner.Z);
+            var p3 = new CadPoint3D(face.ThirdCorner.X, face.ThirdCorner.Y, face.ThirdCorner.Z);
+            var p4 = new CadPoint3D(face.FourthCorner.X, face.FourthCorner.Y, face.FourthCorner.Z);
+
+            bool isTri = Math.Abs(p4.X - p3.X) < 1e-9 && Math.Abs(p4.Y - p3.Y) < 1e-9 && Math.Abs(p4.Z - p3.Z) < 1e-9;
+            var vertices = isTri
+                ? new[]
+                {
+                    new CadExtractedVertex(p1.X, p1.Y),
+                    new CadExtractedVertex(p2.X, p2.Y),
+                    new CadExtractedVertex(p3.X, p3.Y)
+                }
+                : new[]
+                {
+                    new CadExtractedVertex(p1.X, p1.Y),
+                    new CadExtractedVertex(p2.X, p2.Y),
+                    new CadExtractedVertex(p3.X, p3.Y),
+                    new CadExtractedVertex(p4.X, p4.Y)
+                };
+
+            var payload = new CadSolidPayload(p1, p2, p3, p4);
             return new CadExtractedEntity(
                 handleStr, layer, CadExtractedEntityType.Solid, color,
                 sourceOrder: sourceOrder, lineweight: lineweight, transparency: transparency,
@@ -739,7 +839,8 @@ public static class AcadSharpEntityExtractor
         int sourceOrder,
         string blockName,
         Func<double, double, (double X, double Y)> transform,
-        double scale,
+        double scaleX,
+        double scaleY,
         double rotation,
         List<CadExtractedDiagnostic> diagnostics,
         CadBudgetGuard budgetGuard)
@@ -748,6 +849,7 @@ public static class AcadSharpEntityExtractor
         var transparency = new CadEntityTransparency((byte)Math.Clamp(child.Transparency.Value, (short)0, (short)255), child.Transparency.IsByLayer, child.Transparency.IsByBlock);
         string? linetype = child.LineType?.Name;
         double linetypeScale = child.LineTypeScale > 0 ? child.LineTypeScale : 1.0;
+        bool isMirrored = (scaleX * scaleY) < 0;
 
         if (child is Line line)
         {
@@ -765,36 +867,141 @@ public static class AcadSharpEntityExtractor
         else if (child is Circle circle)
         {
             var (cx, cy) = transform(circle.Center.X, circle.Center.Y);
-            double r = circle.Radius * Math.Abs(scale);
-            var payload = new CadCirclePayload(new CadPoint3D(cx, cy), r);
+            double absSx = Math.Abs(scaleX);
+            double absSy = Math.Abs(scaleY);
 
-            return new CadExtractedEntity(
-                handleStr, layer, CadExtractedEntityType.Circle, color,
-                sourceOrder: sourceOrder, lineweight: lineweight, transparency: transparency,
-                linetype: linetype, linetypeScale: linetypeScale, blockOwner: blockName,
-                payload: payload,
-                points: new[] { new CadExtractedPoint(cx, cy) },
-                radius: r,
-                startAngle: 0,
-                endAngle: Math.PI * 2);
+            if (Math.Abs(absSx - absSy) < 1e-6)
+            {
+                // Uniform scale -> Circle
+                double r = circle.Radius * absSx;
+                var payload = new CadCirclePayload(new CadPoint3D(cx, cy), r);
+
+                return new CadExtractedEntity(
+                    handleStr, layer, CadExtractedEntityType.Circle, color,
+                    sourceOrder: sourceOrder, lineweight: lineweight, transparency: transparency,
+                    linetype: linetype, linetypeScale: linetypeScale, blockOwner: blockName,
+                    payload: payload,
+                    points: new[] { new CadExtractedPoint(cx, cy) },
+                    radius: r,
+                    startAngle: 0,
+                    endAngle: Math.PI * 2);
+            }
+            else
+            {
+                // Non-uniform scale -> Ellipse
+                double rx = circle.Radius * absSx;
+                double ry = circle.Radius * absSy;
+                double rmaj = Math.Max(rx, ry);
+                double rmin = Math.Min(rx, ry);
+                double ratio = rmaj > 0 ? rmin / rmaj : 1.0;
+                double rot = rx >= ry ? rotation : rotation + (Math.PI / 2.0);
+                double mx = rmaj * Math.Cos(rot);
+                double my = rmaj * Math.Sin(rot);
+
+                var payload = new CadEllipsePayload(
+                    new CadPoint3D(cx, cy),
+                    new CadPoint3D(mx, my),
+                    ratio,
+                    0,
+                    Math.PI * 2);
+
+                return new CadExtractedEntity(
+                    handleStr, layer, CadExtractedEntityType.Ellipse, color,
+                    sourceOrder: sourceOrder, lineweight: lineweight, transparency: transparency,
+                    linetype: linetype, linetypeScale: linetypeScale, blockOwner: blockName,
+                    payload: payload,
+                    points: new[] { new CadExtractedPoint(cx, cy) },
+                    radius: rmaj,
+                    startAngle: 0,
+                    endAngle: Math.PI * 2,
+                    rotation: rot);
+            }
         }
         else if (child is Arc arc)
         {
             var (cx, cy) = transform(arc.Center.X, arc.Center.Y);
-            double r = arc.Radius * Math.Abs(scale);
-            double sa = arc.StartAngle + rotation;
-            double ea = arc.EndAngle + rotation;
-            var payload = new CadArcPayload(new CadPoint3D(cx, cy), r, sa, ea);
+            double absSx = Math.Abs(scaleX);
+            double absSy = Math.Abs(scaleY);
+
+            if (Math.Abs(absSx - absSy) < 1e-6)
+            {
+                // Uniform scale -> Arc
+                double r = arc.Radius * absSx;
+                double sa = arc.StartAngle + rotation;
+                double ea = arc.EndAngle + rotation;
+
+                if (isMirrored)
+                {
+                    double sweep = arc.EndAngle - arc.StartAngle;
+                    if (sweep <= 0) sweep += Math.PI * 2;
+                    sa = Math.PI - ea;
+                    ea = sa + sweep;
+                }
+
+                var payload = new CadArcPayload(new CadPoint3D(cx, cy), r, sa, ea);
+                return new CadExtractedEntity(
+                    handleStr, layer, CadExtractedEntityType.Arc, color,
+                    sourceOrder: sourceOrder, lineweight: lineweight, transparency: transparency,
+                    linetype: linetype, linetypeScale: linetypeScale, blockOwner: blockName,
+                    payload: payload,
+                    points: new[] { new CadExtractedPoint(cx, cy) },
+                    radius: r,
+                    startAngle: sa,
+                    endAngle: ea);
+            }
+            else
+            {
+                // Non-uniform scale -> tessellated curved polyline
+                int segments = 32;
+                double sweep = arc.EndAngle - arc.StartAngle;
+                if (sweep <= 0) sweep += Math.PI * 2;
+                var arcVerts = new List<CadExtractedVertex>(segments + 1);
+
+                for (int i = 0; i <= segments; i++)
+                {
+                    double t = (double)i / segments;
+                    double a = arc.StartAngle + (sweep * t);
+                    double lx = arc.Center.X + (arc.Radius * Math.Cos(a));
+                    double ly = arc.Center.Y + (arc.Radius * Math.Sin(a));
+                    var (wx, wy) = transform(lx, ly);
+                    arcVerts.Add(new CadExtractedVertex(wx, wy));
+                }
+
+                var payload = new CadPolylinePayload(arcVerts, IsClosed: false);
+                return new CadExtractedEntity(
+                    handleStr, layer, CadExtractedEntityType.Polyline, color,
+                    sourceOrder: sourceOrder, lineweight: lineweight, transparency: transparency,
+                    linetype: linetype, linetypeScale: linetypeScale, blockOwner: blockName,
+                    payload: payload,
+                    vertices: arcVerts);
+            }
+        }
+        else if (child is Ellipse ellipse)
+        {
+            var (cx, cy) = transform(ellipse.Center.X, ellipse.Center.Y);
+            var (mx, my) = transform(ellipse.Center.X + ellipse.MajorAxisEndPoint.X, ellipse.Center.Y + ellipse.MajorAxisEndPoint.Y);
+            double majX = mx - cx;
+            double majY = my - cy;
+            double r = Math.Sqrt((majX * majX) + (majY * majY));
+            double rot = Math.Atan2(majY, majX);
+
+            var payload = new CadEllipsePayload(
+                new CadPoint3D(cx, cy),
+                new CadPoint3D(majX, majY),
+                ellipse.RadiusRatio,
+                ellipse.StartParameter,
+                ellipse.EndParameter);
 
             return new CadExtractedEntity(
-                handleStr, layer, CadExtractedEntityType.Arc, color,
+                handleStr, layer, CadExtractedEntityType.Ellipse, color,
                 sourceOrder: sourceOrder, lineweight: lineweight, transparency: transparency,
                 linetype: linetype, linetypeScale: linetypeScale, blockOwner: blockName,
                 payload: payload,
                 points: new[] { new CadExtractedPoint(cx, cy) },
                 radius: r,
-                startAngle: sa,
-                endAngle: ea);
+                startAngle: ellipse.StartParameter,
+                endAngle: ellipse.EndParameter,
+                rotation: rot);
         }
         else if (child is LwPolyline lwPoly)
         {
@@ -802,7 +1009,8 @@ public static class AcadSharpEntityExtractor
             foreach (var v in lwPoly.Vertices)
             {
                 var (wx, wy) = transform(v.Location.X, v.Location.Y);
-                vertices.Add(new CadExtractedVertex(wx, wy, v.Bulge, v.StartWidth * scale, v.EndWidth * scale));
+                double b = isMirrored ? -v.Bulge : v.Bulge;
+                vertices.Add(new CadExtractedVertex(wx, wy, b, v.StartWidth * Math.Abs(scaleX), v.EndWidth * Math.Abs(scaleX)));
             }
 
             var payload = new CadPolylinePayload(vertices, lwPoly.IsClosed);
@@ -813,10 +1021,72 @@ public static class AcadSharpEntityExtractor
                 payload: payload,
                 vertices: vertices);
         }
+        else if (child is Polyline2D poly2D)
+        {
+            var vertices = new List<CadExtractedVertex>(poly2D.Vertices.Count);
+            foreach (var v in poly2D.Vertices)
+            {
+                var (wx, wy) = transform(v.Location.X, v.Location.Y);
+                double b = isMirrored ? -v.Bulge : v.Bulge;
+                vertices.Add(new CadExtractedVertex(wx, wy, b, v.StartWidth * Math.Abs(scaleX), v.EndWidth * Math.Abs(scaleX)));
+            }
+
+            var payload = new CadPolylinePayload(vertices, poly2D.IsClosed);
+            return new CadExtractedEntity(
+                handleStr, layer, CadExtractedEntityType.Polyline, color,
+                sourceOrder: sourceOrder, lineweight: lineweight, transparency: transparency,
+                linetype: linetype, linetypeScale: linetypeScale, blockOwner: blockName,
+                payload: payload,
+                vertices: vertices);
+        }
+        else if (child is Polyline3D poly3D)
+        {
+            var vertices = new List<CadExtractedVertex>(poly3D.Vertices.Count);
+            foreach (var v in poly3D.Vertices)
+            {
+                var (wx, wy) = transform(v.Location.X, v.Location.Y);
+                vertices.Add(new CadExtractedVertex(wx, wy));
+            }
+
+            var payload = new CadPolylinePayload(vertices, poly3D.IsClosed);
+            return new CadExtractedEntity(
+                handleStr, layer, CadExtractedEntityType.Polyline, color,
+                sourceOrder: sourceOrder, lineweight: lineweight, transparency: transparency,
+                linetype: linetype, linetypeScale: linetypeScale, blockOwner: blockName,
+                payload: payload,
+                vertices: vertices);
+        }
+        else if (child is Spline spline)
+        {
+            var ctrlPts = spline.ControlPoints?.Select(p =>
+            {
+                var (tx, ty) = transform(p.X, p.Y);
+                return new CadPoint3D(tx, ty, p.Z);
+            }).ToArray() ?? Array.Empty<CadPoint3D>();
+
+            var fitPts = spline.FitPoints?.Select(p =>
+            {
+                var (tx, ty) = transform(p.X, p.Y);
+                return new CadPoint3D(tx, ty, p.Z);
+            }).ToArray() ?? Array.Empty<CadPoint3D>();
+
+            var knots = spline.Knots?.ToArray() ?? Array.Empty<double>();
+            var weights = spline.Weights?.ToArray() ?? Array.Empty<double>();
+
+            var payload = new CadSplinePayload(spline.Degree, spline.IsClosed, ctrlPts, fitPts, knots, weights.Length > 0 ? weights : null);
+            var vertices = (ctrlPts.Length > 0 ? ctrlPts : fitPts).Select(p => new CadExtractedVertex(p.X, p.Y)).ToArray();
+
+            return new CadExtractedEntity(
+                handleStr, layer, CadExtractedEntityType.Spline, color,
+                sourceOrder: sourceOrder, lineweight: lineweight, transparency: transparency,
+                linetype: linetype, linetypeScale: linetypeScale, blockOwner: blockName,
+                payload: payload,
+                vertices: vertices);
+        }
         else if (child is TextEntity text)
         {
             var (tx, ty) = transform(text.InsertPoint.X, text.InsertPoint.Y);
-            double h = (text.Height > 0 ? text.Height : 10.0) * Math.Abs(scale);
+            double h = (text.Height > 0 ? text.Height : 10.0) * Math.Abs(scaleY);
             double rot = text.Rotation + rotation;
             string decodedVal = DecodeCadText(text.Value);
 
@@ -834,7 +1104,7 @@ public static class AcadSharpEntityExtractor
         else if (child is MText mtext)
         {
             var (tx, ty) = transform(mtext.InsertPoint.X, mtext.InsertPoint.Y);
-            double h = (mtext.Height > 0 ? mtext.Height : 10.0) * Math.Abs(scale);
+            double h = (mtext.Height > 0 ? mtext.Height : 10.0) * Math.Abs(scaleY);
             double rot = mtext.Rotation + rotation;
             string cleanVal = CleanMText(mtext.Value);
 
@@ -848,6 +1118,134 @@ public static class AcadSharpEntityExtractor
                 text: cleanVal,
                 textHeight: h,
                 rotation: rot);
+        }
+        else if (child is Solid solid)
+        {
+            var (p1x, p1y) = transform(solid.FirstCorner.X, solid.FirstCorner.Y);
+            var (p2x, p2y) = transform(solid.SecondCorner.X, solid.SecondCorner.Y);
+            var (p3x, p3y) = transform(solid.ThirdCorner.X, solid.ThirdCorner.Y);
+            var (p4x, p4y) = transform(solid.FourthCorner.X, solid.FourthCorner.Y);
+
+            bool isTri = Math.Abs(p4x - p3x) < 1e-9 && Math.Abs(p4y - p3y) < 1e-9;
+            var vertices = isTri
+                ? new[]
+                {
+                    new CadExtractedVertex(p1x, p1y),
+                    new CadExtractedVertex(p2x, p2y),
+                    new CadExtractedVertex(p3x, p3y)
+                }
+                : new[]
+                {
+                    new CadExtractedVertex(p1x, p1y),
+                    new CadExtractedVertex(p2x, p2y),
+                    new CadExtractedVertex(p4x, p4y),
+                    new CadExtractedVertex(p3x, p3y)
+                };
+
+            var payload = new CadSolidPayload(
+                new CadPoint3D(p1x, p1y, solid.FirstCorner.Z),
+                new CadPoint3D(p2x, p2y, solid.SecondCorner.Z),
+                new CadPoint3D(p3x, p3y, solid.ThirdCorner.Z),
+                new CadPoint3D(p4x, p4y, solid.FourthCorner.Z));
+
+            return new CadExtractedEntity(
+                handleStr, layer, CadExtractedEntityType.Solid, color,
+                sourceOrder: sourceOrder, lineweight: lineweight, transparency: transparency,
+                linetype: linetype, linetypeScale: linetypeScale, blockOwner: blockName,
+                payload: payload,
+                vertices: vertices);
+        }
+        else if (child is Face3D face)
+        {
+            var (p1x, p1y) = transform(face.FirstCorner.X, face.FirstCorner.Y);
+            var (p2x, p2y) = transform(face.SecondCorner.X, face.SecondCorner.Y);
+            var (p3x, p3y) = transform(face.ThirdCorner.X, face.ThirdCorner.Y);
+            var (p4x, p4y) = transform(face.FourthCorner.X, face.FourthCorner.Y);
+
+            bool isTri = Math.Abs(p4x - p3x) < 1e-9 && Math.Abs(p4y - p3y) < 1e-9;
+            var vertices = isTri
+                ? new[]
+                {
+                    new CadExtractedVertex(p1x, p1y),
+                    new CadExtractedVertex(p2x, p2y),
+                    new CadExtractedVertex(p3x, p3y)
+                }
+                : new[]
+                {
+                    new CadExtractedVertex(p1x, p1y),
+                    new CadExtractedVertex(p2x, p2y),
+                    new CadExtractedVertex(p3x, p3y),
+                    new CadExtractedVertex(p4x, p4y)
+                };
+
+            var payload = new CadSolidPayload(
+                new CadPoint3D(p1x, p1y, face.FirstCorner.Z),
+                new CadPoint3D(p2x, p2y, face.SecondCorner.Z),
+                new CadPoint3D(p3x, p3y, face.ThirdCorner.Z),
+                new CadPoint3D(p4x, p4y, face.FourthCorner.Z));
+
+            return new CadExtractedEntity(
+                handleStr, layer, CadExtractedEntityType.Solid, color,
+                sourceOrder: sourceOrder, lineweight: lineweight, transparency: transparency,
+                linetype: linetype, linetypeScale: linetypeScale, blockOwner: blockName,
+                payload: payload,
+                vertices: vertices);
+        }
+        else if (child is Point pt)
+        {
+            var (px, py) = transform(pt.Location.X, pt.Location.Y);
+            var payload = new CadPointPayload(new CadPoint3D(px, py, pt.Location.Z));
+            return new CadExtractedEntity(
+                handleStr, layer, CadExtractedEntityType.Point, color,
+                sourceOrder: sourceOrder, lineweight: lineweight, transparency: transparency,
+                linetype: linetype, linetypeScale: linetypeScale, blockOwner: blockName,
+                payload: payload,
+                points: new[] { new CadExtractedPoint(px, py) });
+        }
+        else if (child is Hatch hatch)
+        {
+            var loops = new List<IReadOnlyList<CadExtractedVertex>>();
+            foreach (var path in hatch.Paths)
+            {
+                var loopVertices = new List<CadExtractedVertex>();
+                foreach (var edge in path.Edges)
+                {
+                    if (edge is Hatch.BoundaryPath.Line lineEdge)
+                    {
+                        var (sx, sy) = transform(lineEdge.Start.X, lineEdge.Start.Y);
+                        var (ex, ey) = transform(lineEdge.End.X, lineEdge.End.Y);
+                        loopVertices.Add(new CadExtractedVertex(sx, sy));
+                        loopVertices.Add(new CadExtractedVertex(ex, ey));
+                    }
+                    else if (edge is Hatch.BoundaryPath.Polyline polyEdge)
+                    {
+                        foreach (var v in polyEdge.Vertices)
+                        {
+                            var (px, py) = transform(v.X, v.Y);
+                            loopVertices.Add(new CadExtractedVertex(px, py));
+                        }
+                    }
+                }
+                if (loopVertices.Count > 0)
+                {
+                    loops.Add(loopVertices.AsReadOnly());
+                }
+            }
+
+            var flatVertices = loops.SelectMany(l => l).ToArray();
+            var payload = new CadHatchPayload(
+                hatch.Pattern?.Name ?? "SOLID",
+                hatch.IsSolid,
+                hatch.PatternAngle,
+                hatch.PatternScale,
+                loops.AsReadOnly());
+
+            return new CadExtractedEntity(
+                handleStr, layer, CadExtractedEntityType.Hatch, color,
+                sourceOrder: sourceOrder, lineweight: lineweight, transparency: transparency,
+                linetype: linetype, linetypeScale: linetypeScale, blockOwner: blockName,
+                payload: payload,
+                vertices: flatVertices);
         }
 
         return null;

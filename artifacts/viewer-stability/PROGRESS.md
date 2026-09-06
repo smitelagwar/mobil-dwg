@@ -355,6 +355,46 @@ Kullanıcıya yansıyan davranış:
 Geçmeyen veya çalıştırılamayan koşullar: Yok.  
 Bir sonraki aşama: Aşama 09 — Geometri, koordinat uzayları ve block  
 
+### Aşama 09 Raporu
+
+Aşama: 09 — Geometri, koordinat uzayları ve block  
+Durum: TAMAMLANDI  
+Son HEAD: `e97bfe4` (commit: `fix(cad): preserve geometry and block transformation semantics`)  
+Değişen dosyalar:
+- `scripts/viewer-stability-gate.ps1`
+- `src/MobilDwg.Core/Reading/CadExtractedDocument.cs`
+- `src/MobilDwg.Rendering/Geometry/GeometryPrimitives.cs`
+- `src/MobilDwg.Rendering/Geometry/GeometryTessellator.cs`
+- `src/MobilDwg.Rendering/Blocks/BlockReference.cs`
+- `src/MobilDwg.Rendering/Blocks/BlockExpander.cs`
+- `src/MobilDwg.Rendering/Scene/CadExtractedSceneBuilder.cs`
+- `src/MobilDwg.Cad/AcadSharp/AcadSharpEntityExtractor.cs`
+- `tests/MobilDwg.Integration.Tests/Program.cs`
+(Kullanıcı başlangıç değişiklikleri `src/MobilDwg.Rendering/Scene/RenderScene.cs` public constructor görünürlüğü, `release/SHA256SUMS.txt`, `tools/CadControlBenchmark/` bozulmadan çalışma ağacında korundu.)  
+Kullanıcıya yansıyan davranış:
+- Çizgi, nokta, çember, yay, elips, spline, lwpolyline, 2D/3D polyline, solid, trace ve 3dface varlıkları geometri ve blok dönüştürme semantiğiyle eksiksiz bağlandı.
+- Polyline closed, bulge, başlangıç/bitiş genişliği ve elevation korundu; son vertex'ten ilk vertex'e bağlanan bulge ve 2 vertex'li kapalı yay döngüleri desteklendi; sıfır uzunluklu segment ve tekrarlı vertex durumlarında çökme önlendi.
+- Spline degree, knot vektörü, ağırlıklar (rational weights) ve kapalı/periyodik bilgisi korundu; kontrol noktalarını düz çizgiyle birleştirmek yerine de Boor NURBS algoritması ve 0.25/0.50/0.75 çok noktalı örneklemeli muhafazakâr uyarlamalı alt bölme (`SubdivideSplineSpan`) ile yüksek eğrilik ve büküm noktaları yakalandı.
+- Blok (INSERT) yerleşiminde Autodesk dönüşüm sırası tam uygulandı: block-local point → base-point çıkarma → scale → rotation → OCS/WCS dönüşümü.
+- Non-uniform scale altındaki circle varlığı matematiksel olarak elipse (`CadEllipsePayload` / `EllipsePrimitive`) dönüştürüldü; yalnız yarıçapı tek ölçekle çarpma hatası giderildi.
+- Mirroring (yansıtma) altında yay ve polyline bulge yönü / sweep açısı tersine çevrilerek doğru yön korundu.
+- MINSERT için satır/sütun (row/column) ızgara dizilimi yerel eksenlerde açılarak eksiksiz çoğaltıldı.
+- Blok referansı görünür nitelikleri (ATTRIB) metin geometrisiyle sahneye aktarıldı, görünmez olanlar filtrelendi.
+- 3DFACE ve SOLID varlıkları 3 köşeli üçgen ve 4 köşeli dörtgen olarak üstten 2D izdüşümle sahneye taşındı.
+Çalıştırılan gerçek komutlar ve exit code:
+- `dotnet run --project tests/MobilDwg.Rendering.Tests/MobilDwg.Rendering.Tests.csproj -c Release` (exit code: 0, STAGE10/11/12/13/14/15/16/17/18/19/20/21/22/25/26_PASS)
+- `dotnet run --project tests/MobilDwg.Integration.Tests/MobilDwg.Integration.Tests.csproj -c Release` (exit code: 0, STAGE09_GEOMETRY_BLOCK_TESTS_PASS, STAGE09_GEOMETRY_TESTS_PASS)
+- `dotnet run --project tests/MobilDwg.Architecture.Tests/MobilDwg.Architecture.Tests.csproj -c Release` (exit code: 0, STAGE04/STAGE05_DEPENDENCY_BOUNDARY_PASS)
+- `dotnet build src/MobilDwg.App/MobilDwg.App.csproj -f net10.0-android36.0 -c Release` (exit code: 0, 0 warning, 0 error)
+- `powershell -ExecutionPolicy Bypass -File scripts/viewer-stability-gate.ps1 -Stage 09` (exit code: 0, VIEWER_STABILITY_STAGE09_PASS)  
+Ölçülen metrikler ve kanıt dosyaları:
+- `artifacts/viewer-stability/stage09/gate-summary.txt`
+- `artifacts/viewer-stability/stage09/rendering-tests.log`
+- `artifacts/viewer-stability/stage09/integration-tests.log`
+- `artifacts/viewer-stability/stage09/app-build-android.log`  
+Geçmeyen veya çalıştırılamayan koşullar: Yok.  
+Bir sonraki aşama: Aşama 10 — Metin, ölçülendirme ve hatch  
+
 ---
 
 

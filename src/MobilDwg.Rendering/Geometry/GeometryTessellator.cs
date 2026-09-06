@@ -131,6 +131,10 @@ public static class GeometryTessellator
         {
             var start = polyline.Vertices[i];
             var end = polyline.Vertices[(i + 1) % polyline.Vertices.Count];
+            if (PointsEqual(start.Position, end.Position))
+            {
+                continue;
+            }
             if (start.Bulge == 0)
             {
                 AppendWithoutDuplicate(points, end.Position);
@@ -151,7 +155,6 @@ public static class GeometryTessellator
 
     private static TessellatedPath TessellateSpline(SplinePrimitive spline, GeometryTessellationOptions options)
     {
-        var points = new List<WorldPoint2>();
         var nonEmptySpans = new List<(double Start, double End)>();
         for (var i = spline.Degree; i < spline.ControlPoints.Count; i++)
         {
@@ -161,26 +164,82 @@ public static class GeometryTessellator
         }
         if (nonEmptySpans.Count == 0) throw new InvalidOperationException("Spline has no non-empty knot span.");
 
-        var segmentsPerSpan = Math.Max(options.SplineSegmentsPerSpan, options.MinSegments);
-        var requested = checked(nonEmptySpans.Count * segmentsPerSpan);
-        var totalSegments = Math.Min(requested, options.MaxSegments);
-        var allocated = 0;
+        var points = new List<WorldPoint2>();
+        int maxSegments = Math.Max(options.MinSegments, options.MaxSegments);
+        double maxChordError = Math.Max(1e-9, options.MaxChordError);
+
         for (var spanIndex = 0; spanIndex < nonEmptySpans.Count; spanIndex++)
         {
-            var spansRemaining = nonEmptySpans.Count - spanIndex;
-            var segmentsRemaining = totalSegments - allocated;
-            var spanSegments = Math.Max(1, segmentsRemaining / spansRemaining);
-            var (start, end) = nonEmptySpans[spanIndex];
-            for (var i = 0; i <= spanSegments; i++)
+            var (spanStart, spanEnd) = nonEmptySpans[spanIndex];
+            var pStart = spline.Evaluate(spanStart);
+            var pEnd = spline.Evaluate(spanEnd);
+
+            if (points.Count == 0 || !PointsEqual(points[^1], pStart))
             {
-                if (spanIndex > 0 && i == 0) continue;
-                var t = (double)i / spanSegments;
-                points.Add(spline.Evaluate(start + ((end - start) * t)));
+                points.Add(pStart);
             }
-            allocated += spanSegments;
+
+            SubdivideSplineSpan(spline, spanStart, spanEnd, pStart, pEnd, maxChordError, points, maxSegments, depth: 0);
         }
 
         return new TessellatedPath(points, closed: false, filled: false);
+    }
+
+    private static void SubdivideSplineSpan(
+        SplinePrimitive spline,
+        double uStart,
+        double uEnd,
+        WorldPoint2 pStart,
+        WorldPoint2 pEnd,
+        double maxChordError,
+        List<WorldPoint2> points,
+        int maxTotalPoints,
+        int depth)
+    {
+        if (points.Count >= maxTotalPoints || depth >= 12)
+        {
+            if (!PointsEqual(points[^1], pEnd)) points.Add(pEnd);
+            return;
+        }
+
+        // Multi-point sampling (0.25, 0.50, 0.75) to reliably capture high curvature, inflections and weighted poles
+        double u1 = uStart + (0.25 * (uEnd - uStart));
+        double uMid = uStart + (0.50 * (uEnd - uStart));
+        double u3 = uStart + (0.75 * (uEnd - uStart));
+
+        var p1 = spline.Evaluate(u1);
+        var pMid = spline.Evaluate(uMid);
+        var p3 = spline.Evaluate(u3);
+
+        double d1 = PointToSegmentDistance(p1, pStart, pEnd);
+        double dMid = PointToSegmentDistance(pMid, pStart, pEnd);
+        double d3 = PointToSegmentDistance(p3, pStart, pEnd);
+
+        double maxDeviation = Math.Max(d1, Math.Max(dMid, d3));
+
+        if (maxDeviation <= maxChordError && depth >= 1)
+        {
+            if (!PointsEqual(points[^1], pEnd)) points.Add(pEnd);
+            return;
+        }
+
+        SubdivideSplineSpan(spline, uStart, uMid, pStart, pMid, maxChordError, points, maxTotalPoints, depth + 1);
+        SubdivideSplineSpan(spline, uMid, uEnd, pMid, pEnd, maxChordError, points, maxTotalPoints, depth + 1);
+    }
+
+    private static double PointToSegmentDistance(WorldPoint2 p, WorldPoint2 a, WorldPoint2 b)
+    {
+        var dx = b.X - a.X;
+        var dy = b.Y - a.Y;
+        var lenSq = (dx * dx) + (dy * dy);
+        if (lenSq < 1e-24)
+        {
+            var dax = p.X - a.X;
+            var day = p.Y - a.Y;
+            return Math.Sqrt((dax * dax) + (day * day));
+        }
+        var cross = Math.Abs((dy * p.X) - (dx * p.Y) + (b.X * a.Y) - (b.Y * a.X));
+        return cross / Math.Sqrt(lenSq);
     }
 
     private static int SegmentCount(double radius, double sweep, GeometryTessellationOptions options)

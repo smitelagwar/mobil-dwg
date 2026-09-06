@@ -161,7 +161,7 @@ public static class CadExtractedSceneBuilder
                     if (entity.Payload is CadSplinePayload sp && sp.ControlPoints.Count >= sp.Degree + 1 && sp.Knots.Count == sp.ControlPoints.Count + sp.Degree + 1)
                     {
                         var ctrl = sp.ControlPoints.Select(p => new WorldPoint2(p.X, p.Y));
-                        primitives.Add(new SplinePrimitive(sp.Degree, ctrl, sp.Knots));
+                        primitives.Add(new SplinePrimitive(sp.Degree, ctrl, sp.Knots, sp.Weights));
                     }
                     else
                     {

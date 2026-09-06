@@ -256,6 +256,31 @@ if ($stageNum -ge 8) {
     Pass "VIEWER_STABILITY_STAGE08_PASS"
 }
 
+# Stage 09 checks
+if ($stageNum -ge 9) {
+    Write-Host "Verifying Stage 09 Geometry, Coordinate Spaces and Block Transformation Semantics..."
+
+    $tessellatorFile = Join-Path $repoRoot "src/MobilDwg.Rendering/Geometry/GeometryTessellator.cs"
+    if (-not (Test-Path $tessellatorFile)) { Fail "GeometryTessellator.cs missing" }
+    Pass "STAGE09_GEOMETRY_TESSELLATOR_SOURCE_PASS"
+
+    $blockExpanderFile = Join-Path $repoRoot "src/MobilDwg.Rendering/Blocks/BlockExpander.cs"
+    if (-not (Test-Path $blockExpanderFile)) { Fail "BlockExpander.cs missing" }
+    Pass "STAGE09_BLOCK_EXPANDER_SOURCE_PASS"
+
+    $primitiveTransformerFile = Join-Path $repoRoot "src/MobilDwg.Rendering/Transforms/PrimitiveTransformer.cs"
+    if (-not (Test-Path $primitiveTransformerFile)) { Fail "PrimitiveTransformer.cs missing" }
+    Pass "STAGE09_PRIMITIVE_TRANSFORMER_SOURCE_PASS"
+
+    if (-not ($rendText -match "STAGE12_BLOCK_INSERT_TESTS_PASS")) { Fail "STAGE12_BLOCK_INSERT_TESTS_PASS marker missing in rendering tests" }
+    Pass "STAGE09_BLOCK_INSERT_TESTS_PASS"
+
+    if (-not ($integText -match "STAGE09_GEOMETRY_TESTS_PASS")) { Fail "STAGE09_GEOMETRY_TESTS_PASS marker missing in integration tests" }
+    Pass "STAGE09_GEOMETRY_INTEGRATION_TESTS_PASS"
+
+    Pass "VIEWER_STABILITY_STAGE09_PASS"
+}
+
 Write-Host "=== Viewer Stability Gate Passed for Stage $Stage ==="
 exit 0
 

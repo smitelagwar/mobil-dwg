@@ -148,7 +148,8 @@ public sealed record CadSplinePayload(
     bool IsClosed,
     IReadOnlyList<CadPoint3D> ControlPoints,
     IReadOnlyList<CadPoint3D> FitPoints,
-    IReadOnlyList<double> Knots);
+    IReadOnlyList<double> Knots,
+    IReadOnlyList<double>? Weights = null);
 
 public sealed record CadTextPayload(
     string Text,
@@ -184,7 +185,12 @@ public sealed record CadInsertPayload(
     double ScaleZ,
     double Rotation,
     IReadOnlyList<CadExtractedEntity>? ExplodedEntities = null,
-    CadVector3D Normal = default);
+    CadVector3D Normal = default,
+    int ColumnCount = 1,
+    int RowCount = 1,
+    double ColumnSpacing = 0.0,
+    double RowSpacing = 0.0,
+    CadPoint3D BasePoint = default);
 
 public sealed record CadSolidPayload(
     CadPoint3D P1,

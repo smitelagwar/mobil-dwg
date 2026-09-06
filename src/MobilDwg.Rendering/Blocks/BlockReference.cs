@@ -15,7 +15,11 @@ public sealed record BlockReference
         RenderStyleToken? style = null,
         IEnumerable<BlockAttribute>? attributes = null,
         string? handle = null,
-        int? sourceIndex = null)
+        int? sourceIndex = null,
+        int columnCount = 1,
+        int rowCount = 1,
+        double columnSpacing = 0d,
+        double rowSpacing = 0d)
     {
         if (string.IsNullOrWhiteSpace(blockName)) throw new ArgumentException("Block name is required.", nameof(blockName));
 
@@ -29,6 +33,10 @@ public sealed record BlockReference
         Attributes = Array.AsReadOnly(attributes?.ToArray() ?? Array.Empty<BlockAttribute>());
         Handle = handle;
         SourceIndex = sourceIndex;
+        ColumnCount = Math.Max(1, columnCount);
+        RowCount = Math.Max(1, rowCount);
+        ColumnSpacing = columnSpacing;
+        RowSpacing = rowSpacing;
     }
 
     public string BlockName { get; }
@@ -41,4 +49,8 @@ public sealed record BlockReference
     public IReadOnlyList<BlockAttribute> Attributes { get; }
     public string? Handle { get; }
     public int? SourceIndex { get; }
+    public int ColumnCount { get; }
+    public int RowCount { get; }
+    public double ColumnSpacing { get; }
+    public double RowSpacing { get; }
 }
