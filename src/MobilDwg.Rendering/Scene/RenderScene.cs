@@ -1,6 +1,7 @@
 using System.Collections.ObjectModel;
 using MobilDwg.Core.Rendering;
 using MobilDwg.Rendering.Diagnostics;
+using MobilDwg.Rendering.Spatial;
 using MobilDwg.Rendering.Styles;
 
 namespace MobilDwg.Rendering.Scene;
@@ -25,7 +26,7 @@ public sealed class RenderScene : IRenderScene
 {
     private readonly ReadOnlyCollection<RenderSceneEntity> _entities;
 
-    internal RenderScene(
+    public RenderScene(
         IEnumerable<RenderSceneEntity> entities,
         SceneDiagnostics diagnostics,
         RenderColorContext colorContext,
@@ -44,6 +45,7 @@ public sealed class RenderScene : IRenderScene
             .ToArray();
         _entities = Array.AsReadOnly(sorted);
         WorldBounds = CalculateBounds(_entities);
+        SpatialIndex = new StaticSceneBvh(_entities);
     }
 
     public IReadOnlyList<RenderSceneEntity> Entities => _entities;
@@ -51,6 +53,7 @@ public sealed class RenderScene : IRenderScene
     public SceneDiagnostics Diagnostics { get; }
     public RenderColorContext ColorContext { get; }
     public LayerTable LayerTable { get; }
+    public StaticSceneBvh SpatialIndex { get; }
 
     private static WorldBounds2? CalculateBounds(IReadOnlyList<RenderSceneEntity> entities)
     {

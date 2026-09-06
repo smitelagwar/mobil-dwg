@@ -237,3 +237,40 @@ Geçmeyen veya çalıştırılamayan koşullar: Yok.
 Bir sonraki aşama: Aşama 06 — Muhafazakâr bounds ve mekânsal indeks  
 
 ---
+
+### Aşama 06 Raporu
+
+Aşama: 06 — Muhafazakâr bounds ve mekânsal indeks  
+Durum: TAMAMLANDI  
+Son HEAD: `89b3f27` (commit: `perf(scene): add conservative bounds and stable BVH culling`)  
+Değişen dosyalar:
+- `scripts/viewer-stability-gate.ps1`
+- `src/MobilDwg.Rendering/Geometry/TextPrimitive.cs`
+- `src/MobilDwg.Rendering/Scene/RenderScene.cs`
+- `src/MobilDwg.Rendering/Skia/SkiaScenePainter.cs`
+- `src/MobilDwg.Rendering/Spatial/StaticSceneBvh.cs`
+- `src/MobilDwg.Rendering/Text/TextLayoutMetrics.cs`
+- `tests/MobilDwg.Rendering.Tests/Program.cs`
+- `tests/MobilDwg.Rendering.Tests/SpatialIndexTests.cs`
+(Kullanıcı başlangıç değişiklikleri `src/MobilDwg.Rendering/Scene/RenderScene.cs` public constructor görünürlüğü, `release/SHA256SUMS.txt`, `tools/CadControlBenchmark/` bozulmadan çalışma ağacında korundu.)  
+Kullanıcıya yansıyan davranış:
+- Metin primitifleri için font descent (%25), eğiklik (oblique shear: $y \cdot \tan(\theta)$), hizalama ve rotasyonu dikkate alan muhafazakâr sınır hesaplayıcısı (`TextLayoutMetrics`) bağlandı; eğik ve uzayan metinlerin mekânsal culling sırasında kırpılması engellendi.
+- İmmutable çizim sahneleri için dengeli ikili BVH (`StaticSceneBvh`) oluşturuldu; yaprak başına $\le 16$ entity, medyan merkez bölünmesi ve deterministik ordinal eşitlik çözümü sağlandı.
+- $\ge 2048$ entity olan sahnelerde BVH devreye girerek gereksiz bounds testlerini elerken, küçük sahnelerde doğrudan hafif tarama korundu.
+- Sorgu sonuçları orijinal CAD çizim sırasını (`original draw ordinal`) kesin olarak koruyacak biçimde sıralanır; katman/renk sırası ve örtüşen nesnelerin çizim önceliği korunur.
+- `SkiaScenePainter.DrawFrame`, ekran sınırlarına CAD azami çizgi kalınlığı payı ve +2 fiziksel piksel anti-aliasing payı ekleyerek dünyasal sorgu kutusu oluşturur; ekran kenarındaki kalın çizgilerin ve noktaların kırpılması engellendi.
+- 1000 rastgele sorguda BVH ile brute-force sonuçlarının %100 özdeş olduğu, 150k seyrek yükte dar görüş açısında aday sayısının <%20 (<%1) kaldığı ve yoğun örtüşmede sıfır kayıp olduğu doğrulandı.
+Çalıştırılan gerçek komutlar ve exit code:
+- `dotnet run --project tests/MobilDwg.Rendering.Tests/MobilDwg.Rendering.Tests.csproj -c Release` (exit code: 0, STAGE06_SPATIAL_INDEX_TESTS_PASS)
+- `dotnet build src/MobilDwg.App/MobilDwg.App.csproj -f net10.0-android36.0 -c Release` (exit code: 0, 0 warning, 0 error)
+- `powershell -ExecutionPolicy Bypass -File scripts/viewer-stability-gate.ps1 -Stage 06` (exit code: 0, VIEWER_STABILITY_STAGE06_PASS)  
+Ölçülen metrikler ve kanıt dosyaları:
+- `artifacts/viewer-stability/stage06/gate-summary.txt`
+- `artifacts/viewer-stability/stage06/rendering-tests.log`
+- `artifacts/viewer-stability/stage06/architecture-tests.log`
+- `artifacts/viewer-stability/stage06/app-build-android.log`  
+Geçmeyen veya çalıştırılamayan koşullar: Yok.  
+Bir sonraki aşama: Aşama 07 — Cache, geometri hazırlığı ve kontrollü ayrıntı  
+
+---
+

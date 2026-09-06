@@ -128,8 +128,10 @@ AssertThrows<InvalidOperationException>(() => duplicateBuilder.AddEntity(CreateE
 
 ViewportCameraTests.Run();
 ViewportInteractionTests.Run();
+SpatialIndexTests.Run();
 
 Console.WriteLine("STAGE04_RENDER_CONTRACT_TESTS_PASS");
+Console.WriteLine("STAGE06_SPATIAL_INDEX_TESTS_PASS");
 Console.WriteLine("STAGE09_RENDER_SCENE_TESTS_PASS");
 Console.WriteLine(snapshotA);
 

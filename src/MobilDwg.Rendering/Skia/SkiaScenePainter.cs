@@ -1,4 +1,5 @@
-﻿using System;
+using System;
+using System.Collections.Generic;
 using System.IO;
 using MobilDwg.Rendering.Camera;
 using MobilDwg.Rendering.Coordinates;
@@ -6,6 +7,7 @@ using MobilDwg.Rendering.Geometry;
 using MobilDwg.Rendering.Layouts;
 using MobilDwg.Rendering.References;
 using MobilDwg.Rendering.Scene;
+using MobilDwg.Rendering.Spatial;
 using MobilDwg.Rendering.Styles;
 using MobilDwg.Rendering.Text;
 using MobilDwg.Rendering.Viewer;
@@ -27,8 +29,6 @@ public static class SkiaScenePainter
         var scene = snapshot.Scene;
         var camera = snapshot.Camera;
         var layerTable = snapshot.LayerTable ?? scene.LayerTable;
-
-        var visibleWorldBounds = camera.GetVisibleWorldBounds(paddingFraction: 0.05d);
 
         canvas.Clear(ToSkColor(scene.ColorContext.BackgroundArgb));
         var saveCount = canvas.Save();
@@ -57,12 +57,32 @@ public static class SkiaScenePainter
             var maxChordError = Math.Max(camera.WorldUnitsPerPixel * chordFactor, 1e-12);
             var tessellation = new GeometryTessellationOptions(maxChordError, minSegments: 4, maxSegments: 4096, splineSegmentsPerSpan: 12);
 
-            foreach (var entity in scene.Entities)
+            IReadOnlyList<int>? candidateIndices = null;
+            if (context.EnableOptimization)
             {
-                if (context.EnableOptimization && !entity.Bounds.Intersects(visibleWorldBounds))
-                {
-                    continue;
-                }
+                // Screen stroke margin: Max stroke in CAD (2.11mm = 211 hundredths of mm) / 2 + 2px AA margin
+                var maxStrokePixels = CadLineweight.FromHundredthsOfMm(211).ToPixels(context.Density, displayLineweights: true);
+                var marginPixels = (maxStrokePixels / 2.0) + 2.0;
+                var marginWorld = marginPixels * camera.WorldUnitsPerPixel;
+
+                var baseBounds = camera.GetVisibleWorldBounds(paddingFraction: 0d);
+                var queryBounds = new WorldBounds2(
+                    baseBounds.MinX - marginWorld,
+                    baseBounds.MinY - marginWorld,
+                    baseBounds.MaxX + marginWorld,
+                    baseBounds.MaxY + marginWorld);
+
+                var candidates = new List<int>();
+                var metrics = new SpatialQueryMetrics();
+                scene.SpatialIndex.Query(queryBounds, candidates, ref metrics);
+                candidateIndices = candidates;
+            }
+
+            int count = candidateIndices?.Count ?? scene.Entities.Count;
+            for (var candidateIdx = 0; candidateIdx < count; candidateIdx++)
+            {
+                var entityIndex = candidateIndices != null ? candidateIndices[candidateIdx] : candidateIdx;
+                var entity = scene.Entities[entityIndex];
 
                 var resolved = CadStyleResolver.Resolve(
                     entity.CadStyle,

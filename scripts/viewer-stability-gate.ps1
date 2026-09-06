@@ -178,6 +178,28 @@ if ($stageNum -ge 5) {
     Pass "VIEWER_STABILITY_STAGE05_PASS"
 }
 
+# Stage 06 checks
+if ($stageNum -ge 6) {
+    Write-Host "Verifying Stage 06 Conservative Bounds & Stable BVH Culling..."
+
+    $staticBvhFile = Join-Path $repoRoot "src/MobilDwg.Rendering/Spatial/StaticSceneBvh.cs"
+    if (-not (Test-Path $staticBvhFile)) { Fail "StaticSceneBvh.cs missing" }
+    Pass "STAGE06_STATIC_SCENE_BVH_SOURCE_PASS"
+
+    $textMetricsFile = Join-Path $repoRoot "src/MobilDwg.Rendering/Text/TextLayoutMetrics.cs"
+    if (-not (Test-Path $textMetricsFile)) { Fail "TextLayoutMetrics.cs missing" }
+    Pass "STAGE06_TEXT_LAYOUT_METRICS_SOURCE_PASS"
+
+    $spatialTestsFile = Join-Path $repoRoot "tests/MobilDwg.Rendering.Tests/SpatialIndexTests.cs"
+    if (-not (Test-Path $spatialTestsFile)) { Fail "SpatialIndexTests.cs missing" }
+    Pass "STAGE06_SPATIAL_INDEX_TESTS_SOURCE_PASS"
+
+    if (-not ($rendText -match "STAGE06_SPATIAL_INDEX_TESTS_PASS")) { Fail "STAGE06_SPATIAL_INDEX_TESTS_PASS marker missing" }
+    Pass "STAGE06_SPATIAL_INDEX_TESTS_PASS"
+
+    Pass "VIEWER_STABILITY_STAGE06_PASS"
+}
+
 Write-Host "=== Viewer Stability Gate Passed for Stage $Stage ==="
 exit 0
 

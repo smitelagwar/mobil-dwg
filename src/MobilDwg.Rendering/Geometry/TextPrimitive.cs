@@ -53,56 +53,15 @@ public sealed record TextPrimitive : RenderGeometryPrimitive
 
     private WorldBounds2 CalculateBounds()
     {
-        var charCount = Math.Max(1, Text.Length);
-        var estimatedWidth = charCount * Height * 0.6d * WidthFactor;
-        var estimatedHeight = Height;
-
-        // Alignment offsets
-        double offsetX = HorizontalAlignment switch
-        {
-            CadTextHorizontalAlignment.Center or CadTextHorizontalAlignment.Middle => -estimatedWidth / 2d,
-            CadTextHorizontalAlignment.Right => -estimatedWidth,
-            _ => 0d,
-        };
-
-        double offsetY = VerticalAlignment switch
-        {
-            CadTextVerticalAlignment.Top => -estimatedHeight,
-            CadTextVerticalAlignment.Middle => -estimatedHeight / 2d,
-            CadTextVerticalAlignment.Bottom => 0d,
-            _ => 0d, // Baseline
-        };
-
-        // Mirror adjustments
-        var isBackward = MirrorFlags.HasFlag(CadTextMirrorFlags.Backward);
-        var isUpsideDown = MirrorFlags.HasFlag(CadTextMirrorFlags.UpsideDown);
-
-        var corners = new (double X, double Y)[4]
-        {
-            (offsetX, offsetY),
-            (offsetX + estimatedWidth, offsetY),
-            (offsetX + estimatedWidth, offsetY + estimatedHeight),
-            (offsetX, offsetY + estimatedHeight),
-        };
-
-        var cos = Math.Cos(RotationRadians);
-        var sin = Math.Sin(RotationRadians);
-        var worldPoints = new WorldPoint2[4];
-
-        for (var i = 0; i < 4; i++)
-        {
-            var lx = corners[i].X;
-            var ly = corners[i].Y;
-
-            if (isBackward) lx = -lx;
-            if (isUpsideDown) ly = -ly;
-
-            var rx = (lx * cos) - (ly * sin);
-            var ry = (lx * sin) + (ly * cos);
-
-            worldPoints[i] = new WorldPoint2(Position.X + rx, Position.Y + ry);
-        }
-
-        return GeometryBounds.FromPoints(worldPoints);
+        return TextLayoutMetrics.CalculateTextBounds(
+            Text,
+            Position,
+            Height,
+            RotationRadians,
+            WidthFactor,
+            ObliqueAngleRadians,
+            HorizontalAlignment,
+            VerticalAlignment,
+            MirrorFlags);
     }
 }
