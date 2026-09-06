@@ -1,0 +1,91 @@
+param(
+    [string]$Stage = "01",
+    [string]$ArtifactsDir = "artifacts/viewer-stability"
+)
+
+$ErrorActionPreference = "Stop"
+Set-StrictMode -Version Latest
+
+function Fail([string]$Message) {
+    Write-Error $Message
+    exit 1
+}
+
+function Pass([string]$Marker) {
+    Write-Host $Marker
+    if ($script:SummaryPath) {
+        Add-Content -LiteralPath $script:SummaryPath -Value $Marker
+    }
+}
+
+$repoRoot = (Resolve-Path (Join-Path $PSScriptRoot "..")).Path
+Set-Location $repoRoot
+
+$stageNum = [int]$Stage
+$stageArtifacts = Join-Path $repoRoot (Join-Path $ArtifactsDir ("stage" + $Stage.PadLeft(2, '0')))
+New-Item -ItemType Directory -Path $stageArtifacts -Force | Out-Null
+$script:SummaryPath = Join-Path $stageArtifacts "gate-summary.txt"
+Set-Content -LiteralPath $script:SummaryPath -Value "VIEWER_STABILITY_GATE_EVIDENCE stage=$Stage"
+
+Write-Host "=== Running Viewer Stability Gate for Stage $Stage ==="
+
+# 1. Environment & Revision Check
+$head = (& git rev-parse HEAD).Trim()
+if ($LASTEXITCODE -ne 0 -or [string]::IsNullOrWhiteSpace($head)) { Fail "Unable to resolve git HEAD." }
+Add-Content -LiteralPath $script:SummaryPath -Value ("GIT_HEAD=" + $head)
+
+$manifestPath = Join-Path $stageArtifacts "source-baseline-manifest.json"
+if (-not (Test-Path $manifestPath)) {
+    # Check if in stage01
+    $stage01Manifest = Join-Path $repoRoot "artifacts/viewer-stability/stage01/source-baseline-manifest.json"
+    if (Test-Path $stage01Manifest) {
+        $manifestPath = $stage01Manifest
+    }
+}
+if (Test-Path $manifestPath) {
+    Pass "STAGE01_SOURCE_BASELINE_MANIFEST_PRESENT"
+} else {
+    Fail "Source baseline manifest not found at $manifestPath"
+}
+
+# 2. Run Exact Test Projects
+Write-Host "Running Architecture Tests..."
+$archLog = Join-Path $stageArtifacts "architecture-tests.log"
+& dotnet run --project tests/MobilDwg.Architecture.Tests/MobilDwg.Architecture.Tests.csproj -c Release 2>&1 | Tee-Object -FilePath $archLog
+if ($LASTEXITCODE -ne 0) { Fail "Architecture tests failed with exit code $LASTEXITCODE" }
+$archText = Get-Content -LiteralPath $archLog -Raw
+if (-not ($archText -match "STAGE04_ARCHITECTURE_TESTS_PASS")) { Fail "Architecture pass marker missing" }
+Pass "STAGE01_ARCHITECTURE_TESTS_PASS"
+
+Write-Host "Running Core Tests..."
+$coreLog = Join-Path $stageArtifacts "core-tests.log"
+& dotnet run --project tests/MobilDwg.Core.Tests/MobilDwg.Core.Tests.csproj -c Release 2>&1 | Tee-Object -FilePath $coreLog
+if ($LASTEXITCODE -ne 0) { Fail "Core tests failed with exit code $LASTEXITCODE" }
+$coreText = Get-Content -LiteralPath $coreLog -Raw
+if (-not ($coreText -match "STAGE04_CORE_CONTRACT_TESTS_PASS")) { Fail "Core contract pass marker missing" }
+Pass "STAGE01_CORE_TESTS_PASS"
+
+Write-Host "Running Rendering Tests..."
+$rendLog = Join-Path $stageArtifacts "rendering-tests.log"
+& dotnet run --project tests/MobilDwg.Rendering.Tests/MobilDwg.Rendering.Tests.csproj -c Release 2>&1 | Tee-Object -FilePath $rendLog
+if ($LASTEXITCODE -ne 0) { Fail "Rendering tests failed with exit code $LASTEXITCODE" }
+$rendText = Get-Content -LiteralPath $rendLog -Raw
+if (-not ($rendText -match "STAGE04_RENDER_CONTRACT_TESTS_PASS")) { Fail "Render contract pass marker missing" }
+Pass "STAGE01_RENDERING_TESTS_PASS"
+
+Write-Host "Running Integration Tests..."
+$integLog = Join-Path $stageArtifacts "integration-tests.log"
+& dotnet run --project tests/MobilDwg.Integration.Tests/MobilDwg.Integration.Tests.csproj -c Release 2>&1 | Tee-Object -FilePath $integLog
+if ($LASTEXITCODE -ne 0) { Fail "Integration tests failed with exit code $LASTEXITCODE" }
+$integText = Get-Content -LiteralPath $integLog -Raw
+if (-not ($integText -match "STAGE01_INTEGRATION_TESTS_PASS")) { Fail "Integration pass marker missing" }
+Pass "STAGE01_INTEGRATION_TESTS_PASS"
+
+# 3. Telemetry Verification
+$telemetryFile = Join-Path $repoRoot "src/MobilDwg.Rendering/Performance/ViewportTelemetry.cs"
+if (-not (Test-Path $telemetryFile)) { Fail "ViewportTelemetry.cs missing" }
+Pass "STAGE01_VIEWPORT_TELEMETRY_SOURCE_PASS"
+
+Pass "VIEWER_STABILITY_STAGE01_PASS"
+Write-Host "=== Viewer Stability Gate Passed for Stage $Stage ==="
+exit 0

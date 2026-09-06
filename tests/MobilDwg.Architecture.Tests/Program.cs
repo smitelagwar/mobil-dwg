@@ -1,4 +1,4 @@
-using System.Xml.Linq;
+﻿using System.Xml.Linq;
 
 var repoRoot = FindRepoRoot();
 var srcRoot = Path.Combine(repoRoot, "src");
@@ -9,8 +9,22 @@ var testProjects = Directory.GetFiles(testsRoot, "*.csproj", SearchOption.AllDir
 
 Assert(productionProjects.Length == 4,
     $"expected exactly 4 production projects under src/, got {productionProjects.Length}");
-Assert(testProjects.Length == 3,
-    $"expected exactly 3 test projects under tests/, got {testProjects.Length}");
+
+var expectedTestProjects = new[]
+{
+    "tests/MobilDwg.Architecture.Tests/MobilDwg.Architecture.Tests.csproj",
+    "tests/MobilDwg.Core.Tests/MobilDwg.Core.Tests.csproj",
+    "tests/MobilDwg.Integration.Tests/MobilDwg.Integration.Tests.csproj",
+    "tests/MobilDwg.Rendering.Tests/MobilDwg.Rendering.Tests.csproj"
+};
+
+var actualTestProjects = testProjects
+    .Select(p => Path.GetRelativePath(repoRoot, p).Replace('\\', '/'))
+    .Order(StringComparer.Ordinal)
+    .ToArray();
+
+Assert(actualTestProjects.SequenceEqual(expectedTestProjects.Order(StringComparer.Ordinal)),
+    $"test projects must match exact 4 projects, got: [{string.Join(", ", actualTestProjects)}]");
 
 AssertProjectReferences("src/MobilDwg.Core/MobilDwg.Core.csproj", []);
 AssertProjectReferences("src/MobilDwg.Cad/MobilDwg.Cad.csproj",
@@ -22,6 +36,21 @@ AssertProjectReferences("src/MobilDwg.App/MobilDwg.App.csproj",
         "src/MobilDwg.Core/MobilDwg.Core.csproj",
         "src/MobilDwg.Cad/MobilDwg.Cad.csproj",
         "src/MobilDwg.Rendering/MobilDwg.Rendering.csproj",
+    ]);
+
+AssertProjectReferences("tests/MobilDwg.Core.Tests/MobilDwg.Core.Tests.csproj",
+    ["src/MobilDwg.Core/MobilDwg.Core.csproj"]);
+AssertProjectReferences("tests/MobilDwg.Rendering.Tests/MobilDwg.Rendering.Tests.csproj",
+    [
+        "src/MobilDwg.Core/MobilDwg.Core.csproj",
+        "src/MobilDwg.Rendering/MobilDwg.Rendering.csproj"
+    ]);
+AssertProjectReferences("tests/MobilDwg.Architecture.Tests/MobilDwg.Architecture.Tests.csproj", []);
+AssertProjectReferences("tests/MobilDwg.Integration.Tests/MobilDwg.Integration.Tests.csproj",
+    [
+        "src/MobilDwg.Core/MobilDwg.Core.csproj",
+        "src/MobilDwg.Cad/MobilDwg.Cad.csproj",
+        "src/MobilDwg.Rendering/MobilDwg.Rendering.csproj"
     ]);
 
 AssertPackageReferences("src/MobilDwg.Core/MobilDwg.Core.csproj", []);
@@ -104,6 +133,13 @@ void AssertForbiddenSourceTerms(string relativeDirectory, IReadOnlyCollection<st
     var directory = Path.Combine(repoRoot, relativeDirectory);
     foreach (var file in Directory.GetFiles(directory, "*.cs", SearchOption.AllDirectories))
     {
+        var rel = Path.GetRelativePath(directory, file);
+        if (rel.StartsWith("bin" + Path.DirectorySeparatorChar, StringComparison.OrdinalIgnoreCase) ||
+            rel.StartsWith("obj" + Path.DirectorySeparatorChar, StringComparison.OrdinalIgnoreCase))
+        {
+            continue;
+        }
+
         var text = File.ReadAllText(file);
         foreach (var term in forbiddenTerms)
         {
