@@ -7,6 +7,7 @@
   <ItemGroup>
     <ProjectReference Include="../../src/MobilDwg.Core/MobilDwg.Core.csproj" />
     <ProjectReference Include="../../src/MobilDwg.Cad/MobilDwg.Cad.csproj" />
+    <ProjectReference Include="../../src/MobilDwg.Rendering/MobilDwg.Rendering.csproj" />
   </ItemGroup>
 
   <!--

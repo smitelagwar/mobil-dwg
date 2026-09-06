@@ -271,7 +271,10 @@ public sealed class SafeCadFileCache
     private void EnsureFreeSpace()
     {
         var availableBytes = _availableBytesProvider(_rootDirectory);
-        if (availableBytes <= _limits.ReserveFreeBytes)
+        // Only enforce reserve when available space is positively determined (> 0).
+        // If an OS or virtual mount returns 0 or negative due to read-only rootfs or query failure,
+        // do not falsely block user; if storage is truly exhausted, FileStream.Write will throw IOException.
+        if (availableBytes > 0 && availableBytes <= _limits.ReserveFreeBytes)
         {
             throw new CadFileInsufficientSpaceException(availableBytes, _limits.ReserveFreeBytes);
         }
@@ -279,6 +282,37 @@ public sealed class SafeCadFileCache
 
     private static long GetAvailableBytes(string path)
     {
+#if ANDROID
+        try
+        {
+            var targetDir = GetExistingDirectoryOrParent(path);
+            var stat = new Android.OS.StatFs(targetDir);
+            var avail = stat.AvailableBytes;
+            if (avail > 0)
+            {
+                return avail;
+            }
+
+            var blocks = stat.AvailableBlocksLong;
+            var blockSize = stat.BlockSizeLong;
+            if (blocks > 0 && blockSize > 0)
+            {
+                return checked(blocks * blockSize);
+            }
+
+            var free = stat.FreeBytes;
+            if (free > 0)
+            {
+                return free;
+            }
+        }
+        catch (Exception ex)
+        {
+            Android.Util.Log.Warn("MobilDwgCAD", $"StatFs failed for '{path}': {ex.Message}");
+        }
+
+        return long.MaxValue;
+#else
         try
         {
             var root = Path.GetPathRoot(Path.GetFullPath(path));
@@ -288,12 +322,50 @@ public sealed class SafeCadFileCache
             }
 
             var drive = new DriveInfo(root);
-            return drive.IsReady ? drive.AvailableFreeSpace : long.MaxValue;
+            if (!drive.IsReady)
+            {
+                return long.MaxValue;
+            }
+
+            var free = drive.AvailableFreeSpace;
+            return free > 0 ? free : long.MaxValue;
         }
         catch
         {
             return long.MaxValue;
         }
+#endif
+    }
+
+    private static string GetExistingDirectoryOrParent(string path)
+    {
+        try
+        {
+            if (Directory.Exists(path))
+            {
+                return path;
+            }
+
+            var dir = Path.GetDirectoryName(path);
+            while (!string.IsNullOrEmpty(dir) && !Directory.Exists(dir))
+            {
+                dir = Path.GetDirectoryName(dir);
+            }
+
+            if (!string.IsNullOrEmpty(dir) && Directory.Exists(dir))
+            {
+                return dir;
+            }
+        }
+        catch
+        {
+        }
+
+#if ANDROID
+        return Android.App.Application.Context?.CacheDir?.AbsolutePath ?? "/data";
+#else
+        return path;
+#endif
     }
 
     internal static string SanitizeDisplayName(string? displayName)
