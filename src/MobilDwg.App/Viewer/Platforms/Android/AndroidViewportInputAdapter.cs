@@ -106,33 +106,6 @@ public sealed class AndroidViewportInputAdapter : IDisposable
 
         long currentGen = _surfaceGenerationProvider?.Invoke() ?? 0L;
 
-        // Process historical events if available for high-frequency precision
-        int historySize = motionEvent.HistorySize;
-        if (historySize > 0 && actionMasked == MotionEventActions.Move)
-        {
-            for (int h = 0; h < historySize; h++)
-            {
-                long histTime = motionEvent.GetHistoricalEventTime(h);
-                var histPointers = new List<PointerSample>(motionEvent.PointerCount);
-                for (int p = 0; p < motionEvent.PointerCount; p++)
-                {
-                    int pId = motionEvent.GetPointerId(p);
-                    double px = motionEvent.GetHistoricalX(p, h) * scaleX;
-                    double py = motionEvent.GetHistoricalY(p, h) * scaleY;
-                    histPointers.Add(new PointerSample(pId, new ScreenPoint2(px, py)));
-                }
-
-                var histPacket = new PointerPacket(
-                    PointerAction.Move,
-                    actionPointerId,
-                    actionIndex,
-                    histTime,
-                    histPointers,
-                    currentGen);
-                _engine.ProcessPacket(histPacket);
-            }
-        }
-
         // Current event sample
         var pointers = new List<PointerSample>(motionEvent.PointerCount);
         for (int p = 0; p < motionEvent.PointerCount; p++)

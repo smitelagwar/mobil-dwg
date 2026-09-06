@@ -18,6 +18,9 @@ namespace MobilDwg.Rendering.Skia;
 
 public static class SkiaScenePainter
 {
+    [ThreadStatic]
+    private static SKPathBuilder? t_cachedPolyBuilder;
+
     public static void DrawFrame(
         SKCanvas canvas,
         RenderSnapshot snapshot,
@@ -79,11 +82,30 @@ public static class SkiaScenePainter
                 candidateIndices = candidates;
             }
 
+            // Adaptive sub-pixel culling threshold in world units:
+            // Interaction mode: 1.5 to 2.0 screen pixels (scales with scene density)
+            // Final mode: 0.25 screen pixels (microscopic subpixel noise)
+            double basePixelThreshold = snapshot.QualityMode == RenderQualityMode.Interaction
+                ? (scene.Entities.Count > 40_000 ? 2.0 : 1.5)
+                : 0.25;
+            double subPixelThresholdWorld = basePixelThreshold * camera.WorldUnitsPerPixel;
+
+            var isInteraction = snapshot.QualityMode == RenderQualityMode.Interaction;
+            var resourceCache = snapshot.ResourceCache;
+            var geometryCache = snapshot.GeometryCache;
+
             int count = candidateIndices?.Count ?? scene.Entities.Count;
             for (var candidateIdx = 0; candidateIdx < count; candidateIdx++)
             {
                 var entityIndex = candidateIndices != null ? candidateIndices[candidateIdx] : candidateIdx;
                 var entity = scene.Entities[entityIndex];
+
+                // Sub-pixel culling: cull entities whose full bounding dimensions are below threshold
+                var entBounds = entity.Bounds;
+                if (entBounds.Width < subPixelThresholdWorld && entBounds.Height < subPixelThresholdWorld)
+                {
+                    continue;
+                }
 
                 var resolved = CadStyleResolver.Resolve(
                     entity.CadStyle,
@@ -105,9 +127,18 @@ public static class SkiaScenePainter
                 fillPaint.Color = entityColor;
 
                 SKPathEffect? pathEffect = null;
-                if (resolved.DashPatternPixels is { Length: > 0 } pattern)
+                bool ownsPathEffect = false;
+                if (!isInteraction && resolved.DashPatternPixels is { Length: > 0 } pattern)
                 {
-                    pathEffect = SKPathEffect.CreateDash(pattern, 0);
+                    if (resourceCache != null)
+                    {
+                        pathEffect = resourceCache.GetOrCreateDashEffect(pattern);
+                    }
+                    else
+                    {
+                        pathEffect = SKPathEffect.CreateDash(pattern, 0);
+                        ownsPathEffect = true;
+                    }
                     strokePaint.PathEffect = pathEffect;
                 }
                 else
@@ -120,7 +151,13 @@ public static class SkiaScenePainter
                     for (var primIdx = 0; primIdx < entity.Geometry.Count; primIdx++)
                     {
                         var primitive = entity.Geometry[primIdx];
-                        var primitiveKey = $"{entity.Id.Value}:{primIdx}";
+                        string? primitiveKey = null;
+                        if (geometryCache != null &&
+                            (primitive is ArcPrimitive or EllipsePrimitive or SplinePrimitive or HatchPrimitive or ViewportPrimitive))
+                        {
+                            primitiveKey = $"{entity.Id.Value}:{primIdx}";
+                        }
+
                         DrawPrimitive(
                             canvas,
                             primitive,
@@ -134,8 +171,8 @@ public static class SkiaScenePainter
                             snapshot.SceneRevision,
                             lodBand,
                             snapshot.QualityMode,
-                            snapshot.GeometryCache,
-                            snapshot.ResourceCache);
+                            geometryCache,
+                            resourceCache);
                     }
                 }
                 finally
@@ -143,7 +180,10 @@ public static class SkiaScenePainter
                     if (pathEffect is not null)
                     {
                         strokePaint.PathEffect = null;
-                        pathEffect.Dispose();
+                        if (ownsPathEffect)
+                        {
+                            pathEffect.Dispose();
+                        }
                     }
                 }
             }
@@ -226,10 +266,11 @@ public static class SkiaScenePainter
 
             if (primitive is ArcPrimitive arc)
             {
-                var screenCenter = CameraTransform.WorldToScreen(arc.Center, camera);
                 var screenRadius = ToFloat(arc.Radius / camera.WorldUnitsPerPixel);
-                if (screenRadius > 0.05f)
+                var minRadius = qualityMode == RenderQualityMode.Interaction ? 1.0f : 0.05f;
+                if (screenRadius > minRadius)
                 {
+                    var screenCenter = CameraTransform.WorldToScreen(arc.Center, camera);
                     if (Math.Abs(arc.SweepRadians) >= GeometryMath.Tau - 1e-4)
                     {
                         canvas.DrawCircle(ToFloat(screenCenter.X), ToFloat(screenCenter.Y), screenRadius, strokePaint);
@@ -265,9 +306,18 @@ public static class SkiaScenePainter
 
                 if (!hasBulge && polyline.Vertices.Count > 1)
                 {
-                    using var polyBuilder = new SKPathBuilder();
-                    var p0 = CameraTransform.WorldToScreen(polyline.Vertices[0].Position, camera);
-                    polyBuilder.MoveTo(ToFloat(p0.X), ToFloat(p0.Y));
+                    if (polyline.Vertices.Count == 2)
+                    {
+                        var lineP0 = CameraTransform.WorldToScreen(polyline.Vertices[0].Position, camera);
+                        var lineP1 = CameraTransform.WorldToScreen(polyline.Vertices[1].Position, camera);
+                        canvas.DrawLine(ToFloat(lineP0.X), ToFloat(lineP0.Y), ToFloat(lineP1.X), ToFloat(lineP1.Y), strokePaint);
+                        return;
+                    }
+
+                    var polyBuilder = t_cachedPolyBuilder ??= new SKPathBuilder();
+                    polyBuilder.Reset();
+                    var startPt = CameraTransform.WorldToScreen(polyline.Vertices[0].Position, camera);
+                    polyBuilder.MoveTo(ToFloat(startPt.X), ToFloat(startPt.Y));
                     for (int i = 1; i < polyline.Vertices.Count; i++)
                     {
                         var pi = CameraTransform.WorldToScreen(polyline.Vertices[i].Position, camera);
@@ -308,7 +358,8 @@ public static class SkiaScenePainter
             return;
         }
 
-        using var builder = new SKPathBuilder();
+        var builder = t_cachedPolyBuilder ??= new SKPathBuilder();
+        builder.Reset();
         var first = CameraTransform.WorldToScreen(path.Points[0], camera);
         builder.MoveTo(ToFloat(first.X), ToFloat(first.Y));
         for (var i = 1; i < path.Points.Count; i++)
@@ -336,12 +387,16 @@ public static class SkiaScenePainter
         var screenHeight = textPrimitive.Height / camera.WorldUnitsPerPixel;
         if (screenHeight < 0.5d) return;
 
-        if (qualityMode == RenderQualityMode.Interaction && screenHeight < 3.0d)
+        if (qualityMode == RenderQualityMode.Interaction)
         {
-            var p0 = CameraTransform.WorldToScreen(textPrimitive.Position, camera);
-            var estLen = (textPrimitive.Text.Length * textPrimitive.Height * 0.75 * textPrimitive.WidthFactor) / camera.WorldUnitsPerPixel;
-            canvas.DrawLine(ToFloat(p0.X), ToFloat(p0.Y), ToFloat(p0.X + estLen), ToFloat(p0.Y), strokePaint);
-            return;
+            if (screenHeight < 1.5d) return;
+            if (screenHeight < 6.0d)
+            {
+                var p0 = CameraTransform.WorldToScreen(textPrimitive.Position, camera);
+                var estLen = (textPrimitive.Text.Length * textPrimitive.Height * 0.75 * textPrimitive.WidthFactor) / camera.WorldUnitsPerPixel;
+                canvas.DrawLine(ToFloat(p0.X), ToFloat(p0.Y), ToFloat(p0.X + estLen), ToFloat(p0.Y), strokePaint);
+                return;
+            }
         }
 
         var screenPos = CameraTransform.WorldToScreen(textPrimitive.Position, camera);
@@ -435,6 +490,10 @@ public static class SkiaScenePainter
         if (projectedSpacingPixels < 3.0 && projectedSpacingPixels > 0)
         {
             thinningStep = (int)Math.Ceiling(3.0 / projectedSpacingPixels);
+        }
+        if (qualityMode == RenderQualityMode.Interaction)
+        {
+            thinningStep = Math.Max(thinningStep, 8);
         }
 
         // Try to obtain coverage from PreparedGeometryCache

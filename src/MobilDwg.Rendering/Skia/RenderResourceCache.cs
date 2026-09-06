@@ -29,6 +29,7 @@ public sealed class RenderResourceCache : IDisposable
 {
     private readonly object _syncLock = new();
     private readonly Dictionary<string, RasterDecodeEntry> _rasterCache = new(StringComparer.Ordinal);
+    private readonly Dictionary<string, SKPathEffect> _pathEffectCache = new(StringComparer.Ordinal);
     private long _accessCounter;
     private long _currentRasterBytes;
     private bool _disposed;
@@ -131,6 +132,47 @@ public sealed class RenderResourceCache : IDisposable
         }
     }
 
+    public SKPathEffect? GetOrCreateDashEffect(float[] pattern)
+    {
+        if (pattern == null || pattern.Length == 0) return null;
+
+        // Fast key generation
+        var key = pattern.Length switch
+        {
+            1 => $"{pattern[0]:F2}",
+            2 => $"{pattern[0]:F2}_{pattern[1]:F2}",
+            4 => $"{pattern[0]:F2}_{pattern[1]:F2}_{pattern[2]:F2}_{pattern[3]:F2}",
+            _ => string.Join('_', pattern)
+        };
+
+        lock (_syncLock)
+        {
+            if (_disposed) return null;
+
+            if (_pathEffectCache.TryGetValue(key, out var cached))
+            {
+                return cached;
+            }
+
+            if (_pathEffectCache.Count >= 256)
+            {
+                // Prune if too many distinct dynamic patterns
+                foreach (var (_, pe) in _pathEffectCache)
+                {
+                    pe.Dispose();
+                }
+                _pathEffectCache.Clear();
+            }
+
+            var created = SKPathEffect.CreateDash(pattern, 0);
+            if (created != null)
+            {
+                _pathEffectCache[key] = created;
+            }
+            return created;
+        }
+    }
+
     public void Clear()
     {
         lock (_syncLock)
@@ -141,6 +183,12 @@ public sealed class RenderResourceCache : IDisposable
             }
             _rasterCache.Clear();
             _currentRasterBytes = 0;
+
+            foreach (var (_, effect) in _pathEffectCache)
+            {
+                effect.Dispose();
+            }
+            _pathEffectCache.Clear();
         }
     }
 
