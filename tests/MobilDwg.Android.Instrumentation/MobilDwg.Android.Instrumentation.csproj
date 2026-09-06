@@ -1,13 +1,24 @@
 <Project Sdk="Microsoft.NET.Sdk">
   <PropertyGroup>
     <TargetFramework>net10.0-android36.0</TargetFramework>
-    <OutputType>Library</OutputType>
+    <OutputType>Exe</OutputType>
     <Nullable>enable</Nullable>
     <ImplicitUsings>enable</ImplicitUsings>
+    <ApplicationId>com.smitelagwar.mobildwg.test</ApplicationId>
+    <ApplicationTitle>MobilDwg Instrumentation Tests</ApplicationTitle>
+    <ApplicationVersion>1</ApplicationVersion>
+    <ApplicationDisplayVersion>1.0.0</ApplicationDisplayVersion>
+    <SupportedOSPlatformVersion>24.0</SupportedOSPlatformVersion>
+    <TargetSdkVersion>36</TargetSdkVersion>
+    <EmbedAssembliesIntoApk>true</EmbedAssembliesIntoApk>
+    <AndroidUseFastDeployment>false</AndroidUseFastDeployment>
+    <AndroidEnableSGenConcurrent>true</AndroidEnableSGenConcurrent>
+    <AndroidManifest>AndroidManifest.xml</AndroidManifest>
   </PropertyGroup>
+
   <ItemGroup>
     <ProjectReference Include="..\..\src\MobilDwg.Core\MobilDwg.Core.csproj" />
     <ProjectReference Include="..\..\src\MobilDwg.Rendering\MobilDwg.Rendering.csproj" />
-    <ProjectReference Include="..\..\src\MobilDwg.App\MobilDwg.App.csproj" />
+    <ProjectReference Include="..\..\src\MobilDwg.App\MobilDwg.App.csproj" ReferenceOutputAssembly="false" SkipGetTargetFrameworkProperties="true" BuildReference="false" />
   </ItemGroup>
 </Project>

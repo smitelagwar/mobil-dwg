@@ -144,6 +144,9 @@ public static class Program
             RunStage12LifecycleTests();
             await RunStage13PerformanceAcceptanceTests();
 
+            bool failOnRegression = args.Contains("--regressions") || args.Contains("--strict-regressions");
+            await CorrectionRegressionsP10ToP13.RunAllAsync(repoRoot, throwOnFailures: failOnRegression);
+
             Console.WriteLine("STAGE01_INTEGRATION_TESTS_PASS");
             Console.WriteLine("STAGE08_CAD_EXTRACTION_TESTS_PASS");
             Console.WriteLine("STAGE09_GEOMETRY_TESTS_PASS");

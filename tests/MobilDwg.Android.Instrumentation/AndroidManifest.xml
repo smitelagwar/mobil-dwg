@@ -1,0 +1,21 @@
+<?xml version="1.0" encoding="utf-8"?>
+<manifest xmlns:android="http://schemas.android.com/apk/res/android"
+    package="com.smitelagwar.mobildwg.test"
+    android:versionCode="1"
+    android:versionName="1.0">
+
+    <uses-permission android:name="android.permission.INJECT_EVENTS" />
+    <uses-permission android:name="android.permission.READ_EXTERNAL_STORAGE" />
+    <uses-permission android:name="android.permission.WRITE_EXTERNAL_STORAGE" />
+
+    <instrumentation
+        android:name="com.smitelagwar.mobildwg.test.MobilDwgTestRunner"
+        android:targetPackage="com.smitelagwar.mobildwg.test"
+        android:label="MobilDwg Instrumentation Test Runner" />
+
+    <application
+        android:label="MobilDwg.Android.Instrumentation"
+        android:debuggable="true">
+        <uses-library android:name="android.test.runner" />
+    </application>
+</manifest>

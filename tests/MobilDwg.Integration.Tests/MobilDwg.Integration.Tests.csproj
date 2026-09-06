@@ -1,4 +1,4 @@
-﻿<Project Sdk="Microsoft.NET.Sdk">
+<Project Sdk="Microsoft.NET.Sdk">
   <PropertyGroup>
     <OutputType>Exe</OutputType>
     <TargetFramework>net10.0</TargetFramework>
@@ -7,5 +7,10 @@
     <ProjectReference Include="../../src/MobilDwg.Core/MobilDwg.Core.csproj" />
     <ProjectReference Include="../../src/MobilDwg.Cad/MobilDwg.Cad.csproj" />
     <ProjectReference Include="../../src/MobilDwg.Rendering/MobilDwg.Rendering.csproj" />
+  </ItemGroup>
+  <ItemGroup>
+    <Compile Include="../../src/MobilDwg.App/Opening/CadFileOpenContracts.cs" Link="CadFileOpenContracts.cs" />
+    <Compile Include="../../src/MobilDwg.App/Opening/CadFileOpenCoordinator.cs" Link="CadFileOpenCoordinator.cs" />
+    <Compile Include="../../src/MobilDwg.App/Opening/SafeCadFileCache.cs" Link="SafeCadFileCache.cs" />
   </ItemGroup>
 </Project>

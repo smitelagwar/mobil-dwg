@@ -137,6 +137,9 @@ Console.WriteLine("STAGE07_PREPARED_GEOMETRY_CACHE_TESTS_PASS");
 Console.WriteLine("STAGE09_RENDER_SCENE_TESTS_PASS");
 Console.WriteLine(snapshotA);
 
+bool failOnRegression = args.Contains("--regressions") || args.Contains("--strict-regressions");
+CorrectionRegressionsP01ToP09.RunAll(throwOnFailures: failOnRegression);
+
 static RenderScene BuildSyntheticScene(bool reverseEntityOrder)
 {
     var builder = new RenderSceneAssembler(RenderColorContext.Dark);
