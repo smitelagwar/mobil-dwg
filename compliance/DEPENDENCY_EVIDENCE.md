@@ -18,10 +18,10 @@ Production `src/` graph'ı bunlarla sınırlıdır.
 
 | Paket | Exact sürüm | Kullanım | Production etkisi |
 |---|---:|---|---|
-| SkiaSharp.NativeAssets.Linux.NoDependencies | `4.151.1` | Linux GitHub Actions üzerinde Rendering regression harness'inin gerçek Skia bitmap testlerini çalıştırması | `PrivateAssets=all`; `src/` production graph'ına girmez |
+| SkiaSharp.NativeAssets.Linux | `4.151.1` | Linux GitHub Actions üzerinde gerçek Skia bitmap ve font/text regression testlerini çalıştırmak | `PrivateAssets=all`; `src/` production graph'ına girmez |
 | IxMilia.Dxf | `0.8.4` | test/fallback adayı | Production runtime graph'a otomatik girmez |
 
-Linux native test asset'i production Android paketine eklenmez; yalnız test projesi tarafından referans edilir.
+Linux native test asset'i production Android paketine eklenmez; yalnız test projesi tarafından referans edilir. Fontconfig-enabled varyant kullanılır çünkü text regression harness sistem font substitution davranışını da gerçekten render eder.
 
 ## Production proje sınırı
 
