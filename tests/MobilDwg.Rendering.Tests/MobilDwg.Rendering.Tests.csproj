@@ -7,4 +7,8 @@
     <ProjectReference Include="../../src/MobilDwg.Core/MobilDwg.Core.csproj" />
     <ProjectReference Include="../../src/MobilDwg.Rendering/MobilDwg.Rendering.csproj" />
   </ItemGroup>
+  <ItemGroup>
+    <!-- Host-only native asset so the rendering regression harness can execute on Linux CI. -->
+    <PackageReference Include="SkiaSharp.NativeAssets.Linux.NoDependencies" PrivateAssets="all" />
+  </ItemGroup>
 </Project>

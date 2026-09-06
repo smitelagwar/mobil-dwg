@@ -11,9 +11,17 @@ Central Package Management kaynağı: `Directory.Packages.props`.
 | ACadSharp | `3.7.1` | `MobilDwg.Cad` read-only DWG/DXF parser | MIT / `GREEN` |
 | SkiaSharp | `4.151.1` | `MobilDwg.Rendering` 2D renderer | MIT; Android native asset graph'ı ayrıca denetlenir |
 | Microsoft.Maui.Controls | `10.0.100` | Android uygulama/UI | Microsoft package baseline; exact pin |
-| IxMilia.Dxf | `0.8.4` | test/fallback adayı; production graph'a otomatik girmez | MIT / test-only candidate |
 
-Direct dependency sürümleri strict exact NuGet range olarak pinlidir; floating/latest kullanılmaz.
+Production `src/` graph'ı bunlarla sınırlıdır.
+
+## Test / CI-only paketler
+
+| Paket | Exact sürüm | Kullanım | Production etkisi |
+|---|---:|---|---|
+| SkiaSharp.NativeAssets.Linux.NoDependencies | `4.151.1` | Linux GitHub Actions üzerinde Rendering regression harness'inin gerçek Skia bitmap testlerini çalıştırması | `PrivateAssets=all`; `src/` production graph'ına girmez |
+| IxMilia.Dxf | `0.8.4` | test/fallback adayı | Production runtime graph'a otomatik girmez |
+
+Linux native test asset'i production Android paketine eklenmez; yalnız test projesi tarafından referans edilir.
 
 ## Production proje sınırı
 
@@ -40,29 +48,29 @@ Beklenen Android graph:
 - Direct: `SkiaSharp 4.151.1`
 - Transitive: `SkiaSharp.NativeAssets.Android 4.151.1`
 
-Audit projesi ve committed lockfile `--locked-mode` ile doğrulanır.
+Audit projesi ve committed lockfile `--locked-mode` ile doğrulanır. Linux test native asset'i bu Android production probe graph'ının parçası değildir.
 
 ## Native artifact sınırı
 
-`SkiaSharp.NativeAssets.Android 4.151.1` için beklenen native girdiler dört Android ABI'sine ait `libSkiaSharp.so` dosyalarıdır:
+`SkiaSharp.NativeAssets.Android 4.151.1` için beklenen production native girdiler dört Android ABI'sine ait `libSkiaSharp.so` dosyalarıdır:
 
 - android-arm
 - android-arm64
 - android-x64
 - android-x86
 
-Audit, beklenmeyen iOS/macOS/Windows/Linux native girdisini Android graph'ında kabul etmez.
+Audit, beklenmeyen iOS/macOS/Windows/Linux native girdisini Android production graph'ında kabul etmez.
 
 ## Paket artifact doğrulaması
 
-`compliance/stage02-package-manifest.json` exact NuGet artifact sonuçlarını tutar. `scripts/stage02-audit-packages.py`:
+`compliance/stage02-package-manifest.json` exact Android production NuGet artifact sonuçlarını tutar. `scripts/stage02-audit-packages.py`:
 
 - central package setini/exact version syntax'ını,
 - production PackageReference sınırını,
-- lock graph'ını,
-- NuGet license expression'larını,
-- nupkg SHA-256 değerlerini,
-- native entry envanterini
+- Android lock graph'ını,
+- production NuGet license expression'larını,
+- production nupkg SHA-256 değerlerini,
+- Android native entry envanterini
 
 yeniden doğrular ve manifesti deterministik biçimde üretir.
 

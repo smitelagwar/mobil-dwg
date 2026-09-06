@@ -10,7 +10,8 @@
     <PackageVersion Include="SkiaSharp" Version="[4.151.1]" />
     <PackageVersion Include="Microsoft.Maui.Controls" Version="[10.0.100]" />
 
-    <!-- Test/fallback candidate only; not referenced by the production probe. -->
+    <!-- Test/CI-only packages; never production runtime dependencies. -->
+    <PackageVersion Include="SkiaSharp.NativeAssets.Linux.NoDependencies" Version="[4.151.1]" />
     <PackageVersion Include="IxMilia.Dxf" Version="[0.8.4]" />
   </ItemGroup>
 </Project>
