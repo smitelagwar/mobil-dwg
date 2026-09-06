@@ -36,8 +36,8 @@ FORBIDDEN_PRODUCTION_TFM_TOKENS = ("-ios", "-maccatalyst", "-windows")
 NATIVE_FILE_SUFFIXES = {".so", ".aar", ".jar", ".dylib"}
 
 ROOT = Path(__file__).resolve().parents[1]
-LOCK = ROOT / "compliance/Stage02.DependencyProbe/packages.lock.json"
-OUTPUT = ROOT / "compliance/stage02-package-manifest.json"
+LOCK = ROOT / "compliance/DependencyProbe/packages.lock.json"
+OUTPUT = ROOT / "compliance/package-manifest.json"
 CPM = ROOT / "Directory.Packages.props"
 SRC = ROOT / "src"
 
@@ -175,7 +175,7 @@ def main() -> int:
     lock = json.loads(LOCK.read_text(encoding="utf-8"))
     target_name, graph = validate_lock_graph(lock, failures)
     packages: list[dict[str, object]] = []
-    with tempfile.TemporaryDirectory(prefix="stage02-nupkg-") as temp_dir:
+    with tempfile.TemporaryDirectory(prefix="dependency-audit-nupkg-") as temp_dir:
         temp = Path(temp_dir)
         for package_id in sorted(graph, key=str.casefold):
             node = graph[package_id]
@@ -235,9 +235,9 @@ def main() -> int:
         for failure in failures:
             print(f"FAIL: {failure}", file=sys.stderr)
         return 1
-    print("V02_EXACT_VERSION_POLICY_PASS")
-    print("V02_ANDROID_BOUNDARY_PASS")
-    print("STAGE02_PACKAGE_AUDIT_PASS")
+    print("DEPENDENCY_EXACT_VERSION_POLICY_PASS")
+    print("DEPENDENCY_ANDROID_BOUNDARY_PASS")
+    print("DEPENDENCY_PACKAGE_AUDIT_PASS")
     return 0
 
 

@@ -4,7 +4,7 @@ $ErrorActionPreference = "Stop"
 
 <#
 .SYNOPSIS
-    AŞAMA 26 — Dependency freeze / final audit / RC approval kabul testi gate scripti.
+    A26 — Dependency freeze / final audit / RC approval regression gate.
 #>
 
 function Fail([string]$Message) {
@@ -53,7 +53,7 @@ function Assert-PngSignature([string]$Path) {
 $RepoRoot = Split-Path -Parent $PSScriptRoot
 $AppProject  = Join-Path $RepoRoot "src\MobilDwg.App\MobilDwg.App.csproj"
 $TestProject = Join-Path $RepoRoot "tests\MobilDwg.Rendering.Tests\MobilDwg.Rendering.Tests.csproj"
-$ProbeProject = Join-Path $RepoRoot "compliance\Stage02.DependencyProbe\Stage02.DependencyProbe.csproj"
+$ProbeProject = Join-Path $RepoRoot "compliance\DependencyProbe\DependencyProbe.csproj"
 $ArtifactsFullPath = Join-Path $RepoRoot "artifacts\a26-android-final-audit"
 $Package     = "com.smitelagwar.mobildwg"
 $LogcatLog   = Join-Path $ArtifactsFullPath "logcat_a26.txt"
@@ -267,12 +267,6 @@ Invoke-AdbBinaryToFile -AdbPath $AdbExe -Serial $Serial -OutputPath $ScreenshotP
 Assert-PngSignature -Path $ScreenshotPath
 Write-Host "[A26-GATE] Screenshot saved: $ScreenshotPath ($([math]::Round((Get-Item $ScreenshotPath).Length/1KB,1)) KB)"
 
-# Copy to brain artifact folder
-$BrainDir = "C:\Users\hsyn\.gemini\antigravity\brain\9b6886c2-7816-4bdb-afa5-f004834ccfbe"
-if (Test-Path $BrainDir) {
-    Copy-Item $ScreenshotPath (Join-Path $BrainDir "a26-real-app-rc-approval.png") -Force
-}
-
 # ── STEP 12: Memory PSS Measurement ──────────────────────────────────────────
 Write-Host "[A26-GATE] STEP 12: Measuring Dumpsys Meminfo PSS..."
 $meminfo = (& $AdbExe -s $Serial shell dumpsys meminfo $Package | Out-String)
@@ -285,7 +279,7 @@ if ($totalPssMatch.Success) {
     if ($pssMb -gt 250.0) { Fail "Total PSS $pssMb MB exceeds 250 MB budget" }
 }
 
-# ── STEP 13: Cleanup ─────────────────────────────────────────────────────────
+# ── STEP 13: Cleanup ──────────────────────────────────────────────────────────
 Write-Host "[A26-GATE] STEP 13: Cleaning up app..."
 & $AdbExe -s $Serial uninstall $Package | Out-Null
 

@@ -6,18 +6,18 @@ on:
     paths:
       - 'Directory.Packages.props'
       - 'src/**/*.csproj'
-      - 'compliance/Stage02.DependencyProbe/**'
-      - 'compliance/stage02-package-manifest.json'
-      - 'scripts/stage02-audit-packages.py'
+      - 'compliance/DependencyProbe/**'
+      - 'compliance/package-manifest.json'
+      - 'scripts/audit-packages.py'
       - '.github/workflows/dependency-audit.yml'
   pull_request:
     branches: [main]
     paths:
       - 'Directory.Packages.props'
       - 'src/**/*.csproj'
-      - 'compliance/Stage02.DependencyProbe/**'
-      - 'compliance/stage02-package-manifest.json'
-      - 'scripts/stage02-audit-packages.py'
+      - 'compliance/DependencyProbe/**'
+      - 'compliance/package-manifest.json'
+      - 'scripts/audit-packages.py'
       - '.github/workflows/dependency-audit.yml'
   workflow_dispatch:
 
@@ -49,16 +49,16 @@ jobs:
 
       - name: Locked restore Android dependency probe
         shell: bash
-        run: dotnet restore compliance/Stage02.DependencyProbe/Stage02.DependencyProbe.csproj --locked-mode
+        run: dotnet restore compliance/DependencyProbe/DependencyProbe.csproj --locked-mode
 
       - name: Audit exact package graph and licenses
         shell: bash
-        run: python3 scripts/stage02-audit-packages.py
+        run: python3 scripts/audit-packages.py
 
       - name: Require reproducible manifest
         shell: bash
-        run: git diff --exit-code -- compliance/stage02-package-manifest.json
+        run: git diff --exit-code -- compliance/package-manifest.json
 
       - name: Vulnerability report
         shell: bash
-        run: dotnet list compliance/Stage02.DependencyProbe/Stage02.DependencyProbe.csproj package --vulnerable --include-transitive
+        run: dotnet list compliance/DependencyProbe/DependencyProbe.csproj package --vulnerable --include-transitive

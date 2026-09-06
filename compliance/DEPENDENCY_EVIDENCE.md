@@ -37,10 +37,10 @@ Production `src/` altında iOS/MacCatalyst/Windows TFM veya vendored native bina
 Güncel lock kaynağı:
 
 ```text
-compliance/Stage02.DependencyProbe/packages.lock.json
+compliance/DependencyProbe/packages.lock.json
 ```
 
-Klasör adı tarihsel kökenlidir; proje halen yalnız ACadSharp + SkiaSharp üzerinden Android resolved graph'ını kilitlemek için kullanılır ve aktif dependency audit'in parçasıdır.
+Bu probe yalnız ACadSharp + SkiaSharp üzerinden Android resolved graph'ını kilitlemek için kullanılır ve aktif dependency audit'in parçasıdır.
 
 Beklenen Android graph:
 
@@ -63,7 +63,7 @@ Audit, beklenmeyen iOS/macOS/Windows/Linux native girdisini Android production g
 
 ## Paket artifact doğrulaması
 
-`compliance/stage02-package-manifest.json` exact Android production NuGet artifact sonuçlarını tutar. `scripts/stage02-audit-packages.py`:
+`compliance/package-manifest.json` exact Android production NuGet artifact sonuçlarını tutar. `scripts/audit-packages.py`:
 
 - central package setini/exact version syntax'ını,
 - production PackageReference sınırını,

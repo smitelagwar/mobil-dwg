@@ -33,10 +33,10 @@ dotnet workload install maui-android
 Android dependency audit projesini locked mode ile doğrula:
 
 ```powershell
-dotnet restore .\compliance\Stage02.DependencyProbe\Stage02.DependencyProbe.csproj --locked-mode
+dotnet restore .\compliance\DependencyProbe\DependencyProbe.csproj --locked-mode
 ```
 
-Bu klasör adı tarihsel kökenlidir; proje hâlâ güncel Android dependency graph lock kaynağı olarak kullanılır.
+Bu probe güncel Android dependency graph lock kaynağıdır.
 
 Ana solution:
 
