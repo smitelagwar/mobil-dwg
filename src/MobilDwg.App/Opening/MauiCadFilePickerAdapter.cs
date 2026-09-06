@@ -31,11 +31,16 @@ public static class MauiCadFilePickerAdapter
                 "application/acad",
                 "application/x-acad",
                 "application/dwg",
+                "application/x-dwg",
                 "image/vnd.dwg",
+                "image/x-dwg",
                 "application/dxf",
                 "application/x-dxf",
+                "image/vnd.dxf",
+                "image/x-dxf",
                 "application/octet-stream",
                 "text/plain",
+                "*/*",
             ],
         });
 

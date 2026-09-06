@@ -279,13 +279,21 @@ public sealed class SafeCadFileCache
 
     private static long GetAvailableBytes(string path)
     {
-        var root = Path.GetPathRoot(Path.GetFullPath(path));
-        if (string.IsNullOrWhiteSpace(root))
+        try
+        {
+            var root = Path.GetPathRoot(Path.GetFullPath(path));
+            if (string.IsNullOrWhiteSpace(root))
+            {
+                return long.MaxValue;
+            }
+
+            var drive = new DriveInfo(root);
+            return drive.IsReady ? drive.AvailableFreeSpace : long.MaxValue;
+        }
+        catch
         {
             return long.MaxValue;
         }
-
-        return new DriveInfo(root).AvailableFreeSpace;
     }
 
     internal static string SanitizeDisplayName(string? displayName)

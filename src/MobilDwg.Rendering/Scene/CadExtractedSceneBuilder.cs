@@ -174,7 +174,18 @@ public static class CadExtractedSceneBuilder
                 effectiveOrder);
 
             var primitives = new List<RenderGeometryPrimitive>(1);
-            ConvertExtractedEntityToPrimitives(entity, primitives, cadStyle);
+            try
+            {
+                ConvertExtractedEntityToPrimitives(entity, primitives, cadStyle);
+            }
+            catch (Exception ex)
+            {
+                assembler.AddDiagnostic(new SceneDiagnostic(
+                    SceneDiagnosticKind.Error,
+                    "ENTITY_CONVERSION_ERROR",
+                    $"Entity {entity.EntityType} ({entity.Handle}) conversion failed: {ex.Message}",
+                    new RenderEntityId(entity.Handle)));
+            }
 
             if (primitives.Count > 0)
             {

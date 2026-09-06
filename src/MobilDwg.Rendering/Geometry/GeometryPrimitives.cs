@@ -121,7 +121,9 @@ public sealed record PolylinePrimitive : RenderGeometryPrimitive
         var copy = vertices.ToArray();
         if (copy.Length < 2) throw new ArgumentException("Polyline requires at least two vertices.", nameof(vertices));
         if (closed && copy.Length == 2 && copy[0].Bulge == 0 && copy[1].Bulge == 0)
-            throw new ArgumentException("Closed polyline without bulges requires at least three vertices.", nameof(vertices));
+        {
+            closed = false;
+        }
 
         _vertices = Array.AsReadOnly(copy);
         Closed = closed;

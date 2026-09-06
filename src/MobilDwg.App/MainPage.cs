@@ -2225,6 +2225,9 @@ public sealed class MainPage : ContentPage
         {
             var errorKind = exception.GetType().Name;
             _status.Text = $"Dosya açılamadı: {errorKind} — {exception.Message}";
+#if ANDROID
+            Android.Util.Log.Error("MobilDwgCAD", $"OPEN_SELECTION_FAIL: {exception}");
+#endif
 #if V06_VALIDATION
             LogV06($"V06_OPEN_FAIL type={exception.GetType().Name}");
 #endif

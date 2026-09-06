@@ -270,7 +270,7 @@ public sealed class CadFileOpenCoordinator : IAsyncDisposable
             ReportSupersededIfApplicable(generation, requestCancellation.Token, progress);
             return CreateDiscardedResult(generation, requestCancellation.Token);
         }
-        catch
+        catch (Exception ex)
         {
             if (parsedSession is not null)
             {
@@ -287,10 +287,13 @@ public sealed class CadFileOpenCoordinator : IAsyncDisposable
                 return new CadFileOpenResult(generation, CadFileOpenDisposition.Superseded);
             }
 
+#if ANDROID
+            Android.Util.Log.Error("MobilDwgCAD", $"OPEN_COORDINATOR_FAIL gen={generation}: {ex}");
+#endif
             progress?.Report(new CadFileOpenProgress(
                 generation,
                 CadFileOpenPhase.Failed,
-                Message: "The current CAD open request failed."));
+                Message: $"Çizim açılamadı: {ex.Message}"));
             throw;
         }
         finally

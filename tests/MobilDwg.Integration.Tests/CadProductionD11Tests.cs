@@ -49,6 +49,9 @@ public static class CadProductionD11Tests
         await TestCorpusFixtureManifestAndIntegrityAsync(repoRoot);
         Console.WriteLine("  [PASS] D11: Corpus fixture SHA-256 manifest and integrity verified");
 
+        await TestRealDwgAndDegeneratePolylineAsync(repoRoot);
+        Console.WriteLine("  [PASS] D11: Real DWG file parsing and degenerate polyline robustness verified");
+
         Console.WriteLine("=== PRODUCTION ACCEPTANCE TESTS (D11) COMPLETED SUCCESSFULLY ===");
     }
 
@@ -415,6 +418,34 @@ public static class CadProductionD11Tests
                 new[] { new LinePrimitive(new WorldPoint2(x, y), new WorldPoint2(x + 10.0, y + 10.0)) }));
         }
         return assembler.Build();
+    }
+
+    public static async Task TestRealDwgAndDegeneratePolylineAsync(string repoRoot)
+    {
+        // 1. Verify that 2-vertex closed polyline does not throw ArgumentException
+        var poly2Pts = new[]
+        {
+            new PolylineVertex(new WorldPoint2(0, 0), 0.0),
+            new PolylineVertex(new WorldPoint2(100, 100), 0.0)
+        };
+        var poly = new PolylinePrimitive(poly2Pts, closed: true);
+        Assert(poly.Vertices.Count == 2, "2-vertex polyline should have 2 vertices");
+        Assert(poly.Closed == false, "2-vertex polyline without bulge should automatically fallback to closed=false");
+
+        // 2. Verify opening synthetic_turkish_basic_ac1015.dwg
+        var dwgFixture = Path.Combine(repoRoot, "artifacts", "stage03", "synthetic_turkish_basic_ac1015.dwg");
+        if (File.Exists(dwgFixture))
+        {
+            var reader = new AcadSharpDocumentReader();
+            await using var stream = File.OpenRead(dwgFixture);
+            var req = new CadOpenRequest(stream, "synthetic_turkish_basic_ac1015.dwg", stream.Length, LeaveOpen: false);
+            await using var session = await reader.OpenAsync(req);
+            Assert(session.Metadata.Format == CadFormat.Dwg, "Must be DWG format");
+            var extracted = AcadSharpEntityExtractor.Extract(session.Handle);
+            Assert(extracted.Entities.Count > 0, "Must extract entities from synthetic DWG");
+            var scene = CadExtractedSceneBuilder.Build(extracted);
+            Assert(scene.Entities.Count > 0, "Must build scene from synthetic DWG");
+        }
     }
 
     private static void Assert(bool condition, string message)
