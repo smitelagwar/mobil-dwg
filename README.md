@@ -4,11 +4,10 @@ Android için local/offline çalışan, read-only 2D DWG/DXF görüntüleyici.
 
 ## Güncel durum
 
-- Android v1 geliştirme planı AŞAMA 27 ile tamamlandı.
-- Eski V01–V09 doğrulama programı ve A10 paralel workstream kapandı.
-- Bundan sonraki işler **yeni bug fix, kalite, performans ve viewer geliştirmesi** olarak ele alınır; eski stage cursor'ı devam ettirilmez.
+- Android v1 geliştirme programı tamamlandı.
+- Eski Stage/V/A doğrulama numaralandırmaları kapalıdır; yeni işler bug fix, kalite, performans ve viewer geliştirmesi olarak ele alınır.
 - Aktif platform Android'dir. iOS yalnız ileride açıkça yeniden etkinleştirilirse ele alınır.
-- Son v1 handoff claim'i fiziksel cihaz fidelity iddiası içermez; geçmiş kanıtlar `docs/evidence/` altındadır.
+- Emulator doğrulaması fiziksel cihaz fidelity iddiası değildir.
 
 ## Teknoloji ve sınırlar
 
@@ -47,14 +46,14 @@ Lisans politikası: [`compliance/LICENSE_POLICY.md`](compliance/LICENSE_POLICY.m
 
 ## Yeni bir işe başlarken
 
-Eski `BASLA.md`, `DEVAM.md`, A10 workstream veya VXX cursor dosyaları artık yoktur. Yeni bir AI/ajan ya da geliştirici şu sırayı kullanmalıdır:
+Yeni bir AI/ajan ya da geliştirici şu sırayı kullanmalıdır:
 
 1. Gerçek `main` kodunu ve ilgili dosyaları oku.
 2. [`docs/ARCHITECTURE.md`](docs/ARCHITECTURE.md) ile dependency sınırlarını kontrol et.
-3. Render/parser doğruluğu etkileniyorsa [`docs/GOLDEN_CONTRACT.md`](docs/GOLDEN_CONTRACT.md) ve geçmiş `docs/evidence/` kayıtlarını incele.
+3. Render/parser doğruluğu etkileniyorsa [`docs/GOLDEN_CONTRACT.md`](docs/GOLDEN_CONTRACT.md) ve ilgili güncel testleri incele.
 4. Dependency/asset değişiyorsa `compliance/` belgelerini kontrol et.
 5. Android davranışı değişiyorsa [`docs/ANDROID_TESTING.md`](docs/ANDROID_TESTING.md) üzerinden değişikliğe özel doğrulama yap.
-6. Yeni iş için gerekiyorsa yeni, küçük ve işe özel plan/evidence oluştur; tamamlanmış eski planları tekrar yürütme.
+6. Tamamlanmış eski Stage/V/A akışlarını yeniden başlatma.
 
 Sohbet/model belleği repo gerçekliğinin yerine geçmez.
 
@@ -65,15 +64,14 @@ Sohbet/model belleği repo gerçekliğinin yerine geçmez.
 | [`docs/ARCHITECTURE.md`](docs/ARCHITECTURE.md) | Güncel production katmanları ve dependency sınırları |
 | [`docs/GOLDEN_CONTRACT.md`](docs/GOLDEN_CONTRACT.md) | Fixture, semantic golden ve render doğruluk kuralları |
 | [`docs/TOOLCHAIN.md`](docs/TOOLCHAIN.md) | Pinli build/toolchain baseline |
-| [`docs/ANDROID_TESTING.md`](docs/ANDROID_TESTING.md) | Tek Android/emulator/fiziksel cihaz test rehberi |
-| [`docs/DEVICE_MATRIX.md`](docs/DEVICE_MATRIX.md) | Emulator ve fiziksel cihaz test sınıfları |
-| [`docs/EVIDENCE_TEMPLATE.md`](docs/EVIDENCE_TEMPLATE.md) | Yeni önemli değişiklikler için kanıt formatı |
+| [`docs/ANDROID_TESTING.md`](docs/ANDROID_TESTING.md) | Android/emulator/fiziksel cihaz test rehberi |
+| [`docs/DEVICE_MATRIX.md`](docs/DEVICE_MATRIX.md) | Emulator ve fiziksel cihaz test/benchmark sınıfları |
+| [`docs/HISTORY.md`](docs/HISTORY.md) | Kısa proje tarihçesi ve kalıcı teknik karar özeti |
 | [`compliance/LICENSE_POLICY.md`](compliance/LICENSE_POLICY.md) | Dependency/asset lisans politikası |
 | [`compliance/DEPENDENCY_EVIDENCE.md`](compliance/DEPENDENCY_EVIDENCE.md) | Dependency provenance/evidence |
 | [`compliance/RISK_REGISTER.md`](compliance/RISK_REGISTER.md) | Güncel açık teknik/ürün riskleri |
-| [`gecmis.md`](gecmis.md) | Kısa v1 tarihçesi ve kalıcı teknik karar özeti |
 
-`docs/ADR/` mimari kararları, `docs/evidence/` ise tarihsel doğrulama kanıtlarını içerir. Bu kayıtlar geçmişi korumak için tutulur; aktif iş listesi değildir.
+`docs/ADR/` kalıcı mimari kararları içerir. Ayrıntılı eski aşama/validation kanıtları çalışma ağacında tutulmaz; gerektiğinde Git geçmişinden okunur.
 
 ## Fixture ve özel dosya politikası
 
@@ -92,6 +90,6 @@ dotnet build .\MobilDwg.sln -c Release
 
 Android testleri ve cihaz ayrımı için [`docs/ANDROID_TESTING.md`](docs/ANDROID_TESTING.md) kullanılır.
 
-## Tarihsel planlar
+## Geçmiş geliştirme kayıtları
 
-2026-09-05 dokümantasyon temizliğinde tamamlanmış başlangıç/handoff/validation/implementation plan dosyaları çalışma ağacından kaldırıldı. Gerektiğinde Git geçmişinden erişilebilir; normal geliştirmede okunmaları veya yeniden oluşturulmaları gerekmez.
+Tamamlanmış başlangıç/handoff/validation planları ve ayrıntılı Stage/V evidence dosyaları normal çalışma ağacından çıkarılmıştır. Git geçmişi bu kayıtları korur; yeni geliştirmede bunların yeniden oluşturulması veya kaldığı yerden devam ettirilmesi gerekmez.
