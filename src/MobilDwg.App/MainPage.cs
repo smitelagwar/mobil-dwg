@@ -70,11 +70,11 @@ public sealed class MainPage : ContentPage
     private readonly Label _statsLabel;
     private readonly Button _navCloseButton;
     private readonly Button _navLayerButton;
+    private readonly Button _navLayoutButton;
     private readonly Button _navInfoButton;
 
     private bool _isLightMode;
     private bool _isMeasureMode;
-    private WorldPoint2? _measureStartPoint;
     private readonly Border _measureHud;
     private readonly Label _measureLabel;
     private readonly Border _floatingIslandBar;
@@ -84,6 +84,8 @@ public sealed class MainPage : ContentPage
 
     private readonly Grid _layerModalView;
     private readonly VerticalStackLayout _layerStackLayout;
+    private readonly Grid _layoutModalView;
+    private readonly VerticalStackLayout _layoutStackLayout;
     private readonly Grid _infoModalView;
     private readonly Label _infoContentLabel;
 
@@ -132,6 +134,10 @@ public sealed class MainPage : ContentPage
 #if A26_VALIDATION
     private bool _a26Started;
 #endif
+#if ANDROID
+    private readonly Action<string> _onCadFileRequested;
+    private readonly Action<Android.Content.TrimMemory> _onLowMemoryTrimmed;
+#endif
 
     public MainPage()
     {
@@ -141,13 +147,10 @@ public sealed class MainPage : ContentPage
         _coordinator = CreateCoordinator();
 
 #if ANDROID
-        MainActivity.CadFileRequested += fileName =>
-        {
-            Dispatcher.Dispatch(async () =>
-            {
-                await OpenDesktopCadFileAsync(fileName, fileName);
-            });
-        };
+        _onCadFileRequested = OnCadFileRequested;
+        _onLowMemoryTrimmed = OnLowMemoryTrimmed;
+        MainActivity.CadFileRequested += _onCadFileRequested;
+        MainActivity.LowMemoryTrimmed += _onLowMemoryTrimmed;
 #endif
 
         _titleLabel = new Label
@@ -396,7 +399,8 @@ public sealed class MainPage : ContentPage
             {
                 var scene = SampleCadDrawings.CreateArchitecturalPlan();
                 await DisplayCadSceneAsync(scene, "apartman_kat_plani.dwg", "AutoCAD 2018");
-            }));
+            },
+            "sample-card-apartman"));
 
         dashContent.Children.Add(CreateSampleCard(
             "⚙️",
@@ -477,11 +481,11 @@ public sealed class MainPage : ContentPage
             HorizontalOptions = LayoutOptions.Fill,
             VerticalOptions = LayoutOptions.Fill
         };
-        _viewportView.FramePresented += _ =>
+        _viewportView.FramePresented += gen =>
         {
             Dispatcher.Dispatch(() =>
             {
-                if (_transitionOverlay?.IsVisible == true)
+                if (_transitionOverlay?.IsVisible == true && _session != null && _session.FrameGate.CurrentSurfaceGeneration == gen)
                 {
                     _transitionOverlay.IsVisible = false;
                 }
@@ -498,7 +502,6 @@ public sealed class MainPage : ContentPage
             if (pw > 50 && ph > 50 && (_session.ViewportPixelWidth != pw || _session.ViewportPixelHeight != ph))
             {
                 _session.ResizeViewport(pw, ph);
-                _viewportView.RequestFrame();
                 UpdateHud();
             }
         };
@@ -534,7 +537,8 @@ public sealed class MainPage : ContentPage
 
         _latencyLabel = new Label
         {
-            Text = "⚡ 0 ms",
+            Text = string.Empty,
+            IsVisible = false,
             TextColor = ColorAccentEmerald,
             FontSize = 10,
             FontAttributes = FontAttributes.Bold,
@@ -645,8 +649,7 @@ public sealed class MainPage : ContentPage
         var btnZoomIn = CreateFloatingButton("＋", () =>
         {
             if (_session is null) return;
-            _session.Controller.ZoomIn(1.35);
-            _viewportView.RequestFrame();
+            _session.ZoomIn(1.35);
             UpdateHud();
         });
         var btnFit = CreateFloatingButton("⤢", () =>
@@ -658,8 +661,7 @@ public sealed class MainPage : ContentPage
         var btnZoomOut = CreateFloatingButton("－", () =>
         {
             if (_session is null) return;
-            _session.Controller.ZoomOut(1.35);
-            _viewportView.RequestFrame();
+            _session.ZoomOut(1.35);
             UpdateHud();
         });
         fabStack.Children.Add(btnZoomIn);
@@ -684,6 +686,7 @@ public sealed class MainPage : ContentPage
 
         var islandStack = new HorizontalStackLayout { Spacing = 6 };
         _navLayerButton = CreateIslandButton("📑 Katmanlar", ColorBorderHighlight, () => OpenLayerModal());
+        _navLayoutButton = CreateIslandButton("📐 Layout", ColorAccentCyan, () => OpenLayoutModal());
         _islandMeasureButton = CreateIslandButton("📏 Ölçü", ColorAccentAmber, () => ToggleMeasureMode());
         _islandThemeButton = CreateIslandButton("☀️ Tema", Color.FromArgb("#E2E8F0"), async () => await ToggleThemeModeAsync());
         _islandFitButton = CreateIslandButton("⤢ Sığdır", ColorBorderHighlight, () =>
@@ -695,6 +698,7 @@ public sealed class MainPage : ContentPage
         _navInfoButton = CreateIslandButton("ℹ️ Bilgi", Color.FromArgb("#A78BFA"), () => OpenInfoModal());
 
         islandStack.Children.Add(_navLayerButton);
+        islandStack.Children.Add(_navLayoutButton);
         islandStack.Children.Add(_islandMeasureButton);
         islandStack.Children.Add(_islandThemeButton);
         islandStack.Children.Add(_islandFitButton);
@@ -791,10 +795,9 @@ public sealed class MainPage : ContentPage
             foreach (var l in _currentScene.LayerTable.Layers)
             {
                 _currentScene.LayerTable.SetLayerVisibility(l.Name, true);
-                _session?.SetLayerVisibility(l.Name, true);
             }
+            _session?.SetAllLayersVisibility(true);
             OpenLayerModal();
-            _viewportView.RequestFrame();
         };
 
         var btnAllHidden = new Button
@@ -814,10 +817,9 @@ public sealed class MainPage : ContentPage
             foreach (var l in _currentScene.LayerTable.Layers)
             {
                 _currentScene.LayerTable.SetLayerVisibility(l.Name, false);
-                _session?.SetLayerVisibility(l.Name, false);
             }
+            _session?.SetAllLayersVisibility(false);
             OpenLayerModal();
-            _viewportView.RequestFrame();
         };
 
         quickFilterRow.Children.Add(btnAllVisible);
@@ -834,6 +836,86 @@ public sealed class MainPage : ContentPage
 
         layerSheetCard.Content = layerCardStack;
         _layerModalView.Children.Add(layerSheetCard);
+
+        // --- MODERN BOTTOM SHEET: ÇİZİM ALANLARI / LAYOUTS ---
+        _layoutModalView = new Grid
+        {
+            BackgroundColor = Color.FromArgb("#80000000"),
+            IsVisible = false
+        };
+        var layoutScrimTap = new TapGestureRecognizer();
+        layoutScrimTap.Tapped += (_, _) => _layoutModalView.IsVisible = false;
+        _layoutModalView.GestureRecognizers.Add(layoutScrimTap);
+
+        var layoutSheetCard = new Border
+        {
+            Stroke = Color.FromArgb("#334155"),
+            StrokeThickness = 1,
+            StrokeShape = new RoundRectangle { CornerRadius = new CornerRadius(24, 24, 0, 0) },
+            BackgroundColor = ColorBgSurface,
+            Padding = new Thickness(20, 12, 20, 24),
+            VerticalOptions = LayoutOptions.End,
+            HorizontalOptions = LayoutOptions.Fill,
+            MaximumHeightRequest = 520,
+            Shadow = new Shadow { Brush = Colors.Black, Opacity = 0.5f, Radius = 20, Offset = new Point(0, -4) }
+        };
+
+        var layoutCardStack = new VerticalStackLayout { Spacing = 10 };
+
+        var dragPillLayout = new Border
+        {
+            BackgroundColor = Color.FromArgb("#475569"),
+            StrokeShape = new RoundRectangle { CornerRadius = 2 },
+            WidthRequest = 40,
+            HeightRequest = 4,
+            HorizontalOptions = LayoutOptions.Center,
+            Margin = new Thickness(0, 0, 0, 4)
+        };
+        layoutCardStack.Children.Add(dragPillLayout);
+
+        var layoutHeaderRow = new Grid
+        {
+            ColumnDefinitions =
+            {
+                new ColumnDefinition(GridLength.Star),
+                new ColumnDefinition(GridLength.Auto)
+            }
+        };
+        layoutHeaderRow.Add(new Label
+        {
+            Text = "📐 Çizim Alanları (Layouts)",
+            FontSize = 16,
+            FontAttributes = FontAttributes.Bold,
+            TextColor = ColorTextPrimary,
+            VerticalOptions = LayoutOptions.Center
+        }, 0, 0);
+
+        var closeLayoutBtn = new Button
+        {
+            Text = "✕",
+            FontSize = 14,
+            FontAttributes = FontAttributes.Bold,
+            TextColor = ColorTextSecondary,
+            BackgroundColor = Color.FromArgb("#1E293B"),
+            CornerRadius = 16,
+            WidthRequest = 32,
+            HeightRequest = 32,
+            Padding = 0
+        };
+        closeLayoutBtn.Clicked += (_, _) => _layoutModalView.IsVisible = false;
+        layoutHeaderRow.Add(closeLayoutBtn, 1, 0);
+        layoutCardStack.Children.Add(layoutHeaderRow);
+
+        _layoutStackLayout = new VerticalStackLayout { Spacing = 6 };
+        var layoutScroll = new ScrollView
+        {
+            Content = _layoutStackLayout,
+            MaximumHeightRequest = 360
+        };
+        layoutCardStack.Children.Add(layoutScroll);
+
+        layoutSheetCard.Content = layoutCardStack;
+        _layoutModalView.Children.Add(layoutSheetCard);
 
         // --- MODERN BOTTOM SHEET: BİLGİ VE TEŞHİS ---
         _infoModalView = new Grid
@@ -929,6 +1011,7 @@ public sealed class MainPage : ContentPage
         bodyContainer.Children.Add(_dashboardView);
         bodyContainer.Children.Add(_viewerView);
         bodyContainer.Children.Add(_layerModalView);
+        bodyContainer.Children.Add(_layoutModalView);
         bodyContainer.Children.Add(_infoModalView);
         rootGrid.Add(bodyContainer, 0, 1);
 
@@ -1407,8 +1490,9 @@ public sealed class MainPage : ContentPage
         if (_session is not null)
         {
             _session.InteractionEngine.IsMeasurementMode = _isMeasureMode;
+            _session.Measurement.Mode = _isMeasureMode ? MeasurementMode.Distance : MeasurementMode.None;
+            _session.Measurement.Clear();
         }
-        _measureStartPoint = null;
         if (_measureHud is not null)
         {
             _measureHud.IsVisible = _isMeasureMode;
@@ -1430,29 +1514,38 @@ public sealed class MainPage : ContentPage
 
         var camera = _session.Camera;
         double density = GetDensity();
-        var (snapped, snapPoint, _) = SnapToNearestVertex(_currentScene, camera, screenPoint, 28.0 * density);
-        var worldPt = snapped ? snapPoint : CameraTransform.ScreenToWorld(screenPoint, camera);
+        var snap = _session.Measurement.AddScreenPointWithSnap(
+            screenPoint,
+            camera,
+            _currentScene,
+            _currentScene.LayerTable,
+            snapRadiusDip: 12.0,
+            density: density);
 
-        if (_measureStartPoint is null)
+        var pts = _session.Measurement.Points;
+        if (pts.Count == 1)
         {
-            _measureStartPoint = worldPt;
+            var p1 = pts[0];
+            string snapInfo = snap.HasValue ? $" [{snap.Value.Kind}]" : string.Empty;
             if (_measureLabel is not null)
             {
-                _measureLabel.Text = $"📏 1. Nokta ({worldPt.X:F1}, {worldPt.Y:F1}). 2. Noktaya dokunun...";
+                _measureLabel.Text = $"📏 1. Nokta ({p1.X:F1}, {p1.Y:F1}){snapInfo}. 2. Noktaya dokunun...";
             }
         }
-        else
+        else if (pts.Count >= 2)
         {
-            double dx = worldPt.X - _measureStartPoint.Value.X;
-            double dy = worldPt.Y - _measureStartPoint.Value.Y;
-            double dist = Math.Sqrt(dx * dx + dy * dy);
-
-            string distText = dist >= 100.0 ? $"{dist / 100.0:F2} m" : $"{dist:F1} cm";
+            var p1 = pts[pts.Count - 2];
+            var p2 = pts[pts.Count - 1];
+            double dist = _session.Measurement.CalculateDistance();
+            string distText = _session.Measurement.FormatDistance(dist);
+            string snapInfo = snap.HasValue ? $" [{snap.Value.Kind}]" : string.Empty;
+            double dx = p2.X - p1.X;
+            double dy = p2.Y - p1.Y;
             if (_measureLabel is not null)
             {
-                _measureLabel.Text = $"📐 Ölçülen: {distText} (dx={dx:F1}, dy={dy:F1})";
+                _measureLabel.Text = $"📐 Mesafe: {distText}{snapInfo} (dx={dx:F1}, dy={dy:F1})";
             }
-            _measureStartPoint = null;
+            _session.Measurement.Clear();
         }
     }
 
@@ -1467,108 +1560,14 @@ public sealed class MainPage : ContentPage
         {
             _canvasGrid.BackgroundColor = _isLightMode ? Color.FromArgb("#F8FAFC") : ColorBgCanvas;
         }
-        if (_currentScene is not null && _session is not null)
+        if (_session is not null)
         {
             var newColorContext = _isLightMode ? RenderColorContext.Light : RenderColorContext.Dark;
-            _currentScene = new RenderScene(
-                _currentScene.Entities,
-                _currentScene.Diagnostics,
-                newColorContext,
-                _currentScene.LayerTable);
-
-            var oldCamera = _session.Camera;
-            var (pw, ph) = GetViewportPixelDimensions();
-            var lm = new CadLayoutManager(_currentScene);
-
-            var newSession = new CadViewerSession(_session.Metadata, _currentScene, lm, pw, ph);
-            newSession.Controller.SetCamera(oldCamera);
-            newSession.InteractionEngine.CameraChanged += _ => Dispatcher.Dispatch(UpdateHud);
-            newSession.InteractionEngine.SingleTapDetected += pt => Dispatcher.Dispatch(() => OnSingleTap(pt));
-
-            _session.Dispose();
-            _session = newSession;
-            _viewportView.BindSession(_session);
-            _viewportView.RequestFrame();
+            _session.SetColorContext(newColorContext);
+            _currentScene = _session.Scene;
+            UpdateHud();
         }
         await Task.CompletedTask;
-    }
-
-    private static (bool Snapped, WorldPoint2 WorldPoint, double Distance) SnapToNearestVertex(
-        RenderScene? scene,
-        Camera2D camera,
-        ScreenPoint2 touchScreenPoint,
-        double maxScreenDistance)
-    {
-        if (scene is null) return (false, default, double.MaxValue);
-
-        bool found = false;
-        WorldPoint2 bestWorldPoint = default;
-        double bestScreenDist = maxScreenDistance;
-
-        void CheckCandidate(WorldPoint2 wpt)
-        {
-            var sp = CameraTransform.WorldToScreen(wpt, camera);
-            double dx = sp.X - touchScreenPoint.X;
-            double dy = sp.Y - touchScreenPoint.Y;
-            double dist = Math.Sqrt(dx * dx + dy * dy);
-            if (dist < bestScreenDist)
-            {
-                bestScreenDist = dist;
-                bestWorldPoint = wpt;
-                found = true;
-            }
-        }
-
-        foreach (var entity in scene.Entities)
-        {
-            if (!scene.LayerTable.GetLayer(entity.Layer.Value).IsVisible) continue;
-
-            foreach (var geom in entity.Geometry)
-            {
-                switch (geom)
-                {
-                    case PointPrimitive pt:
-                        CheckCandidate(pt.Position);
-                        break;
-                    case LinePrimitive line:
-                        CheckCandidate(line.Start);
-                        CheckCandidate(line.End);
-                        break;
-                    case ArcPrimitive arc:
-                        CheckCandidate(arc.Center);
-                        CheckCandidate(new WorldPoint2(
-                            arc.Center.X + arc.Radius * Math.Cos(arc.StartRadians),
-                            arc.Center.Y + arc.Radius * Math.Sin(arc.StartRadians)));
-                        CheckCandidate(new WorldPoint2(
-                            arc.Center.X + arc.Radius * Math.Cos(arc.StartRadians + arc.SweepRadians),
-                            arc.Center.Y + arc.Radius * Math.Sin(arc.StartRadians + arc.SweepRadians)));
-                        break;
-                    case EllipsePrimitive ellipse:
-                        CheckCandidate(ellipse.Center);
-                        break;
-                    case PolylinePrimitive poly:
-                        foreach (var v in poly.Vertices)
-                        {
-                            CheckCandidate(v.Position);
-                        }
-                        break;
-                    case PolygonPrimitive polygon:
-                        foreach (var v in polygon.Vertices)
-                        {
-                            CheckCandidate(v);
-                        }
-                        break;
-                    case SplinePrimitive spline:
-                        foreach (var cp in spline.ControlPoints)
-                        {
-                            CheckCandidate(cp);
-                        }
-                        break;
-                }
-            }
-        }
-
-        return (found, bestWorldPoint, bestScreenDist);
     }
 
     private static double GetDensity()
@@ -1607,7 +1606,12 @@ public sealed class MainPage : ContentPage
         return (pw, ph);
     }
 
-    private async Task DisplayCadSceneAsync(RenderScene scene, string displayName, string version)
+    private async Task DisplayCadSceneAsync(
+        RenderScene scene,
+        string displayName,
+        string version,
+        CadDocumentMetadata? metadata = null,
+        CadExtractedDocument? extractedDocument = null)
     {
         _transitionOverlay.IsVisible = true;
         _currentScene = scene;
@@ -1615,7 +1619,6 @@ public sealed class MainPage : ContentPage
         _activeDocumentVersion = version;
 
         _isMeasureMode = false;
-        _measureStartPoint = null;
         if (_measureHud is not null) _measureHud.IsVisible = false;
         if (_islandMeasureButton is not null)
         {
@@ -1625,35 +1628,53 @@ public sealed class MainPage : ContentPage
 
         var (pw, ph) = GetViewportPixelDimensions();
 
-        var format = displayName.EndsWith(".dxf", StringComparison.OrdinalIgnoreCase)
-            ? CadFormat.Dxf
-            : CadFormat.Dwg;
-        var metadata = new CadDocumentMetadata(
-            format,
+        metadata ??= new CadDocumentMetadata(
+            displayName.EndsWith(".dxf", StringComparison.OrdinalIgnoreCase)
+                ? CadFormat.Dxf
+                : CadFormat.Dwg,
             version,
-            displayName);
+            displayName,
+            InsUnits: extractedDocument?.InsUnits ?? 0);
 
-        var layoutManager = new CadLayoutManager(scene);
+        CadLayoutManager layoutManager;
+        if (extractedDocument is not null)
+        {
+            var layoutDefs = CadExtractedSceneBuilder.BuildLayoutDefinitions(extractedDocument, scene.ColorContext);
+            layoutManager = new CadLayoutManager(scene, layoutDefs, "Model");
+        }
+        else
+        {
+            layoutManager = new CadLayoutManager(scene);
+        }
 
         _session?.Dispose();
         _session = new CadViewerSession(metadata, scene, layoutManager, pw, ph);
+        if (extractedDocument is not null)
+        {
+            _session.Measurement.SetMetadataUnitFromInsUnits(extractedDocument.InsUnits);
+        }
+        else
+        {
+            _session.Measurement.SetMetadataUnitFromInsUnits(metadata.InsUnits);
+        }
         _session.InteractionEngine.CameraChanged += _ => Dispatcher.Dispatch(UpdateHud);
         _session.InteractionEngine.SingleTapDetected += pt => Dispatcher.Dispatch(() => OnSingleTap(pt));
 
         _viewportView.BindSession(_session);
 
         _viewerTitleLabel.Text = displayName;
-        _viewerVersionBadge.Text = version.Contains("AC", StringComparison.OrdinalIgnoreCase) ? $"DWG {version}" : version;
+        bool isDxf = (metadata?.Format == CadFormat.Dxf) || displayName.EndsWith(".dxf", StringComparison.OrdinalIgnoreCase);
+        string formatPrefix = isDxf ? "DXF" : "DWG";
+        _viewerVersionBadge.Text = $"{formatPrefix} {version}";
 
         UpdateHud();
 
         _dashboardView.IsVisible = false;
         _viewerView.IsVisible = true;
         _navLayerButton.IsVisible = true;
+        _navLayoutButton.IsVisible = true;
         _navInfoButton.IsVisible = true;
         _navCloseButton.IsVisible = true;
-
-        _viewportView.RequestFrame();
         await Task.CompletedTask;
     }
 
@@ -1661,7 +1682,7 @@ public sealed class MainPage : ContentPage
     {
         if (_session is null) return;
         var camera = _session.Camera;
-        var bounds = _session.Controller.SceneBounds ?? new WorldBounds2(0, 0, 100, 100);
+        var bounds = _session.SceneBounds ?? new WorldBounds2(0, 0, 100, 100);
         var fitCamera = Camera2D.Fit(bounds, camera.PixelWidth, camera.PixelHeight);
         double zoomPercent = Math.Round((fitCamera.WorldUnitsPerPixel / Math.Max(1e-9, camera.WorldUnitsPerPixel)) * 100.0);
         _zoomLabel.Text = $"🔎 %{zoomPercent:N0}";
@@ -1687,7 +1708,6 @@ public sealed class MainPage : ContentPage
         _activeDocumentName = null;
         _activeDocumentVersion = null;
         _isMeasureMode = false;
-        _measureStartPoint = null;
         if (_measureHud is not null) _measureHud.IsVisible = false;
         if (_islandMeasureButton is not null)
         {
@@ -1698,9 +1718,16 @@ public sealed class MainPage : ContentPage
         _viewerView.IsVisible = false;
         _dashboardView.IsVisible = true;
         _navLayerButton.IsVisible = false;
+        _navLayoutButton.IsVisible = false;
         _navInfoButton.IsVisible = false;
         _navCloseButton.IsVisible = false;
+        if (_layoutModalView is not null) _layoutModalView.IsVisible = false;
+        if (_layerModalView is not null) _layerModalView.IsVisible = false;
+        if (_infoModalView is not null) _infoModalView.IsVisible = false;
         _status.Text = "Çizim kapatıldı.";
+
+        _coordinator?.CancelCurrentRequest();
+        _ = _coordinator?.ResetCurrentSessionAsync();
     }
 
     private void OpenLayerModal()
@@ -1766,7 +1793,6 @@ public sealed class MainPage : ContentPage
             {
                 _currentScene.LayerTable.SetLayerVisibility(capturedLayerName, te.Value);
                 _session?.SetLayerVisibility(capturedLayerName, te.Value);
-                _viewportView.RequestFrame();
             };
             row.Add(toggle, 2, 0);
 
@@ -1777,6 +1803,110 @@ public sealed class MainPage : ContentPage
         _layerModalView.IsVisible = true;
     }
 
+    private void OpenLayoutModal()
+    {
+        if (_session is null) return;
+
+        _layoutStackLayout.Children.Clear();
+        var activeName = _session.ActiveLayoutName;
+
+        foreach (var layout in _session.LayoutManager.Layouts)
+        {
+            bool isActive = string.Equals(layout.Name, activeName, StringComparison.OrdinalIgnoreCase);
+
+            var rowCard = new Border
+            {
+                Stroke = isActive ? ColorAccentCyan : Color.FromArgb("#1E293B"),
+                StrokeThickness = isActive ? 2 : 1,
+                StrokeShape = new RoundRectangle { CornerRadius = 12 },
+                BackgroundColor = isActive ? Color.FromArgb("#1A2B42") : Color.FromArgb("#162032"),
+                Padding = new Thickness(14, 10),
+                Margin = new Thickness(0, 3)
+            };
+
+            var row = new Grid
+            {
+                ColumnDefinitions =
+                {
+                    new ColumnDefinition(GridLength.Auto),
+                    new ColumnDefinition(GridLength.Star),
+                    new ColumnDefinition(GridLength.Auto)
+                },
+                ColumnSpacing = 12
+            };
+
+            var iconLabel = new Label
+            {
+                Text = layout.IsModelSpace ? "🌐" : "📄",
+                FontSize = 18,
+                VerticalOptions = LayoutOptions.Center
+            };
+            row.Add(iconLabel, 0, 0);
+
+            var textStack = new VerticalStackLayout { Spacing = 2, VerticalOptions = LayoutOptions.Center };
+            var nameLabel = new Label
+            {
+                Text = layout.Name,
+                TextColor = isActive ? ColorAccentCyan : ColorTextPrimary,
+                FontSize = 14,
+                FontAttributes = FontAttributes.Bold,
+                LineBreakMode = LineBreakMode.TailTruncation
+            };
+            textStack.Children.Add(nameLabel);
+
+            string subtitle = layout.IsModelSpace
+                ? "Model Uzayı • Sonsuz 2D Düzlem"
+                : $"Kağıt Alanı • {layout.Viewports.Count} Viewport • {layout.PaperEntities.Count} Varlık";
+            var subLabel = new Label
+            {
+                Text = subtitle,
+                TextColor = ColorTextSecondary,
+                FontSize = 11
+            };
+            textStack.Children.Add(subLabel);
+            row.Add(textStack, 1, 0);
+
+            if (isActive)
+            {
+                var activeBadge = new Border
+                {
+                    BackgroundColor = ColorAccentCyan,
+                    StrokeShape = new RoundRectangle { CornerRadius = 8 },
+                    Padding = new Thickness(8, 4),
+                    VerticalOptions = LayoutOptions.Center,
+                    Content = new Label
+                    {
+                        Text = "Aktif",
+                        TextColor = Colors.Black,
+                        FontSize = 10,
+                        FontAttributes = FontAttributes.Bold
+                    }
+                };
+                row.Add(activeBadge, 2, 0);
+            }
+
+            rowCard.Content = row;
+
+            var capturedLayoutName = layout.Name;
+            var tap = new TapGestureRecognizer();
+            tap.Tapped += (_, _) =>
+            {
+                _layoutModalView.IsVisible = false;
+                if (!string.Equals(capturedLayoutName, _session.ActiveLayoutName, StringComparison.OrdinalIgnoreCase))
+                {
+                    _session.SwitchLayout(capturedLayoutName);
+                    _currentScene = _session.Scene;
+                    UpdateHud();
+                }
+            };
+            rowCard.GestureRecognizers.Add(tap);
+
+            _layoutStackLayout.Children.Add(rowCard);
+        }
+
+        _layoutModalView.IsVisible = true;
+    }
+
     private void OpenInfoModal()
     {
         if (_currentScene is null) return;
@@ -1785,6 +1915,11 @@ public sealed class MainPage : ContentPage
         var info = new System.Text.StringBuilder();
         info.AppendLine($"📄 Dosya Adı: {_activeDocumentName ?? "Bilinmiyor"}");
         info.AppendLine($"🔖 CAD Sürümü: {_activeDocumentVersion ?? "CAD Standart"}");
+        if (_session != null)
+        {
+            info.AppendLine($"📐 Aktif Layout: {_session.ActiveLayoutName}");
+            info.AppendLine($"📑 Toplam Layout: {_session.LayoutManager.Layouts.Count}");
+        }
         info.AppendLine($"📦 Toplam Varlık Sayısı: {_currentScene.Entities.Count:N0}");
         info.AppendLine($"📑 Katman (Layer) Sayısı: {_currentScene.LayerTable.Layers.Count}");
         if (bounds.HasValue)
@@ -1803,6 +1938,7 @@ public sealed class MainPage : ContentPage
     protected override void OnAppearing()
     {
         base.OnAppearing();
+        _viewportView?.OnHostResume();
 #if V06_VALIDATION
         LogV06("V06_LIFECYCLE_APPEARING");
 #endif
@@ -1831,6 +1967,7 @@ public sealed class MainPage : ContentPage
 
     protected override void OnDisappearing()
     {
+        _viewportView?.OnHostPause();
         _coordinator.CancelCurrentRequest();
 #if V06_VALIDATION
         LogV06("V06_LIFECYCLE_DISAPPEARING");
@@ -1880,19 +2017,38 @@ public sealed class MainPage : ContentPage
             searchDirs.Add("/storage/emulated/0/Download");
 
             string? foundPath = null;
-            foreach (var dir in searchDirs)
+            if (File.Exists(displayName))
             {
-                if (string.IsNullOrEmpty(dir) || !Directory.Exists(dir)) continue;
+                foundPath = displayName;
+            }
+            else
+            {
                 foreach (var name in candidateNames)
                 {
-                    var full = System.IO.Path.Combine(dir, name);
-                    if (File.Exists(full))
+                    if (File.Exists(name))
                     {
-                        foundPath = full;
+                        foundPath = name;
                         break;
                     }
                 }
-                if (foundPath != null) break;
+            }
+
+            if (foundPath is null)
+            {
+                foreach (var dir in searchDirs)
+                {
+                    if (string.IsNullOrEmpty(dir) || !Directory.Exists(dir)) continue;
+                    foreach (var name in candidateNames)
+                    {
+                        var full = System.IO.Path.Combine(dir, name);
+                        if (File.Exists(full))
+                        {
+                            foundPath = full;
+                            break;
+                        }
+                    }
+                    if (foundPath != null) break;
+                }
             }
 
             if (foundPath is null)
@@ -2035,20 +2191,9 @@ public sealed class MainPage : ContentPage
                     await DisplayCadSceneAsync(
                         result.PreparedScene,
                         selection.DisplayName ?? "cizim.dwg",
-                        result.ExtractedDocument?.Version ?? result.Metadata?.AcadVersion ?? "Unknown");
-                }
-                catch (Exception renderEx)
-                {
-                    _status.Text = $"Çizim yüklendi ({result.Metadata?.Format}), render hazırlığı: {renderEx.Message}";
-                }
-            }
-            else if (coordinator.CurrentSession is not null)
-            {
-                try
-                {
-                    var extracted = AcadSharpEntityExtractor.Extract(coordinator.CurrentSession.Handle);
-                    var scene = CadExtractedSceneBuilder.Build(extracted);
-                    await DisplayCadSceneAsync(scene, selection.DisplayName ?? "cizim.dwg", extracted.Version);
+                        result.ExtractedDocument?.Version ?? result.Metadata?.AcadVersion ?? "Unknown",
+                        result.Metadata,
+                        result.ExtractedDocument);
                 }
                 catch (Exception renderEx)
                 {
@@ -2065,7 +2210,6 @@ public sealed class MainPage : ContentPage
 #if A25_VALIDATION
             Log.Warn("MobilDwgA25", "A25_RENDER_ERROR_SURFACE_PASS type=CadFileQuotaExceededException");
 #endif
-            await coordinator.ResetCurrentSessionAsync().ConfigureAwait(false);
         }
         catch (CadFileInsufficientSpaceException)
         {
@@ -2076,7 +2220,6 @@ public sealed class MainPage : ContentPage
 #if A25_VALIDATION
             Log.Warn("MobilDwgA25", "A25_RENDER_ERROR_SURFACE_PASS type=CadFileInsufficientSpaceException");
 #endif
-            await coordinator.ResetCurrentSessionAsync().ConfigureAwait(false);
         }
         catch (Exception exception)
         {
@@ -2088,7 +2231,6 @@ public sealed class MainPage : ContentPage
 #if A25_VALIDATION
             Log.Warn("MobilDwgA25", $"A25_RENDER_ERROR_SURFACE_PASS type={errorKind}");
 #endif
-            await coordinator.ResetCurrentSessionAsync().ConfigureAwait(false);
         }
     }
 
@@ -2576,6 +2718,45 @@ public sealed class MainPage : ContentPage
             });
             Log.Error(A26AndroidValidationRunner.Tag, $"ANDROID_STAGE26_RC_APPROVAL_FAIL: {exception}");
         }
+    }
+#endif
+
+    protected override void OnHandlerChanging(HandlerChangingEventArgs args)
+    {
+        base.OnHandlerChanging(args);
+        if (args.NewHandler == null)
+        {
+#if ANDROID
+            MainActivity.CadFileRequested -= _onCadFileRequested;
+            MainActivity.LowMemoryTrimmed -= _onLowMemoryTrimmed;
+#endif
+        }
+    }
+
+#if ANDROID
+    private void OnCadFileRequested(string fileName)
+    {
+        Dispatcher.Dispatch(async () =>
+        {
+            if (fileName.Equals("sample:apartman", StringComparison.OrdinalIgnoreCase) ||
+                fileName.Equals("sample_apartman", StringComparison.OrdinalIgnoreCase))
+            {
+                var scene = SampleCadDrawings.CreateArchitecturalPlan();
+                await DisplayCadSceneAsync(scene, "apartman_kat_plani.dwg", "AutoCAD 2018");
+            }
+            else
+            {
+                await OpenDesktopCadFileAsync(fileName, fileName);
+            }
+        });
+    }
+
+    private void OnLowMemoryTrimmed(Android.Content.TrimMemory level)
+    {
+        Dispatcher.Dispatch(() =>
+        {
+            _session?.OnTrimMemory();
+        });
     }
 #endif
 }

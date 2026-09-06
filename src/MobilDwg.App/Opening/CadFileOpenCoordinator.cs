@@ -15,6 +15,7 @@ public sealed class CadFileOpenCoordinator : IAsyncDisposable
     private CadOpenLease? _current;
     private long _generation;
     private bool _disposed;
+    private int _activeWorkerCount;
 
     public CadFileOpenCoordinator(ICadDocumentReader reader, SafeCadFileCache cache)
     {
@@ -85,6 +86,7 @@ public sealed class CadFileOpenCoordinator : IAsyncDisposable
         RenderScene? preparedScene = null;
         bool gateAcquired = false;
 
+        Interlocked.Increment(ref _activeWorkerCount);
         try
         {
             // At most one active parse worker at a time; wait for gate
@@ -151,32 +153,46 @@ public sealed class CadFileOpenCoordinator : IAsyncDisposable
             var (sessionResult, extractedResult, sceneResult) = await Task.Run<(CadDocumentSession? session, CadExtractedDocument? extracted, RenderScene? scene)>(
                     async () =>
                     {
-                        using var stream = parseSource.OpenRead();
-                        var request = new CadOpenRequest(
-                            stream,
-                            parseSource.DisplayName,
-                            parseSource.Length,
-                            LeaveOpen: false);
-
-                        var session = await _reader.OpenAsync(request, readerProgress, requestCancellation.Token)
-                            .ConfigureAwait(false);
-
-                        if (requestCancellation.IsCancellationRequested)
+                        CadDocumentSession? session = null;
+                        try
                         {
-                            await session.DisposeAsync().ConfigureAwait(false);
-                            return (null, null, null);
-                        }
+                            using var stream = parseSource.OpenRead();
+                            var request = new CadOpenRequest(
+                                stream,
+                                parseSource.DisplayName,
+                                parseSource.Length,
+                                LeaveOpen: false);
 
-                        // Extract entity model off UI thread
-                        CadExtractedDocument? extracted = null;
-                        RenderScene? scene = null;
-                        if (session.Handle is MobilDwg.Cad.AcadSharp.AcadSharpDocumentHandle)
+                            session = await _reader.OpenAsync(request, readerProgress, requestCancellation.Token)
+                                .ConfigureAwait(false);
+
+                            if (requestCancellation.IsCancellationRequested)
+                            {
+                                await session.DisposeAsync().ConfigureAwait(false);
+                                session = null;
+                                return (null, null, null);
+                            }
+
+                            // Extract entity model off UI thread
+                            CadExtractedDocument? extracted = null;
+                            RenderScene? scene = null;
+                            if (session.Handle is MobilDwg.Cad.AcadSharp.AcadSharpDocumentHandle)
+                            {
+                                extracted = MobilDwg.Cad.AcadSharp.AcadSharpEntityExtractor.Extract(session.Handle);
+                                scene = MobilDwg.Rendering.Scene.CadExtractedSceneBuilder.Build(extracted);
+                            }
+
+                            var result = (session, extracted, scene);
+                            session = null; // Ownership successfully transferred
+                            return result;
+                        }
+                        finally
                         {
-                            extracted = MobilDwg.Cad.AcadSharp.AcadSharpEntityExtractor.Extract(session.Handle);
-                            scene = MobilDwg.Rendering.Scene.CadExtractedSceneBuilder.Build(extracted);
+                            if (session is not null)
+                            {
+                                await session.DisposeAsync().ConfigureAwait(false);
+                            }
                         }
-
-                        return (session, extracted, scene);
                     },
                     CancellationToken.None)
                 .ConfigureAwait(false);
@@ -281,7 +297,13 @@ public sealed class CadFileOpenCoordinator : IAsyncDisposable
         {
             if (gateAcquired)
             {
-                _parseGate.Release();
+                try
+                {
+                    _parseGate.Release();
+                }
+                catch (ObjectDisposedException)
+                {
+                }
             }
 
             lock (_sync)
@@ -293,6 +315,17 @@ public sealed class CadFileOpenCoordinator : IAsyncDisposable
             }
 
             requestCancellation.Dispose();
+
+            if (Interlocked.Decrement(ref _activeWorkerCount) == 0 && Volatile.Read(ref _disposed))
+            {
+                try
+                {
+                    _parseGate.Dispose();
+                }
+                catch (ObjectDisposedException)
+                {
+                }
+            }
         }
     }
 
@@ -321,12 +354,22 @@ public sealed class CadFileOpenCoordinator : IAsyncDisposable
     public async ValueTask ResetCurrentSessionAsync()
     {
         CadOpenLease? current;
+        CancellationTokenSource? cancellation;
         lock (_sync)
         {
             if (_disposed) return;
+            checked
+            {
+                _generation++;
+            }
+
+            cancellation = _activeRequestCancellation;
+            _activeRequestCancellation = null;
             current = _current;
             _current = null;
         }
+
+        cancellation?.Cancel();
 
         if (current is not null)
         {
@@ -338,6 +381,7 @@ public sealed class CadFileOpenCoordinator : IAsyncDisposable
     {
         CancellationTokenSource? cancellation;
         CadOpenLease? current;
+        bool canDisposeGate;
 
         lock (_sync)
         {
@@ -356,10 +400,21 @@ public sealed class CadFileOpenCoordinator : IAsyncDisposable
             _activeRequestCancellation = null;
             current = _current;
             _current = null;
+            canDisposeGate = _activeWorkerCount == 0;
         }
 
         cancellation?.Cancel();
-        _parseGate.Dispose();
+
+        if (canDisposeGate)
+        {
+            try
+            {
+                _parseGate.Dispose();
+            }
+            catch (ObjectDisposedException)
+            {
+            }
+        }
 
         if (current is not null)
         {

@@ -316,7 +316,7 @@ public sealed class AcadSharpDocumentHandle : ICadDocumentHandle
 {
     private CadDocument? _document;
 
-    internal AcadSharpDocumentHandle(
+    public AcadSharpDocumentHandle(
         CadDocument document,
         TimeSpan parseDuration,
         CadFormat format = CadFormat.Unknown,

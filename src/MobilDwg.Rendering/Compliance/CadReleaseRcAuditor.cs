@@ -27,56 +27,56 @@ public static class CadReleaseRcAuditor
             License: "MIT",
             IsRoyaltyFree: true,
             IsAudited: true,
-            ProvenanceSha256: "40d9b4bfa1e6f6631ad4c6cb7dc08e8b09f19ca5e839e944bfaeece1da461461"),
+            ProvenanceSha256: "4f9ca3a5dafd1a18af651312522147a3163999818763d168b4d5f59d6ffc1701"),
         new(
             PackageName: "SkiaSharp",
             Version: "4.151.1",
             License: "MIT",
             IsRoyaltyFree: true,
             IsAudited: true,
-            ProvenanceSha256: "skia-4.151.1-mit-verified"),
+            ProvenanceSha256: "2d1feef23f28e55864cad8449f7b60abf5d6db1aa61ec07aef837e9e0eaee73e"),
         new(
             PackageName: "SkiaSharp.NativeAssets.Android",
             Version: "4.151.1",
             License: "MIT",
             IsRoyaltyFree: true,
             IsAudited: true,
-            ProvenanceSha256: "skia-android-native-4.151.1-verified"),
+            ProvenanceSha256: "0857f22d4de9f87899675a30312c52801c6ff85e7ca25dc9483a969c43612803"),
         new(
             PackageName: "Microsoft.Maui.Controls",
             Version: "10.0.100",
             License: "MIT",
             IsRoyaltyFree: true,
             IsAudited: true,
-            ProvenanceSha256: "maui-controls-10.0.100-mit-verified"),
+            ProvenanceSha256: "1cc7876e45fa5614fb84c80f53b1b07eb7f4f4b5fba0dba3b27aca6469f0757b"),
         new(
             PackageName: "Microsoft.Maui.Core",
             Version: "10.0.100",
             License: "MIT",
             IsRoyaltyFree: true,
             IsAudited: true,
-            ProvenanceSha256: "maui-core-10.0.100-mit-verified"),
+            ProvenanceSha256: "e8ced753128b23d8aa3917f5565a033ecec1546745d7f84bc3a17dddfaa1ccd9"),
         new(
             PackageName: "System.Text.Encoding.CodePages",
             Version: "10.0.1",
             License: "MIT",
             IsRoyaltyFree: true,
             IsAudited: true,
-            ProvenanceSha256: "dotnet-codepages-10.0.1-mit-verified"),
+            ProvenanceSha256: "2d547ba964c23f7734138e4a9cfdb842b100989f6d76711d51c720d2c0b05b63"),
         new(
             PackageName: "SkiaSharp.Views.Maui.Controls",
             Version: "4.151.1",
             License: "MIT",
             IsRoyaltyFree: true,
             IsAudited: true,
-            ProvenanceSha256: "skia-views-maui-controls-4.151.1-verified"),
+            ProvenanceSha256: "0a5e094ac41d639649cae1a2c681809b4a5126306ec0dca57561c3d4ebeebb3d"),
         new(
             PackageName: "SkiaSharp.Views.Maui.Core",
             Version: "4.151.1",
             License: "MIT",
             IsRoyaltyFree: true,
             IsAudited: true,
-            ProvenanceSha256: "skia-views-maui-core-4.151.1-verified")
+            ProvenanceSha256: "b126f14975d37c4f4c691542ff0d1514b9c756c41a8a6e3d50a9c52909a9b226")
     ];
 
     public static CadDataSafetyDeclaration GetAuthoritativeDataSafety() =>

@@ -35,6 +35,7 @@ public sealed class RenderResourceCache : IDisposable
 
     public long MaxRasterBytes { get; }
     public long CurrentRasterBytes { get { lock (_syncLock) return _currentRasterBytes; } }
+    public long CurrentSizeBytes => CurrentRasterBytes;
 
     public long RasterDecodeHits;
     public long RasterDecodeMisses;
@@ -67,32 +68,49 @@ public sealed class RenderResourceCache : IDisposable
         }
     }
 
-    public void PutRaster(string resourceKey, SKBitmap bitmap)
+    public bool PutRaster(string resourceKey, SKBitmap bitmap)
     {
         ArgumentNullException.ThrowIfNull(resourceKey);
         ArgumentNullException.ThrowIfNull(bitmap);
 
+        long byteSize = (long)bitmap.Width * bitmap.Height * bitmap.BytesPerPixel;
+        if (byteSize <= 0 || byteSize > MaxRasterBytes)
+        {
+            return false;
+        }
+
         lock (_syncLock)
         {
-            if (_disposed) return;
+            if (_disposed) return false;
 
             if (_rasterCache.TryGetValue(resourceKey, out var existing))
             {
                 _currentRasterBytes -= existing.ByteSize;
                 existing.Dispose();
+                _rasterCache.Remove(resourceKey);
+            }
+
+            if (_currentRasterBytes + byteSize > MaxRasterBytes)
+            {
+                EvictRasterToBudgetUnderLock(byteSize);
+            }
+
+            if (_currentRasterBytes + byteSize > MaxRasterBytes)
+            {
+                return false;
             }
 
             var entry = new RasterDecodeEntry(bitmap, ++_accessCounter);
             _rasterCache[resourceKey] = entry;
             _currentRasterBytes += entry.ByteSize;
-
-            EvictRasterToBudgetUnderLock();
+            return true;
         }
     }
 
-    private void EvictRasterToBudgetUnderLock()
+    private void EvictRasterToBudgetUnderLock(long neededBytes = 0)
     {
-        if (_currentRasterBytes <= MaxRasterBytes) return;
+        long targetLimit = Math.Max(0, MaxRasterBytes - neededBytes);
+        if (_currentRasterBytes <= targetLimit) return;
 
         var entries = new List<(string Key, long LastAccess)>();
         foreach (var (k, v) in _rasterCache)
@@ -102,7 +120,7 @@ public sealed class RenderResourceCache : IDisposable
 
         entries.Sort((a, b) => a.LastAccess.CompareTo(b.LastAccess));
 
-        for (var i = 0; i < entries.Count && _currentRasterBytes > MaxRasterBytes; i++)
+        for (var i = 0; i < entries.Count && _currentRasterBytes > targetLimit; i++)
         {
             var key = entries[i].Key;
             if (_rasterCache.Remove(key, out var entry))

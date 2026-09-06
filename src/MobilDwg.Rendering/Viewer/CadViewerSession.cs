@@ -30,6 +30,7 @@ public sealed class CadViewerSession : IDisposable
     private RenderScene _activeScene;
     private LayerTable _layerTable;
     private string _currentLayoutName;
+    private Camera2D _lastNotifiedCamera;
     private long _documentGeneration = 1;
     private long _sceneRevision = 1;
     private long _layoutRevision = 1;
@@ -53,8 +54,10 @@ public sealed class CadViewerSession : IDisposable
     public SkiaCadRenderer Renderer => _renderer;
     public PreparedGeometryCache GeometryCache => _geometryCache;
     public RenderResourceCache ResourceCache => _resourceCache;
+    public RenderScene Scene => _activeScene;
 
     public Camera2D Camera => _controller.CurrentCamera;
+    public WorldBounds2? SceneBounds => _controller.SceneBounds;
     public int ViewportPixelWidth => _controller.CurrentCamera.PixelWidth;
     public int ViewportPixelHeight => _controller.CurrentCamera.PixelHeight;
 
@@ -97,14 +100,29 @@ public sealed class CadViewerSession : IDisposable
         var initialCamera = ViewerZoomPolicy.CreateFitCamera(bounds, pixelW, pixelH, ViewerZoomPolicy.DefaultPaddingFraction);
 
         _controller = new ViewportController(initialCamera, bounds);
-        _interactionEngine = new ViewportInteractionEngine(_controller);
-        _interactionEngine.CameraChanged += _ =>
+        _interactionEngine = new ViewportInteractionEngine(_controller, null, _stateLock);
+        _lastNotifiedCamera = initialCamera;
+
+        _interactionEngine.CameraChanged += cam =>
         {
+            bool changed = false;
             lock (_stateLock)
             {
-                _cameraRevision++;
+                if (cam != _lastNotifiedCamera)
+                {
+                    _lastNotifiedCamera = cam;
+                    _cameraRevision++;
+                    changed = true;
+                }
             }
-            NotifyFrameInvalidated("Interaction");
+            if (changed)
+            {
+                NotifyFrameInvalidated("Interaction");
+            }
+        };
+        _interactionEngine.InteractionEnded += () =>
+        {
+            NotifyFrameInvalidated("FinalQuality");
         };
 
         _currentLayoutName = LayoutManager.ActiveLayout.Name;
@@ -162,15 +180,42 @@ public sealed class CadViewerSession : IDisposable
 
     public void ResizeViewport(int width, int height)
     {
+        bool changed = false;
         lock (_stateLock)
         {
             ObjectDisposedException.ThrowIf(_disposed, this);
             if (width <= 0 || height <= 0) return;
 
+            var old = _controller.CurrentCamera;
             _controller.Resize(width, height);
-            _cameraRevision++;
+            if (_controller.CurrentCamera != old)
+            {
+                _layoutCameras[_currentLayoutName] = _controller.CurrentCamera;
+                _lastNotifiedCamera = _controller.CurrentCamera;
+                _cameraRevision++;
+                changed = true;
+            }
         }
-        NotifyFrameInvalidated("ResizeViewport");
+        if (changed) NotifyFrameInvalidated("ResizeViewport");
+    }
+
+    public void SetCamera(Camera2D camera)
+    {
+        bool changed = false;
+        lock (_stateLock)
+        {
+            ObjectDisposedException.ThrowIf(_disposed, this);
+            var old = _controller.CurrentCamera;
+            _controller.SetCamera(camera);
+            if (_controller.CurrentCamera != old)
+            {
+                _layoutCameras[_currentLayoutName] = _controller.CurrentCamera;
+                _lastNotifiedCamera = _controller.CurrentCamera;
+                _cameraRevision++;
+                changed = true;
+            }
+        }
+        if (changed) NotifyFrameInvalidated("SetCamera");
     }
 
     public void ZoomToFit(double paddingFraction = ViewerZoomPolicy.DefaultPaddingFraction)
@@ -193,11 +238,16 @@ public sealed class CadViewerSession : IDisposable
 
             if (visibleBounds.HasValue)
             {
+                var old = _controller.CurrentCamera;
                 _controller.SetSceneBounds(visibleBounds.Value);
                 _controller.FitExtents(paddingFraction);
-                _layoutCameras[_currentLayoutName] = _controller.CurrentCamera;
-                _cameraRevision++;
-                changed = true;
+                if (_controller.CurrentCamera != old)
+                {
+                    _layoutCameras[_currentLayoutName] = _controller.CurrentCamera;
+                    _lastNotifiedCamera = _controller.CurrentCamera;
+                    _cameraRevision++;
+                    changed = true;
+                }
             }
         }
         if (changed) NotifyFrameInvalidated("ZoomToFit");
@@ -205,26 +255,91 @@ public sealed class CadViewerSession : IDisposable
 
     public void Pan(double deltaScreenX, double deltaScreenY)
     {
+        if (deltaScreenX == 0 && deltaScreenY == 0) return;
+
+        bool changed = false;
         lock (_stateLock)
         {
             ObjectDisposedException.ThrowIf(_disposed, this);
+            var old = _controller.CurrentCamera;
             _controller.Pan(deltaScreenX, deltaScreenY);
-            _layoutCameras[_currentLayoutName] = _controller.CurrentCamera;
-            _cameraRevision++;
+            if (_controller.CurrentCamera != old)
+            {
+                _layoutCameras[_currentLayoutName] = _controller.CurrentCamera;
+                _lastNotifiedCamera = _controller.CurrentCamera;
+                _cameraRevision++;
+                changed = true;
+            }
         }
-        NotifyFrameInvalidated("Pan");
+        if (changed) NotifyFrameInvalidated("Pan");
     }
 
     public void Zoom(double factor, double focalScreenX, double focalScreenY)
     {
+        if (factor == 1.0) return;
+
+        bool changed = false;
         lock (_stateLock)
         {
             ObjectDisposedException.ThrowIf(_disposed, this);
+            var old = _controller.CurrentCamera;
             _controller.PinchZoom(new ScreenPoint2(focalScreenX, focalScreenY), factor);
-            _layoutCameras[_currentLayoutName] = _controller.CurrentCamera;
-            _cameraRevision++;
+            if (_controller.CurrentCamera != old)
+            {
+                _layoutCameras[_currentLayoutName] = _controller.CurrentCamera;
+                _lastNotifiedCamera = _controller.CurrentCamera;
+                _cameraRevision++;
+                changed = true;
+            }
         }
-        NotifyFrameInvalidated("Zoom");
+        if (changed) NotifyFrameInvalidated("Zoom");
+    }
+
+    public void ZoomIn(double factor = 1.35)
+    {
+        bool changed = false;
+        lock (_stateLock)
+        {
+            ObjectDisposedException.ThrowIf(_disposed, this);
+            var old = _controller.CurrentCamera;
+            _controller.ZoomIn(factor);
+            if (_controller.CurrentCamera != old)
+            {
+                _layoutCameras[_currentLayoutName] = _controller.CurrentCamera;
+                _lastNotifiedCamera = _controller.CurrentCamera;
+                _cameraRevision++;
+                changed = true;
+            }
+        }
+        if (changed) NotifyFrameInvalidated("ZoomIn");
+    }
+
+    public void ZoomOut(double factor = 1.35)
+    {
+        bool changed = false;
+        lock (_stateLock)
+        {
+            ObjectDisposedException.ThrowIf(_disposed, this);
+            var old = _controller.CurrentCamera;
+            _controller.ZoomOut(factor);
+            if (_controller.CurrentCamera != old)
+            {
+                _layoutCameras[_currentLayoutName] = _controller.CurrentCamera;
+                _lastNotifiedCamera = _controller.CurrentCamera;
+                _cameraRevision++;
+                changed = true;
+            }
+        }
+        if (changed) NotifyFrameInvalidated("ZoomOut");
+    }
+
+    public InteractionResult ProcessPointerPacket(PointerPacket packet)
+    {
+        lock (_stateLock)
+        {
+            ObjectDisposedException.ThrowIf(_disposed, this);
+            return _interactionEngine.ProcessPacket(packet);
+        }
     }
 
     public void ToggleLayerVisibility(string layerName)
@@ -250,6 +365,22 @@ public sealed class CadViewerSession : IDisposable
 
             var newTable = new LayerTable(_layerTable.Layers);
             newTable.SetLayerVisibility(layerName, isVisible);
+            _layerTable = newTable;
+            _styleRevision++;
+        }
+        NotifyFrameInvalidated("LayerVisibility");
+    }
+
+    public void SetAllLayersVisibility(bool isVisible)
+    {
+        lock (_stateLock)
+        {
+            ObjectDisposedException.ThrowIf(_disposed, this);
+            var newTable = new LayerTable(_layerTable.Layers);
+            foreach (var l in newTable.Layers)
+            {
+                newTable.SetLayerVisibility(l.Name, isVisible);
+            }
             _layerTable = newTable;
             _styleRevision++;
         }
@@ -289,6 +420,22 @@ public sealed class CadViewerSession : IDisposable
             _cameraRevision++;
         }
         NotifyFrameInvalidated("SwitchLayout");
+    }
+
+    public void SetColorContext(RenderColorContext colorContext)
+    {
+        lock (_stateLock)
+        {
+            ObjectDisposedException.ThrowIf(_disposed, this);
+            _activeScene = new RenderScene(
+                _activeScene.Entities,
+                _activeScene.Diagnostics,
+                colorContext,
+                _layerTable,
+                _activeScene.SpatialIndex);
+            _styleRevision++;
+        }
+        NotifyFrameInvalidated("ThemeColorContext");
     }
 
     private void NotifyFrameInvalidated(string reason)

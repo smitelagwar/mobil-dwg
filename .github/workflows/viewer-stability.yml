@@ -13,35 +13,112 @@ permissions:
   contents: read
 
 jobs:
-  verify-viewer-stability:
-    name: Verify Viewer Stability Harnesses
+  desktop-verification:
+    name: Desktop Suites & Locked Restore Gate
     runs-on: windows-latest
     timeout-minutes: 25
     steps:
       - name: Checkout
-        uses: actions/checkout@v5
+        uses: actions/checkout@v4
 
-      - name: Setup .NET SDK
-        uses: actions/setup-dotnet@v5
+      - name: Setup Java JDK
+        uses: actions/setup-java@v4
         with:
-          dotnet-version: '10.0.x'
+          distribution: 'temurin'
+          java-version: '17'
 
-      - name: Run Core Tests
-        shell: pwsh
-        run: dotnet run --project tests/MobilDwg.Core.Tests/MobilDwg.Core.Tests.csproj -c Release
+      - name: Setup .NET SDK from global.json
+        uses: actions/setup-dotnet@v4
+        with:
+          global-json-file: global.json
 
-      - name: Run Rendering Tests
+      - name: Install Android MAUI Workload
         shell: pwsh
-        run: dotnet run --project tests/MobilDwg.Rendering.Tests/MobilDwg.Rendering.Tests.csproj -c Release
+        run: dotnet workload install maui-android
+
+      - name: Locked Package Restore
+        shell: pwsh
+        run: dotnet restore --locked-mode
 
       - name: Run Architecture Tests
         shell: pwsh
         run: dotnet run --project tests/MobilDwg.Architecture.Tests/MobilDwg.Architecture.Tests.csproj -c Release
 
-      - name: Run Integration Tests
+      - name: Run Core Tests
         shell: pwsh
-        run: dotnet run --project tests/MobilDwg.Integration.Tests/MobilDwg.Integration.Tests.csproj -c Release
+        run: dotnet run --project tests/MobilDwg.Core.Tests/MobilDwg.Core.Tests.csproj -c Release
 
-      - name: Run Stability Gate
+      - name: Run Rendering Tests (with Regressions)
         shell: pwsh
-        run: powershell -ExecutionPolicy Bypass -File scripts/viewer-stability-gate.ps1 -Stage 14
+        run: dotnet run --project tests/MobilDwg.Rendering.Tests/MobilDwg.Rendering.Tests.csproj -c Release -- --regressions
+
+      - name: Run Integration Tests (with D11 & Regressions)
+        shell: pwsh
+        run: dotnet run --project tests/MobilDwg.Integration.Tests/MobilDwg.Integration.Tests.csproj -c Release -- --regressions
+
+      - name: Run Correction Gate (Desktop Mode)
+        shell: pwsh
+        run: powershell -ExecutionPolicy Bypass -File scripts/viewer-correction-gate.ps1 -SkipNative
+
+  android-release-and-instrumentation:
+    name: Android Release Build & Instrumentation Gate
+    runs-on: macos-14
+    timeout-minutes: 45
+    steps:
+      - name: Checkout
+        uses: actions/checkout@v4
+
+      - name: Setup Java JDK
+        uses: actions/setup-java@v4
+        with:
+          distribution: 'temurin'
+          java-version: '17'
+
+      - name: Setup .NET SDK from global.json
+        uses: actions/setup-dotnet@v4
+        with:
+          global-json-file: global.json
+
+      - name: Install Android MAUI Workload
+        run: dotnet workload install maui-android
+
+      - name: Locked Package Restore
+        run: dotnet restore --locked-mode
+
+      - name: Build MobilDwg.App Release APK
+        run: dotnet build src/MobilDwg.App/MobilDwg.App.csproj -c Release -f net10.0-android36.0
+
+      - name: Build Android Instrumentation APK
+        run: dotnet build tests/MobilDwg.Android.Instrumentation/MobilDwg.Android.Instrumentation.csproj -c Release
+
+      - name: Verify APK Integrity & Compute Hashes
+        shell: pwsh
+        run: |
+          $appApk = Get-ChildItem -Path src/MobilDwg.App/bin/Release/net10.0-android36.0 -Filter "*Signed.apk" -Recurse | Select-Object -First 1
+          $testApk = Get-ChildItem -Path tests/MobilDwg.Android.Instrumentation/bin/Release/net10.0-android36.0 -Filter "*Signed.apk" -Recurse | Select-Object -First 1
+          if ($appApk) {
+            $h = (Get-FileHash -Algorithm SHA256 $appApk.FullName).Hash.ToLowerInvariant()
+            Write-Host "APP_APK_SHA256: $h ($($appApk.FullName))"
+          }
+          if ($testApk) {
+            $h = (Get-FileHash -Algorithm SHA256 $testApk.FullName).Hash.ToLowerInvariant()
+            Write-Host "TEST_APK_SHA256: $h ($($testApk.FullName))"
+          }
+
+      - name: Run Android API 36 Emulator & Instrumentation
+        uses: reactivecircus/android-emulator-runner@v2
+        with:
+          api-level: 36
+          target: google_apis
+          arch: x86_64
+          profile: pixel_6
+          script: powershell -ExecutionPolicy Bypass -File scripts/viewer-correction-gate.ps1 -RequireNative -ReinstallApk
+
+      - name: Upload Gate Artifacts
+        if: always()
+        uses: actions/upload-artifact@v4
+        with:
+          name: viewer-correction-gate-artifacts
+          path: |
+            artifacts/viewer-correction/**
+            fixtures/public/synthetic/*.dxf

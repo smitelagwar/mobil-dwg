@@ -121,17 +121,42 @@ public sealed class PreparedGeometryCache : IDisposable
             var fullKey = $"{sceneRevision}:{primitiveKey}";
             if (_entries.TryGetValue(fullKey, out var lodList))
             {
-                // Find matching or finer LOD (chord error <= requiredChordError)
+                // D05: Cache hit için aynı band yeterli olmayacak: kaydedilmiş gerçek/geçerli üst hata sınırı istenen chord error'ı sağlamalı.
+                PreparedGeometryEntry? match = null;
+
+                // First look for an exact lodBand match that satisfies the required chord error
                 for (var i = 0; i < lodList.Count; i++)
                 {
                     var entry = lodList[i];
-                    if (entry.LodBand == lodBand || entry.MaxChordError <= requiredChordError)
+                    if (entry.LodBand == lodBand && entry.MaxChordError <= requiredChordError)
                     {
-                        entry.LastAccessSequence = ++_accessCounter;
-                        System.Threading.Interlocked.Increment(ref CacheHits);
-                        result = entry;
-                        return true;
+                        match = entry;
+                        break;
                     }
+                }
+
+                // If no exact lodBand match, check if any entry satisfies the required chord error
+                if (match == null)
+                {
+                    for (var i = 0; i < lodList.Count; i++)
+                    {
+                        var entry = lodList[i];
+                        if (entry.MaxChordError <= requiredChordError)
+                        {
+                            if (match == null || entry.MaxChordError > match.MaxChordError)
+                            {
+                                match = entry;
+                            }
+                        }
+                    }
+                }
+
+                if (match != null)
+                {
+                    match.LastAccessSequence = ++_accessCounter;
+                    System.Threading.Interlocked.Increment(ref CacheHits);
+                    result = match;
+                    return true;
                 }
             }
 
@@ -151,9 +176,14 @@ public sealed class PreparedGeometryCache : IDisposable
         ArgumentNullException.ThrowIfNull(primitiveKey);
         ArgumentNullException.ThrowIfNull(path);
 
+        var entry = new PreparedGeometryEntry(path, localOrigin, chordError, lodBand, 0);
+        if (entry.EstimatedBytes > MaxSizeBytes) return;
+
         lock (_syncLock)
         {
             if (_disposed) return;
+
+            entry.LastAccessSequence = ++_accessCounter;
 
             var fullKey = $"{sceneRevision}:{primitiveKey}";
             if (!_entries.TryGetValue(fullKey, out var lodList))
@@ -182,7 +212,6 @@ public sealed class PreparedGeometryCache : IDisposable
                 System.Threading.Interlocked.Increment(ref EvictionCount);
             }
 
-            var entry = new PreparedGeometryEntry(path, localOrigin, chordError, lodBand, ++_accessCounter);
             lodList.Add(entry);
             _currentSizeBytes += entry.EstimatedBytes;
 
@@ -234,9 +263,14 @@ public sealed class PreparedGeometryCache : IDisposable
         ArgumentNullException.ThrowIfNull(hatchKey);
         ArgumentNullException.ThrowIfNull(lines);
 
+        var entry = new HatchCoverageEntry(coverageBounds, lines, styleRevision, lodBand, 0);
+        if (entry.EstimatedBytes > MaxSizeBytes) return;
+
         lock (_syncLock)
         {
             if (_disposed) return;
+
+            entry.LastAccessSequence = ++_accessCounter;
 
             var fullKey = $"{sceneRevision}:{hatchKey}";
             if (_hatchEntries.TryGetValue(fullKey, out var oldEntry))
@@ -244,7 +278,6 @@ public sealed class PreparedGeometryCache : IDisposable
                 _currentSizeBytes -= oldEntry.EstimatedBytes;
             }
 
-            var entry = new HatchCoverageEntry(coverageBounds, lines, styleRevision, lodBand, ++_accessCounter);
             _hatchEntries[fullKey] = entry;
             _currentSizeBytes += entry.EstimatedBytes;
 
@@ -262,34 +295,68 @@ public sealed class PreparedGeometryCache : IDisposable
         }
     }
 
+    private sealed class LruCandidate
+    {
+        public bool IsHatch { get; }
+        public string Key { get; }
+        public long LastAccess { get; }
+        public long Bytes { get; }
+
+        public LruCandidate(bool isHatch, string key, long lastAccess, long bytes)
+        {
+            IsHatch = isHatch;
+            Key = key;
+            LastAccess = lastAccess;
+            Bytes = bytes;
+        }
+    }
+
     private void EvictToBudgetUnderLock()
     {
         if (_currentSizeBytes <= MaxSizeBytes) return;
 
-        // Evict oldest entries until size is within budget
-        var allKeys = new List<(string Key, long LastAccess, long Bytes)>();
+        var allItems = new List<LruCandidate>();
         foreach (var (k, list) in _entries)
         {
             for (var i = 0; i < list.Count; i++)
             {
-                allKeys.Add((k, list[i].LastAccessSequence, list[i].EstimatedBytes));
+                allItems.Add(new LruCandidate(false, k, list[i].LastAccessSequence, list[i].EstimatedBytes));
             }
         }
-
-        allKeys.Sort((a, b) => a.LastAccess.CompareTo(b.LastAccess));
-
-        for (var i = 0; i < allKeys.Count && _currentSizeBytes > MaxSizeBytes; i++)
+        foreach (var (k, hatchEntry) in _hatchEntries)
         {
-            var targetKey = allKeys[i].Key;
-            if (_entries.TryGetValue(targetKey, out var list) && list.Count > 0)
+            allItems.Add(new LruCandidate(true, k, hatchEntry.LastAccessSequence, hatchEntry.EstimatedBytes));
+        }
+
+        allItems.Sort((a, b) => a.LastAccess.CompareTo(b.LastAccess));
+
+        for (var i = 0; i < allItems.Count && _currentSizeBytes > MaxSizeBytes; i++)
+        {
+            var candidate = allItems[i];
+            if (candidate.IsHatch)
             {
-                _currentSizeBytes -= list[0].EstimatedBytes;
-                list.RemoveAt(0);
-                if (list.Count == 0)
+                if (_hatchEntries.Remove(candidate.Key, out var removedHatch))
                 {
-                    _entries.Remove(targetKey);
+                    _currentSizeBytes -= removedHatch.EstimatedBytes;
+                    System.Threading.Interlocked.Increment(ref EvictionCount);
                 }
-                System.Threading.Interlocked.Increment(ref EvictionCount);
+            }
+            else
+            {
+                if (_entries.TryGetValue(candidate.Key, out var list))
+                {
+                    var matchIdx = list.FindIndex(e => e.LastAccessSequence == candidate.LastAccess);
+                    if (matchIdx >= 0)
+                    {
+                        _currentSizeBytes -= list[matchIdx].EstimatedBytes;
+                        list.RemoveAt(matchIdx);
+                        if (list.Count == 0)
+                        {
+                            _entries.Remove(candidate.Key);
+                        }
+                        System.Threading.Interlocked.Increment(ref EvictionCount);
+                    }
+                }
             }
         }
     }

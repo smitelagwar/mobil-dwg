@@ -42,6 +42,9 @@ public sealed class StaticSceneBvh
     public const int MaxLeafEntities = 16;
     public const int BvhEntityThreshold = 2048;
 
+    [ThreadStatic]
+    private static BvhNode[]? t_queryStack;
+
     private readonly IReadOnlyList<RenderSceneEntity> _entities;
     private readonly BvhNode? _root;
     private readonly int[] _alwaysTestIndices;
@@ -179,14 +182,15 @@ public sealed class StaticSceneBvh
             }
         }
 
-        // Tree traversal using allocation-free array stack
-        var stack = new BvhNode[64];
+        // Tree traversal using thread-static reusable array stack (allocation-free)
+        var stack = t_queryStack ??= new BvhNode[128];
         var stackTop = 0;
         stack[stackTop++] = _root;
 
         while (stackTop > 0)
         {
             var node = stack[--stackTop];
+            stack[stackTop] = null!;
             metrics.VisitedNodes++;
             metrics.BoundsTests++;
 
@@ -210,6 +214,12 @@ public sealed class StaticSceneBvh
             }
             else
             {
+                if (stackTop + 2 >= stack.Length)
+                {
+                    Array.Resize(ref stack, stack.Length * 2);
+                    t_queryStack = stack;
+                }
+
                 // Push right then left so left is popped first
                 if (node.Right != null) stack[stackTop++] = node.Right;
                 if (node.Left != null) stack[stackTop++] = node.Left;

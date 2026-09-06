@@ -124,6 +124,7 @@ if (-not $SkipNative) {
         $deviceSerial = ($deviceLines[0] -split '\s+')[0]
         Log "Using Android Device: $deviceSerial"
 
+        $mainApkPath = Join-Path $repoRoot "src/MobilDwg.App/bin/Release/net10.0-android36.0/com.smitelagwar.mobildwg-Signed.apk"
         $testApkPath = Join-Path $repoRoot "tests/MobilDwg.Android.Instrumentation/bin/Release/net10.0-android36.0/com.smitelagwar.mobildwg.test-Signed.apk"
         if (-not (Test-Path $testApkPath)) {
             Log "Building Android Test APK in Release mode..."
@@ -137,6 +138,14 @@ if (-not $SkipNative) {
                 Log "Stopping any running test or app processes..."
                 & adb -s $deviceSerial shell am force-stop com.smitelagwar.mobildwg.test | Out-Null
                 & adb -s $deviceSerial shell am force-stop com.smitelagwar.mobildwg | Out-Null
+
+                $isMainInstalled = (& adb -s $deviceSerial shell pm list packages com.smitelagwar.mobildwg) -match "package:com.smitelagwar.mobildwg$"
+                if (Test-Path $mainApkPath) {
+                    if (-not $isMainInstalled -or $ReinstallApk) {
+                        Log "Installing main app APK: $mainApkPath"
+                        & adb -s $deviceSerial install -r -d --no-incremental $mainApkPath | Out-Host
+                    }
+                }
 
                 $isInstalled = (& adb -s $deviceSerial shell pm list packages com.smitelagwar.mobildwg.test) -match "com.smitelagwar.mobildwg.test"
                 if (-not $isInstalled -or $ReinstallApk) {

@@ -30,22 +30,30 @@ public sealed class RenderScene : IRenderScene
         IEnumerable<RenderSceneEntity> entities,
         SceneDiagnostics diagnostics,
         RenderColorContext colorContext,
-        LayerTable? layerTable = null)
+        LayerTable? layerTable = null,
+        StaticSceneBvh? spatialIndex = null)
     {
         ArgumentNullException.ThrowIfNull(entities);
         Diagnostics = diagnostics ?? throw new ArgumentNullException(nameof(diagnostics));
         ColorContext = colorContext ?? throw new ArgumentNullException(nameof(colorContext));
         LayerTable = layerTable ?? new LayerTable();
 
-        // SourceIndex is the parser/scene-builder draw-order contract when available.
-        // Stable ID remains the deterministic fallback for synthetic or source-less entities.
-        var sorted = entities
-            .OrderBy(x => x.Source.SourceIndex ?? int.MaxValue)
-            .ThenBy(x => x.Id.Value, StringComparer.Ordinal)
-            .ToArray();
-        _entities = Array.AsReadOnly(sorted);
-        WorldBounds = CalculateBounds(_entities);
-        SpatialIndex = new StaticSceneBvh(_entities);
+        if (spatialIndex != null && entities is ReadOnlyCollection<RenderSceneEntity> ro)
+        {
+            _entities = ro;
+            WorldBounds = CalculateBounds(_entities);
+            SpatialIndex = spatialIndex;
+        }
+        else
+        {
+            var sorted = entities
+                .OrderBy(x => x.Source.SourceIndex ?? int.MaxValue)
+                .ThenBy(x => x.Id.Value, StringComparer.Ordinal)
+                .ToArray();
+            _entities = Array.AsReadOnly(sorted);
+            WorldBounds = CalculateBounds(_entities);
+            SpatialIndex = spatialIndex ?? new StaticSceneBvh(_entities);
+        }
     }
 
     public IReadOnlyList<RenderSceneEntity> Entities => _entities;

@@ -4,6 +4,7 @@ using MobilDwg.Core.Rendering;
 using MobilDwg.Rendering.Camera;
 using MobilDwg.Rendering.Coordinates;
 using MobilDwg.Rendering.Geometry;
+using MobilDwg.Rendering.Layouts;
 using MobilDwg.Rendering.Scene;
 using MobilDwg.Rendering.Styles;
 
@@ -143,8 +144,30 @@ public static class SnapQuery
                         var nextIdx = (i + 1) % poly.Vertices.Count;
                         var p1 = poly.Vertices[i].Position;
                         var p2 = poly.Vertices[nextIdx].Position;
-                        var closest = ClosestPointOnSegment(worldQueryPt, p1, p2);
-                        ConsiderPoint(closest, CadSnapKind.Curve, entityId, screenPoint, camera, maxRadiusPx, ref bestResult);
+                        var bulge = poly.Vertices[i].Bulge;
+
+                        if (Math.Abs(bulge) > 1e-9)
+                        {
+                            var arc = GeometryBounds.BulgeArc(p1, p2, bulge);
+                            ConsiderPoint(arc.Center, CadSnapKind.Center, entityId, screenPoint, camera, maxRadiusPx, ref bestResult);
+                            var bdx = worldQueryPt.X - arc.Center.X;
+                            var bdy = worldQueryPt.Y - arc.Center.Y;
+                            var bdist = Math.Sqrt((bdx * bdx) + (bdy * bdy));
+                            if (bdist > 1e-9)
+                            {
+                                var bAngle = Math.Atan2(bdy, bdx);
+                                if (IsAngleOnArc(bAngle, arc.StartRadians, arc.SweepRadians))
+                                {
+                                    var curvePt = new WorldPoint2(arc.Center.X + (arc.Radius * (bdx / bdist)), arc.Center.Y + (arc.Radius * (bdy / bdist)));
+                                    ConsiderPoint(curvePt, CadSnapKind.Curve, entityId, screenPoint, camera, maxRadiusPx, ref bestResult);
+                                }
+                            }
+                        }
+                        else
+                        {
+                            var closest = ClosestPointOnSegment(worldQueryPt, p1, p2);
+                            ConsiderPoint(closest, CadSnapKind.Curve, entityId, screenPoint, camera, maxRadiusPx, ref bestResult);
+                        }
                     }
                 }
                 break;
@@ -154,7 +177,12 @@ public static class SnapQuery
                 break;
 
             case SplinePrimitive spline:
-                var tessellated = GeometryTessellator.Tessellate(spline, GeometryTessellationOptions.Default);
+                var splineOptions = new GeometryTessellationOptions(
+                    maxChordError: Math.Min(0.01, Math.Max(1e-4, camera.WorldUnitsPerPixel)),
+                    minSegments: 4,
+                    maxSegments: 2048,
+                    splineSegmentsPerSpan: 16);
+                var tessellated = GeometryTessellator.Tessellate(spline, splineOptions);
                 if (tessellated.Points.Count > 0)
                 {
                     ConsiderPoint(tessellated.Points[0], CadSnapKind.Endpoint, entityId, screenPoint, camera, maxRadiusPx, ref bestResult);
@@ -164,6 +192,39 @@ public static class SnapQuery
                 {
                     var segPt = ClosestPointOnSegment(worldQueryPt, tessellated.Points[ti], tessellated.Points[ti + 1]);
                     ConsiderPoint(segPt, CadSnapKind.Curve, entityId, screenPoint, camera, maxRadiusPx, ref bestResult);
+                }
+                if (tessellated.Points.Count > 2 && Math.Abs(tessellated.Points[0].X - tessellated.Points[^1].X) < 1e-6 && Math.Abs(tessellated.Points[0].Y - tessellated.Points[^1].Y) < 1e-6)
+                {
+                    var closePt = ClosestPointOnSegment(worldQueryPt, tessellated.Points[^1], tessellated.Points[0]);
+                    ConsiderPoint(closePt, CadSnapKind.Curve, entityId, screenPoint, camera, maxRadiusPx, ref bestResult);
+                }
+                break;
+
+            case EllipsePrimitive ellipse:
+                ConsiderPoint(ellipse.Center, CadSnapKind.Center, entityId, screenPoint, camera, maxRadiusPx, ref bestResult);
+                var tessEllipse = GeometryTessellator.Tessellate(ellipse, GeometryTessellationOptions.Default);
+                if (tessEllipse.Points.Count > 0)
+                {
+                    if (Math.Abs(ellipse.SweepParameter) < (Math.PI * 2.0) - 1e-4)
+                    {
+                        ConsiderPoint(tessEllipse.Points[0], CadSnapKind.Endpoint, entityId, screenPoint, camera, maxRadiusPx, ref bestResult);
+                        ConsiderPoint(tessEllipse.Points[^1], CadSnapKind.Endpoint, entityId, screenPoint, camera, maxRadiusPx, ref bestResult);
+                    }
+                    for (var ti = 0; ti < tessEllipse.Points.Count - 1; ti++)
+                    {
+                        var segPt = ClosestPointOnSegment(worldQueryPt, tessEllipse.Points[ti], tessEllipse.Points[ti + 1]);
+                        ConsiderPoint(segPt, CadSnapKind.Curve, entityId, screenPoint, camera, maxRadiusPx, ref bestResult);
+                    }
+                }
+                break;
+
+            case ViewportPrimitive vp:
+                if (vp.PaperBounds.Contains(worldQueryPt))
+                {
+                    foreach (var inner in vp.InnerPrimitives)
+                    {
+                        EvaluatePrimitiveSnap(inner, entityId, worldQueryPt, screenPoint, camera, maxRadiusPx, ref bestResult);
+                    }
                 }
                 break;
         }

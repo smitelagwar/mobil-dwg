@@ -49,6 +49,13 @@ public static class CadStyleResolver
             layer.Color,
             blockContextStyle?.Color);
 
+        if (effectiveStyle.Alpha < 255)
+        {
+            uint baseAlpha = (resolvedArgb >> 24) & 0xFF;
+            uint finalAlpha = (baseAlpha * (uint)effectiveStyle.Alpha) / 255u;
+            resolvedArgb = (finalAlpha << 24) | (resolvedArgb & 0x00FFFFFFu);
+        }
+
         // 3. Resolve Linetype
         CadLinetype linetype = effectiveStyle.Linetype.Kind switch
         {

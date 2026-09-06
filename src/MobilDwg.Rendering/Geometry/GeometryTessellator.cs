@@ -86,6 +86,13 @@ public static class GeometryTessellator
                     new WorldPoint2(missing.PlaceholderBounds.MaxX, missing.PlaceholderBounds.MaxY),
                     new WorldPoint2(missing.PlaceholderBounds.MinX, missing.PlaceholderBounds.MaxY)
                 ], closed: true, filled: false),
+            ReferencePlaceholderPrimitive ph => new TessellatedPath(
+                [
+                    new WorldPoint2(ph.Bounds.MinX, ph.Bounds.MinY),
+                    new WorldPoint2(ph.Bounds.MaxX, ph.Bounds.MinY),
+                    new WorldPoint2(ph.Bounds.MaxX, ph.Bounds.MaxY),
+                    new WorldPoint2(ph.Bounds.MinX, ph.Bounds.MaxY)
+                ], closed: true, filled: false),
             RasterImagePrimitive img => new TessellatedPath(
                 [
                     new WorldPoint2(img.ImageBounds.MinX, img.ImageBounds.MinY),

@@ -18,9 +18,10 @@ public readonly record struct InteractionResult(
 public sealed class ViewportInteractionEngine
 {
     private readonly ViewportController _controller;
-    private readonly ViewportInputConfiguration _configuration;
+    private readonly object? _syncRoot;
     private readonly Dictionary<int, ScreenPoint2> _activePointers = new();
 
+    private ViewportInputConfiguration _configuration;
     private ViewportGestureState _state = ViewportGestureState.Idle;
     private ScreenPoint2 _initialDownPosition;
     private long _initialDownTimeMs;
@@ -34,20 +35,31 @@ public sealed class ViewportInteractionEngine
     private bool _isMeasurementMode;
 
     private long _cameraRevision;
+    private long _currentSurfaceGeneration;
+    private long _lastInputEventTimeMs;
 
     public ViewportInteractionEngine(
         ViewportController controller,
-        ViewportInputConfiguration? configuration = null)
+        ViewportInputConfiguration? configuration = null,
+        object? syncRoot = null)
     {
         _controller = controller ?? throw new ArgumentNullException(nameof(controller));
         _configuration = configuration ?? ViewportInputConfiguration.Default;
+        _syncRoot = syncRoot;
     }
 
     public ViewportController Controller => _controller;
-    public ViewportInputConfiguration Configuration => _configuration;
+    public object? SyncRoot => _syncRoot;
+    public ViewportInputConfiguration Configuration
+    {
+        get => _configuration;
+        set => _configuration = value ?? ViewportInputConfiguration.Default;
+    }
     public ViewportGestureState State => _state;
     public int ActivePointerCount => _activePointers.Count;
     public long CameraRevision => _cameraRevision;
+    public long CurrentSurfaceGeneration => _currentSurfaceGeneration;
+    public long LastInputEventTimeMs => _lastInputEventTimeMs;
 
     public bool IsMeasurementMode
     {
@@ -61,36 +73,171 @@ public sealed class ViewportInteractionEngine
     public event Action? InteractionStarted;
     public event Action? InteractionEnded;
 
+    public void CancelGesture()
+    {
+        if (_syncRoot != null)
+        {
+            lock (_syncRoot)
+            {
+                HandleCancel();
+            }
+            return;
+        }
+        HandleCancel();
+    }
+
+    public void Suspend()
+    {
+        if (_syncRoot != null)
+        {
+            lock (_syncRoot)
+            {
+                _activePointers.Clear();
+                _hasDoubleTapCandidate = false;
+                _state = ViewportGestureState.Suspended;
+                _controller.EndInteraction();
+                InteractionEnded?.Invoke();
+            }
+            return;
+        }
+
+        _activePointers.Clear();
+        _hasDoubleTapCandidate = false;
+        _state = ViewportGestureState.Suspended;
+        _controller.EndInteraction();
+        InteractionEnded?.Invoke();
+    }
+
+    public void Resume()
+    {
+        if (_syncRoot != null)
+        {
+            lock (_syncRoot)
+            {
+                if (_state == ViewportGestureState.Suspended)
+                {
+                    _state = ViewportGestureState.Idle;
+                }
+            }
+            return;
+        }
+
+        if (_state == ViewportGestureState.Suspended)
+        {
+            _state = ViewportGestureState.Idle;
+        }
+    }
+
+    public void InvalidateSurfaceGeneration(long newGeneration)
+    {
+        if (_syncRoot != null)
+        {
+            lock (_syncRoot)
+            {
+                if (_currentSurfaceGeneration != newGeneration)
+                {
+                    _currentSurfaceGeneration = newGeneration;
+                    HandleCancel();
+                }
+            }
+            return;
+        }
+
+        if (_currentSurfaceGeneration != newGeneration)
+        {
+            _currentSurfaceGeneration = newGeneration;
+            HandleCancel();
+        }
+    }
+
     public InteractionResult ProcessPacket(PointerPacket packet)
     {
         ArgumentNullException.ThrowIfNull(packet);
 
-        bool cameraChanged = false;
+        if (_syncRoot != null)
+        {
+            lock (_syncRoot)
+            {
+                return ProcessPacketCore(packet);
+            }
+        }
+
+        return ProcessPacketCore(packet);
+    }
+
+    private InteractionResult ProcessPacketCore(PointerPacket packet)
+    {
+        _lastInputEventTimeMs = packet.EventTimeMs;
+
+        // Coordinate sanity check
+        foreach (var sample in packet.Pointers)
+        {
+            if (!double.IsFinite(sample.Position.X) || !double.IsFinite(sample.Position.Y) ||
+                Math.Abs(sample.Position.X) > 1e7 || Math.Abs(sample.Position.Y) > 1e7)
+            {
+                HandleCancel();
+                return new InteractionResult(
+                    Handled: false,
+                    CameraChanged: false,
+                    Camera: _controller.CurrentCamera,
+                    State: _state,
+                    SingleTapDetected: false,
+                    TapPosition: null,
+                    DoubleTapDetected: false,
+                    DoubleTapPosition: null);
+            }
+        }
+
+        // Generation check
+        if (packet.Action == PointerAction.Down)
+        {
+            if (packet.SurfaceGeneration != 0)
+            {
+                _currentSurfaceGeneration = packet.SurfaceGeneration;
+            }
+        }
+        else if (_currentSurfaceGeneration != 0 && packet.SurfaceGeneration != 0 && packet.SurfaceGeneration != _currentSurfaceGeneration)
+        {
+            HandleCancel();
+            return new InteractionResult(
+                Handled: false,
+                CameraChanged: false,
+                Camera: _controller.CurrentCamera,
+                State: _state,
+                SingleTapDetected: false,
+                TapPosition: null,
+                DoubleTapDetected: false,
+                DoubleTapPosition: null);
+        }
+
         bool singleTap = false;
         ScreenPoint2? tapPos = null;
         bool doubleTap = false;
         ScreenPoint2? doubleTapPos = null;
 
+        bool wasInGesture = _state == ViewportGestureState.Pan || _state == ViewportGestureState.Pinch;
+        var cameraBefore = _controller.CurrentCamera;
+
         switch (packet.Action)
         {
             case PointerAction.Down:
-                cameraChanged = HandleDown(packet);
+                HandleDown(packet);
                 break;
 
             case PointerAction.PointerDown:
-                cameraChanged = HandlePointerDown(packet);
+                HandlePointerDown(packet);
                 break;
 
             case PointerAction.Move:
-                cameraChanged = HandleMove(packet);
+                HandleMove(packet);
                 break;
 
             case PointerAction.PointerUp:
-                cameraChanged = HandlePointerUp(packet);
+                HandlePointerUp(packet);
                 break;
 
             case PointerAction.Up:
-                cameraChanged = HandleUp(packet, out singleTap, out tapPos, out doubleTap, out doubleTapPos);
+                HandleUp(packet, out singleTap, out tapPos, out doubleTap, out doubleTapPos);
                 break;
 
             case PointerAction.Cancel:
@@ -98,10 +245,18 @@ public sealed class ViewportInteractionEngine
                 break;
         }
 
+        var cameraAfter = _controller.CurrentCamera;
+        bool cameraChanged = (cameraAfter != cameraBefore);
+
         if (cameraChanged)
         {
             _cameraRevision++;
-            CameraChanged?.Invoke(_controller.CurrentCamera);
+            CameraChanged?.Invoke(cameraAfter);
+        }
+        else if (packet.Action == PointerAction.Up && wasInGesture)
+        {
+            // Even if camera revision did not change on release, notify host so final high-quality paint is scheduled
+            CameraChanged?.Invoke(cameraAfter);
         }
 
         if (singleTap && tapPos.HasValue)
@@ -117,7 +272,7 @@ public sealed class ViewportInteractionEngine
         return new InteractionResult(
             Handled: true,
             CameraChanged: cameraChanged,
-            Camera: _controller.CurrentCamera,
+            Camera: cameraAfter,
             State: _state,
             SingleTapDetected: singleTap,
             TapPosition: tapPos,
@@ -125,7 +280,7 @@ public sealed class ViewportInteractionEngine
             DoubleTapPosition: doubleTapPos);
     }
 
-    private bool HandleDown(PointerPacket packet)
+    private void HandleDown(PointerPacket packet)
     {
         _activePointers.Clear();
         var sample = FindPointer(packet, packet.ActionPointerId);
@@ -138,21 +293,18 @@ public sealed class ViewportInteractionEngine
 
         _controller.BeginInteraction();
         InteractionStarted?.Invoke();
-        return false;
     }
 
-    private bool HandlePointerDown(PointerPacket packet)
+    private void HandlePointerDown(PointerPacket packet)
     {
-        bool cameraChanged = false;
+        // 1. Process movement of existing tracked pointers prior to new pointer addition
+        ApplyIncrementalMove(packet, ignorePointerId: packet.ActionPointerId);
 
-        // Process any pending movement of already tracked pointers with current state
-        cameraChanged = ApplyIncrementalMove(packet);
-
-        // Add new pointer
+        // 2. Add new pointer
         var newSample = FindPointer(packet, packet.ActionPointerId);
         _activePointers[packet.ActionPointerId] = newSample.Position;
 
-        // Cancel tap candidates on multi-touch
+        // Cancel tap candidate on multi-touch
         _hasDoubleTapCandidate = false;
 
         if (_activePointers.Count == 2)
@@ -164,22 +316,19 @@ public sealed class ViewportInteractionEngine
         {
             _state = ViewportGestureState.MultiTouchHold;
         }
-
-        return cameraChanged;
     }
 
-    private bool HandleMove(PointerPacket packet)
+    private void HandleMove(PointerPacket packet)
     {
-        return ApplyIncrementalMove(packet);
+        ApplyIncrementalMove(packet);
     }
 
-    private bool HandlePointerUp(PointerPacket packet)
+    private void HandlePointerUp(PointerPacket packet)
     {
-        bool cameraChanged = false;
+        // 1. Apply any final movement before removing pointer
+        ApplyIncrementalMove(packet);
 
-        // Apply any final movement before removing pointer
-        cameraChanged = ApplyIncrementalMove(packet);
-
+        // 2. Remove leaving pointer
         _activePointers.Remove(packet.ActionPointerId);
 
         if (_activePointers.Count == 2)
@@ -198,11 +347,9 @@ public sealed class ViewportInteractionEngine
             _controller.EndInteraction();
             InteractionEnded?.Invoke();
         }
-
-        return cameraChanged;
     }
 
-    private bool HandleUp(
+    private void HandleUp(
         PointerPacket packet,
         out bool singleTap,
         out ScreenPoint2? tapPos,
@@ -213,13 +360,14 @@ public sealed class ViewportInteractionEngine
         tapPos = null;
         doubleTap = false;
         doubleTapPos = null;
-        bool cameraChanged = false;
 
         var sample = FindPointer(packet, packet.ActionPointerId);
 
         if (_state == ViewportGestureState.TapCandidate)
         {
             var dist = Distance(sample.Position, _initialDownPosition);
+            long duration = packet.EventTimeMs - _initialDownTimeMs;
+
             if (dist > _configuration.TouchSlopPx)
             {
                 // Slop exceeded on final UP sample -> commit pan
@@ -228,13 +376,17 @@ public sealed class ViewportInteractionEngine
                 if (dx != 0 || dy != 0)
                 {
                     _controller.Pan(dx, dy);
-                    cameraChanged = true;
                 }
+                _hasDoubleTapCandidate = false;
+            }
+            else if (duration > _configuration.LongPressTimeoutMs)
+            {
+                // Long press past threshold -> neither single tap nor double tap
                 _hasDoubleTapCandidate = false;
             }
             else
             {
-                // Tap detected
+                // Valid tap candidate within slop and time
                 if (!_isMeasurementMode && _hasDoubleTapCandidate &&
                     (packet.EventTimeMs - _lastTapTimeMs <= _configuration.DoubleTapTimeoutMs) &&
                     Distance(sample.Position, _lastTapPosition) <= _configuration.DoubleTapSlopPx)
@@ -242,7 +394,6 @@ public sealed class ViewportInteractionEngine
                     doubleTap = true;
                     doubleTapPos = sample.Position;
                     _controller.DoubleTap(sample.Position, _configuration.DoubleTapZoomFactor);
-                    cameraChanged = true;
                     _hasDoubleTapCandidate = false;
                 }
                 else
@@ -262,20 +413,17 @@ public sealed class ViewportInteractionEngine
             if (dx != 0 || dy != 0)
             {
                 _controller.Pan(dx, dy);
-                cameraChanged = true;
             }
         }
         else if (_state == ViewportGestureState.Pinch)
         {
-            cameraChanged = ApplyIncrementalMove(packet);
+            ApplyIncrementalMove(packet);
         }
 
         _activePointers.Clear();
         _state = ViewportGestureState.Idle;
         _controller.EndInteraction();
         InteractionEnded?.Invoke();
-
-        return cameraChanged;
     }
 
     private void HandleCancel()
@@ -287,13 +435,62 @@ public sealed class ViewportInteractionEngine
         InteractionEnded?.Invoke();
     }
 
-    private bool ApplyIncrementalMove(PointerPacket packet)
+    private void ApplyIncrementalMove(PointerPacket packet, int? ignorePointerId = null)
     {
-        bool cameraChanged = false;
+        // Check if pointer ID set matches active pointers (excluding any pointer marked ignorePointerId)
+        if (ignorePointerId == null && packet.Pointers.Count > 0)
+        {
+            bool idsMatch = packet.Pointers.Count == _activePointers.Count;
+            if (idsMatch)
+            {
+                foreach (var s in packet.Pointers)
+                {
+                    if (!_activePointers.ContainsKey(s.Id))
+                    {
+                        idsMatch = false;
+                        break;
+                    }
+                }
+            }
+
+            if (!idsMatch)
+            {
+                // Pointer ID set changed: clear old pointers and establish fresh baseline
+                _activePointers.Clear();
+                foreach (var s in packet.Pointers)
+                {
+                    _activePointers[s.Id] = s.Position;
+                }
+
+                if (_activePointers.Count == 1)
+                {
+                    _state = ViewportGestureState.Pan;
+                    _prevPanPoint = _activePointers.Values.First();
+                }
+                else if (_activePointers.Count == 2)
+                {
+                    _state = ViewportGestureState.Pinch;
+                    EstablishPinchBaseline();
+                }
+                else if (_activePointers.Count >= 3)
+                {
+                    _state = ViewportGestureState.MultiTouchHold;
+                }
+                else
+                {
+                    _state = ViewportGestureState.Idle;
+                    _controller.EndInteraction();
+                    InteractionEnded?.Invoke();
+                }
+                return;
+            }
+        }
 
         // Update positions of tracked pointers
         foreach (var sample in packet.Pointers)
         {
+            if (ignorePointerId.HasValue && sample.Id == ignorePointerId.Value) continue;
+
             if (_activePointers.ContainsKey(sample.Id))
             {
                 _activePointers[sample.Id] = sample.Position;
@@ -302,19 +499,21 @@ public sealed class ViewportInteractionEngine
 
         if (_state == ViewportGestureState.TapCandidate)
         {
-            var pos = _activePointers.Values.First();
-            var dist = Distance(pos, _initialDownPosition);
-            if (dist > _configuration.TouchSlopPx)
+            if (_activePointers.Count > 0)
             {
-                _state = ViewportGestureState.Pan;
-                _hasDoubleTapCandidate = false;
-                var dx = pos.X - _initialDownPosition.X;
-                var dy = pos.Y - _initialDownPosition.Y;
-                if (dx != 0 || dy != 0)
+                var pos = _activePointers.Values.First();
+                var dist = Distance(pos, _initialDownPosition);
+                if (dist > _configuration.TouchSlopPx)
                 {
-                    _controller.Pan(dx, dy);
-                    _prevPanPoint = pos;
-                    cameraChanged = true;
+                    _state = ViewportGestureState.Pan;
+                    _hasDoubleTapCandidate = false;
+                    var dx = pos.X - _initialDownPosition.X;
+                    var dy = pos.Y - _initialDownPosition.Y;
+                    if (dx != 0 || dy != 0)
+                    {
+                        _controller.Pan(dx, dy);
+                        _prevPanPoint = pos;
+                    }
                 }
             }
         }
@@ -329,7 +528,6 @@ public sealed class ViewportInteractionEngine
                 {
                     _controller.Pan(dx, dy);
                     _prevPanPoint = pos;
-                    cameraChanged = true;
                 }
             }
         }
@@ -356,11 +554,8 @@ public sealed class ViewportInteractionEngine
                 _controller.Manipulate(_prevCentroid, currCentroid, factor);
                 _prevCentroid = currCentroid;
                 _prevSpan = currSpan;
-                cameraChanged = true;
             }
         }
-
-        return cameraChanged;
     }
 
     private void EstablishPinchBaseline()

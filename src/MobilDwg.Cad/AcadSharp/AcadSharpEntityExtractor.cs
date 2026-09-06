@@ -3,6 +3,7 @@ using System.Globalization;
 using System.Text;
 using System.Text.RegularExpressions;
 using ACadSharp;
+using ACadSharp.Blocks;
 using ACadSharp.Entities;
 using ACadSharp.Tables;
 using MobilDwg.Core.Coordinates;
@@ -47,11 +48,15 @@ public static class AcadSharpEntityExtractor
             var name = layer.Name ?? "0";
             if (layerNames.Add(name))
             {
-                uint argb = 0xFFCCCCCC; // Default light gray
+                bool isFrozen = layer.Flags.HasFlag(LayerFlags.Frozen);
+                bool isLocked = layer.Flags.HasFlag(LayerFlags.Locked);
+                bool isVisible = layer.IsOn && !isFrozen;
+                bool hasTrueColor = layer.Color.IsTrueColor;
                 short aci = layer.Color.Index;
-                if (layer.Color.TrueColor != 0)
+                uint argb = 0xFFCCCCCC; // Default light gray
+                if (hasTrueColor)
                 {
-                    argb = 0xFF000000 | (uint)(layer.Color.TrueColor & 0x00FFFFFF);
+                    argb = 0xFF000000u | ((uint)layer.Color.R << 16) | ((uint)layer.Color.G << 8) | (uint)layer.Color.B;
                 }
                 else if (aci > 0 && aci <= 256)
                 {
@@ -62,10 +67,12 @@ public static class AcadSharpEntityExtractor
                     name,
                     argb,
                     aci,
-                    layer.IsOn,
-                    false,
+                    isVisible,
+                    isLocked,
                     layer.LineType?.Name ?? "Continuous",
-                    (short)layer.LineWeight));
+                    (short)layer.LineWeight,
+                    isFrozen,
+                    hasTrueColor));
             }
         }
 
@@ -149,8 +156,28 @@ public static class AcadSharpEntityExtractor
             if (y > maxY) maxY = y;
         }
 
+        // DrawOrder / SortEntities Resolution
+        var modelSpace = document.BlockRecords["*Model_Space"] ?? document.BlockRecords.FirstOrDefault(b => b.Name.Equals("*Model_Space", StringComparison.OrdinalIgnoreCase));
+        var sortTable = modelSpace?.SortEntitiesTable;
+        IEnumerable<Entity> entitiesToExtract = document.Entities;
+        if (sortTable != null && sortTable.Any())
+        {
+            var sortMap = new Dictionary<ulong, ulong>();
+            foreach (var sorter in sortTable)
+            {
+                if (sorter.Entity != null)
+                {
+                    sortMap[sorter.Entity.Handle] = sorter.SortHandle;
+                }
+            }
+            if (sortMap.Count > 0)
+            {
+                entitiesToExtract = document.Entities.OrderBy(e => sortMap.TryGetValue(e.Handle, out var sh) ? sh : e.Handle);
+            }
+        }
+
         int entityOrder = 0;
-        foreach (var entity in document.Entities)
+        foreach (var entity in entitiesToExtract)
         {
             entityOrder++;
 
@@ -178,7 +205,8 @@ public static class AcadSharpEntityExtractor
                     updateBounds: UpdateBounds,
                     diagnostics: diagnostics,
                     budgetGuard: budgetGuard,
-                    activeBlockChain: new HashSet<string>(StringComparer.OrdinalIgnoreCase));
+                    activeBlockChain: new HashSet<string>(StringComparer.OrdinalIgnoreCase),
+                    parentTransform: CadAffine2D.Identity);
             }
             else
             {
@@ -202,16 +230,135 @@ public static class AcadSharpEntityExtractor
             minX = 0; minY = 0; maxX = 100; maxY = 100;
         }
 
-        // Collect Layout Names
-        var layoutNames = document.Layouts?.Select(l => l.Name).ToArray() ?? Array.Empty<string>();
+        // Extract Layouts and Viewports
+        var extractedLayouts = new List<CadExtractedLayout>();
+        if (document.Layouts != null)
+        {
+            foreach (var layout in document.Layouts)
+            {
+                if (!layout.IsPaperSpace)
+                {
+                    extractedLayouts.Add(new CadExtractedLayout(
+                        layout.Name,
+                        IsModelSpace: true,
+                        layout.TabOrder,
+                        new CadExtractedBounds(minX, minY, maxX, maxY),
+                        extractedEntities,
+                        Array.Empty<CadExtractedViewport>()));
+                }
+                else
+                {
+                    double pMinX = layout.PlotOriginX;
+                    double pMinY = layout.PlotOriginY;
+                    double pMaxX = pMinX + (layout.PaperWidth > 0 ? layout.PaperWidth : 297);
+                    double pMaxY = pMinY + (layout.PaperHeight > 0 ? layout.PaperHeight : 210);
+                    var pBounds = new CadExtractedBounds(pMinX, pMinY, pMaxX, pMaxY);
+
+                    var paperEntities = new List<CadExtractedEntity>();
+                    var viewports = new List<CadExtractedViewport>();
+
+                    if (layout.AssociatedBlock != null)
+                    {
+                        foreach (var ent in layout.AssociatedBlock.Entities)
+                        {
+                            if (ent is Viewport vp)
+                            {
+                                if (vp.ViewHeight > 0 && !vp.RepresentsPaper)
+                                {
+                                    var vpId = vp.Handle != 0 ? vp.Handle.ToString("X") : $"VP_{vp.Id}";
+                                    var frozen = vp.FrozenLayers?.Select(l => l.Name).ToList();
+                                    viewports.Add(new CadExtractedViewport(
+                                        vpId,
+                                        new CadExtractedPoint(vp.Center.X, vp.Center.Y),
+                                        vp.Width,
+                                        vp.Height,
+                                        new CadExtractedPoint(vp.ViewCenter.X, vp.ViewCenter.Y),
+                                        vp.ViewHeight,
+                                        vp.TwistAngle,
+                                        frozen,
+                                        null,
+                                        vp.ActiveStatus > 0));
+                                }
+                            }
+                            else
+                            {
+                                var extracted = ExtractSingleEntity(
+                                    ent,
+                                    paperEntities.Count + 1,
+                                    blockOwner: null,
+                                    diagnostics: diagnostics,
+                                    budgetGuard: budgetGuard,
+                                    layoutOwner: layout.Name);
+                                if (extracted != null)
+                                {
+                                    paperEntities.Add(extracted);
+                                }
+                            }
+                        }
+                    }
+
+                    foreach (var vp in layout.Viewports)
+                    {
+                        var vpId = vp.Handle != 0 ? vp.Handle.ToString("X") : $"VP_{vp.Id}";
+                        if (vp.ViewHeight > 0 && !vp.RepresentsPaper && !viewports.Any(v => v.Id == vpId))
+                        {
+                            var frozen = vp.FrozenLayers?.Select(l => l.Name).ToList();
+                            viewports.Add(new CadExtractedViewport(
+                                vpId,
+                                new CadExtractedPoint(vp.Center.X, vp.Center.Y),
+                                vp.Width,
+                                vp.Height,
+                                new CadExtractedPoint(vp.ViewCenter.X, vp.ViewCenter.Y),
+                                vp.ViewHeight,
+                                vp.TwistAngle,
+                                frozen,
+                                null,
+                                vp.ActiveStatus > 0));
+                        }
+                    }
+
+                    extractedLayouts.Add(new CadExtractedLayout(
+                        layout.Name,
+                        IsModelSpace: false,
+                        layout.TabOrder,
+                        pBounds,
+                        paperEntities.AsReadOnly(),
+                        viewports.AsReadOnly()));
+                }
+            }
+        }
+
+        if (extractedLayouts.Count == 0)
+        {
+            extractedLayouts.Add(new CadExtractedLayout(
+                "Model",
+                IsModelSpace: true,
+                0,
+                new CadExtractedBounds(minX, minY, maxX, maxY),
+                extractedEntities,
+                Array.Empty<CadExtractedViewport>()));
+        }
+
+        var layoutNames = extractedLayouts.Select(l => l.Name).ToArray();
 
         // Metadata
+        int insUnits = 0;
+        try
+        {
+            if (document.Header != null)
+            {
+                insUnits = (int)document.Header.InsUnits;
+            }
+        }
+        catch { }
+
         var metadata = new CadExtractedMetadata(
             format,
             version,
             null,
             Units: document.Header?.InsUnits.ToString() ?? "Unitless",
-            Measurement: 0.0);
+            Measurement: 0.0,
+            InsUnits: insUnits);
 
         return new CadExtractedDocument(
             format,
@@ -225,7 +372,8 @@ public static class AcadSharpEntityExtractor
             dimensionStyles: dimStyles.AsReadOnly(),
             blockDefinitions: new ReadOnlyDictionary<string, IReadOnlyList<CadExtractedEntity>>(blockDefs),
             diagnostics: diagnostics.AsReadOnly(),
-            layoutNames: layoutNames);
+            layoutNames: layoutNames,
+            layouts: extractedLayouts.AsReadOnly());
     }
 
     private static void ExpandBlockInsert(
@@ -240,11 +388,39 @@ public static class AcadSharpEntityExtractor
         Action<double, double> updateBounds,
         List<CadExtractedDiagnostic> diagnostics,
         CadBudgetGuard budgetGuard,
-        HashSet<string> activeBlockChain)
+        HashSet<string> activeBlockChain,
+        CadAffine2D parentTransform)
     {
         var block = insert.Block;
         if (block is null || string.IsNullOrWhiteSpace(block.Name))
         {
+            return;
+        }
+
+        string? xrefPath = block.BlockEntity?.XRefPath;
+        if (block.Flags.HasFlag(BlockTypeFlags.XRef) || !string.IsNullOrEmpty(xrefPath))
+        {
+            refOrder++;
+            var xrefPayload = new CadXrefPayload(
+                block.Name,
+                xrefPath,
+                IsResolved: false,
+                ResolvedPath: null,
+                new CadPoint3D(insert.InsertPoint.X, insert.InsertPoint.Y, insert.InsertPoint.Z),
+                insert.XScale,
+                insert.YScale,
+                insert.ZScale,
+                insert.Rotation);
+
+            var xrefEntity = new CadExtractedEntity(
+                $"{parentInstancePath}/{block.Name}:{insert.Handle:X}:XREF",
+                insert.Layer?.Name ?? inheritedLayer,
+                CadExtractedEntityType.Insert,
+                inheritedColor,
+                sourceOrder: refOrder,
+                payload: xrefPayload);
+
+            extractedEntities.Add(xrefEntity);
             return;
         }
 
@@ -270,14 +446,12 @@ public static class AcadSharpEntityExtractor
 
         try
         {
-            // Insert transform
+            // Insert transform components
             var ocs = OcsTransform.FromNormal(insert.Normal.X, insert.Normal.Y, insert.Normal.Z);
             double insX = insert.InsertPoint.X;
             double insY = insert.InsertPoint.Y;
-            double insZ = insert.InsertPoint.Z;
             double scaleX = insert.XScale != 0 ? insert.XScale : 1.0;
             double scaleY = insert.YScale != 0 ? insert.YScale : 1.0;
-            double scaleZ = insert.ZScale != 0 ? insert.ZScale : 1.0;
             double rotRad = insert.Rotation;
             double cos = Math.Cos(rotRad);
             double sin = Math.Sin(rotRad);
@@ -291,30 +465,49 @@ public static class AcadSharpEntityExtractor
             double colSpacing = insert.ColumnSpacing;
             double rowSpacing = insert.RowSpacing;
 
-            for (int r = 0; r < rowCount; r++)
+            long totalInstances = (long)colCount * rowCount;
+            if (totalInstances > 100000)
             {
-                for (int c = 0; c < colCount; c++)
-                {
-                    double gridX = c * colSpacing;
-                    double gridY = r * rowSpacing;
-                    double rotGridX = (gridX * cos) - (gridY * sin);
-                    double rotGridY = (gridX * sin) + (gridY * cos);
+                diagnostics.Add(new CadExtractedDiagnostic(
+                    "MINSERT_QUOTA_EXCEEDED",
+                    "Warning",
+                    $"MINSERT grid dimensions ({colCount}x{rowCount}) exceed safety budget.",
+                    insert.Handle.ToString("X")));
+                return;
+            }
 
-                    (double X, double Y) TransformPoint(double lx, double ly)
+            var tBaseNeg = CadAffine2D.Translation(-bx, -by);
+            var s = CadAffine2D.Scale(scaleX, scaleY);
+            var r = CadAffine2D.Rotation(rotRad);
+            var ocsAffine = ocs.IsIdentity
+                ? CadAffine2D.Identity
+                : new CadAffine2D(ocs.AxX, ocs.AyX, ocs.AxY, ocs.AyY, 0.0, 0.0);
+
+            // Single affine transform chain: T(ins) * M_ocs * R * S * T(-base)
+            var baseInsertTransform = CadAffine2D.Translation(insX, insY) * ocsAffine * r * s * tBaseNeg;
+
+            bool quotaExceeded = false;
+            for (int rowIdx = 0; rowIdx < rowCount && !quotaExceeded; rowIdx++)
+            {
+                for (int colIdx = 0; colIdx < colCount && !quotaExceeded; colIdx++)
+                {
+                    CadAffine2D localTransform;
+                    if (colIdx == 0 && rowIdx == 0)
                     {
-                        // 1. Base point subtraction
-                        double px = lx - bx;
-                        double py = ly - by;
-                        // 2. Scale
-                        double sx = px * scaleX;
-                        double sy = py * scaleY;
-                        // 3. Rotate
-                        double rx = (sx * cos) - (sy * sin);
-                        double ry = (sx * sin) + (sy * cos);
-                        // 4. Translate via OCS + grid offset
-                        var (ox, oy, _) = ocs.Transform(rx, ry, 0);
-                        return (ox + insX + rotGridX, oy + insY + rotGridY);
+                        localTransform = baseInsertTransform;
                     }
+                    else
+                    {
+                        double gridX = colIdx * colSpacing;
+                        double gridY = rowIdx * rowSpacing;
+                        double rotGridX = (gridX * cos) - (gridY * sin);
+                        double rotGridY = (gridX * sin) + (gridY * cos);
+                        var tGrid = CadAffine2D.Translation(insX + rotGridX, insY + rotGridY);
+                        localTransform = tGrid * ocsAffine * r * s * tBaseNeg;
+                    }
+
+                    // Composite affine transform: parent * local
+                    var effectiveTransform = parentTransform * localTransform;
 
                     foreach (var child in block.Entities)
                     {
@@ -326,13 +519,14 @@ public static class AcadSharpEntityExtractor
                                 quotaDiag!.Code,
                                 quotaDiag.Severity.ToString(),
                                 quotaDiag.Message));
+                            quotaExceeded = true;
                             break;
                         }
 
                         if (child is Insert nestedInsert)
                         {
                             string nestedPath = (colCount > 1 || rowCount > 1)
-                                ? $"{parentInstancePath}/{block.Name}:{nestedInsert.Handle:X}_c{c}_r{r}"
+                                ? $"{parentInstancePath}/{block.Name}:{nestedInsert.Handle:X}_c{colIdx}_r{rowIdx}"
                                 : $"{parentInstancePath}/{block.Name}:{nestedInsert.Handle:X}";
 
                             ExpandBlockInsert(
@@ -347,12 +541,13 @@ public static class AcadSharpEntityExtractor
                                 updateBounds: updateBounds,
                                 diagnostics: diagnostics,
                                 budgetGuard: budgetGuard,
-                                activeBlockChain: activeBlockChain);
+                                activeBlockChain: activeBlockChain,
+                                parentTransform: effectiveTransform);
                             continue;
                         }
 
                         // Transform child entity
-                        string suffix = (colCount > 1 || rowCount > 1) ? $"_c{c}_r{r}" : string.Empty;
+                        string suffix = (colCount > 1 || rowCount > 1) ? $"_c{colIdx}_r{rowIdx}" : string.Empty;
                         string childHandleStr = $"{parentInstancePath}/{block.Name}:{insert.Handle:X}:{child.Handle:X}{suffix}";
                         string childLayer = string.Equals(child.Layer?.Name, "0", StringComparison.OrdinalIgnoreCase)
                             ? inheritedLayer
@@ -366,10 +561,7 @@ public static class AcadSharpEntityExtractor
                             childColor,
                             refOrder,
                             block.Name,
-                            TransformPoint,
-                            scaleX,
-                            scaleY,
-                            rotRad,
+                            effectiveTransform,
                             diagnostics,
                             budgetGuard);
 
@@ -381,16 +573,16 @@ public static class AcadSharpEntityExtractor
                     }
 
                     // Expand visible attributes attached to this insert on root instance
-                    if (c == 0 && r == 0 && insert.Attributes != null)
+                    if (colIdx == 0 && rowIdx == 0 && insert.Attributes != null)
                     {
                         foreach (var attr in insert.Attributes)
                         {
                             if (attr.IsInvisible) continue;
                             refOrder++;
-                            var (atx, aty) = TransformPoint(attr.InsertPoint.X, attr.InsertPoint.Y);
+                            var (atx, aty) = effectiveTransform.Transform(attr.InsertPoint.X, attr.InsertPoint.Y);
                             string attrText = DecodeCadText(attr.Value);
-                            double ah = (attr.Height > 0 ? attr.Height : 10.0) * Math.Abs(scaleY);
-                            double arot = attr.Rotation + rotRad;
+                            double ah = (attr.Height > 0 ? attr.Height : 10.0) * effectiveTransform.ScaleY;
+                            double arot = attr.Rotation + effectiveTransform.RotationAngle;
                             string attrFont = attr.Style?.Filename ?? attr.Style?.Name ?? "STANDARD";
                             string attrHandle = $"{parentInstancePath}/{block.Name}:{insert.Handle:X}:ATTR:{attr.Handle:X}";
 
@@ -436,7 +628,8 @@ public static class AcadSharpEntityExtractor
         int sourceOrder,
         string? blockOwner,
         List<CadExtractedDiagnostic> diagnostics,
-        CadBudgetGuard budgetGuard)
+        CadBudgetGuard budgetGuard,
+        string? layoutOwner = null)
     {
         string handleStr = entity.Handle.ToString("X");
         string layer = entity.Layer?.Name ?? "0";
@@ -502,15 +695,18 @@ public static class AcadSharpEntityExtractor
         }
         else if (entity is Ellipse ellipse)
         {
-            var ocs = OcsTransform.FromNormal(ellipse.Normal.X, ellipse.Normal.Y, ellipse.Normal.Z);
-            var (cx, cy) = ocs.Transform2D(ellipse.Center.X, ellipse.Center.Y, ellipse.Center.Z);
-            var (mx, my) = ocs.Transform2D(ellipse.MajorAxisEndPoint.X, ellipse.MajorAxisEndPoint.Y, ellipse.MajorAxisEndPoint.Z);
+            double cx = ellipse.Center.X;
+            double cy = ellipse.Center.Y;
+            double mx = ellipse.MajorAxisEndPoint.X;
+            double my = ellipse.MajorAxisEndPoint.Y;
+            double r = Math.Sqrt(mx * mx + my * my);
+            double rot = Math.Atan2(my, mx);
+
             var payload = new CadEllipsePayload(
                 new CadPoint3D(cx, cy, ellipse.Center.Z),
                 new CadPoint3D(mx, my, ellipse.MajorAxisEndPoint.Z),
                 ellipse.RadiusRatio, ellipse.StartParameter, ellipse.EndParameter);
 
-            double r = Math.Sqrt(mx * mx + my * my);
             return new CadExtractedEntity(
                 handleStr, layer, CadExtractedEntityType.Ellipse, color,
                 sourceOrder: sourceOrder, lineweight: lineweight, transparency: transparency,
@@ -519,7 +715,8 @@ public static class AcadSharpEntityExtractor
                 points: new[] { new CadExtractedPoint(cx, cy) },
                 radius: r,
                 startAngle: ellipse.StartParameter,
-                endAngle: ellipse.EndParameter);
+                endAngle: ellipse.EndParameter,
+                rotation: rot);
         }
         else if (entity is LwPolyline lwPoly)
         {
@@ -766,17 +963,19 @@ public static class AcadSharpEntityExtractor
                 foreach (var bEnt in dim.Block.Entities)
                 {
                     var childHandle = $"{handleStr}/DIM_BLK:{bEnt.Handle:X}";
+                    string childLayer = string.Equals(bEnt.Layer?.Name, "0", StringComparison.OrdinalIgnoreCase)
+                        ? layer
+                        : bEnt.Layer?.Name ?? layer;
+                    CadEntityColor childColor = bEnt.Color.IsByBlock ? color : ResolveColor(bEnt);
+
                     var extractedChild = TransformAndExtractEntity(
                         bEnt,
                         childHandle,
-                        layer,
-                        color,
+                        childLayer,
+                        childColor,
                         sourceOrder + (++subOrder),
                         dim.Block.Name,
-                        (x, y) => (x, y),
-                        scaleX: 1.0,
-                        scaleY: 1.0,
-                        rotation: 0.0,
+                        CadAffine2D.Identity,
                         diagnostics,
                         budgetGuard);
                     if (extractedChild != null)
@@ -1004,6 +1203,35 @@ public static class AcadSharpEntityExtractor
                 payload: payload,
                 points: new[] { new CadExtractedPoint(pt.Location.X, pt.Location.Y) });
         }
+        else if (entity is RasterImage raster)
+        {
+            string? refId = raster.Definition?.Name;
+            string? fileName = raster.Definition?.FileName;
+            double uLen = Math.Sqrt((raster.UVector.X * raster.UVector.X) + (raster.UVector.Y * raster.UVector.Y));
+            double vLen = Math.Sqrt((raster.VVector.X * raster.VVector.X) + (raster.VVector.Y * raster.VVector.Y));
+            double w = raster.Size.X * (uLen > 0 ? uLen : 1.0);
+            double h = raster.Size.Y * (vLen > 0 ? vLen : 1.0);
+            double rot = Math.Atan2(raster.UVector.Y, raster.UVector.X);
+
+            var clipPts = raster.ClipBoundaryVertices?.Select(p => new CadExtractedPoint(p.X, p.Y)).ToList();
+
+            var payload = new CadRasterPayload(
+                refId ?? fileName ?? "RASTER",
+                fileName,
+                new CadPoint3D(raster.InsertPoint.X, raster.InsertPoint.Y, raster.InsertPoint.Z),
+                w,
+                h,
+                rot,
+                ClipBoundary: clipPts);
+
+            return new CadExtractedEntity(
+                handleStr, layer, CadExtractedEntityType.Raster, color,
+                sourceOrder: sourceOrder, lineweight: lineweight, transparency: transparency,
+                linetype: linetype, linetypeScale: linetypeScale, blockOwner: blockOwner,
+                layoutOwner: layoutOwner,
+                payload: payload,
+                points: new[] { new CadExtractedPoint(raster.InsertPoint.X, raster.InsertPoint.Y), new CadExtractedPoint(raster.InsertPoint.X + w, raster.InsertPoint.Y + h) });
+        }
         else
         {
             // Unsupported entity: record diagnostic with handle and type
@@ -1030,10 +1258,7 @@ public static class AcadSharpEntityExtractor
         CadEntityColor color,
         int sourceOrder,
         string blockName,
-        Func<double, double, (double X, double Y)> transform,
-        double scaleX,
-        double scaleY,
-        double rotation,
+        CadAffine2D affineTransform,
         List<CadExtractedDiagnostic> diagnostics,
         CadBudgetGuard budgetGuard)
     {
@@ -1041,7 +1266,12 @@ public static class AcadSharpEntityExtractor
         var transparency = new CadEntityTransparency((byte)Math.Clamp(child.Transparency.Value, (short)0, (short)255), child.Transparency.IsByLayer, child.Transparency.IsByBlock);
         string? linetype = child.LineType?.Name;
         double linetypeScale = child.LineTypeScale > 0 ? child.LineTypeScale : 1.0;
-        bool isMirrored = (scaleX * scaleY) < 0;
+        double scaleX = affineTransform.ScaleX;
+        double scaleY = affineTransform.ScaleY;
+        double rotation = affineTransform.RotationAngle;
+        bool isMirrored = affineTransform.IsMirrored;
+
+        (double X, double Y) transform(double x, double y) => affineTransform.Transform(x, y);
 
         if (child is Line line)
         {
@@ -1562,9 +1792,14 @@ public static class AcadSharpEntityExtractor
             return CadEntityColor.ByBlock;
         }
 
-        if (entity.Color.TrueColor != 0)
+        if (entity.Color.IsByLayer)
         {
-            uint argb = 0xFF000000 | (uint)(entity.Color.TrueColor & 0x00FFFFFF);
+            return CadEntityColor.ByLayer;
+        }
+
+        if (entity.Color.IsTrueColor)
+        {
+            uint argb = 0xFF000000u | ((uint)entity.Color.R << 16) | ((uint)entity.Color.G << 8) | (uint)entity.Color.B;
             return CadEntityColor.FromTrueColor(argb);
         }
 
@@ -1681,6 +1916,7 @@ public static class AcadSharpEntityExtractor
         if (string.IsNullOrEmpty(input)) return string.Empty;
         var decoded = DecodeCadText(input);
         decoded = decoded.Replace("\\P", "\n", StringComparison.OrdinalIgnoreCase);
+        decoded = decoded.Replace("\\X", "\n", StringComparison.OrdinalIgnoreCase);
 
         var sb = new StringBuilder(decoded.Length);
         for (int i = 0; i < decoded.Length; i++)
@@ -1689,11 +1925,43 @@ public static class AcadSharpEntityExtractor
             if (c == '\\' && i + 1 < decoded.Length)
             {
                 char next = decoded[i + 1];
-                if (next is 'A' or 'H' or 'C' or 'f' or 'F' or 'Q' or 'W' or 'T' or 'S')
+                if (next == '~')
+                {
+                    sb.Append(' ');
+                    i++;
+                    continue;
+                }
+                if (next is 'L' or 'l' or 'O' or 'o' or 'K' or 'k')
+                {
+                    i++;
+                    continue;
+                }
+                if (next is 'A' or 'H' or 'C' or 'f' or 'F' or 'Q' or 'W' or 'T')
                 {
                     int semicolon = decoded.IndexOf(';', i);
                     if (semicolon > i)
                     {
+                        i = semicolon;
+                        continue;
+                    }
+                }
+                else if (next is 'S' or 's')
+                {
+                    int semicolon = decoded.IndexOf(';', i);
+                    if (semicolon > i)
+                    {
+                        var stack = decoded.Substring(i + 2, semicolon - (i + 2));
+                        var sep = stack.IndexOfAny(['^', '/', '#']);
+                        if (sep >= 0)
+                        {
+                            var num = stack.Substring(0, sep).Trim();
+                            var den = stack.Substring(sep + 1).Trim();
+                            sb.Append(num).Append('/').Append(den);
+                        }
+                        else
+                        {
+                            sb.Append(stack);
+                        }
                         i = semicolon;
                         continue;
                     }

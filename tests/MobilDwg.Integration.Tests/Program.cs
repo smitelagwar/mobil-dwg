@@ -142,7 +142,14 @@ public static class Program
             RunStage10TextDimensionHatchTests();
             RunStage11LayoutMeasurementSnapTests();
             RunStage12LifecycleTests();
+            await CadOpenCoordinatorD04Tests.RunAllAsync();
+            CadGeometryD06Tests.RunAll();
+            CadStyleAndBoundsD07Tests.RunAll();
+            CadTextDimensionHatchD08Tests.RunAll();
+            CadLayoutsAndToolsD09Tests.RunAll(repoRoot);
+            CadLifecycleD10Tests.RunAll();
             await RunStage13PerformanceAcceptanceTests();
+            await CadProductionD11Tests.RunAllAsync(repoRoot);
 
             bool failOnRegression = args.Contains("--regressions") || args.Contains("--strict-regressions");
             await CorrectionRegressionsP10ToP13.RunAllAsync(repoRoot, throwOnFailures: failOnRegression);

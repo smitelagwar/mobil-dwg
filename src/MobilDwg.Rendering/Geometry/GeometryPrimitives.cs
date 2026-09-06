@@ -115,7 +115,7 @@ public sealed record PolylinePrimitive : RenderGeometryPrimitive
 {
     private readonly ReadOnlyCollection<PolylineVertex> _vertices;
 
-    public PolylinePrimitive(IEnumerable<PolylineVertex> vertices, bool closed = false)
+    public PolylinePrimitive(IEnumerable<PolylineVertex> vertices, bool closed = false, double maxWidth = 0.0)
     {
         ArgumentNullException.ThrowIfNull(vertices);
         var copy = vertices.ToArray();
@@ -125,11 +125,13 @@ public sealed record PolylinePrimitive : RenderGeometryPrimitive
 
         _vertices = Array.AsReadOnly(copy);
         Closed = closed;
-        Bounds = GeometryBounds.ForPolyline(copy, closed);
+        MaxWidth = Math.Max(0.0, maxWidth);
+        Bounds = GeometryBounds.ForPolyline(copy, closed, MaxWidth);
     }
 
     public IReadOnlyList<PolylineVertex> Vertices => _vertices;
     public bool Closed { get; }
+    public double MaxWidth { get; }
     public override WorldBounds2 Bounds { get; }
 }
 
@@ -259,6 +261,29 @@ public sealed record SplinePrimitive : RenderGeometryPrimitive
     }
 }
 
+public sealed record ReferencePlaceholderPrimitive : RenderGeometryPrimitive
+{
+    public ReferencePlaceholderPrimitive(
+        WorldBounds2 bounds,
+        string referenceName,
+        string referenceType,
+        bool isResolved,
+        string statusMessage)
+    {
+        Bounds = bounds;
+        ReferenceName = referenceName;
+        ReferenceType = referenceType;
+        IsResolved = isResolved;
+        StatusMessage = statusMessage;
+    }
+
+    public override WorldBounds2 Bounds { get; }
+    public string ReferenceName { get; }
+    public string ReferenceType { get; }
+    public bool IsResolved { get; }
+    public string StatusMessage { get; }
+}
+
 internal static class GeometryMath
 {
     public const double Tau = Math.PI * 2d;
@@ -328,7 +353,7 @@ internal static class GeometryBounds
         return FromPoints(candidates.Select(ellipse.Evaluate).ToArray());
     }
 
-    public static WorldBounds2 ForPolyline(IReadOnlyList<PolylineVertex> vertices, bool closed)
+    public static WorldBounds2 ForPolyline(IReadOnlyList<PolylineVertex> vertices, bool closed, double maxWidth = 0.0)
     {
         var bounds = FromPoints(vertices.Select(vertex => vertex.Position).ToArray());
         var segmentCount = closed ? vertices.Count : vertices.Count - 1;
@@ -343,6 +368,17 @@ internal static class GeometryBounds
             var arc = BulgeArc(start.Position, end.Position, start.Bulge);
             bounds = bounds.Union(arc.Bounds);
         }
+
+        if (maxWidth > 0.0)
+        {
+            double halfW = maxWidth / 2.0;
+            bounds = new WorldBounds2(
+                bounds.MinX - halfW,
+                bounds.MinY - halfW,
+                bounds.MaxX + halfW,
+                bounds.MaxY + halfW);
+        }
+
         return bounds;
     }
 

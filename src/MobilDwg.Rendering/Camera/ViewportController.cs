@@ -45,9 +45,13 @@ public sealed class ViewportController
             throw new ArgumentException("Camera must be valid.", nameof(camera));
         }
 
+        var old = _camera;
         _camera = camera;
         UpdateLimitsForCurrentCenter();
-        _updateCount++;
+        if (_camera != old)
+        {
+            _updateCount++;
+        }
     }
 
     public void BeginInteraction()
@@ -62,6 +66,12 @@ public sealed class ViewportController
 
     public Camera2D Manipulate(ScreenPoint2 previousCentroid, ScreenPoint2 currentCentroid, double factor)
     {
+        if (factor == 1.0 && previousCentroid.X == currentCentroid.X && previousCentroid.Y == currentCentroid.Y)
+        {
+            return _camera;
+        }
+
+        var old = _camera;
         var anchorWorld = CameraTransform.ScreenToWorld(previousCentroid, _camera);
         var (minWupp, maxWupp) = ViewerZoomPolicy.CalculateZoomLimits(
             _sceneBounds, _camera.Center, anchorWorld, _camera.PixelWidth, _camera.PixelHeight);
@@ -74,16 +84,28 @@ public sealed class ViewportController
 
         _camera = _camera.Manipulate(previousCentroid, currentCentroid, factor, minWupp, maxWupp);
         EnforceCoordinateGuard();
-        _updateCount++;
+        if (_camera != old)
+        {
+            _updateCount++;
+        }
         return _camera;
     }
 
     public Camera2D Pan(double deltaScreenX, double deltaScreenY)
     {
+        if (deltaScreenX == 0 && deltaScreenY == 0)
+        {
+            return _camera;
+        }
+
+        var old = _camera;
         _camera = _camera.PanBy(deltaScreenX, deltaScreenY);
         EnforceCoordinateGuard();
         UpdateLimitsForCurrentCenter();
-        _updateCount++;
+        if (_camera != old)
+        {
+            _updateCount++;
+        }
         return _camera;
     }
 
@@ -117,18 +139,26 @@ public sealed class ViewportController
             return _camera;
         }
 
+        var old = _camera;
         _camera = ViewerZoomPolicy.CreateFitCamera(_sceneBounds.Value, _camera.PixelWidth, _camera.PixelHeight, paddingFraction);
-        _updateCount++;
+        if (_camera != old)
+        {
+            _updateCount++;
+        }
         return _camera;
     }
 
     public Camera2D Resize(int newPixelWidth, int newPixelHeight)
     {
+        var old = _camera;
         var (minWupp, maxWupp) = ViewerZoomPolicy.CalculateZoomLimits(
             _sceneBounds, _camera.Center, null, newPixelWidth, newPixelHeight);
         var clampedWupp = Math.Clamp(_camera.WorldUnitsPerPixel, minWupp, maxWupp);
         _camera = new Camera2D(newPixelWidth, newPixelHeight, _camera.Center, clampedWupp, minWupp, maxWupp);
-        _updateCount++;
+        if (_camera != old)
+        {
+            _updateCount++;
+        }
         return _camera;
     }
 

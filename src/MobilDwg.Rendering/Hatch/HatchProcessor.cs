@@ -65,7 +65,8 @@ public static class HatchProcessor
         double angleRadians,
         double spacing,
         WorldBounds2 bounds,
-        WorldPoint2 patternOrigin = default)
+        WorldPoint2 patternOrigin = default,
+        HatchIslandStyle islandStyle = HatchIslandStyle.Normal)
     {
         var result = new List<LinePrimitive>();
         if (loops.Count == 0 || spacing <= 0 || bounds.Width <= 0 || bounds.Height <= 0)
@@ -121,6 +122,12 @@ public static class HatchProcessor
         if (totalLines > MaxHatchLines)
         {
             stride = (int)Math.Ceiling((double)totalLines / MaxHatchLines);
+            // Align kStart with stride relative to origin (0) to maintain world phase during pan/zoom
+            var rem = kStart % stride;
+            if (rem != 0)
+            {
+                kStart += (rem < 0 ? -rem : (stride - rem));
+            }
         }
 
         // Segment length along D to safely span the coverage bounds
@@ -140,7 +147,7 @@ public static class HatchProcessor
             var lineEnd = new WorldPoint2(pBaseX + (v1 * dx), pBaseY + (v1 * dy));
 
             // Clip line against all loops using 1D parameter intervals
-            var intervals = ClipLineToLoops(lineStart, lineEnd, loops);
+            var intervals = ClipLineToLoops(lineStart, lineEnd, loops, islandStyle);
             foreach (var (t0, t1) in intervals)
             {
                 if (t1 - t0 > 1e-6)
@@ -158,7 +165,8 @@ public static class HatchProcessor
     private static List<(double T0, double T1)> ClipLineToLoops(
         WorldPoint2 start,
         WorldPoint2 end,
-        IReadOnlyList<HatchLoop> loops)
+        IReadOnlyList<HatchLoop> loops,
+        HatchIslandStyle islandStyle = HatchIslandStyle.Normal)
     {
         var intersections = new List<double>();
         var lx = end.X - start.X;
@@ -201,8 +209,8 @@ public static class HatchProcessor
             var midT = (t0 + t1) / 2d;
             var midPoint = new WorldPoint2(start.X + (midT * lx), start.Y + (midT * ly));
 
-            // Test if midpoint is inside outer boundary and outside islands
-            if (IsPointInsideHatch(midPoint, loops))
+            // Test if midpoint is inside outer boundary and respects island style
+            if (IsPointInsideHatch(midPoint, loops, islandStyle))
             {
                 validSegments.Add((t0, t1));
             }
@@ -211,8 +219,28 @@ public static class HatchProcessor
         return validSegments;
     }
 
-    public static bool IsPointInsideHatch(WorldPoint2 pt, IReadOnlyList<HatchLoop> loops)
+    public static bool IsPointInsideHatch(
+        WorldPoint2 pt,
+        IReadOnlyList<HatchLoop> loops,
+        HatchIslandStyle islandStyle = HatchIslandStyle.Normal)
     {
+        if (loops.Count == 0) return false;
+
+        if (islandStyle == HatchIslandStyle.Ignore)
+        {
+            return IsPointInPolygon(pt, loops[0].Vertices);
+        }
+
+        if (islandStyle == HatchIslandStyle.Outer)
+        {
+            if (!IsPointInPolygon(pt, loops[0].Vertices)) return false;
+            for (var i = 1; i < loops.Count; i++)
+            {
+                if (IsPointInPolygon(pt, loops[i].Vertices)) return false;
+            }
+            return true;
+        }
+
         var insideCount = 0;
         foreach (var loop in loops)
         {

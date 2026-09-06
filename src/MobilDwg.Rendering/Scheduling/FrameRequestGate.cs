@@ -6,6 +6,7 @@ public enum FrameGateState
 {
     Idle,
     Scheduled,
+    AwaitingPaint,
     Painting
 }
 
@@ -20,6 +21,7 @@ public sealed class FrameRequestGate
     private long _nextTicketId;
     private long _activeTicketId;
     private long _lastRequestTimeMs;
+    private long _lastRequestTicks;
     private int _requestedFrameCount;
     private int _paintedFrameCount;
 
@@ -31,6 +33,11 @@ public sealed class FrameRequestGate
     public long CurrentSurfaceGeneration
     {
         get { lock (_sync) return _currentSurfaceGeneration; }
+    }
+
+    public long LastRequestTicks
+    {
+        get { lock (_sync) return _lastRequestTicks; }
     }
 
     public int RequestedFrameCount
@@ -48,12 +55,35 @@ public sealed class FrameRequestGate
         get { lock (_sync) return _hasPendingRequest; }
     }
 
+    public bool IsFrameAwaitingOrScheduled
+    {
+        get
+        {
+            lock (_sync)
+            {
+                return _state is FrameGateState.Scheduled or FrameGateState.AwaitingPaint || _hasPendingRequest;
+            }
+        }
+    }
+
+    public bool HasActiveTicket
+    {
+        get
+        {
+            lock (_sync)
+            {
+                return _activeTicketId != 0 || _state == FrameGateState.Painting;
+            }
+        }
+    }
+
     public bool RequestFrame(long nowMs = 0)
     {
         lock (_sync)
         {
             _requestedFrameCount++;
             _lastRequestTimeMs = nowMs;
+            _lastRequestTicks = System.Diagnostics.Stopwatch.GetTimestamp();
 
             if (_state == FrameGateState.Idle)
             {
@@ -61,9 +91,20 @@ public sealed class FrameRequestGate
                 return true;
             }
 
-            // If already Scheduled or Painting, record pending request for the latest state
+            // If already Scheduled, AwaitingPaint, or Painting, record single pending request for latest state
             _hasPendingRequest = true;
             return false;
+        }
+    }
+
+    public void MarkAwaitingPaint()
+    {
+        lock (_sync)
+        {
+            if (_state == FrameGateState.Scheduled)
+            {
+                _state = FrameGateState.AwaitingPaint;
+            }
         }
     }
 

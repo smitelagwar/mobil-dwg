@@ -48,6 +48,19 @@ public sealed class MeasurementController
             5 => "cm",
             6 => "m",
             7 => "km",
+            8 => "μin",
+            9 => "mil",
+            10 => "yd",
+            11 => "Å",
+            12 => "nm",
+            13 => "μm",
+            14 => "dm",
+            15 => "dam",
+            16 => "hm",
+            17 => "Gm",
+            18 => "AU",
+            19 => "ly",
+            20 => "pc",
             _ => null
         };
     }

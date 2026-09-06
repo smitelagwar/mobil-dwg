@@ -33,8 +33,8 @@ public static class CadFinalRcAuditor
             new DependencyFreezeRecord("Microsoft.Maui.Controls", "10.0.100", "MIT", true, true, "8a8341df904323631be0ca30560a66d0c262744fe88554282fa209673a005370"),
             new DependencyFreezeRecord("Microsoft.Maui.Core", "10.0.100", "MIT", true, false, "6e6a1437346261271794711ee0fa096df3f2d29486c9d2f6fa72d1f73751296f"),
             new DependencyFreezeRecord("System.Text.Encoding.CodePages", "10.0.1", "MIT", true, true, "2d547ba964c23f7734138e4a9cfdb842b100989f6d76711d51c720d2c0b05b63"),
-            new DependencyFreezeRecord("SkiaSharp.Views.Maui.Controls", "4.151.1", "MIT", true, true, "skia-views-maui-controls-4.151.1-verified"),
-            new DependencyFreezeRecord("SkiaSharp.Views.Maui.Core", "4.151.1", "MIT", true, false, "skia-views-maui-core-4.151.1-verified"),
+            new DependencyFreezeRecord("SkiaSharp.Views.Maui.Controls", "4.151.1", "MIT", true, true, "0a5e094ac41d639649cae1a2c681809b4a5126306ec0dca57561c3d4ebeebb3d"),
+            new DependencyFreezeRecord("SkiaSharp.Views.Maui.Core", "4.151.1", "MIT", true, false, "b126f14975d37c4f4c691542ff0d1514b9c756c41a8a6e3d50a9c52909a9b226"),
             new DependencyFreezeRecord("IxMilia.Dxf", "0.8.4", "MIT", true, false, "9c51ebcb2cfba0d173bc5c8a3c5d6fbb33d6b1d8f7602ec4c8b2bb857945d7a6")
         };
     }

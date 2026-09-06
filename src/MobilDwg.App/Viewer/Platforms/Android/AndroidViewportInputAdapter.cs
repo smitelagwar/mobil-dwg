@@ -13,25 +13,66 @@ public sealed class AndroidViewportInputAdapter : IDisposable
     private readonly AndroidView _nativeView;
     private readonly ViewportInteractionEngine _engine;
     private readonly Func<(int Width, int Height)> _surfaceSizeProvider;
+    private readonly Func<long>? _surfaceGenerationProvider;
     private bool _disposed;
 
     public AndroidViewportInputAdapter(
         AndroidView nativeView,
         ViewportInteractionEngine engine,
-        Func<(int Width, int Height)> surfaceSizeProvider)
+        Func<(int Width, int Height)> surfaceSizeProvider,
+        Func<long>? surfaceGenerationProvider = null)
     {
         _nativeView = nativeView ?? throw new ArgumentNullException(nameof(nativeView));
         _engine = engine ?? throw new ArgumentNullException(nameof(engine));
         _surfaceSizeProvider = surfaceSizeProvider ?? throw new ArgumentNullException(nameof(surfaceSizeProvider));
+        _surfaceGenerationProvider = surfaceGenerationProvider;
+
+        // Apply Android ViewConfiguration values to engine configuration
+        if (_nativeView.Context != null)
+        {
+            var vc = ViewConfiguration.Get(_nativeView.Context);
+            if (vc != null)
+            {
+                _engine.Configuration = _engine.Configuration with
+                {
+                    TouchSlopPx = vc.ScaledTouchSlop,
+                    DoubleTapSlopPx = vc.ScaledDoubleTapSlop,
+                    DoubleTapTimeoutMs = ViewConfiguration.DoubleTapTimeout,
+                    TapTimeoutMs = ViewConfiguration.TapTimeout,
+                    LongPressTimeoutMs = ViewConfiguration.LongPressTimeout
+                };
+            }
+        }
 
         _nativeView.Touch += OnTouch;
+        _nativeView.ViewDetachedFromWindow += OnDetachedFromWindow;
+        _nativeView.FocusChange += OnFocusChange;
     }
 
     public AndroidView NativeView => _nativeView;
     public ViewportInteractionEngine Engine => _engine;
 
+    private void OnDetachedFromWindow(object? sender, AndroidView.ViewDetachedFromWindowEventArgs e)
+    {
+        _engine.CancelGesture();
+    }
+
+    private void OnFocusChange(object? sender, AndroidView.FocusChangeEventArgs e)
+    {
+        if (!e.HasFocus)
+        {
+            _engine.CancelGesture();
+        }
+    }
+
     private void OnTouch(object? sender, AndroidView.TouchEventArgs e)
     {
+        if (_disposed)
+        {
+            e.Handled = false;
+            return;
+        }
+
         var motionEvent = e.Event;
         if (motionEvent == null)
         {
@@ -56,8 +97,14 @@ public sealed class AndroidViewportInputAdapter : IDisposable
         }
 
         var (surfaceW, surfaceH) = _surfaceSizeProvider();
+        // Native coordinates: _nativeView.Width and Height are in native pixels.
+        // Surface physical pixels are (surfaceW, surfaceH).
+        // Only scale if the native view dimensions differ from the surface pixel dimensions.
+        // NEVER multiply by DisplayMetrics.Density twice!
         double scaleX = _nativeView.Width > 0 && surfaceW > 0 ? (double)surfaceW / _nativeView.Width : 1.0;
         double scaleY = _nativeView.Height > 0 && surfaceH > 0 ? (double)surfaceH / _nativeView.Height : 1.0;
+
+        long currentGen = _surfaceGenerationProvider?.Invoke() ?? 0L;
 
         // Process historical events if available for high-frequency precision
         int historySize = motionEvent.HistorySize;
@@ -81,7 +128,7 @@ public sealed class AndroidViewportInputAdapter : IDisposable
                     actionIndex,
                     histTime,
                     histPointers,
-                    0);
+                    currentGen);
                 _engine.ProcessPacket(histPacket);
             }
         }
@@ -113,9 +160,20 @@ public sealed class AndroidViewportInputAdapter : IDisposable
             actionIndex,
             motionEvent.EventTime,
             pointers,
-            0);
+            currentGen);
 
         _engine.ProcessPacket(packet);
+    }
+
+    public void CancelCurrentGesture()
+    {
+        _engine.CancelGesture();
+    }
+
+    public void CancelAndDetach()
+    {
+        _engine.CancelGesture();
+        Dispose();
     }
 
     public void Dispose()
@@ -123,6 +181,8 @@ public sealed class AndroidViewportInputAdapter : IDisposable
         if (!_disposed)
         {
             _nativeView.Touch -= OnTouch;
+            _nativeView.ViewDetachedFromWindow -= OnDetachedFromWindow;
+            _nativeView.FocusChange -= OnFocusChange;
             _nativeView.Parent?.RequestDisallowInterceptTouchEvent(false);
             _disposed = true;
         }

@@ -4,6 +4,8 @@ using System.Collections.ObjectModel;
 using MobilDwg.Rendering.Geometry;
 using MobilDwg.Rendering.Scene;
 
+using SkiaSharp;
+
 namespace MobilDwg.Rendering.Text;
 
 public sealed record TextLineLayout(
@@ -15,7 +17,6 @@ public sealed record TextLineLayout(
 public sealed class TextLayout
 {
     private const double LineSpacingRatio = 1.33d;
-    private const double CharWidthRatio = 0.75d;
     private const double DescentRatio = 0.25d;
 
     public TextLayout(
@@ -47,8 +48,12 @@ public sealed class TextLayout
             ? new[] { string.Empty }
             : Text.Replace("\r\n", "\n").Split('\n');
 
+        var typeface = FontSubstitutionResolver.GetSkiaTypeface(FontKey);
+        using var font = new SKFont(typeface, (float)Height);
+
         var lineSpacing = Height * LineSpacingRatio;
-        var descent = Height * DescentRatio;
+        var fontDescent = font.Metrics.Descent > 0 ? (double)font.Metrics.Descent : Height * DescentRatio;
+        var descent = Math.Max(fontDescent, Height * DescentRatio);
         var lineCount = rawLines.Length;
 
         var measuredLines = new (string text, double width)[lineCount];
@@ -56,8 +61,18 @@ public sealed class TextLayout
         for (var i = 0; i < lineCount; i++)
         {
             var lText = rawLines[i];
-            var charCount = Math.Max(1, lText.Length);
-            var w = charCount * Height * CharWidthRatio * WidthFactor;
+            double w;
+            if (string.IsNullOrEmpty(lText))
+            {
+                w = 0d;
+            }
+            else
+            {
+                var advance = (double)font.MeasureText(lText);
+                font.MeasureText(lText, out var textBounds);
+                var measured = Math.Max(advance, (double)textBounds.Width);
+                w = measured * WidthFactor;
+            }
             measuredLines[i] = (lText, w);
             if (w > maxWidth) maxWidth = w;
         }

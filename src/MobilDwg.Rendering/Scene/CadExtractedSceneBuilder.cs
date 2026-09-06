@@ -4,8 +4,11 @@ using MobilDwg.Rendering.Diagnostics;
 using MobilDwg.Rendering.Dimensions;
 using MobilDwg.Rendering.Geometry;
 using MobilDwg.Rendering.Hatch;
+using MobilDwg.Rendering.Layouts;
+using MobilDwg.Rendering.References;
 using MobilDwg.Rendering.Styles;
 using MobilDwg.Rendering.Text;
+using MobilDwg.Rendering.Transforms;
 
 namespace MobilDwg.Rendering.Scene;
 
@@ -18,21 +21,60 @@ public static class CadExtractedSceneBuilder
         ArgumentNullException.ThrowIfNull(document);
         colorContext ??= RenderColorContext.Dark;
 
-        // 1. Build Layer Table
+        // 1. Build Linetype Map
+        var linetypeMap = new Dictionary<string, CadLinetype>(StringComparer.OrdinalIgnoreCase)
+        {
+            ["CONTINUOUS"] = CadLinetype.Continuous,
+            ["BYLAYER"] = CadLinetype.ByLayer,
+            ["BYBLOCK"] = CadLinetype.ByBlock,
+            ["DASHED"] = CadLinetype.Dashed,
+            ["HIDDEN"] = CadLinetype.Hidden,
+            ["CENTER"] = CadLinetype.Center,
+            ["DOT"] = CadLinetype.Dot,
+            ["DASHDOT"] = CadLinetype.DashDot,
+            ["PHANTOM"] = CadLinetype.Phantom,
+        };
+
+        foreach (var lt in document.Linetypes)
+        {
+            if (!linetypeMap.ContainsKey(lt.Name))
+            {
+                var pattern = lt.PatternSegments.Select(s => (float)s).ToArray();
+                linetypeMap[lt.Name] = new CadLinetype(lt.Name, lt.Description, CadLinetypeKind.Pattern, pattern);
+            }
+        }
+
+        // Build Layer Table
         var layerDefinitions = new List<LayerDefinition>(document.Layers.Count + 1);
         var layerTokenMap = new Dictionary<string, RenderLayerToken>(document.Layers.Count + 2, StringComparer.OrdinalIgnoreCase);
 
         foreach (var l in document.Layers)
         {
-            CadColor layerColor = (l.AciIndex > 0 && l.AciIndex <= 256)
-                ? CadColor.FromAci(l.AciIndex)
-                : CadColor.FromArgb(l.ArgbColor);
+            CadColor layerColor = l.HasTrueColor
+                ? CadColor.FromArgb(l.ArgbColor)
+                : (l.AciIndex > 0 && l.AciIndex <= 256)
+                    ? CadColor.FromAci(l.AciIndex)
+                    : CadColor.FromArgb(l.ArgbColor);
 
             CadLineweight layerLw = l.Lineweight >= 0
                 ? CadLineweight.FromHundredthsOfMm(l.Lineweight)
                 : CadLineweight.Default;
 
-            var def = new LayerDefinition(l.Name, layerColor, CadLinetype.Continuous, layerLw, l.IsVisible);
+            CadLinetype layerLinetype = CadLinetype.Continuous;
+            if (!string.IsNullOrWhiteSpace(l.LineType) && linetypeMap.TryGetValue(l.LineType, out var resolvedLayerLt))
+            {
+                layerLinetype = resolvedLayerLt;
+            }
+
+            var def = new LayerDefinition(
+                l.Name,
+                layerColor,
+                layerLinetype,
+                layerLw,
+                isVisible: l.IsVisible,
+                isFrozen: l.IsFrozen,
+                isLocked: l.IsLocked);
+
             layerDefinitions.Add(def);
             layerTokenMap[l.Name] = new RenderLayerToken(l.Name);
         }
@@ -64,6 +106,11 @@ public static class CadExtractedSceneBuilder
         foreach (var entity in document.Entities)
         {
             fallbackIndex++;
+            if (!entity.IsVisible)
+            {
+                continue;
+            }
+
             if (!layerTokenMap.TryGetValue(entity.LayerName, out var layerToken))
             {
                 layerToken = new RenderLayerToken(entity.LayerName);
@@ -85,11 +132,29 @@ public static class CadExtractedSceneBuilder
                     ? CadLineweight.ByLayer
                     : CadLineweight.FromHundredthsOfMm(entity.Lineweight.ValueHundredthsMm);
 
+            CadLinetype entityLinetype = CadLinetype.ByLayer;
+            if (!string.IsNullOrWhiteSpace(entity.Linetype))
+            {
+                if (string.Equals(entity.Linetype, "ByLayer", StringComparison.OrdinalIgnoreCase))
+                    entityLinetype = CadLinetype.ByLayer;
+                else if (string.Equals(entity.Linetype, "ByBlock", StringComparison.OrdinalIgnoreCase))
+                    entityLinetype = CadLinetype.ByBlock;
+                else if (linetypeMap.TryGetValue(entity.Linetype, out var resolvedEntityLt))
+                    entityLinetype = resolvedEntityLt;
+                else
+                    entityLinetype = new CadLinetype(entity.Linetype, entity.Linetype, CadLinetypeKind.Pattern, Array.Empty<float>());
+            }
+
+            byte alpha = entity.Transparency.ByLayer || entity.Transparency.ByBlock
+                ? (byte)255
+                : entity.Transparency.Alpha;
+
             var cadStyle = new CadEntityStyle(
                 entityColor,
-                CadLinetype.ByLayer,
+                entityLinetype,
                 lineweight,
-                entity.LinetypeScale);
+                entity.LinetypeScale,
+                alpha);
 
             var styleToken = entity.Color.Method switch
             {
@@ -99,10 +164,14 @@ public static class CadExtractedSceneBuilder
                 _ => ByLayerToken
             };
 
+            int effectiveOrder = entity.DrawOrder > 0
+                ? entity.DrawOrder
+                : (entity.SourceOrder > 0 ? entity.SourceOrder : fallbackIndex);
+
             var sourceRef = new RenderSourceReference(
                 entity.EntityType.ToString(),
                 entity.Handle,
-                entity.SourceOrder > 0 ? entity.SourceOrder : fallbackIndex);
+                effectiveOrder);
 
             var primitives = new List<RenderGeometryPrimitive>(1);
             ConvertExtractedEntityToPrimitives(entity, primitives, cadStyle);
@@ -116,6 +185,33 @@ public static class CadExtractedSceneBuilder
                     sourceRef,
                     primitives,
                     cadStyle));
+
+                foreach (var p in primitives)
+                {
+                    if (p is ReferencePlaceholderPrimitive rp && !rp.IsResolved)
+                    {
+                        assembler.AddDiagnostic(new SceneDiagnostic(
+                            SceneDiagnosticKind.Substituted,
+                            rp.ReferenceType == "XREF" ? "UNRESOLVED_XREF" : "MISSING_RASTER",
+                            rp.StatusMessage,
+                            new RenderEntityId(entity.Handle)));
+                    }
+                    else if (p is MissingReferencePrimitive mr)
+                    {
+                        assembler.AddDiagnostic(new SceneDiagnostic(
+                            SceneDiagnosticKind.Substituted,
+                            mr.DiagnosticCode,
+                            mr.DiagnosticMessage,
+                            new RenderEntityId(entity.Handle)));
+                    }
+                }
+            }
+            else if (entity.EntityType == CadExtractedEntityType.Unsupported || entity.EntityType == CadExtractedEntityType.Other)
+            {
+                assembler.AddDiagnostic(new SceneDiagnostic(
+                    SceneDiagnosticKind.Unsupported,
+                    "UNSUPPORTED_ENTITY",
+                    $"Entity '{entity.Handle}' ({entity.EntityType}) has unsupported geometry."));
             }
         }
 
@@ -172,12 +268,15 @@ public static class CadExtractedSceneBuilder
 
             case CadExtractedEntityType.Polyline when entity.Vertices is { Count: >= 2 }:
                 var polyPoints = new List<PolylineVertex>(entity.Vertices.Count);
+                double maxPolyWidth = 0.0;
                 foreach (var v in entity.Vertices)
                 {
                     polyPoints.Add(new PolylineVertex(new WorldPoint2(v.X, v.Y), v.Bulge));
+                    double vw = Math.Max(v.StartWidth, v.EndWidth);
+                    if (vw > maxPolyWidth) maxPolyWidth = vw;
                 }
                 bool isClosed = entity.Payload is CadPolylinePayload pl && pl.IsClosed;
-                primitives.Add(new PolylinePrimitive(polyPoints, closed: isClosed));
+                primitives.Add(new PolylinePrimitive(polyPoints, closed: isClosed, maxWidth: maxPolyWidth));
                 break;
 
             case CadExtractedEntityType.Spline when entity.Vertices is { Count: >= 2 }:
@@ -228,9 +327,19 @@ public static class CadExtractedSceneBuilder
 
                     double textHeight = entity.TextHeight > 0 ? entity.TextHeight : 12.0;
                     var pos = new WorldPoint2(entity.Points[0].X, entity.Points[0].Y);
+                    string rawText = entity.Text;
+                    if (entity.EntityType == CadExtractedEntityType.MText)
+                    {
+                        var parsed = MTextParser.Parse(rawText);
+                        rawText = parsed.PlainText;
+                        if (!string.IsNullOrEmpty(parsed.ExtractedFontFamily))
+                        {
+                            fontName = parsed.ExtractedFontFamily;
+                        }
+                    }
 
                     primitives.Add(new TextPrimitive(
-                        entity.Text,
+                        rawText,
                         pos,
                         height: textHeight,
                         rotationRadians: entity.Rotation,
@@ -244,8 +353,8 @@ public static class CadExtractedSceneBuilder
                 break;
 
             case CadExtractedEntityType.Solid when entity.Vertices is { Count: >= 3 }:
-                var solidPoly = entity.Vertices.Select(v => new PolylineVertex(new WorldPoint2(v.X, v.Y))).ToList();
-                primitives.Add(new PolylinePrimitive(solidPoly, closed: true));
+                var solidPts = entity.Vertices.Select(v => new WorldPoint2(v.X, v.Y)).ToList();
+                primitives.Add(new PolygonPrimitive(solidPts));
                 break;
 
             case CadExtractedEntityType.Hatch:
@@ -273,20 +382,22 @@ public static class CadExtractedSceneBuilder
                         }
 
                         var origin = new WorldPoint2(hatchPayload.Origin.X, hatchPayload.Origin.Y);
+                        double hatchSpacing = Math.Max(0.1, hatchPayload.Scale > 0 ? hatchPayload.Scale : 1.0);
                         var patternLines = !hatchPayload.IsSolid
                             ? HatchProcessor.GeneratePatternLines(
                                 hatchLoops,
                                 hatchPayload.Angle,
-                                Math.Max(0.5, hatchPayload.Scale > 0 ? hatchPayload.Scale * 5.0 : 5.0),
+                                hatchSpacing,
                                 unionBounds,
-                                origin)
+                                origin,
+                                HatchIslandStyle.Normal)
                             : null;
 
                         primitives.Add(new HatchPrimitive(
                             hatchLoops,
                             patternName: hatchPayload.PatternName,
                             patternAngleRadians: hatchPayload.Angle,
-                            patternScale: hatchPayload.Scale > 0 ? hatchPayload.Scale : 1.0,
+                            patternScale: hatchSpacing,
                             islandStyle: HatchIslandStyle.Normal,
                             isSolid: hatchPayload.IsSolid,
                             patternLines: patternLines,
@@ -390,8 +501,64 @@ public static class CadExtractedSceneBuilder
                 primitives.Add(new LinePrimitive(new WorldPoint2(px, py - 1), new WorldPoint2(px, py + 1)));
                 break;
 
+            case CadExtractedEntityType.Insert when entity.Payload is CadXrefPayload xref:
+                var xBounds = xref.ApproxBounds.HasValue
+                    ? new WorldBounds2(xref.ApproxBounds.Value.MinX, xref.ApproxBounds.Value.MinY, xref.ApproxBounds.Value.MaxX, xref.ApproxBounds.Value.MaxY)
+                    : new WorldBounds2(xref.InsertionPoint.X, xref.InsertionPoint.Y, xref.InsertionPoint.X + 100.0, xref.InsertionPoint.Y + 100.0);
+
+                primitives.Add(new ReferencePlaceholderPrimitive(
+                    xBounds,
+                    xref.BlockName,
+                    "XREF",
+                    xref.IsResolved,
+                    $"Unresolved external reference (XREF) '{xref.BlockName}' at path '{xref.XrefPath}'."));
+                break;
+
+            case CadExtractedEntityType.Raster:
+                if (entity.Payload is CadRasterPayload raster)
+                {
+                    var rBounds = new WorldBounds2(
+                        raster.InsertionPoint.X,
+                        raster.InsertionPoint.Y,
+                        raster.InsertionPoint.X + Math.Max(1.0, raster.Width),
+                        raster.InsertionPoint.Y + Math.Max(1.0, raster.Height));
+
+                    if (!string.IsNullOrEmpty(raster.ResolvedPath) && File.Exists(raster.ResolvedPath))
+                    {
+                        var rot = Transform2D.CreateRotation(raster.Rotation);
+                        var trans = Transform2D.CreateTranslation(raster.InsertionPoint.X, raster.InsertionPoint.Y);
+                        primitives.Add(new RasterImagePrimitive(
+                            raster.ReferenceId ?? "RASTER",
+                            raster.ResolvedPath,
+                            null,
+                            rBounds,
+                            trans * rot,
+                            (int)Math.Max(1, raster.Width),
+                            (int)Math.Max(1, raster.Height),
+                            raster.ClipBoundary?.Select(p => new WorldPoint2(p.X, p.Y))));
+                    }
+                    else
+                    {
+                        primitives.Add(new ReferencePlaceholderPrimitive(
+                            rBounds,
+                            raster.ReferenceId ?? "RASTER",
+                            "RASTER",
+                            false,
+                            $"Missing Raster reference '{raster.ReferenceId}'."));
+                    }
+                }
+                break;
+
             case CadExtractedEntityType.Unsupported or CadExtractedEntityType.Other:
-                if (entity.Points is { Count: >= 1 })
+                if (entity.Payload is CadUnsupportedPayload unsp && unsp.ApproxBounds.HasValue)
+                {
+                    var b = unsp.ApproxBounds.Value;
+                    primitives.Add(new LinePrimitive(new WorldPoint2(b.MinX, b.MinY), new WorldPoint2(b.MaxX, b.MinY)));
+                    primitives.Add(new LinePrimitive(new WorldPoint2(b.MaxX, b.MinY), new WorldPoint2(b.MaxX, b.MaxY)));
+                    primitives.Add(new LinePrimitive(new WorldPoint2(b.MaxX, b.MaxY), new WorldPoint2(b.MinX, b.MaxY)));
+                    primitives.Add(new LinePrimitive(new WorldPoint2(b.MinX, b.MaxY), new WorldPoint2(b.MinX, b.MinY)));
+                }
+                else if (entity.Points is { Count: >= 1 })
                 {
                     double ux = entity.Points[0].X;
                     double uy = entity.Points[0].Y;
@@ -400,5 +567,74 @@ public static class CadExtractedSceneBuilder
                 }
                 break;
         }
+    }
+
+    public static IReadOnlyList<CadLayoutDefinition> BuildLayoutDefinitions(
+        CadExtractedDocument document,
+        RenderColorContext? colorContext = null)
+    {
+        ArgumentNullException.ThrowIfNull(document);
+        colorContext ??= RenderColorContext.Dark;
+
+        var result = new List<CadLayoutDefinition>();
+
+        foreach (var layout in document.Layouts)
+        {
+            var pBounds = new WorldBounds2(
+                layout.PaperBounds.MinX,
+                layout.PaperBounds.MinY,
+                layout.PaperBounds.MaxX,
+                layout.PaperBounds.MaxY);
+
+            if (layout.IsModelSpace)
+            {
+                result.Add(new CadLayoutDefinition(layout.Name, isModelSpace: true, layout.TabOrder, pBounds));
+                continue;
+            }
+
+            var paperEntities = new List<RenderSceneEntity>();
+            int order = 0;
+            foreach (var pe in layout.Entities)
+            {
+                order++;
+                var prims = new List<RenderGeometryPrimitive>();
+                ConvertExtractedEntityToPrimitives(pe, prims, CadEntityStyle.Default);
+                if (prims.Count > 0)
+                {
+                    paperEntities.Add(new RenderSceneEntity(
+                        new RenderEntityId(string.IsNullOrEmpty(pe.Handle) ? $"PE_{order}" : pe.Handle),
+                        new RenderLayerToken(pe.LayerName),
+                        new RenderStyleToken("BYLAYER"),
+                        new RenderSourceReference("PAPER_SPACE", pe.Handle, order),
+                        prims));
+                }
+            }
+
+            var viewports = new List<CadLayoutViewport>();
+            foreach (var vp in layout.Viewports)
+            {
+                viewports.Add(new CadLayoutViewport(
+                    vp.Id,
+                    new WorldPoint2(vp.PaperCenter.X, vp.PaperCenter.Y),
+                    vp.PaperWidth,
+                    vp.PaperHeight,
+                    new WorldPoint2(vp.ViewCenter.X, vp.ViewCenter.Y),
+                    vp.ViewHeight,
+                    vp.TwistAngleRadians,
+                    vp.FrozenLayers,
+                    vp.ClipBoundary?.Select(p => new WorldPoint2(p.X, p.Y)),
+                    vp.IsActive));
+            }
+
+            result.Add(new CadLayoutDefinition(
+                layout.Name,
+                isModelSpace: false,
+                layout.TabOrder,
+                pBounds,
+                paperEntities,
+                viewports));
+        }
+
+        return result.AsReadOnly();
     }
 }

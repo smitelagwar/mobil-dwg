@@ -83,7 +83,9 @@ public sealed record CadExtractedLayer(
     bool IsVisible = true,
     bool IsLocked = false,
     string LineType = "Continuous",
-    short Lineweight = -1);
+    short Lineweight = -1,
+    bool IsFrozen = false,
+    bool HasTrueColor = false);
 
 public sealed record CadExtractedLinetype(
     string Name,
@@ -227,7 +229,40 @@ public sealed record CadRasterPayload(
     double Width,
     double Height,
     double Rotation,
-    CadVector3D Normal = default);
+    CadVector3D Normal = default,
+    IReadOnlyList<CadExtractedPoint>? ClipBoundary = null);
+
+public sealed record CadXrefPayload(
+    string BlockName,
+    string? XrefPath,
+    bool IsResolved,
+    string? ResolvedPath,
+    CadPoint3D InsertionPoint,
+    double ScaleX = 1.0,
+    double ScaleY = 1.0,
+    double ScaleZ = 1.0,
+    double Rotation = 0.0,
+    CadExtractedBounds? ApproxBounds = null);
+
+public sealed record CadExtractedViewport(
+    string Id,
+    CadExtractedPoint PaperCenter,
+    double PaperWidth,
+    double PaperHeight,
+    CadExtractedPoint ViewCenter,
+    double ViewHeight,
+    double TwistAngleRadians = 0.0,
+    IReadOnlyList<string>? FrozenLayers = null,
+    IReadOnlyList<CadExtractedPoint>? ClipBoundary = null,
+    bool IsActive = true);
+
+public sealed record CadExtractedLayout(
+    string Name,
+    bool IsModelSpace,
+    int TabOrder,
+    CadExtractedBounds PaperBounds,
+    IReadOnlyList<CadExtractedEntity> Entities,
+    IReadOnlyList<CadExtractedViewport> Viewports);
 
 public sealed record CadUnsupportedPayload(
     string TypeName,
@@ -239,7 +274,8 @@ public sealed record CadExtractedMetadata(
     string Version,
     string? DisplayName,
     string Units = "Unitless",
-    double Measurement = 0.0);
+    double Measurement = 0.0,
+    int InsUnits = 0);
 
 public sealed record CadExtractedEntity
 {
@@ -273,7 +309,7 @@ public sealed record CadExtractedEntity
         EntityType = entityType;
         Color = color;
         SourceOrder = sourceOrder;
-        DrawOrder = drawOrder;
+        DrawOrder = drawOrder > 0 ? drawOrder : sourceOrder;
         IsVisible = isVisible;
         Lineweight = lineweight;
         Transparency = transparency;
@@ -370,7 +406,8 @@ public sealed record CadExtractedDocument
         IReadOnlyList<CadExtractedDimensionStyle>? dimensionStyles = null,
         IReadOnlyDictionary<string, IReadOnlyList<CadExtractedEntity>>? blockDefinitions = null,
         IReadOnlyList<CadExtractedDiagnostic>? diagnostics = null,
-        IReadOnlyList<string>? layoutNames = null)
+        IReadOnlyList<string>? layoutNames = null,
+        IReadOnlyList<CadExtractedLayout>? layouts = null)
     {
         Format = format;
         Version = version;
@@ -386,7 +423,8 @@ public sealed record CadExtractedDocument
         DimensionStyles = dimensionStyles ?? Array.Empty<CadExtractedDimensionStyle>();
         BlockDefinitions = blockDefinitions ?? ReadOnlyDictionary<string, IReadOnlyList<CadExtractedEntity>>.Empty;
         Diagnostics = diagnostics ?? Array.Empty<CadExtractedDiagnostic>();
-        LayoutNames = layoutNames ?? Array.Empty<string>();
+        Layouts = layouts ?? Array.Empty<CadExtractedLayout>();
+        LayoutNames = layoutNames ?? (Layouts.Count > 0 ? Layouts.Select(l => l.Name).ToArray() : Array.Empty<string>());
     }
 
     public string Format { get; }
@@ -398,12 +436,14 @@ public sealed record CadExtractedDocument
     public double MaxX { get; }
     public double MaxY { get; }
     public CadExtractedMetadata Metadata { get; }
+    public int InsUnits => Metadata.InsUnits;
     public IReadOnlyList<CadExtractedLinetype> Linetypes { get; }
     public IReadOnlyList<CadExtractedTextStyle> TextStyles { get; }
     public IReadOnlyList<CadExtractedDimensionStyle> DimensionStyles { get; }
     public IReadOnlyDictionary<string, IReadOnlyList<CadExtractedEntity>> BlockDefinitions { get; }
     public IReadOnlyList<CadExtractedDiagnostic> Diagnostics { get; }
     public IReadOnlyList<string> LayoutNames { get; }
+    public IReadOnlyList<CadExtractedLayout> Layouts { get; }
 
     public int SupportedEntityCount =>
         Entities.Count(e => e.EntityType != CadExtractedEntityType.Other && e.EntityType != CadExtractedEntityType.Unsupported);

@@ -73,6 +73,19 @@ public readonly record struct WorldBounds2
         Math.Max(MaxX, other.MaxX),
         Math.Max(MaxY, other.MaxY));
 
+    public WorldBounds2 Intersect(WorldBounds2 other)
+    {
+        double minX = Math.Max(MinX, other.MinX);
+        double minY = Math.Max(MinY, other.MinY);
+        double maxX = Math.Min(MaxX, other.MaxX);
+        double maxY = Math.Min(MaxY, other.MaxY);
+        if (minX > maxX || minY > maxY)
+        {
+            return new WorldBounds2(0, 0, 0, 0);
+        }
+        return new WorldBounds2(minX, minY, maxX, maxY);
+    }
+
     public bool Intersects(WorldBounds2 other) =>
         MinX <= other.MaxX && MaxX >= other.MinX &&
         MinY <= other.MaxY && MaxY >= other.MinY;

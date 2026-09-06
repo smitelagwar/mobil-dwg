@@ -4,6 +4,7 @@ using System.IO;
 using MobilDwg.Rendering.Camera;
 using MobilDwg.Rendering.Coordinates;
 using MobilDwg.Rendering.Geometry;
+using MobilDwg.Rendering.Hatch;
 using MobilDwg.Rendering.Layouts;
 using MobilDwg.Rendering.References;
 using MobilDwg.Rendering.Scene;
@@ -178,19 +179,25 @@ public static class SkiaScenePainter
 
         if (primitive is HatchPrimitive hatchPrimitive)
         {
-            DrawHatchPrimitive(canvas, hatchPrimitive, camera, strokePaint, fillPaint, qualityMode);
+            DrawHatchPrimitive(canvas, hatchPrimitive, camera, strokePaint, fillPaint, qualityMode, geometryCache, primitiveKey, sceneRevision, lodBand);
             return;
         }
 
         if (primitive is ViewportPrimitive viewportPrimitive)
         {
-            DrawViewportPrimitive(canvas, viewportPrimitive, camera, tessellation, strokePaint, fillPaint, density, enableOptimization, geometryCache, resourceCache, sceneRevision, lodBand, qualityMode);
+            DrawViewportPrimitive(canvas, viewportPrimitive, camera, tessellation, strokePaint, fillPaint, density, enableOptimization, geometryCache, resourceCache, sceneRevision, lodBand, qualityMode, primitiveKey);
             return;
         }
 
         if (primitive is MissingReferencePrimitive missingRef)
         {
             DrawMissingReferencePrimitive(canvas, missingRef, camera, strokePaint, density);
+            return;
+        }
+
+        if (primitive is ReferencePlaceholderPrimitive placeholder)
+        {
+            DrawReferencePlaceholderPrimitive(canvas, placeholder, camera, strokePaint, density);
             return;
         }
 
@@ -384,12 +391,19 @@ public static class SkiaScenePainter
         Camera2D camera,
         SKPaint strokePaint,
         SKPaint fillPaint,
-        RenderQualityMode qualityMode)
+        RenderQualityMode qualityMode,
+        PreparedGeometryCache? geometryCache = null,
+        string? primitiveKey = null,
+        long sceneRevision = 1,
+        int lodBand = 0)
     {
         if (hatch.Loops.Count == 0) return;
 
         using var builder = new SKPathBuilder();
-        builder.FillType = SKPathFillType.EvenOdd;
+        builder.FillType = hatch.IslandStyle == HatchIslandStyle.Normal
+            ? SKPathFillType.EvenOdd
+            : SKPathFillType.Winding;
+
         foreach (var loop in hatch.Loops)
         {
             if (loop.Vertices.Count < 2) continue;
@@ -408,20 +422,65 @@ public static class SkiaScenePainter
         if (hatch.IsSolid)
         {
             canvas.DrawPath(skPath, fillPaint);
+            return;
+        }
+
+        // Draw boundary loop outline
+        canvas.DrawPath(skPath, strokePaint);
+
+        // Thinning rule: project spacing onto screen pixels.
+        // When projected spacing < 3.0 px, thin by step = ceil(3.0 / projectedSpacing)
+        var projectedSpacingPixels = hatch.PatternScale / camera.WorldUnitsPerPixel;
+        int thinningStep = 1;
+        if (projectedSpacingPixels < 3.0 && projectedSpacingPixels > 0)
+        {
+            thinningStep = (int)Math.Ceiling(3.0 / projectedSpacingPixels);
+        }
+
+        // Try to obtain coverage from PreparedGeometryCache
+        IReadOnlyList<(WorldPoint2 Start, WorldPoint2 End)>? cachedLines = null;
+        var visibleBounds = camera.GetVisibleWorldBounds(paddingFraction: 0.05);
+
+        if (geometryCache != null && primitiveKey != null)
+        {
+            var queryBounds = hatch.Bounds.Intersect(visibleBounds);
+            if (geometryCache.TryGetHatchCoverage(sceneRevision, primitiveKey, queryBounds, lodBand, 0, out var coverageEntry) && coverageEntry != null)
+            {
+                cachedLines = coverageEntry.Lines;
+            }
+            else if (qualityMode == RenderQualityMode.Final && queryBounds.Width > 0 && queryBounds.Height > 0)
+            {
+                var coverageGen = HatchProcessor.GeneratePatternLines(
+                    hatch.Loops,
+                    hatch.PatternAngleRadians,
+                    hatch.PatternScale,
+                    queryBounds,
+                    hatch.PatternOrigin,
+                    hatch.IslandStyle);
+
+                var linePairs = coverageGen.Select(l => (l.Start, l.End)).ToList();
+                geometryCache.PutHatchCoverage(sceneRevision, primitiveKey, queryBounds, linePairs, lodBand, 0);
+                cachedLines = linePairs;
+            }
+        }
+
+        if (cachedLines != null)
+        {
+            for (var i = 0; i < cachedLines.Count; i++)
+            {
+                if (thinningStep > 1 && (i % thinningStep) != 0) continue;
+                var pair = cachedLines[i];
+                var p1 = CameraTransform.WorldToScreen(pair.Start, camera);
+                var p2 = CameraTransform.WorldToScreen(pair.End, camera);
+                canvas.DrawLine(ToFloat(p1.X), ToFloat(p1.Y), ToFloat(p2.X), ToFloat(p2.Y), strokePaint);
+            }
         }
         else
         {
-            canvas.DrawPath(skPath, strokePaint);
-
             var lineCount = hatch.PatternLines.Count;
-            var stride = 1;
-            if (qualityMode == RenderQualityMode.Interaction && lineCount > 64)
+            for (var i = 0; i < lineCount; i++)
             {
-                stride = lineCount > 512 ? 4 : 2;
-            }
-
-            for (var i = 0; i < lineCount; i += stride)
-            {
+                if (thinningStep > 1 && (i % thinningStep) != 0) continue;
                 var line = hatch.PatternLines[i];
                 var p1 = CameraTransform.WorldToScreen(line.Start, camera);
                 var p2 = CameraTransform.WorldToScreen(line.End, camera);
@@ -443,7 +502,8 @@ public static class SkiaScenePainter
         RenderResourceCache? resourceCache = null,
         long sceneRevision = 1,
         int lodBand = 0,
-        RenderQualityMode qualityMode = RenderQualityMode.Final)
+        RenderQualityMode qualityMode = RenderQualityMode.Final,
+        string? primitiveKey = null)
     {
         var minScreen = CameraTransform.WorldToScreen(new WorldPoint2(vp.PaperBounds.MinX, vp.PaperBounds.MaxY), camera);
         var maxScreen = CameraTransform.WorldToScreen(new WorldPoint2(vp.PaperBounds.MaxX, vp.PaperBounds.MinY), camera);
@@ -480,7 +540,7 @@ public static class SkiaScenePainter
             for (var innerIdx = 0; innerIdx < vp.InnerPrimitives.Count; innerIdx++)
             {
                 var inner = vp.InnerPrimitives[innerIdx];
-                var innerKey = $"vp:{innerIdx}";
+                var innerKey = $"{primitiveKey ?? "vp"}:inner:{innerIdx}";
                 DrawPrimitive(
                     canvas,
                     inner,
@@ -530,6 +590,32 @@ public static class SkiaScenePainter
 
         using var font = new SKFont(SKTypeface.Default, Math.Max(10f, (float)(10d * density)));
         canvas.DrawText(missing.Label, ToFloat(labelScreen.X + 4), ToFloat(labelScreen.Y - 6), SKTextAlign.Left, font, strokePaint);
+    }
+
+    private static void DrawReferencePlaceholderPrimitive(
+        SKCanvas canvas,
+        ReferencePlaceholderPrimitive placeholder,
+        Camera2D camera,
+        SKPaint strokePaint,
+        double density)
+    {
+        var b = placeholder.Bounds;
+        var p00 = CameraTransform.WorldToScreen(new WorldPoint2(b.MinX, b.MinY), camera);
+        var p10 = CameraTransform.WorldToScreen(new WorldPoint2(b.MaxX, b.MinY), camera);
+        var p11 = CameraTransform.WorldToScreen(new WorldPoint2(b.MaxX, b.MaxY), camera);
+        var p01 = CameraTransform.WorldToScreen(new WorldPoint2(b.MinX, b.MaxY), camera);
+
+        canvas.DrawLine(ToFloat(p00.X), ToFloat(p00.Y), ToFloat(p10.X), ToFloat(p10.Y), strokePaint);
+        canvas.DrawLine(ToFloat(p10.X), ToFloat(p10.Y), ToFloat(p11.X), ToFloat(p11.Y), strokePaint);
+        canvas.DrawLine(ToFloat(p11.X), ToFloat(p11.Y), ToFloat(p01.X), ToFloat(p01.Y), strokePaint);
+        canvas.DrawLine(ToFloat(p01.X), ToFloat(p01.Y), ToFloat(p00.X), ToFloat(p00.Y), strokePaint);
+
+        canvas.DrawLine(ToFloat(p00.X), ToFloat(p00.Y), ToFloat(p11.X), ToFloat(p11.Y), strokePaint);
+        canvas.DrawLine(ToFloat(p01.X), ToFloat(p01.Y), ToFloat(p10.X), ToFloat(p10.Y), strokePaint);
+
+        var label = $"[{placeholder.ReferenceType}: {placeholder.ReferenceName}]";
+        using var font = new SKFont(SKTypeface.Default, Math.Max(10f, (float)(10d * density)));
+        canvas.DrawText(label, ToFloat(p00.X + 4), ToFloat(p00.Y - 6), SKTextAlign.Left, font, strokePaint);
     }
 
     private static void DrawRasterImagePrimitive(
@@ -582,9 +668,9 @@ public static class SkiaScenePainter
 
             if (resourceCache != null && !string.IsNullOrEmpty(cacheKey))
             {
-                resourceCache.PutRaster(cacheKey, decoded);
+                bool admitted = resourceCache.PutRaster(cacheKey, decoded);
                 bitmap = decoded;
-                isCached = true;
+                isCached = admitted;
             }
             else
             {

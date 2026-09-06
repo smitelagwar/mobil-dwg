@@ -177,6 +177,9 @@ public sealed class SafeCadFileCache
         long total = 0;
         long lastDiskCheck = 0;
 
+        RegisterActiveFile(temporaryPath);
+        bool finalRegistered = false;
+
         try
         {
             await using var source = await selection.OpenReadAsync(cancellationToken).ConfigureAwait(false);
@@ -227,12 +230,23 @@ public sealed class SafeCadFileCache
             }
 
             cancellationToken.ThrowIfCancellationRequested();
+
+            RegisterActiveFile(finalPath);
+            finalRegistered = true;
+
             File.Move(temporaryPath, finalPath);
+            UnregisterActiveFile(temporaryPath);
+
             progress?.Report(CreateProgress(total, selection.DeclaredLength));
             return new CachedCadFile(finalPath, displayName, total);
         }
         catch
         {
+            UnregisterActiveFile(temporaryPath);
+            if (finalRegistered)
+            {
+                UnregisterActiveFile(finalPath);
+            }
             TryDelete(temporaryPath);
             TryDelete(finalPath);
             throw;

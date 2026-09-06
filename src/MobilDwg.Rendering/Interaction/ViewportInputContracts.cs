@@ -32,7 +32,7 @@ public sealed class PointerPacket
         int actionIndex,
         long eventTimeMs,
         IReadOnlyList<PointerSample> pointers,
-        int surfaceGeneration)
+        long surfaceGeneration)
     {
         Action = action;
         ActionPointerId = actionPointerId;
@@ -47,7 +47,7 @@ public sealed class PointerPacket
     public int ActionIndex { get; }
     public long EventTimeMs { get; }
     public IReadOnlyList<PointerSample> Pointers { get; }
-    public int SurfaceGeneration { get; }
+    public long SurfaceGeneration { get; }
 }
 
 public sealed record ViewportInputConfiguration
@@ -57,6 +57,8 @@ public sealed record ViewportInputConfiguration
     public double TouchSlopPx { get; init; } = 8.0;
     public double DoubleTapSlopPx { get; init; } = 24.0;
     public long DoubleTapTimeoutMs { get; init; } = 300;
+    public long TapTimeoutMs { get; init; } = 100;
+    public long LongPressTimeoutMs { get; init; } = 400;
     public double MinSpanPx => Math.Max(8.0, 2.0 * TouchSlopPx);
     public double ZoomButtonFactor { get; init; } = ViewerZoomPolicy.ButtonZoomFactor;
     public double DoubleTapZoomFactor { get; init; } = ViewerZoomPolicy.DoubleTapZoomFactor;
