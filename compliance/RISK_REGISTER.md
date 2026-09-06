@@ -1,8 +1,8 @@
 # mobil-dwg — Aktif Risk Register
 
-Son güncelleme: 2026-09-05
+Son güncelleme: 2026-09-06
 
-Bu dosya yalnız hâlâ anlamlı olan riskleri taşır. Tamamlanmış eski stage/validation riskleri tarihsel evidence içinde kalır.
+Bu dosya yalnız hâlâ anlamlı olan ürün/teknik riskleri taşır. Kapanmış tarihsel Stage/V doğrulama kayıtları çalışma ağacında tutulmaz; gerektiğinde Git geçmişi ve `docs/HISTORY.md` kullanılır.
 
 | ID | Risk | Etki | Durum | Zorunlu tepki |
 |---|---|---|---|---|
@@ -14,7 +14,7 @@ Bu dosya yalnız hâlâ anlamlı olan riskleri taşır. Tamamlanmış eski stage
 | `R-DEP-001` | ACadSharp 3.7.1 bazı gerçek dünya DWG/DXF'lerde fidelity sınırına sahip olabilir | Eksik/yanlış CAD görünümü | `CONTROLLED` | Exact pini koru; sistematik hata varsa bağımsız fixture/corpus ile A/B doğrula; sessiz fallback yapma |
 | `R-DEP-002` | SkiaSharp native/third-party artifact zinciri değişebilir | License/native runtime riski | `CONTROLLED / REVIEW_ON_CHANGE` | Package/version değişiminde transitive/native inventory ve notice kontrolü |
 | `R-DEP-003` | Reddedilmiş ProCad veya başka CAD viewer kaynaklarından kod kopyalanması | Lisans/politika ve bakım riski | `CONTROLLED / NO_GO_FOR_COPY` | Fikir/algoritma deseni incelenebilir; satır-satır port/kopya yok; özgün implementasyon |
-| `R-EXT-001` | Android v1 tarihsel kabulü ağırlıklı API 36 emulator kanıtına dayanır; fiziksel cihaz matrisi açık | Gerçek touch/GPU/SAF/thermal/perf farkları bilinmez | `OPEN_PHYSICAL_DEVICE_COVERAGE` | Önemli viewer değişikliklerinde en az güncel fiziksel Android slotunda doğrulama; emulatoru fiziksel cihaz sayma |
+| `R-EXT-001` | Android v1 kabulü ağırlıklı API 36 emulator doğrulamasına dayanır; fiziksel cihaz matrisi açık | Gerçek touch/GPU/SAF/thermal/perf farkları bilinmez | `OPEN_PHYSICAL_DEVICE_COVERAGE` | Önemli viewer değişikliklerinde en az güncel fiziksel Android slotunda doğrulama; emulatoru fiziksel cihaz sayma |
 | `R-EXT-002` | Self-hosted runner çevrim dışı veya eski marker yanlış yorumlanabilir | Yanlış PASS / test kuyruğu | `CONTROLLED` | Exact SHA; zero-step/queued PASS değil; yalnız değişikliği gerçekten kapsayan gate kullan |
 | `R-IOS-001` | iOS aktif değil ama shared sınırlar future dönüş için korunuyor | Android odaklı refactor future portability'yi zorlaştırabilir | `DEFERRED_FUTURE_IOS` | Android'i bloke etme; Core/Cad/Rendering'e gereksiz Android-only bağımlılık yayma |
 | `R-DATA-001` | Gerçek müşteri CAD/font/asset'in repo veya public artifact'e sızması | Gizlilik/telif riski | `CONTROLLED` | Private corpus Git dışında; public fixture yalnız provenance/redistribution kanıtlı |
@@ -22,5 +22,3 @@ Bu dosya yalnız hâlâ anlamlı olan riskleri taşır. Tamamlanmış eski stage
 ## Risk kapatma kuralı
 
 Bir risk yalnız kod değiştiği için `CLOSED` olmaz. İlgili failure mode'u doğrudan sınayan test/ölçüm PASS olmalı ve claim sınırı kaydedilmelidir.
-
-Yeni bir risk mevcut tabloyu büyütmek yerine geçici bir uygulama planında kalıyorsa, ürün seviyesinde tekrarlama ihtimali ortaya çıktığında bu register'a alınır.

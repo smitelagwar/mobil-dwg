@@ -1,32 +1,27 @@
 # mobil-dwg — Android Test Rehberi
 
-Bu dosya gelecekteki bug fix, performans ve viewer geliştirmelerinde kullanılacak tek Android test rehberidir. Eski V01–V09 doğrulama cursor'ları veya A10 paralel çalışma kuralları artık aktif değildir.
+Bu dosya bug fix, performans ve viewer geliştirmelerinde kullanılacak güncel Android test rehberidir. Eski Stage/V/A numaraları geliştirme cursor'u değildir.
 
 ## Temel kural
 
-Bir değişiklik ancak **değiştirilen davranışı gerçekten ölçen** test ile doğrulanmış sayılır. Eski bir stage marker'ının PASS olması yeni davranışın doğru olduğunu kanıtlamaz.
+Bir değişiklik ancak **değiştirilen davranışı gerçekten ölçen** test ile doğrulanmış sayılır.
 
 - Emulator sonucu fiziksel cihaz sonucu değildir.
 - Host build sonucu Android runtime sonucu değildir.
 - Ekranın açılması render doğruluğu değildir.
-- Canvas/image varlığı doğru pan/zoom, doğru metin veya eksiksiz CAD görünümü değildir.
+- Canvas/image varlığı doğru pan/zoom, metin veya eksiksiz CAD görünümü değildir.
 - `queued`, zero-step, runner-offline veya artifact'siz run PASS değildir.
 - Test edilen exact commit SHA kaydedilir.
 
 ## Yerel ortam
 
-Repo baseline'ı `docs/TOOLCHAIN.md` ve `global.json` ile tanımlanır.
+Toolchain baseline `docs/TOOLCHAIN.md` ve `global.json` ile tanımlanır.
 
 Windows test makinesinde kullanılan temel bileşenler:
 
-- self-hosted runner: `C:\actions-runner`
-- interaktif listener: `C:\actions-runner\run.cmd`
 - Android AVD: `mobil-dwg-api36`
 - hedef emulator: Android API 36
-
-Emulator grafik/masaüstü oturumuna ihtiyaç duyduğundan runner'ın interaktif kullanıcı oturumunda çalışması tercih edilir.
-
-## Temel komutlar
+- self-hosted runner gerektiğinde interaktif kullanıcı oturumunda çalıştırılır
 
 Ortam kontrolü:
 
@@ -47,15 +42,36 @@ Solution Release build:
 dotnet build .\MobilDwg.sln -c Release
 ```
 
-Repo içinde geçmiş geliştirme aşamalarına ait hedefli Android gate scriptleri `scripts/aXX-android-*-gate.ps1` biçiminde korunur. Bunlar regresyon aracı olarak kullanılabilir; yeni bir özellik veya yeni bir bug fix eski scriptin kapsamı dışındaysa ilgili script genişletilir veya yeni odaklı test eklenir.
+Platform-neutral harness'lar:
 
-Özellikle viewer hareketleri için tarihsel başlangıç noktası:
-
-```text
-scripts/a11-android-gesture-gate.ps1
+```powershell
+dotnet run --project .\tests\MobilDwg.Core.Tests\MobilDwg.Core.Tests.csproj -c Release
+dotnet run --project .\tests\MobilDwg.Rendering.Tests\MobilDwg.Rendering.Tests.csproj -c Release
+dotnet run --project .\tests\MobilDwg.Architecture.Tests\MobilDwg.Architecture.Tests.csproj -c Release
 ```
 
-Bu scriptin geçmişte PASS olması gelecekte değiştirilen gesture/render zincirini otomatik olarak doğrulamaz.
+## Ana gerçek-uygulama Android regression kapısı
+
+En geniş güncel Android gerçek-app regression girişi:
+
+```powershell
+.\scripts\android-real-app-regression.ps1
+```
+
+Bu script gerçek `MobilDwg.App` APK'sını derler, emulator üzerinde kurar/başlatır ve kritik blocker regresyonlarını doğrular. GitHub Actions karşılığı `.github/workflows/android-emulator-test.yml` dosyasıdır ve pahalı olduğu için yalnız `android-test` branch push'unda veya manuel çalıştırılır.
+
+## Hedefli regression araçları
+
+`scripts/a10-*` … `scripts/a22-*` ve `scripts/a26-*` altında geçmişten kalan numaralı gate'lerin bir bölümü hâlâ belirli renderer/parser/device failure mode'larını gerçek uygulamada ölçer. Bunlar **aktif aşama sırası değildir**; marker ve MSBuild isimleri eski kanıtlarla uyumluluk için korunmuştur.
+
+Yeni işte kural:
+
+1. Önce host testini çalıştır.
+2. Değiştirilen davranış Android zincirini etkiliyorsa `android-real-app-regression.ps1` çalıştır.
+3. Sorun belirli bir alt sisteme aitse ilgili hedefli gate'i ek regresyon aracı olarak kullan.
+4. Sırf eski numarası daha yüksek diye bir gate daha güncel kabul edilmez.
+
+Compile-time Android validation runner'ları `src/MobilDwg.App/Validation/` altında tutulur. Normal build'de ilgili MSBuild validation flag'i verilmediği için bu kod yolları aktif değildir; yalnız hedefli regression build'lerinde etkinleşir.
 
 ## Değişiklik türüne göre zorunlu doğrulama
 
@@ -65,16 +81,16 @@ En az şunlar ölçülür:
 
 - tek parmak pan sırasında kamera ile görüntünün aynı frame zincirinde hareket etmesi,
 - yeni görünür alanda parmak bırakılmadan içerik üretilmesi,
-- iki parmak pinch sırasında focal world point drift'inin ölçülmesi,
-- parmak sayısı 1→2 ve 2→1 değişirken jump olmaması,
-- gesture sonunda ek bir görsel sıçrama olmaması,
+- pinch sırasında focal world point drift'i,
+- 1→2 ve 2→1 pointer geçişlerinde jump olmaması,
+- gesture sonunda ek görsel sıçrama olmaması,
 - portrait/landscape resize sonrası viewport doğruluğu,
-- p50/p95 frame süresi ve dropped-frame/jank gözlemi,
+- p50/p95 frame süresi ve jank,
 - büyük sahnede bellek ve render latency.
 
 ### Parser / DWG / DXF
 
-- sentetik/provenance-kayıtlı fixture,
+- provenance-kayıtlı fixture,
 - pozitif ve kontrollü negatif girdiler,
 - unsupported/eksik kaynakların sessiz kaybolmaması,
 - büyük koordinatlarda `double` hassasiyet,
@@ -82,54 +98,49 @@ En az şunlar ölçülür:
 
 ### Stil / text / hatch / block / layout / XREF
 
-Değiştirilen özellik için ilgili `scripts/a12`–`a19` gate'leri ve `docs/evidence/` içindeki geçmiş semantik beklentiler regresyon referansı olarak kullanılır.
+Değiştirilen özelliğin host testini çalıştır. Android UI/render zinciri de etkileniyorsa ilgili hedefli Android gate'i ek olarak çalıştır. Eski PASS marker'ı yeni değişikliğin kanıtı değildir.
 
 ### Performans / büyük çizim
 
-- `scripts/a20-android-perf-memory-gate.ps1` ve `scripts/a21-android-corpus-regression-gate.ps1` başlangıç noktasıdır,
-- yalnız ortalama süreye bakılmaz; p50/p95, peak memory/PSS ve repeat-open/close davranışı kaydedilir,
-- optimizasyon correctness'i değiştirmemelidir.
+- p50/p95 gibi dağılım metriklerini kullan,
+- peak memory/PSS ve repeat-open/close davranışını izle,
+- optimizasyon correctness'i değiştirmemeli,
+- ölçülmemiş bottleneck için karmaşıklık ekleme.
 
-## Self-hosted runner kullanımı
+## Self-hosted runner
 
-Runner etiketleri tarihsel olarak:
+Geçerli runner etiketleri:
 
 - `self-hosted`
 - `windows`
 - `android-test`
 - `mobil-dwg`
 
-Runner kapalıysa aynı testi tekrar tekrar kuyruğa sokma. Test edilecek exact SHA'yı kaydet ve makine hazır olduğunda yalnız hâlâ gerekli olan en güncel koşuyu çalıştır.
-
-Self-hosted runner üzerinde güvenilmeyen üçüncü taraf ref/PR çalıştırılmaz.
+Runner kapalıysa queued koşu PASS sayılmaz. Güvenilmeyen üçüncü taraf ref/PR self-hosted runner üzerinde çalıştırılmaz.
 
 ## Fiziksel Android
 
-Emulator API/uygulama entegrasyonu için güçlü bir gate'tir fakat şu alanlarda fiziksel cihazın yerini tutmaz:
+Emulator entegrasyon için güçlü bir gate'tir fakat şu alanlarda fiziksel cihazın yerini tutmaz:
 
-- üreticiye özgü SAF/content-provider davranışı,
 - gerçek touch sampling ve gesture hissi,
-- GPU/driver farkları,
+- üretici GPU/driver farkları,
+- SAF/content-provider farkları,
 - termal throttling ve gerçek bellek baskısı,
 - background/process death,
-- düşük/orta/yüksek cihaz performans sınıfları.
+- düşük/orta/yüksek cihaz performansı.
 
-Fiziksel cihaz testi gerektiğinde sonuç `docs/DEVICE_MATRIX.md` içindeki uygun slota eklenir.
+Fiziksel cihaz sınıfları ve benchmark kayıt formatı `docs/DEVICE_MATRIX.md` içindedir.
 
 ## Kanıt kaydı
 
-Önemli bir regression fix veya release etkili değişiklik için `docs/EVIDENCE_TEMPLATE.md` kullanılır. En az:
+Yeni bir ayrı evidence MD dosyası oluşturmak varsayılan değildir. Önemli bir regression/release doğrulamasında en az şu bilgiler PR/commit açıklaması veya CI artifact/log'unda bulunmalıdır:
 
 - exact SHA,
 - test ortamı,
-- kullanılan komut/script,
-- PASS/FAIL çıktısı,
-- screenshot/log/metric gerekiyorsa artifact,
+- kullanılan komut/gate,
+- PASS/FAIL sonucu,
+- gerekiyorsa screenshot/log/metric,
 - claim sınırı,
-- bilinen açık risk
+- bilinen açık risk.
 
-kaydedilir.
-
-## Tarihsel test kayıtları
-
-Tamamlanmış eski uygulama ve doğrulama sonuçları `docs/evidence/` altında korunur. Bunlar değiştirilmez; yeni bir hata bulunursa yeni commit ve yeni kanıt üretilir.
+Tamamlanmış eski ayrıntılı Stage/V evidence dosyaları çalışma ağacından kaldırılmıştır; gerektiğinde Git geçmişinden okunabilir.

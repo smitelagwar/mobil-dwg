@@ -30,11 +30,13 @@ dotnet workload install maui-android
 
 ## Restore ve Release build
 
-Dependency audit projesini locked mode ile doğrula:
+Android dependency audit projesini locked mode ile doğrula:
 
 ```powershell
 dotnet restore .\compliance\Stage02.DependencyProbe\Stage02.DependencyProbe.csproj --locked-mode
 ```
+
+Bu klasör adı tarihsel kökenlidir; proje hâlâ güncel Android dependency graph lock kaynağı olarak kullanılır.
 
 Ana solution:
 
@@ -52,7 +54,7 @@ dotnet run --project .\tests\MobilDwg.Core.Tests\MobilDwg.Core.Tests.csproj -c R
 dotnet run --project .\tests\MobilDwg.Rendering.Tests\MobilDwg.Rendering.Tests.csproj -c Release
 ```
 
-Android davranışını değiştiren işler için yalnız bu host testleri yeterli değildir; `docs/ANDROID_TESTING.md` uygulanır.
+Android davranışını değiştiren işler için yalnız host testleri yeterli değildir; `docs/ANDROID_TESTING.md` uygulanır.
 
 ## Android AAB
 
@@ -66,7 +68,7 @@ dotnet build .\src\MobilDwg.App\MobilDwg.App.csproj `
   -p:AndroidKeyStore=false
 ```
 
-Çıktı yolu SDK/MAUI packaging ayrıntısına göre `src/MobilDwg.App/bin/Release/net10.0-android36.0/` altındadır. Dosya adı sabit varsayılmamalı; üretilen artifact build sonrasında gerçek dizinden doğrulanmalıdır.
+Çıktı SDK/MAUI packaging ayrıntısına göre `src/MobilDwg.App/bin/Release/net10.0-android36.0/` altındadır. Dosya adı sabit varsayılmamalı; build sonrasında gerçek artifact doğrulanmalıdır.
 
 ## Android APK
 
@@ -82,8 +84,6 @@ Artifact boyutu, package ID ve gerekiyorsa install/launch sonucu ayrıca doğrul
 ## Production signing
 
 Signing secret, parola, private key veya keystore repoya commit edilmez.
-
-Örnek:
 
 ```powershell
 dotnet build .\src\MobilDwg.App\MobilDwg.App.csproj `
@@ -104,10 +104,10 @@ Secret değerleri shell history/log/artifact içine sızdırılmamalıdır.
 - exact toolchain ve dependency graph,
 - Release build,
 - executable Core/Rendering/Architecture harness'ları,
-- değiştirilen davranışa özel Android gate,
+- değiştirilen davranışa özel Android gerçek-app regression,
 - package permission/data-safety kontrolü,
 - dependency/native/license inventory,
 - artifact checksum,
 - bilinen limitation'ların güncelliği.
 
-Tarihsel v1 package/evidence kayıtları `docs/evidence/` ve `release/` altında korunur; yeni build onların byte-for-byte aynısı varsayılmaz.
+Release APK/AAB ve checksum geçici build artifact'idir; source tree içinde eski binary/checksum kopyaları tutulmaz. Tamamlanmış v1 ayrıntılı kanıtlarına gerekirse Git geçmişinden erişilir.

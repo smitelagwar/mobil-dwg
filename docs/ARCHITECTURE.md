@@ -1,6 +1,6 @@
 # mobil-dwg — Güncel Mimari Sözleşmesi
 
-Bu belge geçmiş bir aşama planı değil, mevcut production dependency sınırıdır. Yeni geliştirmeler bu sınırı bilinçsizce bozmamalıdır.
+Bu belge mevcut production dependency sınırıdır. Yeni geliştirmeler bu sınırı bilinçsizce bozmamalıdır.
 
 ## Production projeleri
 
@@ -32,6 +32,8 @@ Bu belge geçmiş bir aşama planı değil, mevcut production dependency sınır
 - MAUI dependency'si burada tutulur.
 - Dosya seçimi, viewer lifecycle, UI state ve composition bu katmandadır.
 - Parser entity tipleri veya parser internal model'i UI API'si haline getirilmez.
+
+`src/MobilDwg.App/Validation/` altındaki dosyalar normal kullanıcı özelliği değildir. Bunlar hedefli Android regression build'lerinde MSBuild flag'leriyle açılan compile-time validation runner'larıdır; normal production build'de ilgili kod yolları etkin değildir.
 
 Dependency yönü:
 
@@ -76,17 +78,29 @@ Rendering katmanı:
 
 merkezi şekilde yönetmelidir.
 
-Yeni bir viewer surface, GPU backend, render scheduler, spatial index veya cache sistemi eklenirse mevcut scene/camera sözleşmesi bypass edilmemeli; architecture değişikliği gerekiyorsa bu dosya aynı değişiklikte güncellenmelidir.
+Yeni viewer surface, GPU backend, render scheduler, spatial index veya cache sistemi eklenirse mevcut scene/camera sözleşmesi bypass edilmemeli; architecture değişikliği gerekiyorsa bu dosya aynı değişiklikte güncellenmelidir.
 
-## Test yapısı
+## Test ve CI yapısı
 
-Repo, ayrı Core/Rendering/Architecture test harness'ları ve Android'e özel gate scriptleri içerir. Eski stage testleri regresyon referansıdır; yeni davranış eski marker ile otomatik doğrulanmış sayılmaz.
+Platform-neutral doğrulama üç executable harness ile yapılır:
+
+- `tests/MobilDwg.Core.Tests`
+- `tests/MobilDwg.Rendering.Tests`
+- `tests/MobilDwg.Architecture.Tests`
+
+Ana host CI: `.github/workflows/ci.yml`.
+
+Android gerçek-app regression: `.github/workflows/android-emulator-test.yml` + `scripts/android-real-app-regression.ps1`.
+
+Dependency/lisans graph denetimi: `.github/workflows/dependency-audit.yml`.
+
+Numaralı bazı Android gate/marker'ları geçmiş regresyonlarla karşılaştırılabilirliği korumak için bulunmaktadır; bunlar geliştirme aşaması/cursor'u değildir.
 
 Android test politikası: `docs/ANDROID_TESTING.md`.
 
 ## Future iOS
 
-Aktif production hedef Android'dir. Core/Cad/Rendering katmanları mümkün olduğunca platform-neutral tutulur; ancak iOS workload, signing veya platform implementation'ı kullanıcı açıkça yeniden etkinleştirmedikçe Android graph'ına zorunlu dependency olarak eklenmez.
+Aktif production hedef Android'dir. Core/Cad/Rendering mümkün olduğunca platform-neutral tutulur; iOS workload, signing veya platform implementation kullanıcı açıkça yeniden etkinleştirmedikçe Android graph'ına zorunlu dependency olarak eklenmez.
 
 ## Değişiklik kontrolü
 
