@@ -16,7 +16,7 @@ EXPECTED_CENTRAL = {
     "ACadSharp": "3.7.1",
     "SkiaSharp": "4.151.1",
     "Microsoft.Maui.Controls": "10.0.100",
-    "SkiaSharp.NativeAssets.Linux.NoDependencies": "4.151.1",
+    "SkiaSharp.NativeAssets.Linux": "4.151.1",
     "IxMilia.Dxf": "0.8.4",
 }
 EXPECTED_GRAPH = {
