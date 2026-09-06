@@ -23,6 +23,8 @@ public sealed class CadViewerSession : IDisposable
     private readonly ViewportController _controller;
     private readonly ViewportInteractionEngine _interactionEngine;
     private readonly FrameRequestGate _frameGate = new();
+    private readonly PreparedGeometryCache _geometryCache = new();
+    private readonly RenderResourceCache _resourceCache = new();
 
     private RenderScene _activeScene;
     private LayerTable _layerTable;
@@ -45,6 +47,8 @@ public sealed class CadViewerSession : IDisposable
     public ViewportInteractionEngine InteractionEngine => _interactionEngine;
     public FrameRequestGate FrameGate => _frameGate;
     public SkiaCadRenderer Renderer => _renderer;
+    public PreparedGeometryCache GeometryCache => _geometryCache;
+    public RenderResourceCache ResourceCache => _resourceCache;
 
     public Camera2D Camera => _controller.CurrentCamera;
     public int ViewportPixelWidth => _controller.CurrentCamera.PixelWidth;
@@ -110,7 +114,9 @@ public sealed class CadViewerSession : IDisposable
                 StyleRevision: _styleRevision,
                 CameraRevision: _interactionEngine.CameraRevision,
                 SurfaceGeneration: surfaceGeneration,
-                QualityMode: qualityMode);
+                QualityMode: qualityMode,
+                GeometryCache: _geometryCache,
+                ResourceCache: _resourceCache);
 
             return new RenderSessionLease(this, snapshot);
         }
@@ -239,6 +245,8 @@ public sealed class CadViewerSession : IDisposable
 
     public void OnTrimMemory()
     {
+        _geometryCache.Clear();
+        _resourceCache.Clear();
         GC.Collect(1, GCCollectionMode.Optimized, blocking: false);
     }
 
@@ -258,6 +266,8 @@ public sealed class CadViewerSession : IDisposable
     private void CompleteDisposal()
     {
         _disposed = true;
+        _geometryCache.Dispose();
+        _resourceCache.Dispose();
         _frameGate.Reset();
     }
 }

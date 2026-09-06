@@ -1,5 +1,6 @@
-﻿using MobilDwg.Rendering.Camera;
+using MobilDwg.Rendering.Camera;
 using MobilDwg.Rendering.Scene;
+using MobilDwg.Rendering.Skia;
 using MobilDwg.Rendering.Styles;
 
 namespace MobilDwg.Rendering.Viewer;
@@ -20,5 +21,8 @@ public sealed record RenderSnapshot(
     long StyleRevision = 1,
     long CameraRevision = 1,
     long SurfaceGeneration = 1,
-    RenderQualityMode QualityMode = RenderQualityMode.Final
+    RenderQualityMode QualityMode = RenderQualityMode.Final,
+    PreparedGeometryCache? GeometryCache = null,
+    RenderResourceCache? ResourceCache = null
 );
+

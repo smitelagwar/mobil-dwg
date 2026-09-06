@@ -80,6 +80,10 @@ public readonly record struct WorldBounds2
     public bool Contains(WorldPoint2 point) =>
         point.X >= MinX && point.X <= MaxX &&
         point.Y >= MinY && point.Y <= MaxY;
+
+    public bool Contains(WorldBounds2 other) =>
+        other.MinX >= MinX && other.MaxX <= MaxX &&
+        other.MinY >= MinY && other.MaxY <= MaxY;
 }
 
 public readonly record struct RenderEntityId

@@ -200,6 +200,32 @@ if ($stageNum -ge 6) {
     Pass "VIEWER_STABILITY_STAGE06_PASS"
 }
 
+# Stage 07 checks
+if ($stageNum -ge 7) {
+    Write-Host "Verifying Stage 07 Cache, Prepared Geometry and Controlled Detail..."
+
+    $prepCacheFile = Join-Path $repoRoot "src/MobilDwg.Rendering/Skia/PreparedGeometryCache.cs"
+    if (-not (Test-Path $prepCacheFile)) { Fail "PreparedGeometryCache.cs missing" }
+    Pass "STAGE07_PREPARED_GEOMETRY_CACHE_SOURCE_PASS"
+
+    $resCacheFile = Join-Path $repoRoot "src/MobilDwg.Rendering/Skia/RenderResourceCache.cs"
+    if (-not (Test-Path $resCacheFile)) { Fail "RenderResourceCache.cs missing" }
+    Pass "STAGE07_RENDER_RESOURCE_CACHE_SOURCE_PASS"
+
+    $qualityPolicyFile = Join-Path $repoRoot "src/MobilDwg.Rendering/Geometry/RenderQualityPolicy.cs"
+    if (-not (Test-Path $qualityPolicyFile)) { Fail "RenderQualityPolicy.cs missing" }
+    Pass "STAGE07_RENDER_QUALITY_POLICY_SOURCE_PASS"
+
+    $prepTestsFile = Join-Path $repoRoot "tests/MobilDwg.Rendering.Tests/PreparedGeometryCacheTests.cs"
+    if (-not (Test-Path $prepTestsFile)) { Fail "PreparedGeometryCacheTests.cs missing" }
+    Pass "STAGE07_PREPARED_GEOMETRY_CACHE_TESTS_SOURCE_PASS"
+
+    if (-not ($rendText -match "STAGE07_PREPARED_GEOMETRY_CACHE_TESTS_PASS")) { Fail "STAGE07_PREPARED_GEOMETRY_CACHE_TESTS_PASS marker missing" }
+    Pass "STAGE07_PREPARED_GEOMETRY_CACHE_TESTS_PASS"
+
+    Pass "VIEWER_STABILITY_STAGE07_PASS"
+}
+
 Write-Host "=== Viewer Stability Gate Passed for Stage $Stage ==="
 exit 0
 

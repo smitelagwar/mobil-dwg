@@ -53,8 +53,8 @@ public static class SkiaScenePainter
                 Style = SKPaintStyle.Fill,
             };
 
-            var chordFactor = snapshot.QualityMode == RenderQualityMode.Interaction ? 1.0d : 0.25d;
-            var maxChordError = Math.Max(camera.WorldUnitsPerPixel * chordFactor, 1e-12);
+            var maxChordError = RenderQualityPolicy.GetMaxChordError(snapshot.QualityMode, camera.WorldUnitsPerPixel);
+            var lodBand = RenderQualityPolicy.ComputeLodBand(camera.WorldUnitsPerPixel);
             var tessellation = new GeometryTessellationOptions(maxChordError, minSegments: 4, maxSegments: 4096, splineSegmentsPerSpan: 12);
 
             IReadOnlyList<int>? candidateIndices = null;
@@ -116,9 +116,25 @@ public static class SkiaScenePainter
 
                 try
                 {
-                    foreach (var primitive in entity.Geometry)
+                    for (var primIdx = 0; primIdx < entity.Geometry.Count; primIdx++)
                     {
-                        DrawPrimitive(canvas, primitive, camera, tessellation, strokePaint, fillPaint, context.Density, context.EnableOptimization);
+                        var primitive = entity.Geometry[primIdx];
+                        var primitiveKey = $"{entity.Id.Value}:{primIdx}";
+                        DrawPrimitive(
+                            canvas,
+                            primitive,
+                            camera,
+                            tessellation,
+                            strokePaint,
+                            fillPaint,
+                            context.Density,
+                            context.EnableOptimization,
+                            primitiveKey,
+                            snapshot.SceneRevision,
+                            lodBand,
+                            snapshot.QualityMode,
+                            snapshot.GeometryCache,
+                            snapshot.ResourceCache);
                     }
                 }
                 finally
@@ -146,23 +162,29 @@ public static class SkiaScenePainter
         SKPaint strokePaint,
         SKPaint fillPaint,
         double density,
-        bool enableOptimization)
+        bool enableOptimization,
+        string? primitiveKey = null,
+        long sceneRevision = 1,
+        int lodBand = 0,
+        RenderQualityMode qualityMode = RenderQualityMode.Final,
+        PreparedGeometryCache? geometryCache = null,
+        RenderResourceCache? resourceCache = null)
     {
         if (primitive is TextPrimitive textPrimitive)
         {
-            DrawTextPrimitive(canvas, textPrimitive, camera, fillPaint);
+            DrawTextPrimitive(canvas, textPrimitive, camera, fillPaint, strokePaint, qualityMode);
             return;
         }
 
         if (primitive is HatchPrimitive hatchPrimitive)
         {
-            DrawHatchPrimitive(canvas, hatchPrimitive, camera, strokePaint, fillPaint);
+            DrawHatchPrimitive(canvas, hatchPrimitive, camera, strokePaint, fillPaint, qualityMode);
             return;
         }
 
         if (primitive is ViewportPrimitive viewportPrimitive)
         {
-            DrawViewportPrimitive(canvas, viewportPrimitive, camera, tessellation, strokePaint, fillPaint, density, enableOptimization);
+            DrawViewportPrimitive(canvas, viewportPrimitive, camera, tessellation, strokePaint, fillPaint, density, enableOptimization, geometryCache, resourceCache, sceneRevision, lodBand, qualityMode);
             return;
         }
 
@@ -174,7 +196,7 @@ public static class SkiaScenePainter
 
         if (primitive is RasterImagePrimitive rasterImg)
         {
-            DrawRasterImagePrimitive(canvas, rasterImg, camera, strokePaint, density);
+            DrawRasterImagePrimitive(canvas, rasterImg, camera, strokePaint, density, resourceCache);
             return;
         }
 
@@ -252,7 +274,26 @@ public static class SkiaScenePainter
             }
         }
 
-        var path = GeometryTessellator.Tessellate(primitive, tessellation);
+        TessellatedPath path;
+        if (enableOptimization && geometryCache != null && primitiveKey != null &&
+            (primitive is ArcPrimitive or EllipsePrimitive or SplinePrimitive or PolylinePrimitive))
+        {
+            if (geometryCache.TryGet(sceneRevision, primitiveKey, lodBand, tessellation.MaxChordError, out var cached) && cached != null)
+            {
+                path = cached.Path;
+            }
+            else
+            {
+                path = GeometryTessellator.Tessellate(primitive, tessellation);
+                geometryCache.Put(sceneRevision, primitiveKey, lodBand, path, tessellation.MaxChordError, primitive.Bounds.Center);
+                System.Threading.Interlocked.Increment(ref geometryCache.TessellationCount);
+            }
+        }
+        else
+        {
+            path = GeometryTessellator.Tessellate(primitive, tessellation);
+        }
+
         if (primitive is PointPrimitive)
         {
             var screen = CameraTransform.WorldToScreen(path.Points[0], camera);
@@ -279,12 +320,22 @@ public static class SkiaScenePainter
         SKCanvas canvas,
         TextPrimitive textPrimitive,
         Camera2D camera,
-        SKPaint fillPaint)
+        SKPaint fillPaint,
+        SKPaint strokePaint,
+        RenderQualityMode qualityMode)
     {
         if (string.IsNullOrEmpty(textPrimitive.Text)) return;
 
         var screenHeight = textPrimitive.Height / camera.WorldUnitsPerPixel;
         if (screenHeight < 0.5d) return;
+
+        if (qualityMode == RenderQualityMode.Interaction && screenHeight < 3.0d)
+        {
+            var p0 = CameraTransform.WorldToScreen(textPrimitive.Position, camera);
+            var estLen = (textPrimitive.Text.Length * textPrimitive.Height * 0.75 * textPrimitive.WidthFactor) / camera.WorldUnitsPerPixel;
+            canvas.DrawLine(ToFloat(p0.X), ToFloat(p0.Y), ToFloat(p0.X + estLen), ToFloat(p0.Y), strokePaint);
+            return;
+        }
 
         var screenPos = CameraTransform.WorldToScreen(textPrimitive.Position, camera);
         var typeface = FontSubstitutionResolver.GetSkiaTypeface(textPrimitive.ResolvedFont);
@@ -337,7 +388,8 @@ public static class SkiaScenePainter
         HatchPrimitive hatch,
         Camera2D camera,
         SKPaint strokePaint,
-        SKPaint fillPaint)
+        SKPaint fillPaint,
+        RenderQualityMode qualityMode)
     {
         if (hatch.Loops.Count == 0) return;
 
@@ -365,8 +417,17 @@ public static class SkiaScenePainter
         else
         {
             canvas.DrawPath(skPath, strokePaint);
-            foreach (var line in hatch.PatternLines)
+
+            var lineCount = hatch.PatternLines.Count;
+            var stride = 1;
+            if (qualityMode == RenderQualityMode.Interaction && lineCount > 64)
             {
+                stride = lineCount > 512 ? 4 : 2;
+            }
+
+            for (var i = 0; i < lineCount; i += stride)
+            {
+                var line = hatch.PatternLines[i];
                 var p1 = CameraTransform.WorldToScreen(line.Start, camera);
                 var p2 = CameraTransform.WorldToScreen(line.End, camera);
                 canvas.DrawLine(ToFloat(p1.X), ToFloat(p1.Y), ToFloat(p2.X), ToFloat(p2.Y), strokePaint);
@@ -382,7 +443,12 @@ public static class SkiaScenePainter
         SKPaint strokePaint,
         SKPaint fillPaint,
         double density,
-        bool enableOptimization)
+        bool enableOptimization,
+        PreparedGeometryCache? geometryCache = null,
+        RenderResourceCache? resourceCache = null,
+        long sceneRevision = 1,
+        int lodBand = 0,
+        RenderQualityMode qualityMode = RenderQualityMode.Final)
     {
         var minScreen = CameraTransform.WorldToScreen(new WorldPoint2(vp.PaperBounds.MinX, vp.PaperBounds.MaxY), camera);
         var maxScreen = CameraTransform.WorldToScreen(new WorldPoint2(vp.PaperBounds.MaxX, vp.PaperBounds.MinY), camera);
@@ -416,9 +482,25 @@ public static class SkiaScenePainter
                 canvas.ClipRect(clipRect, SKClipOperation.Intersect, antialias: true);
             }
 
-            foreach (var inner in vp.InnerPrimitives)
+            for (var innerIdx = 0; innerIdx < vp.InnerPrimitives.Count; innerIdx++)
             {
-                DrawPrimitive(canvas, inner, camera, tessellation, strokePaint, fillPaint, density, enableOptimization);
+                var inner = vp.InnerPrimitives[innerIdx];
+                var innerKey = $"vp:{innerIdx}";
+                DrawPrimitive(
+                    canvas,
+                    inner,
+                    camera,
+                    tessellation,
+                    strokePaint,
+                    fillPaint,
+                    density,
+                    enableOptimization,
+                    innerKey,
+                    sceneRevision,
+                    lodBand,
+                    qualityMode,
+                    geometryCache,
+                    resourceCache);
             }
         }
         finally
@@ -460,77 +542,115 @@ public static class SkiaScenePainter
         RasterImagePrimitive raster,
         Camera2D camera,
         SKPaint strokePaint,
-        double density)
+        double density,
+        RenderResourceCache? resourceCache = null)
     {
-        byte[]? bytes = raster.ImageBytes;
-        if (bytes == null && raster.ResolvedPath != null && File.Exists(raster.ResolvedPath))
+        SKBitmap? bitmap = null;
+        var cacheKey = raster.ResolvedPath ?? raster.ReferenceId;
+        bool isCached = false;
+
+        if (resourceCache != null && !string.IsNullOrEmpty(cacheKey))
         {
-            try
+            if (resourceCache.TryGetRaster(cacheKey, out var cachedBmp) && cachedBmp != null)
             {
-                bytes = File.ReadAllBytes(raster.ResolvedPath);
-            }
-            catch
-            {
-                // File read fallback
+                bitmap = cachedBmp;
+                isCached = true;
             }
         }
 
-        if (bytes == null || bytes.Length == 0)
+        if (bitmap == null)
         {
-            var b = raster.ImageBounds;
-            var p1 = CameraTransform.WorldToScreen(new WorldPoint2(b.MinX, b.MinY), camera);
-            var p2 = CameraTransform.WorldToScreen(new WorldPoint2(b.MaxX, b.MaxY), camera);
-            canvas.DrawRect(new SKRect(ToFloat(Math.Min(p1.X, p2.X)), ToFloat(Math.Min(p1.Y, p2.Y)), ToFloat(Math.Max(p1.X, p2.X)), ToFloat(Math.Max(p1.Y, p2.Y))), strokePaint);
-            return;
+            byte[]? bytes = raster.ImageBytes;
+            if (bytes == null && raster.ResolvedPath != null && File.Exists(raster.ResolvedPath))
+            {
+                try
+                {
+                    bytes = File.ReadAllBytes(raster.ResolvedPath);
+                }
+                catch
+                {
+                    // File read fallback
+                }
+            }
+
+            if (bytes == null || bytes.Length == 0)
+            {
+                var b = raster.ImageBounds;
+                var p1 = CameraTransform.WorldToScreen(new WorldPoint2(b.MinX, b.MinY), camera);
+                var p2 = CameraTransform.WorldToScreen(new WorldPoint2(b.MaxX, b.MaxY), camera);
+                canvas.DrawRect(new SKRect(ToFloat(Math.Min(p1.X, p2.X)), ToFloat(Math.Min(p1.Y, p2.Y)), ToFloat(Math.Max(p1.X, p2.X)), ToFloat(Math.Max(p1.Y, p2.Y))), strokePaint);
+                return;
+            }
+
+            var decoded = SKBitmap.Decode(bytes);
+            if (decoded == null) return;
+
+            if (resourceCache != null && !string.IsNullOrEmpty(cacheKey))
+            {
+                resourceCache.PutRaster(cacheKey, decoded);
+                bitmap = decoded;
+                isCached = true;
+            }
+            else
+            {
+                bitmap = decoded;
+            }
         }
 
-        using var bitmap = SKBitmap.Decode(bytes);
-        if (bitmap == null) return;
-
-        var saveCount = canvas.Save();
         try
         {
-            if (raster.ClipBoundary != null && raster.ClipBoundary.Count >= 3)
+            var saveCount = canvas.Save();
+            try
             {
-                using var clipBuilder = new SKPathBuilder();
-                var p0 = CameraTransform.WorldToScreen(raster.ClipBoundary[0], camera);
-                clipBuilder.MoveTo(ToFloat(p0.X), ToFloat(p0.Y));
-                for (var i = 1; i < raster.ClipBoundary.Count; i++)
+                if (raster.ClipBoundary != null && raster.ClipBoundary.Count >= 3)
                 {
-                    var pt = CameraTransform.WorldToScreen(raster.ClipBoundary[i], camera);
-                    clipBuilder.LineTo(ToFloat(pt.X), ToFloat(pt.Y));
+                    using var clipBuilder = new SKPathBuilder();
+                    var p0 = CameraTransform.WorldToScreen(raster.ClipBoundary[0], camera);
+                    clipBuilder.MoveTo(ToFloat(p0.X), ToFloat(p0.Y));
+                    for (var i = 1; i < raster.ClipBoundary.Count; i++)
+                    {
+                        var pt = CameraTransform.WorldToScreen(raster.ClipBoundary[i], camera);
+                        clipBuilder.LineTo(ToFloat(pt.X), ToFloat(pt.Y));
+                    }
+                    clipBuilder.Close();
+                    using var clipPath = clipBuilder.Detach();
+                    canvas.ClipPath(clipPath, SKClipOperation.Intersect, antialias: true);
                 }
-                clipBuilder.Close();
-                using var clipPath = clipBuilder.Detach();
-                canvas.ClipPath(clipPath, SKClipOperation.Intersect, antialias: true);
+
+                var minScreen = CameraTransform.WorldToScreen(new WorldPoint2(raster.ImageBounds.MinX, raster.ImageBounds.MaxY), camera);
+                var maxScreen = CameraTransform.WorldToScreen(new WorldPoint2(raster.ImageBounds.MaxX, raster.ImageBounds.MinY), camera);
+
+                var left = ToFloat(Math.Min(minScreen.X, maxScreen.X));
+                var top = ToFloat(Math.Min(minScreen.Y, maxScreen.Y));
+                var right = ToFloat(Math.Max(minScreen.X, maxScreen.X));
+                var bottom = ToFloat(Math.Max(minScreen.Y, maxScreen.Y));
+
+                var destRect = new SKRect(left, top, right, bottom);
+
+                using var imagePaint = new SKPaint
+                {
+                    IsAntialias = true
+                };
+
+                if (raster.Fade > 0)
+                {
+                    var alpha = (byte)Math.Clamp((1d - (raster.Fade / 100d)) * 255d, 0d, 255d);
+                    imagePaint.Color = new SKColor(255, 255, 255, alpha);
+                }
+
+                canvas.DrawBitmap(bitmap, destRect, new SKSamplingOptions(SKFilterMode.Linear), imagePaint);
             }
-
-            var minScreen = CameraTransform.WorldToScreen(new WorldPoint2(raster.ImageBounds.MinX, raster.ImageBounds.MaxY), camera);
-            var maxScreen = CameraTransform.WorldToScreen(new WorldPoint2(raster.ImageBounds.MaxX, raster.ImageBounds.MinY), camera);
-
-            var left = ToFloat(Math.Min(minScreen.X, maxScreen.X));
-            var top = ToFloat(Math.Min(minScreen.Y, maxScreen.Y));
-            var right = ToFloat(Math.Max(minScreen.X, maxScreen.X));
-            var bottom = ToFloat(Math.Max(minScreen.Y, maxScreen.Y));
-
-            var destRect = new SKRect(left, top, right, bottom);
-
-            using var imagePaint = new SKPaint
+            finally
             {
-                IsAntialias = true
-            };
-
-            if (raster.Fade > 0)
-            {
-                var alpha = (byte)Math.Clamp((1d - (raster.Fade / 100d)) * 255d, 0d, 255d);
-                imagePaint.Color = new SKColor(255, 255, 255, alpha);
+                canvas.RestoreToCount(saveCount);
             }
-
-            canvas.DrawBitmap(bitmap, destRect, new SKSamplingOptions(SKFilterMode.Linear), imagePaint);
         }
         finally
         {
-            canvas.RestoreToCount(saveCount);
+            if (!isCached)
+            {
+                bitmap.Dispose();
+            }
         }
     }
 

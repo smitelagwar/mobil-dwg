@@ -13,10 +13,10 @@
 | 02 | Paket sınırları ve ortak doğrudan Skia painter | TAMAMLANDI |
 | 03 | Kamera ve sayısal sözleşme | TAMAMLANDI |
 | 04 | Native input ve gesture state machine | TAMAMLANDI |
-| 05 | Session, scheduler ve üretim viewer bağlantısı | BAŞLANIYOR |
-| 06 | Muhafazakâr bounds ve mekânsal indeks | BAŞLAMADI |
-| 07 | Cache, geometri hazırlığı ve kontrollü ayrıntı | BAŞLAMADI |
-| 08 | Gerçek dosya açma ve parser köprüsü | BAŞLAMADI |
+| 05 | Session, scheduler ve üretim viewer bağlantısı | TAMAMLANDI |
+| 06 | Muhafazakâr bounds ve mekânsal indeks | TAMAMLANDI |
+| 07 | Cache, geometri hazırlığı ve kontrollü ayrıntı | TAMAMLANDI |
+| 08 | Gerçek dosya açma ve parser köprüsü | BAŞLANIYOR |
 | 09 | Geometri, koordinat uzayları ve block | BAŞLAMADI |
 | 10 | Metin, ölçülendirme ve hatch | BAŞLAMADI |
 | 11 | Layout, referanslar ve viewer araçları | BAŞLAMADI |
@@ -273,4 +273,43 @@ Geçmeyen veya çalıştırılamayan koşullar: Yok.
 Bir sonraki aşama: Aşama 07 — Cache, geometri hazırlığı ve kontrollü ayrıntı  
 
 ---
+
+### Aşama 07 Raporu
+
+Aşama: 07 — Cache, geometri hazırlığı ve kontrollü ayrıntı  
+Durum: TAMAMLANDI  
+Son HEAD: `280f037` (commit: `perf(render): cache prepared geometry within quality and memory budgets`)  
+Değişen dosyalar:
+- `scripts/viewer-stability-gate.ps1`
+- `src/MobilDwg.Rendering/Geometry/RenderQualityPolicy.cs`
+- `src/MobilDwg.Rendering/Scene/SceneGeometry.cs`
+- `src/MobilDwg.Rendering/Skia/PreparedGeometryCache.cs`
+- `src/MobilDwg.Rendering/Skia/RenderResourceCache.cs`
+- `src/MobilDwg.Rendering/Skia/SkiaScenePainter.cs`
+- `src/MobilDwg.Rendering/Viewer/CadViewerSession.cs`
+- `src/MobilDwg.Rendering/Viewer/RenderSnapshot.cs`
+- `tests/MobilDwg.Rendering.Tests/PreparedGeometryCacheTests.cs`
+- `tests/MobilDwg.Rendering.Tests/Program.cs`
+(Kullanıcı başlangıç değişiklikleri `src/MobilDwg.Rendering/Scene/RenderScene.cs` public constructor görünürlüğü, `release/SHA256SUMS.txt`, `tools/CadControlBenchmark/` bozulmadan çalışma ağacında korundu.)  
+Kullanıcıya yansıyan davranış:
+- Eğriler (yay, elips, spline, bulged çoklu çizgi) için ekrandaki piksel çözünürlüğüne bağlı LOD önbelleği (`PreparedGeometryCache`) kuruldu; etkileşim modunda 1.0 px kord hatası, nihai modda 0.25 px hassasiyet sağlanırken aynı ölçekteki kaydırmalarda (pan) sıfır tepe noktası hesabı yapıldı.
+- Pinch-zoom esnasında önbellek döngüsünü (thrashing) önlemek için $\log_2(\text{WUPP})$ tabanlı güç-2 LOD bantları ve $\pm 20\%$ histerezis uygulandı.
+- Çok büyük CAD koordinatlarında float32 dönüşüm hassasiyet kaybı kontrolü (`float round-trip error check <= 0.1 px`) eklendi; yerel orijine göre dönüşüm yapılarak titreme kesin olarak önlendi.
+- Etkileşim modunda <0.5 px metinler tamamen budanır (cull), <3 px metinler hafif taban çizgisi (baseline) olarak basitleştirilir, desen hatch çizgileri şeffaflığı bozmadan adımlı seyreltilir (asla opak katı yapılmaz).
+- Raster imajlar için `RenderResourceCache` kurularak kaydırma sırasında diske/kod çözücüye (decode) gitme sayısı sıfıra indirildi (0 re-decodes on pan).
+- Bellek sınırları: Geometri önbelleği 32 MB, raster önbelleği 64 MB LRU bütçesiyle sınırlandı; `OnTrimMemory` ve oturum kapanışında deterministik temizlik sağlandı.
+Çalıştırılan gerçek komutlar ve exit code:
+- `dotnet run --project tests/MobilDwg.Rendering.Tests/MobilDwg.Rendering.Tests.csproj -c Release` (exit code: 0, STAGE07_PREPARED_GEOMETRY_CACHE_TESTS_PASS)
+- `dotnet build src/MobilDwg.App/MobilDwg.App.csproj -f net10.0-android36.0 -c Release` (exit code: 0, 0 warning, 0 error)
+- `powershell -ExecutionPolicy Bypass -File scripts/viewer-stability-gate.ps1 -Stage 07` (exit code: 0, VIEWER_STABILITY_STAGE07_PASS)  
+Ölçülen metrikler ve kanıt dosyaları:
+- `artifacts/viewer-stability/stage07/gate-summary.txt`
+- `artifacts/viewer-stability/stage07/rendering-tests.log`
+- `artifacts/viewer-stability/stage07/architecture-tests.log`
+- `artifacts/viewer-stability/stage07/app-build-android.log`  
+Geçmeyen veya çalıştırılamayan koşullar: Yok.  
+Bir sonraki aşama: Aşama 08 — Gerçek dosya açma ve parser köprüsü  
+
+---
+
 
