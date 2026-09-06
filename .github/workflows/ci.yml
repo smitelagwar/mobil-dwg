@@ -1,0 +1,67 @@
+name: CI
+
+on:
+  push:
+    branches: [main]
+    paths:
+      - 'src/MobilDwg.Core/**'
+      - 'src/MobilDwg.Cad/**'
+      - 'src/MobilDwg.Rendering/**'
+      - 'tests/**'
+      - 'Directory.Build.props'
+      - 'Directory.Packages.props'
+      - 'global.json'
+      - '.github/workflows/ci.yml'
+  pull_request:
+    branches: [main]
+    paths:
+      - 'src/MobilDwg.Core/**'
+      - 'src/MobilDwg.Cad/**'
+      - 'src/MobilDwg.Rendering/**'
+      - 'tests/**'
+      - 'Directory.Build.props'
+      - 'Directory.Packages.props'
+      - 'global.json'
+      - '.github/workflows/ci.yml'
+
+permissions:
+  contents: read
+
+concurrency:
+  group: host-ci-${{ github.ref }}
+  cancel-in-progress: true
+
+jobs:
+  host-tests:
+    runs-on: ubuntu-latest
+    timeout-minutes: 20
+    steps:
+      - name: Checkout
+        uses: actions/checkout@v5
+        with:
+          persist-credentials: false
+
+      - name: Set up exact .NET SDK
+        uses: actions/setup-dotnet@v5
+        with:
+          dotnet-version: '10.0.400'
+
+      - name: Verify SDK pin
+        shell: bash
+        run: test "$(dotnet --version)" = "10.0.400"
+
+      - name: Build CAD adapter
+        shell: bash
+        run: dotnet build src/MobilDwg.Cad/MobilDwg.Cad.csproj -c Release --nologo
+
+      - name: Run core tests
+        shell: bash
+        run: dotnet run --project tests/MobilDwg.Core.Tests/MobilDwg.Core.Tests.csproj -c Release
+
+      - name: Run rendering tests
+        shell: bash
+        run: dotnet run --project tests/MobilDwg.Rendering.Tests/MobilDwg.Rendering.Tests.csproj -c Release
+
+      - name: Run architecture tests
+        shell: bash
+        run: dotnet run --project tests/MobilDwg.Architecture.Tests/MobilDwg.Architecture.Tests.csproj -c Release

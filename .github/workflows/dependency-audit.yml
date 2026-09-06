@@ -1,0 +1,64 @@
+name: Dependency Audit
+
+on:
+  push:
+    branches: [main]
+    paths:
+      - 'Directory.Packages.props'
+      - 'src/**/*.csproj'
+      - 'compliance/Stage02.DependencyProbe/**'
+      - 'compliance/stage02-package-manifest.json'
+      - 'scripts/stage02-audit-packages.py'
+      - '.github/workflows/dependency-audit.yml'
+  pull_request:
+    branches: [main]
+    paths:
+      - 'Directory.Packages.props'
+      - 'src/**/*.csproj'
+      - 'compliance/Stage02.DependencyProbe/**'
+      - 'compliance/stage02-package-manifest.json'
+      - 'scripts/stage02-audit-packages.py'
+      - '.github/workflows/dependency-audit.yml'
+  workflow_dispatch:
+
+permissions:
+  contents: read
+
+concurrency:
+  group: dependency-audit-${{ github.ref }}
+  cancel-in-progress: true
+
+jobs:
+  audit:
+    runs-on: ubuntu-latest
+    timeout-minutes: 30
+    steps:
+      - name: Checkout
+        uses: actions/checkout@v5
+        with:
+          persist-credentials: false
+
+      - name: Set up exact .NET SDK
+        uses: actions/setup-dotnet@v5
+        with:
+          dotnet-version: '10.0.400'
+
+      - name: Install pinned Android workload
+        shell: bash
+        run: dotnet workload install maui-android
+
+      - name: Locked restore Android dependency probe
+        shell: bash
+        run: dotnet restore compliance/Stage02.DependencyProbe/Stage02.DependencyProbe.csproj --locked-mode
+
+      - name: Audit exact package graph and licenses
+        shell: bash
+        run: python3 scripts/stage02-audit-packages.py
+
+      - name: Require reproducible manifest
+        shell: bash
+        run: git diff --exit-code -- compliance/stage02-package-manifest.json
+
+      - name: Vulnerability report
+        shell: bash
+        run: dotnet list compliance/Stage02.DependencyProbe/Stage02.DependencyProbe.csproj package --vulnerable --include-transitive

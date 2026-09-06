@@ -1,8 +1,6 @@
-name: Android Emulator Automated Test Gate
+name: Android Real-App Regression
 
-# Bu workflow normal main veya feature branch push'larında ÇALIŞMAZ.
-# Yalnızca 'android-test' branch'ine anlamlı (Markdown-only olmayan) push yapıldığında
-# veya manuel (workflow_dispatch) tetiklenir.
+# Expensive device validation stays opt-in: push to android-test or manual dispatch.
 on:
   push:
     branches:
@@ -10,52 +8,46 @@ on:
     paths-ignore:
       - '**/*.md'
   workflow_dispatch:
-    inputs:
-      configuration:
-        description: 'Build Configuration (Release / Debug)'
-        required: true
-        default: 'Release'
-        type: choice
-        options:
-          - Release
-          - Debug
 
 permissions:
   contents: read
 
 concurrency:
-  group: android-emulator-${{ github.repository }}
+  group: android-real-app-${{ github.repository }}
   cancel-in-progress: false
 
 jobs:
-  android-emulator-gate:
-    name: Run Android Emulator Gate on Windows Runner
+  android-real-app:
     runs-on: [self-hosted, windows, android-test, mobil-dwg]
-    timeout-minutes: 30
+    timeout-minutes: 40
 
     steps:
-      - name: Checkout Repository
+      - name: Checkout
         uses: actions/checkout@v5
         with:
           persist-credentials: false
 
-      - name: Run Local Environment Doctor
+      - name: Verify local Android environment
         shell: powershell
-        run: |
-          & .\scripts\doctor-local-environment.ps1
+        run: .\scripts\doctor-local-environment.ps1
 
-      - name: Run Android Emulator Gate Script
+      - name: Start or reuse API 36 emulator
         shell: powershell
-        run: |
-          $config = if ("${{ github.event_name }}" -eq "workflow_dispatch") { "${{ inputs.configuration }}" } else { "Release" }
-          Write-Host "Triggered by: ${{ github.event_name }} on branch: ${{ github.ref_name }}"
-          Write-Host "Running android-emulator-gate.ps1 with Configuration: $config"
-          & .\scripts\android-emulator-gate.ps1 -Configuration $config -ArtifactsDir "artifacts/android-emulator-result"
+        run: .\scripts\start-emulator.ps1
 
-      - name: Upload Test Diagnostics Artifacts
+      - name: Run real-app blocker regression gate
+        shell: powershell
+        run: .\scripts\a25-android-beta-blocker-gate.ps1
+
+      - name: Upload diagnostics
         uses: actions/upload-artifact@v4
         if: always()
         with:
-          name: android-emulator-result
-          path: artifacts/android-emulator-result/
+          name: android-real-app-regression
+          path: artifacts/a25-android-beta-blocker/
           retention-days: 14
+
+      - name: Stop emulator
+        if: always()
+        shell: powershell
+        run: .\scripts\stop-emulator.ps1
