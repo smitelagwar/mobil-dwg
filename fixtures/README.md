@@ -1,6 +1,6 @@
 # mobil-dwg — Test Fixtures
 
-Bu klasör test corpus'unun yeniden dağıtım açısından açıkça sınıflandırılmış bölümünü ve immutable remote-reference sözleşmesini tutar. Fixture kayıtları aktif bir stage/cursor değildir; gelecekteki parser/render regresyonlarında yeniden kullanılabilir.
+Bu klasör test corpus'unun yeniden dağıtım açısından açıkça sınıflandırılmış bölümünü ve immutable remote-reference sözleşmesini tutar. Fixture kayıtları aktif bir geliştirme aşaması/cursor değildir; parser/render regresyonlarında tekrar kullanılabilir.
 
 ## Klasör politikası
 
@@ -15,7 +15,7 @@ CAD fixture bytes kanıtın parçasıdır. `.gitattributes` CAD dosyalarında pl
 
 ## Mini corpus
 
-Tarihsel ve tekrar kullanılabilir pozitif referans seti:
+Tekrar kullanılabilir pozitif referans seti:
 
 - pinned ACadSharp DWG örnekleri: R2000, R2004, R2010, R2018,
 - pinned ACadSharp ASCII DXF örnekleri: R2000, R2018,
@@ -32,7 +32,7 @@ Remote ACadSharp fixture'ları mobil-dwg içine vendored değildir ve `remote-re
 
 ## Redistributable Android smoke seti
 
-`fixtures/manifest/stage03-mini.json` içindeki tarihsel `android_smoke_set` gelecekteki Android/parser smoke testlerinde yeniden kullanılabilir:
+`fixtures/manifest/corpus.json` içindeki `android_smoke_set` Android/parser smoke testlerinde kullanılır:
 
 - `synthetic-turkish-basic-ac1015`: committed 0BSD DXF,
 - `synthetic-turkish-basic-ac1015-dwg`: sentetik DXF'den exact ACadSharp 3.7.1 generator sözleşmesiyle test sırasında üretilebilen DWG,
@@ -43,14 +43,18 @@ Generated DWG binary bağımsız engineering-fidelity goldeni değildir. Kullan�
 
 ## Validator
 
-Mevcut fixture audit aracı tarihsel dosya adını korur:
-
 ```bash
-python scripts/stage03-validate-fixtures.py \
-  --manifest fixtures/manifest/stage03-mini.json \
-  --evidence artifacts/stage03-fixture-audit.json
+python scripts/validate-fixtures.py \
+  --manifest fixtures/manifest/corpus.json \
+  --evidence artifacts/fixture-audit.json
 ```
 
-Script/marker adlarında `stage03` veya `V03` geçmesi onların aktif geliştirme cursor'ı olduğu anlamına gelmez; bunlar geriye dönük uyumluluk için korunmuş test isimleridir.
+Committed fixture hash'lerini ayrıca doğrulamak için:
+
+```bash
+python scripts/verify-fixture-integrity.py \
+  --audit artifacts/fixture-audit.json \
+  --integrity fixtures/manifest/source-integrity.json
+```
 
 Fixture/golden genel kuralları için `docs/GOLDEN_CONTRACT.md` esas alınır.

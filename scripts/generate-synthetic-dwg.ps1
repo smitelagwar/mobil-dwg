@@ -1,6 +1,6 @@
 param(
     [string]$InputDxf = "fixtures/public/synthetic/synthetic_turkish_basic_ac1015.dxf",
-    [string]$OutputDwg = "artifacts/stage03/synthetic_turkish_basic_ac1015.dwg"
+    [string]$OutputDwg = "artifacts/fixtures/synthetic_turkish_basic_ac1015.dwg"
 )
 
 $ErrorActionPreference = "Stop"
@@ -25,11 +25,11 @@ if (Test-Path -LiteralPath $outputPath) {
     Remove-Item -LiteralPath $outputPath -Force
 }
 
-$tempRoot = Join-Path ([System.IO.Path]::GetTempPath()) ("mobil-dwg-stage03-dwg-" + [guid]::NewGuid().ToString("N"))
+$tempRoot = Join-Path ([System.IO.Path]::GetTempPath()) ("mobil-dwg-fixture-dwg-" + [guid]::NewGuid().ToString("N"))
 New-Item -ItemType Directory -Force -Path $tempRoot | Out-Null
 
 try {
-    $projectPath = Join-Path $tempRoot "Stage03SyntheticDwgGenerator.csproj"
+    $projectPath = Join-Path $tempRoot "SyntheticDwgGenerator.csproj"
     $programPath = Join-Path $tempRoot "Program.cs"
 
     @'
@@ -60,10 +60,6 @@ string output = Path.GetFullPath(args[1]);
 using (DxfReader reader = new DxfReader(input))
 {
     var document = reader.Read();
-
-    // The hand-authored DXF intentionally contains only the tables needed for
-    // read-side smoke coverage. Complete ACadSharp's default table hierarchy
-    // before writing DWG so the fixture is structurally self-contained.
     document.CreateDefaults();
 
     using (DwgWriter writer = new DwgWriter(output, document))
@@ -90,8 +86,8 @@ if (info.Length <= 6)
     throw new InvalidDataException("Generated DWG is unexpectedly small.");
 }
 
-Console.WriteLine($"STAGE03_SYNTHETIC_DWG_GENERATED magic={magic} bytes={info.Length}");
-Console.WriteLine("STAGE03_SYNTHETIC_DWG_READBACK_PASS");
+Console.WriteLine($"SYNTHETIC_DWG_GENERATED magic={magic} bytes={info.Length}");
+Console.WriteLine("SYNTHETIC_DWG_READBACK_PASS");
 '@ | Set-Content -LiteralPath $programPath -Encoding UTF8
 
     & dotnet restore $projectPath --nologo
@@ -103,7 +99,7 @@ Console.WriteLine("STAGE03_SYNTHETIC_DWG_READBACK_PASS");
     if ($packageText -notmatch '"id"\s*:\s*"ACadSharp"' -or $packageText -notmatch '"resolvedVersion"\s*:\s*"3\.7\.1"') {
         throw "Synthetic DWG generator did not resolve exact ACadSharp 3.7.1."
     }
-    Write-Host "STAGE03_SYNTHETIC_DWG_PACKAGE_PASS"
+    Write-Host "SYNTHETIC_DWG_PACKAGE_PASS"
 
     & dotnet run --project $projectPath --no-restore --configuration Release -- $inputPath $outputPath
     if ($LASTEXITCODE -ne 0) { throw "Synthetic DWG generation failed." }

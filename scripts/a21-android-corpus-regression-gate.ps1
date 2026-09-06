@@ -1,6 +1,6 @@
 <#
 .SYNOPSIS
-    AŞAMA 21 real MobilDwg.App API36 Full Corpus Regression & Beta Gate acceptance script.
+    A21 real MobilDwg.App API36 Full Corpus Regression & Beta Gate acceptance script.
 .DESCRIPTION
     Builds a validation Release APK with -p:A21Validation=true and packaged CAD fixtures,
     executes full corpus regression across committed DXFs, generated DWG, and synthetic suites,
@@ -82,12 +82,12 @@ if ($AndroidApi -ne 36) { Fail "expected API 36 emulator, found API $AndroidApi 
 Write-Host "A21_EMULATOR_API36_PASS serial=$Serial android=$AndroidRelease abi=$Abi"
 
 # Ensure synthetic DWG fixture is generated
-$SyntheticDwgRelative = 'artifacts/stage03/synthetic_turkish_basic_ac1015.dwg'
+$SyntheticDwgRelative = 'artifacts/fixtures/synthetic_turkish_basic_ac1015.dwg'
 $SyntheticDwgFull = Join-Path $RepoRoot $SyntheticDwgRelative
 if (-not (Test-Path $SyntheticDwgFull)) {
-    Write-Host "Generating synthetic AC1015 DWG fixture via stage03 generator..."
-    & powershell -ExecutionPolicy Bypass -File scripts/stage03-generate-synthetic-dwg.ps1
-    Require-ExitCode "stage03 synthetic DWG generation"
+    Write-Host "Generating synthetic AC1015 DWG fixture..."
+    & powershell -ExecutionPolicy Bypass -File scripts/generate-synthetic-dwg.ps1
+    Require-ExitCode "synthetic DWG generation"
 }
 
 $AppProject = 'src/MobilDwg.App/MobilDwg.App.csproj'
@@ -167,7 +167,6 @@ $LogcatDump = (& adb -s $Serial logcat -d -s MobilDwgA21:I | Out-String)
 $LogcatFile = Join-Path $ArtifactsFullPath 'a21_emulator_logcat.txt'
 [System.IO.File]::WriteAllText($LogcatFile, $LogcatDump)
 
-# Parse required markers
 $ReqMarkers = @(
     'A21_CORPUS_REGRESSION_PASS',
     'A21_P0_P1_MATRIX_PASS',
@@ -190,7 +189,6 @@ foreach ($m in $ReqMarkers) {
 
 Write-Host "A21_REAL_APP_REGRESSION_MARKERS_PASS"
 
-# Verify UI Hierarchy via uiautomator dump
 $RemoteDump = '/sdcard/a21_window_dump.xml'
 & adb -s $Serial shell uiautomator dump $RemoteDump | Out-Null
 $LocalDump = Join-Path $ArtifactsFullPath 'a21_window.xml'
@@ -203,7 +201,6 @@ if ($UiContent -notmatch 'ANDROID_STAGE21_CORPUS_REGRESSION_PASS') {
 }
 Write-Host "A21_REAL_APP_UI_STATUS_PASS"
 
-# Capture byte-safe PNG screenshot
 $ScreenshotPath = Join-Path $ArtifactsFullPath 'a21-real-app-corpus.png'
 Invoke-AdbBinaryToFile -AdbPath $AdbExe -Serial $Serial -OutputPath $ScreenshotPath
 Assert-PngSignature -Path $ScreenshotPath
@@ -211,7 +208,6 @@ $PngBytes = (Get-Item -LiteralPath $ScreenshotPath).Length
 $PngHash = (Get-FileHash -Path $ScreenshotPath -Algorithm SHA256).Hash.ToLowerInvariant()
 Write-Host "A21_SCREENSHOT_PNG_PASS bytes=$PngBytes sha256=$PngHash"
 
-# Check dumpsys meminfo PSS
 $MemInfo = (& adb -s $Serial shell dumpsys meminfo $PackageName | Out-String)
 $MeminfoFile = Join-Path $ArtifactsFullPath 'a21_meminfo.txt'
 [System.IO.File]::WriteAllText($MeminfoFile, $MemInfo)
@@ -226,7 +222,6 @@ if ($TotalPssMb -gt $MaxPssMb) {
 }
 Write-Host "A21_MEMINFO_PSS_PASS total_pss=$([Math]::Round($TotalPssMb, 1)) MB"
 
-# Verify process liveness
 $FinalPidOutput = ((& adb -s $Serial shell pidof -s $PackageName | Out-String).Trim())
 $FinalPid = if ($FinalPidOutput -match '^\d+$') { [int]$FinalPidOutput } else { 0 }
 if ($FinalPid -ne $AppPid) {

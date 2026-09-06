@@ -46,7 +46,7 @@ def read_committed_blob(repo_root: Path, repo_path: str) -> bytes:
 
 
 def check_git_private_ignore(repo_root: Path) -> None:
-    sentinel = "fixtures/private/stage03-sentinel.dwg"
+    sentinel = "fixtures/private/ignore-sentinel.dwg"
     proc = subprocess.run(["git", "check-ignore", "-q", sentinel], cwd=repo_root, check=False)
     if proc.returncode != 0:
         fail(f"private fixture path is not ignored: {sentinel}")
@@ -77,7 +77,7 @@ def check_cad_byte_attributes(repo_root: Path, paths: list[str]) -> None:
 
 def fetch_remote(url: str, target: Path) -> bytes:
     target.parent.mkdir(parents=True, exist_ok=True)
-    request = urllib.request.Request(url, headers={"User-Agent": "mobil-dwg-stage03-fixture-audit/3"})
+    request = urllib.request.Request(url, headers={"User-Agent": "mobil-dwg-fixture-audit/3"})
     with urllib.request.urlopen(request, timeout=60) as response:
         data = response.read()
     target.write_bytes(data)
@@ -241,7 +241,7 @@ def validate_generated_and_smoke_set(manifest: dict, repo_root: Path) -> dict:
         fail(f"Android smoke set must cover positive DWG and DXF; got {sorted(formats)}")
 
     print(
-        "V03_ANDROID_SMOKE_SET_PASS "
+        "FIXTURE_ANDROID_SMOKE_SET_PASS "
         f"committed_positive={len(positive_ids)} generated_positive={len(generated_ids)} "
         f"negative={len(negative_ids)} formats={','.join(sorted(formats))}"
     )
@@ -256,7 +256,7 @@ def validate_generated_and_smoke_set(manifest: dict, repo_root: Path) -> dict:
 
 def main() -> int:
     parser = argparse.ArgumentParser()
-    parser.add_argument("--manifest", default="fixtures/manifest/stage03-mini.json")
+    parser.add_argument("--manifest", default="fixtures/manifest/corpus.json")
     parser.add_argument("--cache", default=None)
     parser.add_argument("--evidence", default=None)
     args = parser.parse_args()
@@ -277,7 +277,7 @@ def main() -> int:
     validate_coverage(manifest)
     smoke_evidence = validate_generated_and_smoke_set(manifest, repo_root)
 
-    cache_root = Path(args.cache) if args.cache else Path(tempfile.mkdtemp(prefix="mobil-dwg-stage03-"))
+    cache_root = Path(args.cache) if args.cache else Path(tempfile.mkdtemp(prefix="mobil-dwg-fixtures-"))
     cache_root.mkdir(parents=True, exist_ok=True)
     payload_by_id: dict[str, bytes] = {}
     evidence = {
@@ -357,7 +357,7 @@ def main() -> int:
         evidence_path.parent.mkdir(parents=True, exist_ok=True)
         evidence_path.write_text(json.dumps(evidence, indent=2, sort_keys=True) + "\n", encoding="utf-8")
 
-    print(f"STAGE03_FIXTURE_AUDIT_PASS fixtures={len(evidence['fixtures'])} derived_negatives={len(evidence['derived_negatives'])}")
+    print(f"FIXTURE_AUDIT_PASS fixtures={len(evidence['fixtures'])} derived_negatives={len(evidence['derived_negatives'])}")
     return 0
 
 
@@ -365,5 +365,5 @@ if __name__ == "__main__":
     try:
         raise SystemExit(main())
     except Exception as exc:
-        print(f"STAGE03_FIXTURE_AUDIT_FAIL: {exc}", file=sys.stderr)
+        print(f"FIXTURE_AUDIT_FAIL: {exc}", file=sys.stderr)
         raise

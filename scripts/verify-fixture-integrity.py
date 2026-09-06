@@ -26,12 +26,12 @@ def main():
             raise RuntimeError(f"{fixture_id}: Git blob SHA1 mismatch")
         if item["sha256_observed"] != hashes["sha256"]:
             raise RuntimeError(f"{fixture_id}: SHA-256 mismatch")
-    print(f"STAGE03_DUAL_HASH_PASS fixtures={len(expected)}")
+    print(f"FIXTURE_DUAL_HASH_PASS fixtures={len(expected)}")
 
 
 if __name__ == "__main__":
     try:
         main()
     except Exception as exc:
-        print(f"STAGE03_DUAL_HASH_FAIL: {exc}", file=sys.stderr)
+        print(f"FIXTURE_DUAL_HASH_FAIL: {exc}", file=sys.stderr)
         raise

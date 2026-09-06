@@ -18,7 +18,7 @@
     "mobil-dwg-synthetic-0bsd": {
       "license": "0BSD",
       "redistribution": "committed-permitted",
-      "provenance": "mobil-dwg Stage 03 synthetic CAD authored in-repo; no customer/private CAD content. Generated DWG smoke artifacts inherit this source-data provenance and are created only by the pinned fixture generator."
+      "provenance": "mobil-dwg synthetic CAD authored in-repo; no customer/private CAD content. Generated DWG smoke artifacts inherit this source-data provenance and are created only by the pinned fixture generator."
     }
   },
   "fixtures": [
@@ -158,7 +158,7 @@
       "acad_version": "AC1015",
       "version_family": "R2000",
       "source_fixture_id": "synthetic-turkish-basic-ac1015",
-      "generator": "scripts/stage03-generate-synthetic-dwg.ps1",
+      "generator": "scripts/generate-synthetic-dwg.ps1",
       "generator_dependency": {"id": "ACadSharp", "version": "3.7.1"},
       "rights_profile": "mobil-dwg-synthetic-0bsd",
       "features": ["basic_geometry", "turkish_text", "nested_block"],
