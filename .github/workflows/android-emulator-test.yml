@@ -37,7 +37,7 @@ jobs:
 
       - name: Run real-app blocker regression gate
         shell: powershell
-        run: .\scripts\a25-android-beta-blocker-gate.ps1
+        run: .\scripts\android-real-app-regression.ps1
 
       - name: Upload diagnostics
         uses: actions/upload-artifact@v4
