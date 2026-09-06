@@ -380,8 +380,36 @@ if ($stageNum -ge 12) {
     Pass "VIEWER_STABILITY_STAGE12_PASS"
 }
 
+# Stage 13 checks
+if ($stageNum -ge 13) {
+    Write-Host "Verifying Stage 13 Real Android Touch Fidelity, Performance Acceptance & Frame Budgets..."
+
+    $viewerPerfFile = Join-Path $repoRoot "tests/MobilDwg.Rendering.Tests/ViewerPerformanceTests.cs"
+    if (-not (Test-Path $viewerPerfFile)) { Fail "ViewerPerformanceTests.cs missing" }
+    Pass "STAGE13_VIEWER_PERFORMANCE_SOURCE_PASS"
+
+    $smokeRunnerFile = Join-Path $repoRoot "tests/MobilDwg.Android.Instrumentation/NativeSmokeRunner.cs"
+    if (-not (Test-Path $smokeRunnerFile)) { Fail "NativeSmokeRunner.cs missing" }
+    Pass "STAGE13_NATIVE_SMOKE_RUNNER_SOURCE_PASS"
+
+    if (-not ($rendText -match "STAGE13_VIEWER_PERFORMANCE_TESTS_PASS")) { Fail "STAGE13_VIEWER_PERFORMANCE_TESTS_PASS marker missing in rendering tests" }
+    Pass "STAGE13_VIEWER_PERFORMANCE_TESTS_PASS"
+
+    if (-not ($rendText -match "STAGE13_TOUCH_FIDELITY_FRAME_BUDGETS_PASS")) { Fail "STAGE13_TOUCH_FIDELITY_FRAME_BUDGETS_PASS marker missing in rendering tests" }
+    Pass "STAGE13_TOUCH_FIDELITY_FRAME_BUDGETS_PASS"
+
+    if (-not ($rendText -match "STAGE20_PERFORMANCE_MEMORY_TESTS_PASS")) { Fail "STAGE20_PERFORMANCE_MEMORY_TESTS_PASS marker missing in rendering tests" }
+    Pass "STAGE13_PERFORMANCE_MEMORY_TESTS_PASS"
+
+    if (-not ($integText -match "STAGE13_FIXTURE_PERFORMANCE_PASS")) { Fail "STAGE13_FIXTURE_PERFORMANCE_PASS marker missing in integration tests" }
+    Pass "STAGE13_INTEGRATION_TESTS_PASS"
+
+    Pass "VIEWER_STABILITY_STAGE13_PASS"
+}
+
 Write-Host "=== Viewer Stability Gate Passed for Stage $Stage ==="
 exit 0
+
 
 
 

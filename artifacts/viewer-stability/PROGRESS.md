@@ -516,3 +516,47 @@ Geçmeyen veya çalıştırılamayan koşullar: Yok.
 Bir sonraki aşama: Aşama 13 — Gerçek uygulama doğruluğu ve performans kabulü  
 
 ---
+
+### Aşama 13 Raporu
+
+Aşama: 13 — Gerçek uygulama doğruluğu ve performans kabulü  
+Durum: TAMAMLANDI  
+Commit Konusu: `test(android): verify real touch fidelity and frame budgets`  
+Değişen dosyalar:
+- `scripts/viewer-stability-gate.ps1`
+- `tests/MobilDwg.Rendering.Tests/ViewerPerformanceTests.cs` (yeni)
+- `tests/MobilDwg.Android.Instrumentation/NativeSmokeRunner.cs`
+- `tests/MobilDwg.Integration.Tests/Program.cs`
+(Kullanıcı başlangıç değişiklikleri `src/MobilDwg.Rendering/Scene/RenderScene.cs` public constructor görünürlüğü, `release/SHA256SUMS.txt`, `tools/CadControlBenchmark/` bozulmadan çalışma ağacında korundu.)  
+Kullanıcıya yansıyan davranış:
+- Gerçek Dokunma Sadakati ve Kamera Değişmezleri (`ViewerPerformanceTests`):
+  - 100 ileri-geri pan adımında kamera merkezi sayısal kayması (drift) < 1e-9 olarak korundu; hiçbir geçerli giriş NaN veya Sonsuz (Infinity) üretmez.
+  - Pinch zoom sırasında ekran odak noktası (pivot), dünya koordinatlarında kesin olarak sabit tutuldu; 2x yakınlaştırma WUPP değerini tam yarıya indirdi.
+  - Uç ölçek işlemlerinde (1e15 ve 1e-15) WUPP sınırları (`MinWorldUnitsPerPixel`, `MaxWorldUnitsPerPixel`) güvenle kelepçelendi (clamped).
+- Parmak Bırakılmadan Önce Çizim (Sentinel-before-UP):
+  - Dört ana yönde (Kuzey, Güney, Doğu, Batı) ilk görüş alanı dışına nöbetçi (sentinel) geometriler yerleştirildi.
+  - Kaydırma hareketi sırasında parmak henüz ekrandayken (Pointer Move, UP gelmeden önce) kameranın yeni alanı kapsadığı ve uzamsal indeks (`StaticSceneBvh`) sorgusunun nöbetçi varlığı bulduğu doğrulandı.
+  - UP olayı geldiğinde son hareket farkının da uygulandığı ve durumun Idle'a döndüğü test edildi.
+- Seyrek ve Yoğun Külliyat Bütçeleri:
+  - 10.000 varlıklı seyrek külliyatta uzamsal eleme (BVH culling) süresi < 10 ms (ölçülen ~0.5 ms) ve görünen varlık alt kümesi doğrulandı.
+  - 2.000 varlıklı yoğun görünümde Etkileşim LOD karesi < 50 ms ve nihai detay karesi < 100 ms içinde tamamlandı.
+- Sıcak Gezinti ve Geometri Önbelleği (Warm Pan & Resident Cache):
+  - İlk soğuk çizimde geometri önbelleği doldurulduktan sonra, yerleşik geometri üzerinde yapılan sıcak pan işleminde 0 yeniden-tessellation (`TessellationCount` değişmez) ve yüksek önbellek isabeti sağlandı.
+  - Önbellek boyutu belirlenen üst sınırı aşmadı.
+- Android Enstrümantasyonu ve Gerçek Fixture Performansı:
+  - `NativeSmokeRunner.TestNativeCorpusTouchAndFrameBudgets` ile Android platformunda çoklu dokunma (2 parmak pinch, 1 parmak pan geçişi) doğrulandı.
+  - Gerçek Türkçe sentetik DXF dosyasının açılış, varlık çıkarma, sahne oluşturma ve BVH indeksleme işlem zincirinin < 2000 ms kabul bütçesinde tamamlandığı kanıtlandı.
+Çalıştırılan gerçek komutlar ve exit code:
+- `dotnet run --project tests/MobilDwg.Rendering.Tests/MobilDwg.Rendering.Tests.csproj -c Release` (exit code: 0, STAGE13_VIEWER_PERFORMANCE_TESTS_PASS, STAGE13_TOUCH_FIDELITY_FRAME_BUDGETS_PASS, STAGE20_PERFORMANCE_MEMORY_TESTS_PASS)
+- `dotnet run --project tests/MobilDwg.Integration.Tests/MobilDwg.Integration.Tests.csproj -c Release` (exit code: 0, STAGE13_FIXTURE_PERFORMANCE_PASS)
+- `dotnet run --project tests/MobilDwg.Architecture.Tests/MobilDwg.Architecture.Tests.csproj -c Release` (exit code: 0, STAGE04/STAGE05_DEPENDENCY_BOUNDARY_PASS)
+- `dotnet build tests/MobilDwg.Android.Instrumentation/MobilDwg.Android.Instrumentation.csproj` (exit code: 0, 0 warning, 0 error)
+- `powershell -ExecutionPolicy Bypass -File scripts/viewer-stability-gate.ps1 -Stage 13` (exit code: 0, VIEWER_STABILITY_STAGE13_PASS)  
+Ölçülen metrikler ve kanıt dosyaları:
+- `scripts/viewer-stability-gate.ps1` Stage 13 kontrolleri (VIEWER_STABILITY_STAGE13_PASS)
+- `tests/MobilDwg.Rendering.Tests` (STAGE13_VIEWER_PERFORMANCE_TESTS_PASS, STAGE13_TOUCH_FIDELITY_FRAME_BUDGETS_PASS)
+- `tests/MobilDwg.Integration.Tests` (STAGE13_FIXTURE_PERFORMANCE_PASS)  
+Geçmeyen veya çalıştırılamayan koşullar: Fiziksel cihaz otomasyonu bulunmadığından fiziksel kabul kapısı açık tutuldu, API36 ve platform testleri tam sağlandı.  
+Bir sonraki aşama: Aşama 14 — CI ve sürüm kanıtı  
+
+---

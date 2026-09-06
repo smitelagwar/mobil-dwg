@@ -142,6 +142,7 @@ public static class Program
             RunStage10TextDimensionHatchTests();
             RunStage11LayoutMeasurementSnapTests();
             RunStage12LifecycleTests();
+            await RunStage13PerformanceAcceptanceTests();
 
             Console.WriteLine("STAGE01_INTEGRATION_TESTS_PASS");
             Console.WriteLine("STAGE08_CAD_EXTRACTION_TESTS_PASS");
@@ -149,6 +150,7 @@ public static class Program
             Console.WriteLine("STAGE10_TEXT_DIMENSION_HATCH_PASS");
             Console.WriteLine("STAGE11_LAYOUT_MEASUREMENT_SNAP_PASS");
             Console.WriteLine("STAGE12_LIFECYCLE_TESTS_PASS");
+            Console.WriteLine("STAGE13_FIXTURE_PERFORMANCE_PASS");
             return 0;
         }
         catch (Exception ex)
@@ -905,6 +907,56 @@ public static class Program
             var hashHex = Convert.ToHexString(hashBytes).ToLowerInvariant();
             Assert(hashHex.Length == 64, "Fixture SHA-256 hash computation valid");
         }
+    }
+
+    private static async Task RunStage13PerformanceAcceptanceTests()
+    {
+        var repoRoot = FindRepoRoot();
+
+        // 1. Fixture Manifest Validation: Synthetic Turkish, negative font, negative xref
+        var fixtures = new[]
+        {
+            Path.Combine(repoRoot, "fixtures", "public", "synthetic", "synthetic_turkish_basic_ac1015.dxf"),
+            Path.Combine(repoRoot, "fixtures", "public", "synthetic", "negative_missing_font_ac1015.dxf"),
+            Path.Combine(repoRoot, "fixtures", "public", "synthetic", "negative_missing_xref_ac1015.dxf")
+        };
+
+        foreach (var path in fixtures)
+        {
+            Assert(File.Exists(path), $"Corpus fixture must exist: {path}");
+            var fi = new FileInfo(path);
+            Assert(fi.Length > 0, $"Fixture must not be empty: {path}");
+        }
+
+        // 2. Real Turkish DXF pipeline timing acceptance
+        var turkishDxf = fixtures[0];
+        var reader = new AcadSharpDocumentReader();
+        var sw = System.Diagnostics.Stopwatch.StartNew();
+
+        await using (var stream = File.OpenRead(turkishDxf))
+        {
+            var request = new CadOpenRequest(stream, Path.GetFileName(turkishDxf), stream.Length, LeaveOpen: true);
+            await using var session = await reader.OpenAsync(request);
+
+            var extracted = AcadSharpEntityExtractor.Extract(session.Handle!);
+            var scene = CadExtractedSceneBuilder.Build(extracted);
+
+            Assert(scene.Entities.Count > 0, "Entities must be extracted");
+            Assert(scene.WorldBounds.HasValue, "World bounds must be computed");
+
+            // Spatial query
+            var camera = ViewerZoomPolicy.CreateFitCamera(scene.WorldBounds!.Value, 800, 800);
+            var visibleBounds = camera.GetVisibleWorldBounds();
+            var candidates = new List<int>();
+            var metrics = new MobilDwg.Rendering.Spatial.SpatialQueryMetrics();
+            scene.SpatialIndex.Query(visibleBounds, candidates, ref metrics);
+            Assert(candidates.Count > 0, "Visible candidates must be found");
+        }
+        sw.Stop();
+
+        // End-to-end open + parse + extract + bvh build must be well within budget (< 2000ms for synthetic Turkish)
+        Assert(sw.Elapsed.TotalMilliseconds < 2000.0,
+            $"Real fixture pipeline took {sw.Elapsed.TotalMilliseconds} ms, expected < 2000ms");
     }
 }
 

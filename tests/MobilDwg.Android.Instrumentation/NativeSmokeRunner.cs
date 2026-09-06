@@ -19,9 +19,11 @@ public static class NativeSmokeRunner
         TestNativeResizeSmoke();
         TestRapidOpenCancellationAndLeaseSafety();
         TestSafeCadFileCacheOrphanPurgingAndActiveProtection();
+        TestNativeCorpusTouchAndFrameBudgets();
         Console.WriteLine("STAGE05_NATIVE_INSTRUMENTATION_PASS");
         Console.WriteLine("STAGE08_COORDINATOR_RAPID_OPEN_PASS");
         Console.WriteLine("STAGE12_SAFE_CACHE_ORPHAN_PROTECTION_PASS");
+        Console.WriteLine("STAGE13_NATIVE_TOUCH_FIDELITY_PASS");
     }
 
     private static void TestNativePanSmoke()
@@ -182,10 +184,13 @@ public static class NativeSmokeRunner
         {
             var cache = new MobilDwg.App.Opening.SafeCadFileCache(tempDir, new MobilDwg.App.Opening.CadFileOpenLimits(10 * 1024 * 1024, 1024 * 1024));
 
-            // Create active file
-            var activeFile = System.IO.Path.Combine(tempDir, "active_drawing.dwg");
-            System.IO.File.WriteAllText(activeFile, "DWG_ACTIVE_CONTENT");
-            var cachedCadFile = new MobilDwg.App.Opening.CachedCadFile(activeFile, "active_drawing.dwg", 18);
+            // Create active file via CopyAsync
+            var selection = new MobilDwg.App.Opening.CadFileSelection(
+                "active_drawing.dwg",
+                18,
+                _ => ValueTask.FromResult<System.IO.Stream>(new System.IO.MemoryStream(System.Text.Encoding.ASCII.GetBytes("DWG_ACTIVE_CONTENT"))));
+            var cachedCadFile = cache.CopyAsync(selection, 1).AsTask().Result;
+            var activeFile = cachedCadFile.FilePath;
 
             Assert(MobilDwg.App.Opening.SafeCadFileCache.IsFileActive(activeFile), "Active file must be registered in active cache registry");
 
@@ -216,6 +221,40 @@ public static class NativeSmokeRunner
                 try { System.IO.Directory.Delete(tempDir, true); } catch { }
             }
         }
+    }
+
+    private static void TestNativeCorpusTouchAndFrameBudgets()
+    {
+        // 1. Verify multi-touch fidelity on full HD mobile viewport
+        var camera = new Camera2D(1080, 2400, new WorldPoint2(500, 1000), 1.0);
+        var controller = new ViewportController(camera);
+        var engine = new ViewportInteractionEngine(controller);
+
+        // Multi-touch pinch with 2 fingers
+        var f1 = new PointerSample(1, new ScreenPoint2(400, 1200));
+        var f2 = new PointerSample(2, new ScreenPoint2(600, 1200));
+
+        engine.ProcessPacket(new PointerPacket(PointerAction.Down, 1, 0, 10, new[] { f1 }, 0));
+        engine.ProcessPacket(new PointerPacket(PointerAction.PointerDown, 2, 1, 20, new[] { f1, f2 }, 0));
+
+        // Spread fingers from 200px apart to 400px apart (2x zoom factor)
+        var f1Moved = new PointerSample(1, new ScreenPoint2(300, 1200));
+        var f2Moved = new PointerSample(2, new ScreenPoint2(700, 1200));
+        engine.ProcessPacket(new PointerPacket(PointerAction.Move, 1, 0, 30, new[] { f1Moved, f2Moved }, 0));
+
+        AssertNear(0.5, controller.CurrentCamera.WorldUnitsPerPixel, 1e-9, "Pinch zoom 2x must halve WUPP");
+
+        // Release first finger, transition back to 1-finger pan smoothly
+        engine.ProcessPacket(new PointerPacket(PointerAction.PointerUp, 2, 1, 40, new[] { f1Moved }, 0));
+        Assert(engine.State == ViewportGestureState.Pan, "Must return to Pan state after 2nd finger lifted");
+
+        // Pan with remaining finger
+        var f1Pan = new PointerSample(1, new ScreenPoint2(350, 1200));
+        engine.ProcessPacket(new PointerPacket(PointerAction.Move, 1, 0, 50, new[] { f1Pan }, 0));
+        engine.ProcessPacket(new PointerPacket(PointerAction.Up, 1, 0, 60, new[] { f1Pan }, 0));
+
+        Assert(engine.State == ViewportGestureState.Idle, "Must return to Idle state after last finger lifted");
+        Assert(double.IsFinite(controller.CurrentCamera.Center.X) && double.IsFinite(controller.CurrentCamera.Center.Y), "Camera center must remain finite");
     }
 
     private sealed class MockCadReader : MobilDwg.Core.Reading.ICadDocumentReader
