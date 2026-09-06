@@ -12,7 +12,8 @@ public enum CadFormat
 public sealed record CadDocumentMetadata(
     CadFormat Format,
     string? AcadVersion,
-    string? DisplayName);
+    string? DisplayName,
+    int InsUnits = 0);
 
 public interface ICadDocumentHandle : IAsyncDisposable
 {

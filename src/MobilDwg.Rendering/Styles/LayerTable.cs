@@ -69,4 +69,9 @@ public sealed class LayerTable
         }
         return false;
     }
+
+    public bool IsLayerVisible(string name)
+    {
+        return TryGetLayer(name, out var l) ? l.IsVisible && !l.IsFrozen : true;
+    }
 }

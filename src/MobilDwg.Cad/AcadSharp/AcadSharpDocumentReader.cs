@@ -67,7 +67,8 @@ public sealed class AcadSharpDocumentReader : ICadDocumentReader
             var metadata = new CadDocumentMetadata(
                 preflight.Format,
                 document.Header?.Version.ToString() ?? preflight.AcadVersion,
-                request.DisplayName);
+                request.DisplayName,
+                (int)(document.Header?.InsUnits ?? 0));
 
             var handle = new AcadSharpDocumentHandle(document, stopwatch.Elapsed, preflight.Format, metadata.AcadVersion);
             progress?.Report(new CadReadProgress(CadReadStage.Completed, message: "CAD document parsed."));

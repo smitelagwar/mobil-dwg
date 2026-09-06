@@ -434,5 +434,38 @@ Bir sonraki aşama: Aşama 11 — Layout, viewport ve ölçüm/seçim araçları
 
 ---
 
+### Aşama 11 Raporu
 
+Aşama: 11 — Layout, referanslar ve viewer araçları  
+Durum: TAMAMLANDI  
+Son HEAD: `5850a62` (commit: `fix(cad): connect text dimensions and hatch fidelity`)  
+Değişen dosyalar:
+- `scripts/viewer-stability-gate.ps1`
+- `src/MobilDwg.Core/Documents/CadDocumentSession.cs`
+- `src/MobilDwg.Cad/AcadSharp/AcadSharpDocumentReader.cs`
+- `src/MobilDwg.Rendering/Styles/LayerTable.cs`
+- `src/MobilDwg.Rendering/Geometry/GeometryTessellator.cs`
+- `src/MobilDwg.Rendering/Viewer/CadViewerSession.cs`
+- `src/MobilDwg.Rendering/Viewer/MeasurementController.cs` (yeni)
+- `src/MobilDwg.Rendering/Viewer/SnapQuery.cs` (yeni)
+- `tests/MobilDwg.Integration.Tests/Program.cs`
+(Kullanıcı başlangıç değişiklikleri `src/MobilDwg.Rendering/Scene/RenderScene.cs` public constructor görünürlüğü, `release/SHA256SUMS.txt`, `tools/CadControlBenchmark/` bozulmadan çalışma ağacında korundu.)  
+Kullanıcıya yansıyan davranış:
+- Çoklu pafta ve Model/Paper space yönetimi: `CadLayoutManager` ve `CadViewerSession` üzerinden Model ve Paper space paftaları bellek içi sıfır reparse (zero reparse) ile aktarıldı. Her layout için son kamera durumu (`_layoutCameras`) saklanarak dönüşlerde görüş kayması (view shift) olmadan önceki kamera birebir geri yüklendi.
+- Görünür katmana duyarlı Fit Extents: `ZoomToFit` aktif layout'un yalnızca görünür ve donmamış (unfrozen) katmanlardaki geometrilerini kapsayacak şekilde hesaplandı; tüm katmanlar gizlendiğinde kamera konumu korundu.
+- Dünya koordinatlarında ölçüm denetleyicisi (`MeasurementController`): Mesafe ve alan hesaplamaları dünya `double` koordinatlarında saklanarak 100 ardışık pan/pinch işleminde kesin olarak değişmez (invariant) tutuldu; INSUNITS metadata'sı varsa (mm, m vb.) birim eşlemesi yapıldı, birim bilgisi yoksa varsayım yapılmadan `"çizim birimi"` ve `"çizim birimi²"` biçimlendirmesi uygulandı.
+- CAD nesne yakalama sorgusu (`SnapQuery`): 12 DIP yakalama toleransı cihaz yoğunluğu (density 1.0, 2.0, 3.0) ve yakınlaştırmadan bağımsız olarak piksele çevrildi; eşit mesafede `Endpoint -> Center -> Curve -> EntityId` öncelik hiyerarşisi işletildi; gizli katmanlardaki nesneler yakalama dışı bırakıldı; B-spline kontrol noktaları eğri dışı (off-curve) ise yanlış uç nokta yakalaması engellenerek yalnızca gerçek eğri ve gerçek uç noktalar örneklendi.
+Çalıştırılan gerçek komutlar ve exit code:
+- `dotnet run --project tests/MobilDwg.Rendering.Tests/MobilDwg.Rendering.Tests.csproj -c Release` (exit code: 0, STAGE16_LAYOUT_VIEWPORT_TESTS_PASS, STAGE17_REFERENCE_COMPATIBILITY_TESTS_PASS)
+- `dotnet run --project tests/MobilDwg.Integration.Tests/MobilDwg.Integration.Tests.csproj -c Release` (exit code: 0, STAGE11_LAYOUT_MEASUREMENT_SNAP_PASS)
+- `dotnet run --project tests/MobilDwg.Architecture.Tests/MobilDwg.Architecture.Tests.csproj -c Release` (exit code: 0, STAGE04/STAGE05_DEPENDENCY_BOUNDARY_PASS)
+- `dotnet build src/MobilDwg.App/MobilDwg.App.csproj -f net10.0-android36.0 -c Release` (exit code: 0, 0 warning, 0 error)
+- `powershell -ExecutionPolicy Bypass -File scripts/viewer-stability-gate.ps1 -Stage 11` (exit code: 0, VIEWER_STABILITY_STAGE11_PASS)  
+Ölçülen metrikler ve kanıt dosyaları:
+- `scripts/viewer-stability-gate.ps1` Stage 11 kontrolleri (VIEWER_STABILITY_STAGE11_PASS)
+- `tests/MobilDwg.Rendering.Tests` (STAGE16_LAYOUT_VIEWPORT_TESTS_PASS, STAGE17_REFERENCE_COMPATIBILITY_TESTS_PASS)
+- `tests/MobilDwg.Integration.Tests` (STAGE11_LAYOUT_MEASUREMENT_SNAP_PASS)  
+Geçmeyen veya çalıştırılamayan koşullar: Yok.  
+Bir sonraki aşama: Aşama 12 — Yaşam döngüsü ve hata kurtarma  
 
+---

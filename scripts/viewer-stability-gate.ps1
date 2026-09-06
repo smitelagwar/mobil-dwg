@@ -313,6 +313,38 @@ if ($stageNum -ge 10) {
     Pass "VIEWER_STABILITY_STAGE10_PASS"
 }
 
+# Stage 11 checks
+if ($stageNum -ge 11) {
+    Write-Host "Verifying Stage 11 Layouts, References and Measurement Tools..."
+
+    $layoutMgrFile = Join-Path $repoRoot "src/MobilDwg.Rendering/Layouts/CadLayoutManager.cs"
+    if (-not (Test-Path $layoutMgrFile)) { Fail "CadLayoutManager.cs missing" }
+    Pass "STAGE11_LAYOUT_MANAGER_SOURCE_PASS"
+
+    $refResolverFile = Join-Path $repoRoot "src/MobilDwg.Rendering/References/CadReferenceResolver.cs"
+    if (-not (Test-Path $refResolverFile)) { Fail "CadReferenceResolver.cs missing" }
+    Pass "STAGE11_REFERENCE_RESOLVER_SOURCE_PASS"
+
+    $measurementFile = Join-Path $repoRoot "src/MobilDwg.Rendering/Viewer/MeasurementController.cs"
+    if (-not (Test-Path $measurementFile)) { Fail "MeasurementController.cs missing" }
+    Pass "STAGE11_MEASUREMENT_CONTROLLER_SOURCE_PASS"
+
+    $snapFile = Join-Path $repoRoot "src/MobilDwg.Rendering/Viewer/SnapQuery.cs"
+    if (-not (Test-Path $snapFile)) { Fail "SnapQuery.cs missing" }
+    Pass "STAGE11_SNAP_QUERY_SOURCE_PASS"
+
+    if (-not ($rendText -match "STAGE16_LAYOUT_VIEWPORT_TESTS_PASS")) { Fail "STAGE16_LAYOUT_VIEWPORT_TESTS_PASS marker missing in rendering tests" }
+    Pass "STAGE11_LAYOUT_VIEWPORT_TESTS_PASS"
+
+    if (-not ($rendText -match "STAGE17_REFERENCE_COMPATIBILITY_TESTS_PASS")) { Fail "STAGE17_REFERENCE_COMPATIBILITY_TESTS_PASS marker missing in rendering tests" }
+    Pass "STAGE11_REFERENCE_COMPATIBILITY_TESTS_PASS"
+
+    if (-not ($integText -match "STAGE11_LAYOUT_MEASUREMENT_SNAP_PASS")) { Fail "STAGE11_LAYOUT_MEASUREMENT_SNAP_PASS marker missing in integration tests" }
+    Pass "STAGE11_INTEGRATION_TESTS_PASS"
+
+    Pass "VIEWER_STABILITY_STAGE11_PASS"
+}
+
 Write-Host "=== Viewer Stability Gate Passed for Stage $Stage ==="
 exit 0
 

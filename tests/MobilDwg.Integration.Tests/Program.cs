@@ -13,6 +13,12 @@ using MobilDwg.Rendering.Hatch;
 using MobilDwg.Rendering.Scene;
 using MobilDwg.Rendering.Text;
 using MobilDwg.Rendering.Transforms;
+using MobilDwg.Core.Rendering;
+using MobilDwg.Rendering.Camera;
+using MobilDwg.Rendering.Coordinates;
+using MobilDwg.Rendering.Layouts;
+using MobilDwg.Rendering.Styles;
+using MobilDwg.Rendering.Viewer;
 
 namespace MobilDwg.Integration.Tests;
 
@@ -134,11 +140,13 @@ public static class Program
 
             RunStage09GeometryTests();
             RunStage10TextDimensionHatchTests();
+            RunStage11LayoutMeasurementSnapTests();
 
             Console.WriteLine("STAGE01_INTEGRATION_TESTS_PASS");
             Console.WriteLine("STAGE08_CAD_EXTRACTION_TESTS_PASS");
             Console.WriteLine("STAGE09_GEOMETRY_TESTS_PASS");
             Console.WriteLine("STAGE10_TEXT_DIMENSION_HATCH_PASS");
+            Console.WriteLine("STAGE11_LAYOUT_MEASUREMENT_SNAP_PASS");
             return 0;
         }
         catch (Exception ex)
@@ -503,6 +511,222 @@ public static class Program
             Assert(Math.Abs(hatchPrim.PatternLines[i].Start.X - hatchPrim2.PatternLines[i].Start.X) < 1e-9, "Pattern line phase must be invariant");
             Assert(Math.Abs(hatchPrim.PatternLines[i].Start.Y - hatchPrim2.PatternLines[i].Start.Y) < 1e-9, "Pattern line phase must be invariant");
         }
+    }
+
+    private static void RunStage11LayoutMeasurementSnapTests()
+    {
+        // 1. Multi-layout switching and camera restoration (Model <-> Paper space, no view shift, zero reparse)
+        var layerDef1 = new LayerDefinition("WALLS", CadColor.FromRgb(255, 255, 255), CadLinetype.Continuous, CadLineweight.Default);
+        var layerDef2 = new LayerDefinition("HIDDEN", CadColor.FromRgb(128, 128, 128), CadLinetype.Continuous, CadLineweight.Default, isVisible: false);
+        var layerTable = new LayerTable(new[] { layerDef1, layerDef2 });
+
+        var e1 = new RenderSceneEntity(
+            new RenderEntityId("E1"),
+            new RenderLayerToken("WALLS"),
+            new RenderStyleToken("STYLE1"),
+            new RenderSourceReference("LINE", "HANDLE1", 1),
+            new[] { new LinePrimitive(new WorldPoint2(0, 0), new WorldPoint2(100, 0)) });
+
+        var e2 = new RenderSceneEntity(
+            new RenderEntityId("E2"),
+            new RenderLayerToken("HIDDEN"),
+            new RenderStyleToken("STYLE1"),
+            new RenderSourceReference("LINE", "HANDLE2", 2),
+            new[] { new LinePrimitive(new WorldPoint2(50, -50), new WorldPoint2(50, 50)) });
+
+        var assembler = new RenderSceneAssembler(RenderColorContext.Dark);
+        assembler.SetLayerTable(layerTable);
+        assembler.AddEntity(e1);
+        assembler.AddEntity(e2);
+        var modelScene = assembler.Build();
+
+        var paperBounds = new WorldBounds2(0, 0, 420, 297);
+        var vp = new CadLayoutViewport(
+            "VP1",
+            paperCenter: new WorldPoint2(210, 148.5),
+            paperWidth: 420,
+            paperHeight: 297,
+            viewCenter: new WorldPoint2(50, 0),
+            viewHeight: 100);
+
+        var layout1 = new CadLayoutDefinition(
+            "Layout1",
+            isModelSpace: false,
+            tabOrder: 1,
+            paperBounds: paperBounds,
+            viewports: new[] { vp });
+
+        var layoutManager = new CadLayoutManager(modelScene, new[] { layout1 }, "Model");
+        var metadata = new CadDocumentMetadata(CadFormat.Dxf, "AC1015", "TestDrawing", InsUnits: 4); // 4 = mm
+        var session = new CadViewerSession(metadata, modelScene, layoutManager, 1000, 1000);
+
+        Assert(session.ActiveLayoutName == "Model", "Initial layout should be Model");
+        var initialModelCamera = session.Camera;
+
+        // Pan in Model space
+        session.Pan(50, -25);
+        var pannedModelCamera = session.Camera;
+        Assert(pannedModelCamera != initialModelCamera, "Camera must update on pan");
+
+        // Switch to Layout1
+        session.SwitchLayout("Layout1");
+        Assert(session.ActiveLayoutName == "Layout1", "Active layout should be Layout1");
+        var layout1Camera = session.Camera;
+
+        // Pan in Layout1
+        session.Pan(20, 30);
+        var pannedLayout1Camera = session.Camera;
+        Assert(pannedLayout1Camera != layout1Camera, "Camera must update on layout pan");
+
+        // Switch back to Model: verify camera is restored exactly without view shift
+        session.SwitchLayout("Model");
+        Assert(session.ActiveLayoutName == "Model", "Active layout should be Model");
+        Assert(session.Camera == pannedModelCamera, "Model camera must be restored exactly without view shift");
+
+        // Switch back to Layout1: verify camera is restored to layout-specific camera
+        session.SwitchLayout("Layout1");
+        Assert(session.ActiveLayoutName == "Layout1", "Active layout should be Layout1");
+        Assert(session.Camera == pannedLayout1Camera, "Layout1 camera must be restored exactly without view shift");
+
+        // ZoomToFit filters by visible layers
+        session.SwitchLayout("Model");
+        session.ZoomToFit();
+        var fitCameraWithVisible = session.Camera;
+        var visibleBounds = fitCameraWithVisible.GetVisibleWorldBounds();
+        Assert(visibleBounds.Contains(new WorldPoint2(0, 0)), "Fit extents must include visible entities");
+        Assert(visibleBounds.Contains(new WorldPoint2(100, 0)), "Fit extents must include visible entities");
+
+        // 2. Measurement invariance under 100 pan/pinch manipulations
+        var measurement = session.Measurement;
+        measurement.Clear();
+        measurement.Mode = MeasurementMode.Distance;
+        measurement.AddPoint(new WorldPoint2(10.0, 20.0));
+        measurement.AddPoint(new WorldPoint2(40.0, 60.0));
+
+        var baseDistance = measurement.CalculateDistance();
+        Assert(Math.Abs(baseDistance - 50.0) < 1e-9, $"Expected distance 50.0, got {baseDistance}");
+
+        measurement.Mode = MeasurementMode.Area;
+        measurement.AddPoint(new WorldPoint2(10.0, 60.0)); // Triangle (10,20), (40,60), (10,60)
+        var baseArea = measurement.CalculateArea();
+        Assert(Math.Abs(baseArea - 600.0) < 1e-9, $"Expected area 600.0, got {baseArea}");
+
+        // Perform 100 pan and pinch cycles on session
+        var rand = new Random(42);
+        for (var i = 0; i < 100; i++)
+        {
+            var dx = (rand.NextDouble() - 0.5) * 200;
+            var dy = (rand.NextDouble() - 0.5) * 200;
+            var zoomFactor = 0.8 + (rand.NextDouble() * 0.4); // 0.8x to 1.2x
+            session.Pan(dx, dy);
+            session.Zoom(zoomFactor, 500, 500);
+
+            // Measurement stored in world double coordinates must be strictly invariant!
+            Assert(Math.Abs(measurement.CalculateDistance() - 80.0) < 1e-12, "World distance mutated during pan/zoom!");
+            Assert(Math.Abs(measurement.CalculateArea() - 600.0) < 1e-12, "World area mutated during pan/zoom!");
+        }
+
+        // 3. Measurement unit formatting: default unitless produces "çizim birimi" without mm/m assumption; INSUNITS metadata mapped appropriately
+        var standaloneMeasurement = new MeasurementController();
+        standaloneMeasurement.AddPoint(new WorldPoint2(0, 0));
+        standaloneMeasurement.AddPoint(new WorldPoint2(3, 4));
+        standaloneMeasurement.AddPoint(new WorldPoint2(0, 4));
+
+        // Default unitless: must format as "çizim birimi" and "çizim birimi²"
+        Assert(standaloneMeasurement.FormatDistance(5.0) == "5.00 çizim birimi", $"Expected '5.00 çizim birimi', got '{standaloneMeasurement.FormatDistance(5.0)}'");
+        Assert(standaloneMeasurement.FormatArea(6.0) == "6.00 çizim birimi²", $"Expected '6.00 çizim birimi²', got '{standaloneMeasurement.FormatArea(6.0)}'");
+
+        // Explicit unit overrides metadata
+        standaloneMeasurement.ExplicitUnit = "km";
+        Assert(standaloneMeasurement.FormatDistance(5.0) == "5.00 km", $"Expected '5.00 km', got '{standaloneMeasurement.FormatDistance(5.0)}'");
+        Assert(standaloneMeasurement.FormatArea(6.0) == "6.00 km²", $"Expected '6.00 km²', got '{standaloneMeasurement.FormatArea(6.0)}'");
+
+        // INSUNITS mapping: 4 -> mm, 6 -> m, 1 -> in
+        standaloneMeasurement.ExplicitUnit = null;
+        standaloneMeasurement.SetMetadataUnitFromInsUnits(4);
+        Assert(standaloneMeasurement.FormatDistance(5.0) == "5.00 mm", $"Expected '5.00 mm', got '{standaloneMeasurement.FormatDistance(5.0)}'");
+        Assert(standaloneMeasurement.FormatArea(6.0) == "6.00 mm²", $"Expected '6.00 mm²', got '{standaloneMeasurement.FormatArea(6.0)}'");
+
+        standaloneMeasurement.SetMetadataUnitFromInsUnits(6);
+        Assert(standaloneMeasurement.FormatDistance(5.0) == "5.00 m", $"Expected '5.00 m', got '{standaloneMeasurement.FormatDistance(5.0)}'");
+        Assert(standaloneMeasurement.FormatArea(6.0) == "6.00 m²", $"Expected '6.00 m²', got '{standaloneMeasurement.FormatArea(6.0)}'");
+
+        standaloneMeasurement.SetMetadataUnitFromInsUnits(0);
+        Assert(standaloneMeasurement.FormatDistance(5.0) == "5.00 çizim birimi", $"Expected '5.00 çizim birimi', got '{standaloneMeasurement.FormatDistance(5.0)}'");
+
+        // Session measurement inherited InsUnits 4 = mm
+        Assert(session.Measurement.FormatDistance(50.0) == "50.00 mm", $"Expected '50.00 mm', got '{session.Measurement.FormatDistance(50.0)}'");
+        Assert(session.Measurement.FormatArea(600.0) == "600.00 mm²", $"Expected '600.00 mm²', got '{session.Measurement.FormatArea(600.0)}'");
+
+        // 4. Snap query: 12 DIP tolerance evaluated at density 1.0, 2.0, 3.0; priority order, visibility filtering, spline off-curve rejection
+        var snapLine = new LinePrimitive(new WorldPoint2(0, 0), new WorldPoint2(100, 0));
+        var snapArc = new ArcPrimitive(new WorldPoint2(50, 50), 20, 0, Math.PI * 2.0);
+        var splinePoints = new[] { new WorldPoint2(0, 100), new WorldPoint2(50, 200), new WorldPoint2(100, 100) };
+        var splineKnots = new[] { 0.0, 0.0, 0.0, 1.0, 1.0, 1.0 };
+        var snapSpline = new SplinePrimitive(2, splinePoints, splineKnots);
+
+        var snapEntities = new[]
+        {
+            new RenderSceneEntity(new RenderEntityId("ENT_LINE"), new RenderLayerToken("WALLS"), new RenderStyleToken("S1"), new RenderSourceReference("H1"), new[] { snapLine }),
+            new RenderSceneEntity(new RenderEntityId("ENT_ARC"), new RenderLayerToken("WALLS"), new RenderStyleToken("S1"), new RenderSourceReference("H2"), new[] { snapArc }),
+            new RenderSceneEntity(new RenderEntityId("ENT_SPLINE"), new RenderLayerToken("WALLS"), new RenderStyleToken("S1"), new RenderSourceReference("H3"), new[] { snapSpline }),
+            new RenderSceneEntity(new RenderEntityId("ENT_HIDDEN"), new RenderLayerToken("HIDDEN"), new RenderStyleToken("S1"), new RenderSourceReference("H4"), new[] { new LinePrimitive(new WorldPoint2(200, 200), new WorldPoint2(200, 300)) })
+        };
+
+        var snapAssembler = new RenderSceneAssembler(RenderColorContext.Dark);
+        snapAssembler.SetLayerTable(layerTable);
+        foreach (var ent in snapEntities) snapAssembler.AddEntity(ent);
+        var snapScene = snapAssembler.Build();
+
+        var snapCamera = new Camera2D(1000, 1000, new WorldPoint2(50, 50), 1.0);
+
+        // 4a. Snap near Line endpoint (0, 0)
+        var screenEndpoint = CameraTransform.WorldToScreen(new WorldPoint2(0, 0), snapCamera);
+        var queryScreenNearStart = new ScreenPoint2(screenEndpoint.X - 3, screenEndpoint.Y);
+        var snapResultStart = SnapQuery.FindSnapPoint(queryScreenNearStart, snapCamera, snapScene, layerTable, 12.0, 1.0);
+        Assert(snapResultStart.HasValue, "Snap near endpoint should succeed");
+        var valStart = snapResultStart!.Value;
+        Assert(valStart.Kind == CadSnapKind.Endpoint, $"Expected Endpoint snap, got {valStart.Kind}");
+        Assert(Math.Abs(valStart.WorldPoint.X - 0.0) < 1e-9 && Math.Abs(valStart.WorldPoint.Y - 0.0) < 1e-9, "Endpoint world coords mismatch");
+
+        // 4b. Snap near Center of Arc (50, 50)
+        var screenCenter = CameraTransform.WorldToScreen(new WorldPoint2(50, 50), snapCamera);
+        var queryScreenNearCenter = new ScreenPoint2(screenCenter.X + 2, screenCenter.Y + 2);
+        var snapResultCenter = SnapQuery.FindSnapPoint(queryScreenNearCenter, snapCamera, snapScene, layerTable, 12.0, 1.0);
+        Assert(snapResultCenter.HasValue, "Snap near arc center should succeed");
+        var valCenter = snapResultCenter!.Value;
+        Assert(valCenter.Kind == CadSnapKind.Center, $"Expected Center snap, got {valCenter.Kind}");
+
+        // 4c. Snap on line curve (50, 0): far from endpoints
+        var screenCurve = CameraTransform.WorldToScreen(new WorldPoint2(50, 0), snapCamera);
+        var queryScreenNearCurve = new ScreenPoint2(screenCurve.X, screenCurve.Y + 4);
+        var snapResultCurve = SnapQuery.FindSnapPoint(queryScreenNearCurve, snapCamera, snapScene, layerTable, 12.0, 1.0);
+        Assert(snapResultCurve.HasValue, "Snap near line curve should succeed");
+        var valCurve = snapResultCurve!.Value;
+        Assert(valCurve.Kind == CadSnapKind.Curve, $"Expected Curve snap, got {valCurve.Kind}");
+        Assert(Math.Abs(valCurve.WorldPoint.Y - 0.0) < 1e-9, "Curve point Y coordinate mismatch");
+
+        // 4d. Priority test: Near endpoint where both endpoint and curve are within 12 px at equal distance, endpoint wins
+        var nearEndQuery = new ScreenPoint2(screenEndpoint.X - 4, screenEndpoint.Y);
+        var snapPriority = SnapQuery.FindSnapPoint(nearEndQuery, snapCamera, snapScene, layerTable, 12.0, 1.0);
+        Assert(snapPriority.HasValue && snapPriority.Value.Kind == CadSnapKind.Endpoint, "Endpoint must take priority over curve");
+
+        // 4e. Layer visibility exclusion: Query near hidden entity must return null
+        var screenHidden = CameraTransform.WorldToScreen(new WorldPoint2(200, 250), snapCamera);
+        var snapHidden = SnapQuery.FindSnapPoint(screenHidden, snapCamera, snapScene, layerTable, 12.0, 1.0);
+        Assert(!snapHidden.HasValue, "Entities on hidden layers must not be snapped");
+
+        // 4f. Density scaling: density 2.0 scales pixel radius to 24px
+        var queryScreen20Px = new ScreenPoint2(screenEndpoint.X, screenEndpoint.Y + 20);
+        var snapDensity1 = SnapQuery.FindSnapPoint(queryScreen20Px, snapCamera, snapScene, layerTable, 12.0, density: 1.0);
+        var snapDensity2 = SnapQuery.FindSnapPoint(queryScreen20Px, snapCamera, snapScene, layerTable, 12.0, density: 2.0);
+        Assert(!snapDensity1.HasValue, "At density 1.0 with 20px offset, snap within 12px must fail");
+        Assert(snapDensity2.HasValue && snapDensity2.Value.DistancePixels <= 24.0, "At density 2.0, snap radius is 24px so offset 20px must succeed");
+
+        // 4g. Spline: off-curve control point (50, 200) is NOT an endpoint or curve point
+        var screenOffCurveControl = CameraTransform.WorldToScreen(new WorldPoint2(50, 200), snapCamera);
+        var snapOffCurve = SnapQuery.FindSnapPoint(screenOffCurveControl, snapCamera, snapScene, layerTable, 5.0, 1.0);
+        Assert(!snapOffCurve.HasValue, "Off-curve spline control points must NOT be snapped as endpoints");
     }
 }
 

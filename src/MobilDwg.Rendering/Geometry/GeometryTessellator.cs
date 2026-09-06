@@ -28,6 +28,8 @@ public sealed record GeometryTessellationOptions
     public int MinSegments { get; }
     public int MaxSegments { get; }
     public int SplineSegmentsPerSpan { get; }
+
+    public static readonly GeometryTessellationOptions Default = new(0.1, 4, 1024, 8);
 }
 
 public sealed record TessellatedPath

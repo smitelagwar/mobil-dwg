@@ -25,9 +25,11 @@ public sealed class CadViewerSession : IDisposable
     private readonly FrameRequestGate _frameGate = new();
     private readonly PreparedGeometryCache _geometryCache = new();
     private readonly RenderResourceCache _resourceCache = new();
+    private readonly Dictionary<string, Camera2D> _layoutCameras = new(StringComparer.OrdinalIgnoreCase);
 
     private RenderScene _activeScene;
     private LayerTable _layerTable;
+    private string _currentLayoutName;
     private long _documentGeneration = 1;
     private long _sceneRevision = 1;
     private long _layoutRevision = 1;
@@ -40,6 +42,7 @@ public sealed class CadViewerSession : IDisposable
     public RenderScene ModelScene { get; }
     public CadLayoutManager LayoutManager { get; }
     public LayerTable LayerTable => _layerTable;
+    public MeasurementController Measurement { get; } = new();
     public IReadOnlyList<CadDiagnostic> Diagnostics { get; }
     public IReadOnlyList<CadCompatibilityIssue> CompatibilityIssues { get; }
 
@@ -78,6 +81,7 @@ public sealed class CadViewerSession : IDisposable
         _layerTable = new LayerTable(modelScene.LayerTable.Layers);
         Diagnostics = diagnostics ?? Array.Empty<CadDiagnostic>();
         CompatibilityIssues = compatibilityIssues ?? Array.Empty<CadCompatibilityIssue>();
+        Measurement.SetMetadataUnitFromInsUnits(metadata.InsUnits);
 
         var pixelW = Math.Max(100, initialPixelWidth);
         var pixelH = Math.Max(100, initialPixelHeight);
@@ -89,6 +93,8 @@ public sealed class CadViewerSession : IDisposable
 
         _controller = new ViewportController(initialCamera, bounds);
         _interactionEngine = new ViewportInteractionEngine(_controller);
+        _currentLayoutName = LayoutManager.ActiveLayout.Name;
+        _layoutCameras[_currentLayoutName] = initialCamera;
     }
 
     public string ActiveLayoutName => LayoutManager.ActiveLayout.Name;
@@ -152,10 +158,24 @@ public sealed class CadViewerSession : IDisposable
         {
             ObjectDisposedException.ThrowIf(_disposed, this);
             var activeScene = LayoutManager.ComposeActiveScene();
-            var bounds = activeScene.WorldBounds ?? new WorldBounds2(0, 0, 100, 100);
-            _controller.SetSceneBounds(bounds);
-            _controller.FitExtents(paddingFraction);
-            _frameGate.RequestFrame();
+
+            // Only consider entities on visible layers
+            WorldBounds2? visibleBounds = null;
+            foreach (var entity in activeScene.Entities)
+            {
+                if (_layerTable.IsLayerVisible(entity.Layer.Value) && entity.Bounds.Width >= 0 && entity.Bounds.Height >= 0)
+                {
+                    visibleBounds = visibleBounds == null ? entity.Bounds : visibleBounds.Value.Union(entity.Bounds);
+                }
+            }
+
+            if (visibleBounds.HasValue)
+            {
+                _controller.SetSceneBounds(visibleBounds.Value);
+                _controller.FitExtents(paddingFraction);
+                _layoutCameras[_currentLayoutName] = _controller.CurrentCamera;
+                _frameGate.RequestFrame();
+            }
         }
     }
 
@@ -165,6 +185,7 @@ public sealed class CadViewerSession : IDisposable
         {
             ObjectDisposedException.ThrowIf(_disposed, this);
             _controller.Pan(deltaScreenX, deltaScreenY);
+            _layoutCameras[_currentLayoutName] = _controller.CurrentCamera;
             _frameGate.RequestFrame();
         }
     }
@@ -175,6 +196,7 @@ public sealed class CadViewerSession : IDisposable
         {
             ObjectDisposedException.ThrowIf(_disposed, this);
             _controller.PinchZoom(new ScreenPoint2(focalScreenX, focalScreenY), factor);
+            _layoutCameras[_currentLayoutName] = _controller.CurrentCamera;
             _frameGate.RequestFrame();
         }
     }
@@ -213,14 +235,31 @@ public sealed class CadViewerSession : IDisposable
         lock (_stateLock)
         {
             ObjectDisposedException.ThrowIf(_disposed, this);
+            if (string.IsNullOrWhiteSpace(layoutName)) return;
+
+            // Save camera of current layout
+            _layoutCameras[_currentLayoutName] = _controller.CurrentCamera;
+
             LayoutManager.SwitchLayout(layoutName);
+            _currentLayoutName = layoutName;
             _activeScene = LayoutManager.ComposeActiveScene();
             _layoutRevision++;
             _sceneRevision++;
 
             var bounds = _activeScene.WorldBounds ?? new WorldBounds2(0, 0, 100, 100);
             _controller.SetSceneBounds(bounds);
-            _controller.FitExtents();
+
+            // Restore previous camera if visited, or initialize with Fit
+            if (_layoutCameras.TryGetValue(layoutName, out var savedCamera))
+            {
+                _controller.SetCamera(savedCamera);
+            }
+            else
+            {
+                _controller.FitExtents();
+                _layoutCameras[layoutName] = _controller.CurrentCamera;
+            }
+
             _frameGate.RequestFrame();
         }
     }
