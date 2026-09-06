@@ -62,7 +62,21 @@ public static class CadReleaseRcAuditor
             License: "MIT",
             IsRoyaltyFree: true,
             IsAudited: true,
-            ProvenanceSha256: "dotnet-codepages-10.0.1-mit-verified")
+            ProvenanceSha256: "dotnet-codepages-10.0.1-mit-verified"),
+        new(
+            PackageName: "SkiaSharp.Views.Maui.Controls",
+            Version: "4.151.1",
+            License: "MIT",
+            IsRoyaltyFree: true,
+            IsAudited: true,
+            ProvenanceSha256: "skia-views-maui-controls-4.151.1-verified"),
+        new(
+            PackageName: "SkiaSharp.Views.Maui.Core",
+            Version: "4.151.1",
+            License: "MIT",
+            IsRoyaltyFree: true,
+            IsAudited: true,
+            ProvenanceSha256: "skia-views-maui-core-4.151.1-verified")
     ];
 
     public static CadDataSafetyDeclaration GetAuthoritativeDataSafety() =>

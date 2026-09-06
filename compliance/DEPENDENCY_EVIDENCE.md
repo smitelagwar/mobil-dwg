@@ -55,6 +55,7 @@ Doğrulananlar:
 - Native renderer upstream Google Skia BSD-3-Clause'dur; bu lisans proje allowlist'indedir.
 - Android native package içinde arm, arm64, x64 ve x86 `libSkiaSharp.so` artifact'leri gerçek `.nupkg` taramasında görüldü.
 - Native `.so`/framework içeriğinin third-party notice/artifact inventory doğrulaması final artifact üzerinde yine gereklidir.
+- `SkiaSharp.Views.Maui.Controls 4.151.1` ve `SkiaSharp.Views.Maui.Core 4.151.1`: NuGet MIT lisanslı UI bridge paketleri; doğrudan canlı çizim için App katmanında `Viewer/CadViewportView.cs` ve `Viewer/ViewerHostingExtensions.cs` ile sınırlandırılmıştır.
 
 Karar: `REVIEW`. Sürüm pinlenebilir ve spike/build için kullanılabilir; native artifact inventory tamamlanmadan release-level `GREEN` yazılmaz.
 

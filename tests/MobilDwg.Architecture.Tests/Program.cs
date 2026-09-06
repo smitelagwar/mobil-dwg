@@ -1,4 +1,4 @@
-﻿using System.Xml.Linq;
+using System.Xml.Linq;
 
 var repoRoot = FindRepoRoot();
 var srcRoot = Path.Combine(repoRoot, "src");
@@ -56,7 +56,8 @@ AssertProjectReferences("tests/MobilDwg.Integration.Tests/MobilDwg.Integration.T
 AssertPackageReferences("src/MobilDwg.Core/MobilDwg.Core.csproj", []);
 AssertPackageReferences("src/MobilDwg.Cad/MobilDwg.Cad.csproj", ["ACadSharp"]);
 AssertPackageReferences("src/MobilDwg.Rendering/MobilDwg.Rendering.csproj", ["SkiaSharp"]);
-AssertPackageReferences("src/MobilDwg.App/MobilDwg.App.csproj", ["Microsoft.Maui.Controls"]);
+AssertPackageReferences("src/MobilDwg.App/MobilDwg.App.csproj",
+    ["Microsoft.Maui.Controls", "SkiaSharp.Views.Maui.Controls"]);
 
 AssertProjectProperty("src/MobilDwg.App/MobilDwg.App.csproj", "TargetFramework", "net10.0-android36.0");
 AssertProjectProperty("src/MobilDwg.App/MobilDwg.App.csproj", "OutputType", "Exe");
@@ -73,7 +74,9 @@ AssertForbiddenSourceTerms(
     ["ACadSharp"]);
 AssertForbiddenSourceTerms(
     "src/MobilDwg.App",
-    ["SkiaSharp", "ACadSharp"]);
+    ["ACadSharp"]);
+
+AssertAppSkiaBridge();
 
 Console.WriteLine("STAGE04_ARCHITECTURE_TESTS_PASS");
 Console.WriteLine("STAGE05_DEPENDENCY_BOUNDARY_PASS");
@@ -146,6 +149,35 @@ void AssertForbiddenSourceTerms(string relativeDirectory, IReadOnlyCollection<st
             Assert(!text.Contains(term, StringComparison.Ordinal),
                 $"{relativeDirectory} source must not depend on {term}: {Path.GetRelativePath(repoRoot, file)}");
         }
+    }
+}
+
+void AssertAppSkiaBridge()
+{
+    var appDir = Path.Combine(repoRoot, "src", "MobilDwg.App");
+    var allowedRelativePaths = new HashSet<string>(StringComparer.OrdinalIgnoreCase)
+    {
+        "Viewer/CadViewportView.cs",
+        "Viewer/ViewerHostingExtensions.cs"
+    };
+
+    foreach (var file in Directory.GetFiles(appDir, "*.cs", SearchOption.AllDirectories))
+    {
+        var rel = Path.GetRelativePath(appDir, file).Replace('\\', '/');
+        if (rel.StartsWith("bin/", StringComparison.OrdinalIgnoreCase) ||
+            rel.StartsWith("obj/", StringComparison.OrdinalIgnoreCase))
+        {
+            continue;
+        }
+
+        if (allowedRelativePaths.Contains(rel))
+        {
+            continue;
+        }
+
+        var text = File.ReadAllText(file);
+        Assert(!text.Contains("SkiaSharp", StringComparison.Ordinal),
+            $"SkiaSharp usage is forbidden outside Viewer bridge in App: {rel}");
     }
 }
 

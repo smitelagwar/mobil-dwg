@@ -29,7 +29,8 @@ Bu belge geçmiş bir aşama planı değil, mevcut production dependency sınır
 
 - Android .NET MAUI composition/UI katmanı.
 - `Core`, `Cad` ve `Rendering` projelerine referans verir.
-- MAUI dependency'si burada tutulur.
+- MAUI dependency'si ve `SkiaSharp.Views.Maui.Controls` UI bridge paketi burada tutulur.
+- Doğrudan SkiaSharp kullanımı yalnız `Viewer/CadViewportView.cs` ve `Viewer/ViewerHostingExtensions.cs` ile sınırlıdır; diğer App dosyalarında SkiaSharp yasaktır.
 - Dosya seçimi, viewer lifecycle, UI state ve composition bu katmandadır.
 - Parser entity tipleri veya parser internal model'i UI API'si haline getirilmez.
 

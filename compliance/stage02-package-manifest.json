@@ -43,7 +43,8 @@
     "allowed_package_references": [
       "ACadSharp",
       "Microsoft.Maui.Controls",
-      "SkiaSharp"
+      "SkiaSharp",
+      "SkiaSharp.Views.Maui.Controls"
     ],
     "forbidden_tfm_tokens": [
       "-ios",

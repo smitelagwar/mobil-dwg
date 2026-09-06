@@ -8,6 +8,8 @@
     <!-- Production candidates: strict exact versions only. NuGet exact-range syntax is intentional. -->
     <PackageVersion Include="ACadSharp" Version="[3.7.1]" />
     <PackageVersion Include="SkiaSharp" Version="[4.151.1]" />
+    <PackageVersion Include="SkiaSharp.Views.Maui.Controls" Version="[4.151.1]" />
+    <PackageVersion Include="SkiaSharp.Views.Maui.Core" Version="[4.151.1]" />
     <PackageVersion Include="Microsoft.Maui.Controls" Version="[10.0.100]" />
 
     <!-- Test/fallback candidate only; not referenced by the production probe. -->

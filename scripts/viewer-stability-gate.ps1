@@ -81,11 +81,39 @@ $integText = Get-Content -LiteralPath $integLog -Raw
 if (-not ($integText -match "STAGE01_INTEGRATION_TESTS_PASS")) { Fail "Integration pass marker missing" }
 Pass "STAGE01_INTEGRATION_TESTS_PASS"
 
-# 3. Telemetry Verification
+# 3. Telemetry Verification (Stage 01+)
 $telemetryFile = Join-Path $repoRoot "src/MobilDwg.Rendering/Performance/ViewportTelemetry.cs"
 if (-not (Test-Path $telemetryFile)) { Fail "ViewportTelemetry.cs missing" }
 Pass "STAGE01_VIEWPORT_TELEMETRY_SOURCE_PASS"
 
-Pass "VIEWER_STABILITY_STAGE01_PASS"
+if ($stageNum -ge 1) {
+    Pass "VIEWER_STABILITY_STAGE01_PASS"
+}
+
+# Stage 02 checks
+if ($stageNum -ge 2) {
+    Write-Host "Running Stage 02 Package Audit..."
+    $pkgAuditLog = Join-Path $stageArtifacts "stage02-package-audit.log"
+    & python scripts/stage02-audit-packages.py 2>&1 | Tee-Object -FilePath $pkgAuditLog
+    if ($LASTEXITCODE -ne 0) { Fail "Package audit failed with exit code $LASTEXITCODE" }
+    $pkgAuditText = Get-Content -LiteralPath $pkgAuditLog -Raw
+    if (-not ($pkgAuditText -match "STAGE02_PACKAGE_AUDIT_PASS")) { Fail "Package audit pass marker missing" }
+    Pass "STAGE02_PACKAGE_AUDIT_PASS"
+
+    Write-Host "Running Locked Restore on App..."
+    & dotnet restore --locked-mode src/MobilDwg.App/MobilDwg.App.csproj
+    if ($LASTEXITCODE -ne 0) { Fail "Locked restore failed with exit code $LASTEXITCODE" }
+    Pass "STAGE02_LOCKED_RESTORE_PASS"
+
+    Write-Host "Building App for Android Release..."
+    $appBuildLog = Join-Path $stageArtifacts "app-build-android.log"
+    & dotnet build src/MobilDwg.App/MobilDwg.App.csproj -f net10.0-android36.0 -c Release 2>&1 | Tee-Object -FilePath $appBuildLog
+    if ($LASTEXITCODE -ne 0) { Fail "Android release build failed with exit code $LASTEXITCODE" }
+    Pass "STAGE02_APP_ANDROID_BUILD_PASS"
+
+    Pass "VIEWER_STABILITY_STAGE02_PASS"
+}
+
 Write-Host "=== Viewer Stability Gate Passed for Stage $Stage ==="
 exit 0
+

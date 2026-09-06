@@ -15,6 +15,8 @@ ALLOW_LICENSES = {"MIT", "Apache-2.0", "BSD-2-Clause", "BSD-3-Clause", "ISC", "0
 EXPECTED_CENTRAL = {
     "ACadSharp": "3.7.1",
     "SkiaSharp": "4.151.1",
+    "SkiaSharp.Views.Maui.Controls": "4.151.1",
+    "SkiaSharp.Views.Maui.Core": "4.151.1",
     "Microsoft.Maui.Controls": "10.0.100",
     "IxMilia.Dxf": "0.8.4",
 }
@@ -30,12 +32,13 @@ EXPECTED_ANDROID_NATIVE = {
     "runtimes/android-x64/native/libSkiaSharp.so",
     "runtimes/android-x86/native/libSkiaSharp.so",
 }
-ALLOWED_PRODUCTION_PACKAGE_REFS = {"ACadSharp", "SkiaSharp", "Microsoft.Maui.Controls"}
+ALLOWED_PRODUCTION_PACKAGE_REFS = {"ACadSharp", "SkiaSharp", "Microsoft.Maui.Controls", "SkiaSharp.Views.Maui.Controls"}
 FORBIDDEN_PRODUCTION_TFM_TOKENS = ("-ios", "-maccatalyst", "-windows")
 NATIVE_FILE_SUFFIXES = {".so", ".aar", ".jar", ".dylib"}
 
 ROOT = Path(__file__).resolve().parents[1]
 LOCK = ROOT / "compliance/Stage02.DependencyProbe/packages.lock.json"
+APP_LOCK = ROOT / "src/MobilDwg.App/packages.lock.json"
 OUTPUT = ROOT / "compliance/stage02-package-manifest.json"
 CPM = ROOT / "Directory.Packages.props"
 SRC = ROOT / "src"
@@ -123,6 +126,8 @@ def validate_production_source_boundary(failures: list[str]) -> None:
         if not path.is_file():
             continue
         lowered_parts = [part.lower() for part in path.parts]
+        if "bin" in lowered_parts or "obj" in lowered_parts:
+            continue
         if path.suffix.lower() in NATIVE_FILE_SUFFIXES or any(part.endswith(".framework") for part in lowered_parts):
             vendored.append(path.relative_to(ROOT).as_posix())
     if vendored:
@@ -164,10 +169,32 @@ def validate_lock_graph(lock: dict[str, object], failures: list[str]) -> tuple[s
     return str(target_name), graph
 
 
+def validate_app_lock_graph(failures: list[str]) -> None:
+    if not APP_LOCK.exists():
+        fail_append(failures, f"missing App lockfile: {APP_LOCK.relative_to(ROOT)}")
+        return
+    app_lock = json.loads(APP_LOCK.read_text(encoding="utf-8"))
+    targets = app_lock.get("dependencies", {})
+    if EXPECTED_TARGET not in targets:
+        fail_append(failures, f"App lockfile missing target {EXPECTED_TARGET}")
+        return
+    deps = targets[EXPECTED_TARGET]
+    views_ctrl = deps.get("SkiaSharp.Views.Maui.Controls")
+    if not views_ctrl or views_ctrl.get("resolved") != "4.151.1":
+        fail_append(failures, f"SkiaSharp.Views.Maui.Controls in App lockfile expected 4.151.1, got {views_ctrl}")
+    maui_ctrl = deps.get("Microsoft.Maui.Controls")
+    if not maui_ctrl or maui_ctrl.get("resolved") != "10.0.100":
+        fail_append(failures, f"Microsoft.Maui.Controls in App lockfile expected 10.0.100, got {maui_ctrl}")
+    skia = deps.get("SkiaSharp")
+    if not skia or skia.get("resolved") != "4.151.1":
+        fail_append(failures, f"SkiaSharp in App lockfile expected 4.151.1, got {skia}")
+
+
 def main() -> int:
     failures: list[str] = []
     validate_central_versions(failures)
     validate_production_source_boundary(failures)
+    validate_app_lock_graph(failures)
     if not LOCK.exists():
         print(f"missing lockfile: {LOCK.relative_to(ROOT)}", file=sys.stderr)
         return 2
