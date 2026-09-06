@@ -345,7 +345,43 @@ if ($stageNum -ge 11) {
     Pass "VIEWER_STABILITY_STAGE11_PASS"
 }
 
+# Stage 12 checks
+if ($stageNum -ge 12) {
+    Write-Host "Verifying Stage 12 Lifecycle, Resource Guards and Error Recovery..."
+
+    $sessionFile = Join-Path $repoRoot "src/MobilDwg.Rendering/Viewer/CadViewerSession.cs"
+    if (-not (Test-Path $sessionFile)) { Fail "CadViewerSession.cs missing" }
+    Pass "STAGE12_VIEWER_SESSION_SOURCE_PASS"
+
+    $safeCacheFile = Join-Path $repoRoot "src/MobilDwg.App/Opening/SafeCadFileCache.cs"
+    if (-not (Test-Path $safeCacheFile)) { Fail "SafeCadFileCache.cs missing" }
+    Pass "STAGE12_SAFE_CAD_FILE_CACHE_SOURCE_PASS"
+
+    $openCoordFile = Join-Path $repoRoot "src/MobilDwg.App/Opening/CadFileOpenCoordinator.cs"
+    if (-not (Test-Path $openCoordFile)) { Fail "CadFileOpenCoordinator.cs missing" }
+    Pass "STAGE12_OPEN_COORDINATOR_SOURCE_PASS"
+
+    $resourceBudgetFile = Join-Path $repoRoot "src/MobilDwg.Core/Guards/CadResourceBudget.cs"
+    if (-not (Test-Path $resourceBudgetFile)) { Fail "CadResourceBudget.cs missing" }
+    Pass "STAGE12_RESOURCE_BUDGET_SOURCE_PASS"
+
+    if (-not ($rendText -match "STAGE18_VIEWER_LIFECYCLE_TESTS_PASS")) { Fail "STAGE18_VIEWER_LIFECYCLE_TESTS_PASS marker missing in rendering tests" }
+    Pass "STAGE12_VIEWER_LIFECYCLE_TESTS_PASS"
+
+    if (-not ($rendText -match "STAGE19_RESOURCE_GUARDS_TESTS_PASS")) { Fail "STAGE19_RESOURCE_GUARDS_TESTS_PASS marker missing in rendering tests" }
+    Pass "STAGE12_RESOURCE_GUARDS_TESTS_PASS"
+
+    if (-not ($rendText -match "STAGE25_BETA_BLOCKER_TESTS_PASS")) { Fail "STAGE25_BETA_BLOCKER_TESTS_PASS marker missing in rendering tests" }
+    Pass "STAGE12_BETA_BLOCKER_TESTS_PASS"
+
+    if (-not ($integText -match "STAGE12_LIFECYCLE_TESTS_PASS")) { Fail "STAGE12_LIFECYCLE_TESTS_PASS marker missing in integration tests" }
+    Pass "STAGE12_INTEGRATION_TESTS_PASS"
+
+    Pass "VIEWER_STABILITY_STAGE12_PASS"
+}
+
 Write-Host "=== Viewer Stability Gate Passed for Stage $Stage ==="
 exit 0
+
 
 

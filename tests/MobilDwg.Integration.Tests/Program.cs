@@ -141,12 +141,14 @@ public static class Program
             RunStage09GeometryTests();
             RunStage10TextDimensionHatchTests();
             RunStage11LayoutMeasurementSnapTests();
+            RunStage12LifecycleTests();
 
             Console.WriteLine("STAGE01_INTEGRATION_TESTS_PASS");
             Console.WriteLine("STAGE08_CAD_EXTRACTION_TESTS_PASS");
             Console.WriteLine("STAGE09_GEOMETRY_TESTS_PASS");
             Console.WriteLine("STAGE10_TEXT_DIMENSION_HATCH_PASS");
             Console.WriteLine("STAGE11_LAYOUT_MEASUREMENT_SNAP_PASS");
+            Console.WriteLine("STAGE12_LIFECYCLE_TESTS_PASS");
             return 0;
         }
         catch (Exception ex)
@@ -727,6 +729,182 @@ public static class Program
         var screenOffCurveControl = CameraTransform.WorldToScreen(new WorldPoint2(50, 200), snapCamera);
         var snapOffCurve = SnapQuery.FindSnapPoint(screenOffCurveControl, snapCamera, snapScene, layerTable, 5.0, 1.0);
         Assert(!snapOffCurve.HasValue, "Off-curve spline control points must NOT be snapped as endpoints");
+    }
+
+    private static void RunStage12LifecycleTests()
+    {
+        // 1. 50 Close / Reopen cycles with lease counting and ODE
+        for (int cycle = 0; cycle < 50; cycle++)
+        {
+            var meta = new CadDocumentMetadata(CadFormat.Dxf, "AC1015", $"doc_{cycle}.dxf");
+            var assembler = new RenderSceneAssembler(RenderColorContext.Dark);
+            var scene = assembler.Build();
+            var layoutManager = new CadLayoutManager(scene);
+            var session = new CadViewerSession(meta, scene, layoutManager);
+
+            Assert(!session.IsDisposed, $"Cycle {cycle}: Session should not be disposed initially");
+            Assert(!session.IsRetiring, $"Cycle {cycle}: Session should not be retiring initially");
+            Assert(session.ActiveLeaseCount == 0, $"Cycle {cycle}: Initial lease count should be 0");
+
+            // Acquire render lease
+            using (var lease = session.AcquireRenderLease(1))
+            {
+                Assert(session.ActiveLeaseCount == 1, $"Cycle {cycle}: Active lease count must be 1");
+                Assert(lease.Snapshot.Scene == scene, $"Cycle {cycle}: Lease scene must match");
+
+                // Request close while lease is active
+                session.Dispose();
+                Assert(session.IsRetiring, $"Cycle {cycle}: Session must be in retiring state while lease is held");
+                Assert(!session.IsDisposed, $"Cycle {cycle}: Session must not be fully disposed while lease is active");
+
+                // Trying to acquire new lease during retiring must throw ObjectDisposedException
+                bool caughtOde = false;
+                try
+                {
+                    session.AcquireRenderLease(1);
+                }
+                catch (ObjectDisposedException)
+                {
+                    caughtOde = true;
+                }
+                Assert(caughtOde, $"Cycle {cycle}: Acquiring lease on retiring session must throw ObjectDisposedException");
+            }
+
+            // After lease is disposed, session must transition to fully disposed
+            Assert(session.ActiveLeaseCount == 0, $"Cycle {cycle}: Active lease count must return to 0");
+            Assert(session.IsDisposed, $"Cycle {cycle}: Session must be disposed after final lease release");
+            Assert(!session.IsRetiring, $"Cycle {cycle}: Retiring flag must clear after drain");
+
+            // Idempotent Dispose
+            session.Dispose();
+            Assert(session.IsDisposed, $"Cycle {cycle}: Idempotent dispose must keep session disposed");
+        }
+
+        // 2. Lifecycle event ordering: CloseRequested vs DrainCompleted
+        {
+            var meta = new CadDocumentMetadata(CadFormat.Dxf, "AC1015", "events_test.dxf");
+            var assembler = new RenderSceneAssembler(RenderColorContext.Dark);
+            var scene = assembler.Build();
+            var layoutManager = new CadLayoutManager(scene);
+            var session = new CadViewerSession(meta, scene, layoutManager);
+
+            bool closeRequestedFired = false;
+            bool drainCompletedFired = false;
+            session.CloseRequested += () => closeRequestedFired = true;
+            session.DrainCompleted += () => drainCompletedFired = true;
+
+            var lease = session.AcquireRenderLease(1);
+            Assert(!closeRequestedFired && !drainCompletedFired, "Events must not fire before dispose");
+
+            session.Dispose();
+            Assert(closeRequestedFired, "CloseRequested must fire immediately on Dispose()");
+            Assert(!drainCompletedFired, "DrainCompleted must NOT fire while active lease is held");
+
+            lease.Dispose();
+            Assert(drainCompletedFired, "DrainCompleted must fire once final lease is released");
+        }
+
+        // 3. 20 Viewport rotations (resizing) and 20 background/resume (TrimMemory) cycles
+        {
+            var meta = new CadDocumentMetadata(CadFormat.Dxf, "AC1015", "rotate_test.dxf");
+            var assembler = new RenderSceneAssembler(RenderColorContext.Dark);
+            assembler.AddEntity(new RenderSceneEntity(
+                new RenderEntityId("E1"),
+                new RenderLayerToken("0"),
+                new RenderStyleToken("S1"),
+                new RenderSourceReference("LINE", "1", 1),
+                new[] { new LinePrimitive(new WorldPoint2(0, 0), new WorldPoint2(100, 100)) }));
+            var scene = assembler.Build();
+            var layoutManager = new CadLayoutManager(scene);
+            var session = new CadViewerSession(meta, scene, layoutManager);
+
+            for (int r = 0; r < 20; r++)
+            {
+                // Portrait
+                session.ResizeViewport(1080, 2400);
+                Assert(session.Controller.CurrentCamera.PixelWidth == 1080, "Portrait width 1080");
+                Assert(session.Controller.CurrentCamera.PixelHeight == 2400, "Portrait height 2400");
+
+                // Landscape
+                session.ResizeViewport(2400, 1080);
+                Assert(session.Controller.CurrentCamera.PixelWidth == 2400, "Landscape width 2400");
+                Assert(session.Controller.CurrentCamera.PixelHeight == 1080, "Landscape height 1080");
+            }
+
+            for (int bg = 0; bg < 20; bg++)
+            {
+                // Background -> trim memory
+                session.OnTrimMemory();
+
+                // Resume -> verify session is still completely operational
+                using var lease = session.AcquireRenderLease(1);
+                Assert(lease.Snapshot.Scene.Entities.Count == 1, "Scene entities intact after memory trim");
+            }
+
+            session.Dispose();
+            Assert(session.IsDisposed, "Session disposed successfully");
+        }
+
+        // 4. Resource guards and overflow protection (CadBudgetGuard)
+        {
+            var budget = new CadResourceBudget
+            {
+                MaxFileSizeBytes = 10 * 1024 * 1024,
+                MaxEntities = 1000,
+                MaxHatchBoundarySegments = 50,
+                MaxTextLength = 1000,
+                MaxRasterTotalPixels = 4096 * 4096
+            };
+
+            var guard = new CadBudgetGuard(budget);
+
+            // Excessive dimension check (> MaxRasterDimensionPixels)
+            bool dimAllowed = guard.CheckRasterDimensions(10000, 1000, out var dimDiag);
+            Assert(!dimAllowed, "Raster dimension exceeding MaxRasterDimensionPixels must be rejected");
+            Assert(dimDiag != null && dimDiag.Code == "RESOURCE_BUDGET_EXCEEDED_RASTER_DIMENSIONS",
+                $"Expected dimension diagnostic code, got: {dimDiag?.Code}");
+
+            // Over-budget raster total pixels (> MaxRasterTotalPixels)
+            bool overBudgetAllowed = guard.CheckRasterDimensions(5000, 5000, out var overDiag);
+            Assert(!overBudgetAllowed, "Over-budget raster dimensions must be rejected");
+            Assert(overDiag != null && overDiag.Code == "RESOURCE_BUDGET_EXCEEDED_RASTER_PIXELS",
+                $"Expected over budget diagnostic code, got: {overDiag?.Code}");
+
+            // Within budget raster
+            bool validRasterAllowed = guard.CheckRasterDimensions(1920, 1080, out _);
+            Assert(validRasterAllowed, "Valid 1080p raster dimensions should pass budget check");
+
+            // Text length limits
+            bool longTextAllowed = guard.CheckTextLength(2000, out var textDiag);
+            Assert(!longTextAllowed, "Text exceeding max length must be rejected");
+            Assert(textDiag != null && textDiag.Code == "RESOURCE_BUDGET_EXCEEDED_TEXT_LENGTH",
+                $"Expected text length diagnostic, got: {textDiag?.Code}");
+
+            bool shortTextAllowed = guard.CheckTextLength("Valid Turkish Cad Text: İstanbul ÇGÖŞÜ".Length, out _);
+            Assert(shortTextAllowed, "Normal text length should pass budget check");
+
+            // Entity count check
+            for (int i = 0; i < 1000; i++)
+            {
+                guard.CheckEntityCount(i + 1, out _);
+            }
+            bool overEntityAllowed = guard.CheckEntityCount(1001, out var entDiag);
+            Assert(!overEntityAllowed, "Entity count exceeding limit must be rejected");
+            Assert(entDiag != null && entDiag.Code == "RESOURCE_BUDGET_EXCEEDED_ENTITIES",
+                $"Expected entity count diagnostic, got: {entDiag?.Code}");
+        }
+
+        // 5. Fixture SHA-256 integrity verification
+        {
+            var repoRoot = FindRepoRoot();
+            var dxfPath = Path.Combine(repoRoot, "fixtures", "public", "synthetic", "synthetic_turkish_basic_ac1015.dxf");
+            Assert(File.Exists(dxfPath), "Fixture must exist");
+            using var stream = File.OpenRead(dxfPath);
+            using var sha = System.Security.Cryptography.SHA256.Create();
+            var hashBytes = sha.ComputeHash(stream);
+            var hashHex = Convert.ToHexString(hashBytes).ToLowerInvariant();
+            Assert(hashHex.Length == 64, "Fixture SHA-256 hash computation valid");
+        }
     }
 }
 

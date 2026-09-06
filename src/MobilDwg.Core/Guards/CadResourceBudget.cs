@@ -13,6 +13,7 @@ public sealed record CadResourceBudget
     public int MaxHatchBoundarySegments { get; init; } = 10_000;
     public int MaxRasterDimensionPixels { get; init; } = 8_192; // 8K x 8K
     public long MaxRasterTotalPixels { get; init; } = 67_108_864; // 64 MP decompression bomb protection
+    public long MaxRasterDecodedBytes { get; init; } = 256 * 1024 * 1024; // 256 MB decoded raster limit
     public int MaxXrefCount { get; init; } = 100;
     public double CoordinateMaxAbsoluteValue { get; init; } = 1e12; // Overflow threshold
 }
@@ -132,13 +133,29 @@ public sealed class CadBudgetGuard
             return false;
         }
 
-        long totalPixels = (long)width * height;
-        if (totalPixels > _budget.MaxRasterTotalPixels)
+        long totalPixels;
+        long decodedBytes;
+        try
+        {
+            totalPixels = checked((long)width * height);
+            decodedBytes = checked(totalPixels * 4); // 4 bytes per 32-bit RGBA pixel
+        }
+        catch (OverflowException)
         {
             diagnostic = new CadDiagnostic(
                 "RESOURCE_BUDGET_EXCEEDED_RASTER_PIXELS",
                 DiagnosticSeverity.Warning,
-                $"Raster total pixel count ({totalPixels:N0}) exceeds safe memory budget of {_budget.MaxRasterTotalPixels:N0} pixels (decompression bomb guard).");
+                $"Raster dimensions ({width}x{height}) cause integer overflow.");
+            _diagnostics.Add(diagnostic);
+            return false;
+        }
+
+        if (totalPixels > _budget.MaxRasterTotalPixels || decodedBytes > _budget.MaxRasterDecodedBytes)
+        {
+            diagnostic = new CadDiagnostic(
+                "RESOURCE_BUDGET_EXCEEDED_RASTER_PIXELS",
+                DiagnosticSeverity.Warning,
+                $"Raster total footprint ({totalPixels:N0} px, {decodedBytes:N0} bytes) exceeds safe memory budget of {_budget.MaxRasterTotalPixels:N0} px / {_budget.MaxRasterDecodedBytes:N0} bytes (decompression bomb guard).");
             _diagnostics.Add(diagnostic);
             return false;
         }

@@ -11,6 +11,7 @@ public sealed class CachedCadFile : IAsyncDisposable
         _filePath = filePath;
         DisplayName = displayName;
         Length = length;
+        SafeCadFileCache.RegisterActiveFile(filePath);
     }
 
     public string FilePath =>
@@ -36,6 +37,7 @@ public sealed class CachedCadFile : IAsyncDisposable
         var filePath = Interlocked.Exchange(ref _filePath, null);
         if (filePath is not null)
         {
+            SafeCadFileCache.UnregisterActiveFile(filePath);
             TryDelete(filePath);
         }
 
@@ -62,17 +64,42 @@ public sealed class SafeCadFileCache
     private const int BufferSize = 128 * 1024;
     private const long DiskRecheckIntervalBytes = 8L * 1024 * 1024;
 
+    private static readonly System.Collections.Concurrent.ConcurrentDictionary<string, byte> _activeFiles = new(StringComparer.OrdinalIgnoreCase);
+
+    public static void RegisterActiveFile(string path)
+    {
+        if (!string.IsNullOrWhiteSpace(path))
+        {
+            _activeFiles.TryAdd(Path.GetFullPath(path), 0);
+        }
+    }
+
+    public static void UnregisterActiveFile(string path)
+    {
+        if (!string.IsNullOrWhiteSpace(path))
+        {
+            _activeFiles.TryRemove(Path.GetFullPath(path), out _);
+        }
+    }
+
+    public static bool IsFileActive(string path)
+    {
+        if (string.IsNullOrWhiteSpace(path)) return false;
+        return _activeFiles.ContainsKey(Path.GetFullPath(path));
+    }
+
+    public static int ActiveFileCount => _activeFiles.Count;
+
     private readonly string _rootDirectory;
     private readonly CadFileOpenLimits _limits;
     private readonly Func<string, long> _availableBytesProvider;
 
     /// <summary>
-    /// Purges all leftover files in the private cache root directory.
-    /// Safe to call from OnTrimMemory or application teardown.
-    /// Individual CachedCadFile instances handle their own deletion on DisposeAsync;
-    /// PurgeAll is a belt-and-suspenders sweep for orphaned temporaries.
+    /// Purges orphaned temporary files in the private cache root directory.
+    /// Does not delete files associated with currently active open leases.
+    /// Safe to call from OnTrimMemory.
     /// </summary>
-    public void PurgeAll()
+    public void PurgeOrphans()
     {
         if (!Directory.Exists(_rootDirectory))
         {
@@ -83,7 +110,11 @@ public sealed class SafeCadFileCache
         {
             foreach (var file in Directory.EnumerateFiles(_rootDirectory, "*", SearchOption.TopDirectoryOnly))
             {
-                TryDelete(file);
+                var full = Path.GetFullPath(file);
+                if (!_activeFiles.ContainsKey(full))
+                {
+                    TryDelete(file);
+                }
             }
         }
         catch (DirectoryNotFoundException)
@@ -92,6 +123,14 @@ public sealed class SafeCadFileCache
         catch (UnauthorizedAccessException)
         {
         }
+    }
+
+    /// <summary>
+    /// Purges leftover orphaned files in the private cache root directory while protecting active files.
+    /// </summary>
+    public void PurgeAll()
+    {
+        PurgeOrphans();
     }
 
     public SafeCadFileCache(

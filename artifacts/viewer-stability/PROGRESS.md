@@ -469,3 +469,50 @@ Geçmeyen veya çalıştırılamayan koşullar: Yok.
 Bir sonraki aşama: Aşama 12 — Yaşam döngüsü ve hata kurtarma  
 
 ---
+
+### Aşama 12 Raporu
+
+Aşama: 12 — Yaşam döngüsü ve hata kurtarma  
+Durum: TAMAMLANDI  
+Commit Konusu: `fix(lifecycle): make document and surface ownership deterministic`  
+Değişen dosyalar:
+- `scripts/viewer-stability-gate.ps1`
+- `src/MobilDwg.Core/Guards/CadResourceBudget.cs`
+- `src/MobilDwg.Rendering/Viewer/CadViewerSession.cs`
+- `src/MobilDwg.App/Opening/SafeCadFileCache.cs`
+- `src/MobilDwg.App/Platforms/Android/MainActivity.cs`
+- `tests/MobilDwg.Android.Instrumentation/NativeSmokeRunner.cs`
+- `tests/MobilDwg.Integration.Tests/Program.cs`
+(Kullanıcı başlangıç değişiklikleri `src/MobilDwg.Rendering/Scene/RenderScene.cs` public constructor görünürlüğü, `release/SHA256SUMS.txt`, `tools/CadControlBenchmark/` bozulmadan çalışma ağacında korundu.)  
+Kullanıcıya yansıyan davranış:
+- Deterministik Belge ve Oturum Yaşam Döngüsü (`CadViewerSession`):
+  - Kapanış isteği (`Dispose()`) anında `_isRetiring = true` atanıp `CloseRequested` olayı tetiklenir; arayüz hemen kapanış durumuna geçer.
+  - Aktif render/worker kiralama (lease) varsa (`_activeLeaseCount > 0`), kaynaklar arka plandaki aktif iş tamamlanıncaya kadar geçerli kalır; emekliye ayrılmış veya kapanmış oturuma yeni kiralama (`AcquireRenderLease`) isteği `ObjectDisposedException` fırlatılarak güvenle reddedilir.
+  - Son kiralama iade edildiğinde (`ReleaseRenderLease`), oturum `_disposed = true` ve `_isRetiring = false` durumuna geçerek geometri ve kaynak önbelleklerini temizler ve `DrainCompleted` olayını tetikler. Oturum kapanışı idempotenttir.
+  - Üretim etkileşim yollarından (`OnTrimMemory`) manuel `GC.Collect()` kaldırıldı; bellek baskısında yalnızca sahipsiz önbellekler temizlenir.
+- Güvenli Önbellek Dosya Yönetimi (`SafeCadFileCache` & `MainActivity`):
+  - Açık çizim dosyaları için statik aktif dosya kayıt tablosu (`_activeFiles`) eklendi; `CachedCadFile` örneği oluşturulduğunda yol kaydedilir, `DisposeAsync` ile serbest bırakılır.
+  - `MainActivity.OnTrimMemory` içindeki koşulsuz `PurgeAll()` çağrısı yerini `PurgeOrphans()` metoduna bıraktı. Bellek baskısı altında aktif olarak kiralanmış ve görüntülenen çizim dosyaları korunur, yalnızca sahipsiz (untracked/orphaned) geçici dosyalar temizlenir.
+- Kaynak Güvenlik Sınırları ve Taşma Koruması (`CadResourceBudget` & `CadBudgetGuard`):
+  - `MaxRasterDecodedBytes` (256 MB) ve `MaxRasterTotalPixels` (64 MP) sınırları eklendi.
+  - Raster boyut kontrollerinde `checked((long)width * height)` ve `checked(totalPixels * 4)` taşma koruması uygulanarak bellek bombası ve tamsayı taşması kaynaklı çökmeler önlendi.
+- Doğrulama ve Testler:
+  - 50 close/reopen döngüsü, kiralama sayacı drenajı, retiring durumunda kiralama reddi ve idempotent dispose test edildi.
+  - `CloseRequested` ve `DrainCompleted` olay sırası ve asenkron drenaj sözleşmesi doğrulandı.
+  - 20 Viewport döndürme (ekran boyucu değişimi 1080x2400 <-> 2400x1080) ve 20 arka plan/bellek kırpma (OnTrimMemory) döngüsü doğrulandı.
+  - Kaynak fixture SHA-256 bütünlüğü doğrulandı.
+  - `SafeCadFileCache` sahipsiz dosya temizliği ve aktif dosya koruması test edildi.
+Çalıştırılan gerçek komutlar ve exit code:
+- `dotnet run --project tests/MobilDwg.Rendering.Tests/MobilDwg.Rendering.Tests.csproj -c Release` (exit code: 0, STAGE18_VIEWER_LIFECYCLE_TESTS_PASS, STAGE19_RESOURCE_GUARDS_TESTS_PASS, STAGE25_BETA_BLOCKER_TESTS_PASS)
+- `dotnet run --project tests/MobilDwg.Integration.Tests/MobilDwg.Integration.Tests.csproj -c Release` (exit code: 0, STAGE12_LIFECYCLE_TESTS_PASS)
+- `dotnet run --project tests/MobilDwg.Architecture.Tests/MobilDwg.Architecture.Tests.csproj -c Release` (exit code: 0, STAGE04/STAGE05_DEPENDENCY_BOUNDARY_PASS)
+- `dotnet build src/MobilDwg.App/MobilDwg.App.csproj -f net10.0-android36.0 -c Release` (exit code: 0, 0 warning, 0 error)
+- `powershell -ExecutionPolicy Bypass -File scripts/viewer-stability-gate.ps1 -Stage 12` (exit code: 0, VIEWER_STABILITY_STAGE12_PASS)  
+Ölçülen metrikler ve kanıt dosyaları:
+- `scripts/viewer-stability-gate.ps1` Stage 12 kontrolleri (VIEWER_STABILITY_STAGE12_PASS)
+- `tests/MobilDwg.Rendering.Tests` (STAGE18_VIEWER_LIFECYCLE_TESTS_PASS, STAGE19_RESOURCE_GUARDS_TESTS_PASS, STAGE25_BETA_BLOCKER_TESTS_PASS)
+- `tests/MobilDwg.Integration.Tests` (STAGE12_LIFECYCLE_TESTS_PASS)  
+Geçmeyen veya çalıştırılamayan koşullar: Yok.  
+Bir sonraki aşama: Aşama 13 — Gerçek uygulama doğruluğu ve performans kabulü  
+
+---

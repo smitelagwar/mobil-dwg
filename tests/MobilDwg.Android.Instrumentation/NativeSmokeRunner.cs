@@ -18,8 +18,10 @@ public static class NativeSmokeRunner
         TestNativeGlCpuSwitchSmoke();
         TestNativeResizeSmoke();
         TestRapidOpenCancellationAndLeaseSafety();
+        TestSafeCadFileCacheOrphanPurgingAndActiveProtection();
         Console.WriteLine("STAGE05_NATIVE_INSTRUMENTATION_PASS");
         Console.WriteLine("STAGE08_COORDINATOR_RAPID_OPEN_PASS");
+        Console.WriteLine("STAGE12_SAFE_CACHE_ORPHAN_PROTECTION_PASS");
     }
 
     private static void TestNativePanSmoke()
@@ -162,6 +164,50 @@ public static class NativeSmokeRunner
             {
                 Assert(coordinator.CurrentSession.Metadata != null, "Committed session metadata must not be null");
             }
+        }
+        finally
+        {
+            if (System.IO.Directory.Exists(tempDir))
+            {
+                try { System.IO.Directory.Delete(tempDir, true); } catch { }
+            }
+        }
+    }
+
+    private static void TestSafeCadFileCacheOrphanPurgingAndActiveProtection()
+    {
+        var tempDir = System.IO.Path.Combine(System.IO.Path.GetTempPath(), "mobildwg_test_cache_" + Guid.NewGuid().ToString("N"));
+        System.IO.Directory.CreateDirectory(tempDir);
+        try
+        {
+            var cache = new MobilDwg.App.Opening.SafeCadFileCache(tempDir, new MobilDwg.App.Opening.CadFileOpenLimits(10 * 1024 * 1024, 1024 * 1024));
+
+            // Create active file
+            var activeFile = System.IO.Path.Combine(tempDir, "active_drawing.dwg");
+            System.IO.File.WriteAllText(activeFile, "DWG_ACTIVE_CONTENT");
+            var cachedCadFile = new MobilDwg.App.Opening.CachedCadFile(activeFile, "active_drawing.dwg", 18);
+
+            Assert(MobilDwg.App.Opening.SafeCadFileCache.IsFileActive(activeFile), "Active file must be registered in active cache registry");
+
+            // Create orphan file
+            var orphanFile = System.IO.Path.Combine(tempDir, "orphan_leftover.tmp");
+            System.IO.File.WriteAllText(orphanFile, "ORPHAN_CONTENT");
+            Assert(System.IO.File.Exists(orphanFile), "Orphan file created");
+
+            // Purge orphans (like OnTrimMemory does)
+            cache.PurgeOrphans();
+
+            // Active file MUST still exist!
+            Assert(System.IO.File.Exists(activeFile), "Active file must NOT be deleted during PurgeOrphans / OnTrimMemory");
+
+            // Orphan file MUST have been deleted!
+            Assert(!System.IO.File.Exists(orphanFile), "Orphan file must be deleted during PurgeOrphans");
+
+            // Dispose active file - now it unregisters and deletes itself
+            cachedCadFile.DisposeAsync().AsTask().Wait();
+
+            Assert(!System.IO.File.Exists(activeFile), "Active file must be deleted upon CachedCadFile disposal");
+            Assert(!MobilDwg.App.Opening.SafeCadFileCache.IsFileActive(activeFile), "Active file must be unregistered");
         }
         finally
         {

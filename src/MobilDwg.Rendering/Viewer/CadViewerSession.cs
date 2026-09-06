@@ -66,6 +66,9 @@ public sealed class CadViewerSession : IDisposable
     public bool IsRetiring => _isRetiring;
     public bool IsDisposed => _disposed;
 
+    public event Action? CloseRequested;
+    public event Action? DrainCompleted;
+
     public CadViewerSession(
         CadDocumentMetadata metadata,
         RenderScene modelScene,
@@ -105,7 +108,10 @@ public sealed class CadViewerSession : IDisposable
     {
         lock (_stateLock)
         {
-            ObjectDisposedException.ThrowIf(_disposed, this);
+            if (_disposed || _isRetiring)
+            {
+                throw new ObjectDisposedException(nameof(CadViewerSession), "Session is retiring or disposed; cannot acquire new render lease.");
+            }
 
             _activeLeaseCount++;
 
@@ -130,14 +136,17 @@ public sealed class CadViewerSession : IDisposable
 
     internal void ReleaseRenderLease()
     {
+        Action? onDrained = null;
         lock (_stateLock)
         {
             _activeLeaseCount--;
             if (_activeLeaseCount <= 0 && _isRetiring)
             {
-                CompleteDisposal();
+                CompleteDisposalUnderLock(out onDrained);
             }
         }
+
+        onDrained?.Invoke();
     }
 
     public void ResizeViewport(int width, int height)
@@ -284,29 +293,40 @@ public sealed class CadViewerSession : IDisposable
 
     public void OnTrimMemory()
     {
-        _geometryCache.Clear();
-        _resourceCache.Clear();
-        GC.Collect(1, GCCollectionMode.Optimized, blocking: false);
+        lock (_stateLock)
+        {
+            if (_disposed) return;
+            _geometryCache.Clear();
+            _resourceCache.Clear();
+        }
     }
 
     public void Dispose()
     {
+        Action? onClosed = null;
+        Action? onDrained = null;
         lock (_stateLock)
         {
-            if (_disposed) return;
+            if (_disposed || _isRetiring) return;
             _isRetiring = true;
+            onClosed = CloseRequested;
             if (_activeLeaseCount <= 0)
             {
-                CompleteDisposal();
+                CompleteDisposalUnderLock(out onDrained);
             }
         }
+
+        onClosed?.Invoke();
+        onDrained?.Invoke();
     }
 
-    private void CompleteDisposal()
+    private void CompleteDisposalUnderLock(out Action? onDrained)
     {
         _disposed = true;
+        _isRetiring = false;
         _geometryCache.Dispose();
         _resourceCache.Dispose();
         _frameGate.Reset();
+        onDrained = DrainCompleted;
     }
 }

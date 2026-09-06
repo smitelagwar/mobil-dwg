@@ -58,7 +58,7 @@ public sealed class MainActivity : MauiAppCompatActivity
                 "mobil-dwg",
                 "open");
             var cache = new SafeCadFileCache(cacheRoot);
-            cache.PurgeAll();
+            cache.PurgeOrphans();
 #if A25_VALIDATION
             Android.Util.Log.Info("MobilDwgA25", $"A25_CACHE_PURGE_PASS level={level}");
 #endif
