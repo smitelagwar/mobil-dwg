@@ -7,8 +7,11 @@ using MobilDwg.Core.Documents;
 using MobilDwg.Core.Guards;
 using MobilDwg.Core.Reading;
 using MobilDwg.Rendering.Blocks;
+using MobilDwg.Rendering.Dimensions;
 using MobilDwg.Rendering.Geometry;
+using MobilDwg.Rendering.Hatch;
 using MobilDwg.Rendering.Scene;
+using MobilDwg.Rendering.Text;
 using MobilDwg.Rendering.Transforms;
 
 namespace MobilDwg.Integration.Tests;
@@ -130,10 +133,12 @@ public static class Program
             }
 
             RunStage09GeometryTests();
+            RunStage10TextDimensionHatchTests();
 
             Console.WriteLine("STAGE01_INTEGRATION_TESTS_PASS");
             Console.WriteLine("STAGE08_CAD_EXTRACTION_TESTS_PASS");
             Console.WriteLine("STAGE09_GEOMETRY_TESTS_PASS");
+            Console.WriteLine("STAGE10_TEXT_DIMENSION_HATCH_PASS");
             return 0;
         }
         catch (Exception ex)
@@ -276,4 +281,228 @@ public static class Program
 
         Console.WriteLine("STAGE09_GEOMETRY_BLOCK_TESTS_PASS");
     }
+
+    private static void RunStage10TextDimensionHatchTests()
+    {
+        // 1. Turkish text & unicode escapes in Extracted Document -> RenderScene (TextPrimitive)
+        var doc = new CadExtractedDocument(
+            "DXF",
+            "AC1015",
+            new[] { new CadExtractedLayer("TEXT_LAYER", 0xFFFFFFFF, 1, true) },
+            new[]
+            {
+                new CadExtractedEntity(
+                    "T01",
+                    "TEXT_LAYER",
+                    CadExtractedEntityType.Text,
+                    new CadEntityColor(CadColorMethod.Index, 1, 0),
+                    points: new[] { new CadExtractedPoint(10, 20) },
+                    text: "İstanbul Şemsiyesi Örtüsü Çiçeği Ağacı Ğülüşü ıİ",
+                    textHeight: 12.0,
+                    rotation: 0.0,
+                    payload: new CadTextPayload(
+                        "İstanbul Şemsiyesi Örtüsü Çiçeği Ağacı Ğülüşü ıİ",
+                        new CadPoint3D(10, 20, 0),
+                        12.0,
+                        0.0,
+                        FontName: "romans.shx",
+                        WidthFactor: 1.0,
+                        HorizontalAlignment: 0,
+                        VerticalAlignment: 0))
+            },
+            0, 0, 100, 100);
+
+        var scene = CadExtractedSceneBuilder.Build(doc);
+        Assert(scene.Entities.Count == 1, $"Expected 1 entity in scene, got {scene.Entities.Count}");
+        var textEntity = scene.Entities[0];
+        Assert(textEntity.Geometry.Count == 1, $"Expected 1 primitive, got {textEntity.Geometry.Count}");
+        Assert(textEntity.Geometry[0] is TextPrimitive, "Expected TextPrimitive");
+        var textPrim = (TextPrimitive)textEntity.Geometry[0];
+        Assert(textPrim.Text.Contains("İstanbul", StringComparison.Ordinal), "TextPrimitive text must preserve Turkish characters");
+        Assert(textPrim.ResolvedFont == "sans-serif", $"SHX font 'romans.shx' should be resolved to 'sans-serif', got '{textPrim.ResolvedFont}'");
+        Assert(textPrim.Layout.Lines.Count == 1, "Expected single line text layout");
+
+        // 2. MTEXT multiline layout with attachment point
+        var mtextDoc = new CadExtractedDocument(
+            "DXF",
+            "AC1015",
+            new[] { new CadExtractedLayer("MTEXT_LAYER", 0xFFFFFFFF, 2, true) },
+            new[]
+            {
+                new CadExtractedEntity(
+                    "MT01",
+                    "MTEXT_LAYER",
+                    CadExtractedEntityType.MText,
+                    new CadEntityColor(CadColorMethod.Index, 2, 0),
+                    points: new[] { new CadExtractedPoint(50, 50) },
+                    text: "Birinci Satir\nIkinci Satir\nUcuncu Satir",
+                    textHeight: 10.0,
+                    rotation: 0.0,
+                    payload: new CadTextPayload(
+                        "Birinci Satir\nIkinci Satir\nUcuncu Satir",
+                        new CadPoint3D(50, 50, 0),
+                        10.0,
+                        0.0,
+                        AttachmentPoint: (int)CadTextAttachmentPoint.MiddleCenter,
+                        Lines: new[] { "Birinci Satir", "Ikinci Satir", "Ucuncu Satir" }))
+            },
+            0, 0, 100, 100);
+
+        var mtextScene = CadExtractedSceneBuilder.Build(mtextDoc);
+        var mtextPrim = (TextPrimitive)mtextScene.Entities[0].Geometry[0];
+        Assert(mtextPrim.HorizontalAlignment == CadTextHorizontalAlignment.Center, "AttachmentPoint MiddleCenter should map to Center horizontal");
+        Assert(mtextPrim.VerticalAlignment == CadTextVerticalAlignment.Middle, "AttachmentPoint MiddleCenter should map to Middle vertical");
+        Assert(mtextPrim.Layout.Lines.Count == 3, $"Expected 3 lines in layout, got {mtextPrim.Layout.Lines.Count}");
+        Assert(mtextPrim.Bounds.Width > 0, "Bounds width must be positive");
+        Assert(mtextPrim.Bounds.Height > 0, "Bounds height must be positive");
+
+        // 3. Dimension with Exploded Anonymous Block vs Procedural Fallback
+        // 3a. Exploded block entities: no double-drawing
+        var explodedDimDoc = new CadExtractedDocument(
+            "DXF",
+            "AC1015",
+            new[] { new CadExtractedLayer("DIM_LAYER", 0xFFFFFFFF, 3, true) },
+            new[]
+            {
+                new CadExtractedEntity(
+                    "DIM01",
+                    "DIM_LAYER",
+                    CadExtractedEntityType.Dimension,
+                    new CadEntityColor(CadColorMethod.Index, 3, 0),
+                    points: new[] { new CadExtractedPoint(0, 0), new CadExtractedPoint(100, 0) },
+                    payload: new CadDimensionPayload(
+                        "100.00",
+                        new CadPoint3D(0, 0, 0),
+                        new CadPoint3D(50, 10, 0),
+                        DimensionType: "Aligned",
+                        ExplodedEntities: new[]
+                        {
+                            new CadExtractedEntity("D_LINE1", "DIM_LAYER", CadExtractedEntityType.Line, new CadEntityColor(CadColorMethod.ByLayer, 0, 0), points: new[] { new CadExtractedPoint(0, 10), new CadExtractedPoint(100, 10) }),
+                            new CadExtractedEntity("D_TEXT1", "DIM_LAYER", CadExtractedEntityType.Text, new CadEntityColor(CadColorMethod.ByLayer, 0, 0), points: new[] { new CadExtractedPoint(50, 15) }, text: "100.00")
+                        }))
+            },
+            0, 0, 100, 100);
+
+        var explodedScene = CadExtractedSceneBuilder.Build(explodedDimDoc);
+        Assert(explodedScene.Entities.Count == 1, "Expected 1 dimension entity");
+        Assert(explodedScene.Entities[0].Geometry.Count == 2, $"Expected exactly 2 exploded primitives (no duplicate procedural geometry), got {explodedScene.Entities[0].Geometry.Count}");
+        Assert(explodedScene.Entities[0].Geometry[0] is LinePrimitive, "Expected LinePrimitive in exploded dim");
+        Assert(explodedScene.Entities[0].Geometry[1] is TextPrimitive, "Expected TextPrimitive in exploded dim");
+
+        // 3b. Procedural fallback with text override
+        var proceduralDimDoc = new CadExtractedDocument(
+            "DXF",
+            "AC1015",
+            new[] { new CadExtractedLayer("DIM_LAYER", 0xFFFFFFFF, 3, true) },
+            new[]
+            {
+                new CadExtractedEntity(
+                    "DIM02",
+                    "DIM_LAYER",
+                    CadExtractedEntityType.Dimension,
+                    new CadEntityColor(CadColorMethod.Index, 3, 0),
+                    points: new[] { new CadExtractedPoint(0, 0), new CadExtractedPoint(50, 0) },
+                    text: "ÖZEL ÖLÇÜ: 50 mm",
+                    payload: new CadDimensionPayload(
+                        "ÖZEL ÖLÇÜ: 50 mm",
+                        new CadPoint3D(0, 0, 0),
+                        new CadPoint3D(25, 10, 0),
+                        DimensionType: "Aligned",
+                        Point1: new CadPoint3D(0, 0, 0),
+                        Point2: new CadPoint3D(50, 0, 0),
+                        DimLinePoint: new CadPoint3D(25, 10, 0),
+                        TextHeight: 3.0,
+                        ArrowheadSize: 2.5))
+            },
+            0, 0, 100, 100);
+
+        var proceduralScene = CadExtractedSceneBuilder.Build(proceduralDimDoc);
+        var dimGeom = proceduralScene.Entities[0].Geometry;
+        Assert(dimGeom.Any(g => g is TextPrimitive tp && tp.Text == "ÖZEL ÖLÇÜ: 50 mm"), "Dimension text override must be preserved");
+
+        // 3c. Leader
+        var leaderDoc = new CadExtractedDocument(
+            "DXF",
+            "AC1015",
+            new[] { new CadExtractedLayer("LEADER_LAYER", 0xFFFFFFFF, 4, true) },
+            new[]
+            {
+                new CadExtractedEntity(
+                    "LDR01",
+                    "LEADER_LAYER",
+                    CadExtractedEntityType.Dimension,
+                    new CadEntityColor(CadColorMethod.Index, 4, 0),
+                    points: new[] { new CadExtractedPoint(0, 0), new CadExtractedPoint(10, 10) },
+                    text: "NOT: DETAY A",
+                    payload: new CadDimensionPayload(
+                        "NOT: DETAY A",
+                        new CadPoint3D(0, 0, 0),
+                        new CadPoint3D(10, 10, 0),
+                        DimensionType: "Leader",
+                        TextHeight: 3.0,
+                        ArrowheadSize: 2.0))
+            },
+            0, 0, 100, 100);
+
+        var leaderScene = CadExtractedSceneBuilder.Build(leaderDoc);
+        Assert(leaderScene.Entities[0].Geometry.Any(g => g is TextPrimitive tp && tp.Text == "NOT: DETAY A"), "Leader text must be preserved");
+
+        // 4. Hatch loops, islands and pattern line stability
+        var outerLoop = new[]
+        {
+            new CadExtractedVertex(0, 0),
+            new CadExtractedVertex(100, 0),
+            new CadExtractedVertex(100, 100),
+            new CadExtractedVertex(0, 100),
+            new CadExtractedVertex(0, 0)
+        };
+        var islandLoop = new[]
+        {
+            new CadExtractedVertex(25, 25),
+            new CadExtractedVertex(75, 25),
+            new CadExtractedVertex(75, 75),
+            new CadExtractedVertex(25, 75),
+            new CadExtractedVertex(25, 25)
+        };
+
+        var hatchDoc = new CadExtractedDocument(
+            "DXF",
+            "AC1015",
+            new[] { new CadExtractedLayer("HATCH_LAYER", 0xFFFFFFFF, 5, true) },
+            new[]
+            {
+                new CadExtractedEntity(
+                    "HATCH01",
+                    "HATCH_LAYER",
+                    CadExtractedEntityType.Hatch,
+                    new CadEntityColor(CadColorMethod.Index, 5, 0),
+                    vertices: outerLoop.Concat(islandLoop).ToArray(),
+                    payload: new CadHatchPayload(
+                        "ANSI31",
+                        IsSolid: false,
+                        Angle: Math.PI / 4.0,
+                        Scale: 1.0,
+                        Loops: new[] { outerLoop, islandLoop },
+                        Origin: new CadPoint3D(0, 0, 0)))
+            },
+            0, 0, 100, 100);
+
+        var hatchScene = CadExtractedSceneBuilder.Build(hatchDoc);
+        Assert(hatchScene.Entities.Count == 1, "Expected 1 hatch entity");
+        Assert(hatchScene.Entities[0].Geometry[0] is HatchPrimitive, "Expected HatchPrimitive");
+        var hatchPrim = (HatchPrimitive)hatchScene.Entities[0].Geometry[0];
+        Assert(hatchPrim.Loops.Count == 2, $"Expected 2 loops (outer + island), got {hatchPrim.Loops.Count}");
+        Assert(hatchPrim.PatternLines.Count > 0, "Pattern lines should be generated for non-solid hatch");
+
+        // Check pattern phase stability: identical origin produces identical lines
+        var hatchScene2 = CadExtractedSceneBuilder.Build(hatchDoc);
+        var hatchPrim2 = (HatchPrimitive)hatchScene2.Entities[0].Geometry[0];
+        Assert(hatchPrim.PatternLines.Count == hatchPrim2.PatternLines.Count, "Pattern line count must be deterministic");
+        for (var i = 0; i < hatchPrim.PatternLines.Count; i++)
+        {
+            Assert(Math.Abs(hatchPrim.PatternLines[i].Start.X - hatchPrim2.PatternLines[i].Start.X) < 1e-9, "Pattern line phase must be invariant");
+            Assert(Math.Abs(hatchPrim.PatternLines[i].Start.Y - hatchPrim2.PatternLines[i].Start.Y) < 1e-9, "Pattern line phase must be invariant");
+        }
+    }
 }
+

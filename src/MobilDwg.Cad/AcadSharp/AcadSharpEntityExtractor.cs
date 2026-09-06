@@ -391,16 +391,28 @@ public static class AcadSharpEntityExtractor
                             string attrText = DecodeCadText(attr.Value);
                             double ah = (attr.Height > 0 ? attr.Height : 10.0) * Math.Abs(scaleY);
                             double arot = attr.Rotation + rotRad;
+                            string attrFont = attr.Style?.Filename ?? attr.Style?.Name ?? "STANDARD";
                             string attrHandle = $"{parentInstancePath}/{block.Name}:{insert.Handle:X}:ATTR:{attr.Handle:X}";
 
                             var attrEntity = new CadExtractedEntity(
                                 attrHandle,
                                 inheritedLayer,
-                                CadExtractedEntityType.Text,
+                                CadExtractedEntityType.Attrib,
                                 inheritedColor,
                                 sourceOrder: refOrder,
                                 blockOwner: block.Name,
-                                payload: new CadTextPayload(attrText, new CadPoint3D(atx, aty), ah, arot, attr.Style?.Name),
+                                payload: new CadTextPayload(
+                                    attrText,
+                                    new CadPoint3D(atx, aty),
+                                    ah,
+                                    arot,
+                                    attrFont,
+                                    (int)attr.HorizontalAlignment,
+                                    (int)attr.VerticalAlignment,
+                                    WidthFactor: attr.WidthFactor > 0 ? attr.WidthFactor : 1.0,
+                                    ObliqueAngle: attr.ObliqueAngle,
+                                    MirrorFlags: (int)attr.Mirror,
+                                    FontName: attrFont),
                                 points: new[] { new CadExtractedPoint(atx, aty) },
                                 text: attrText,
                                 textHeight: ah,
@@ -582,11 +594,92 @@ public static class AcadSharpEntityExtractor
                 payload: payload,
                 vertices: vertices);
         }
+        else if (entity is AttributeEntity attrib)
+        {
+            var ocs = OcsTransform.FromNormal(attrib.Normal.X, attrib.Normal.Y, attrib.Normal.Z);
+            var (tx, ty) = ocs.Transform2D(attrib.InsertPoint.X, attrib.InsertPoint.Y);
+            string decodedVal = DecodeCadText(attrib.Value);
+            string fontName = attrib.Style?.Filename ?? attrib.Style?.Name ?? "STANDARD";
+
+            if (decodedVal.Length > budgetGuard.Budget.MaxTextLength)
+            {
+                budgetGuard.CheckTextLength(decodedVal.Length, out var textDiag);
+                if (textDiag is not null)
+                {
+                    diagnostics.Add(new CadExtractedDiagnostic(textDiag.Code, textDiag.Severity.ToString(), textDiag.Message, handleStr));
+                }
+                decodedVal = decodedVal.Substring(0, budgetGuard.Budget.MaxTextLength);
+            }
+
+            var payload = new CadTextPayload(
+                decodedVal,
+                new CadPoint3D(tx, ty, attrib.InsertPoint.Z),
+                attrib.Height > 0 ? attrib.Height : 10.0,
+                attrib.Rotation,
+                fontName,
+                (int)attrib.HorizontalAlignment,
+                (int)attrib.VerticalAlignment,
+                WidthFactor: attrib.WidthFactor > 0 ? attrib.WidthFactor : 1.0,
+                ObliqueAngle: attrib.ObliqueAngle,
+                MirrorFlags: (int)attrib.Mirror,
+                FontName: fontName);
+
+            return new CadExtractedEntity(
+                handleStr, layer, CadExtractedEntityType.Attrib, color,
+                sourceOrder: sourceOrder, lineweight: lineweight, transparency: transparency,
+                linetype: linetype, linetypeScale: linetypeScale, blockOwner: blockOwner,
+                payload: payload,
+                points: new[] { new CadExtractedPoint(tx, ty) },
+                text: decodedVal,
+                textHeight: attrib.Height > 0 ? attrib.Height : 10.0,
+                rotation: attrib.Rotation);
+        }
+        else if (entity is AttributeDefinition attdef)
+        {
+            var ocs = OcsTransform.FromNormal(attdef.Normal.X, attdef.Normal.Y, attdef.Normal.Z);
+            var (tx, ty) = ocs.Transform2D(attdef.InsertPoint.X, attdef.InsertPoint.Y);
+            string decodedVal = DecodeCadText(attdef.Value);
+            string fontName = attdef.Style?.Filename ?? attdef.Style?.Name ?? "STANDARD";
+
+            if (decodedVal.Length > budgetGuard.Budget.MaxTextLength)
+            {
+                budgetGuard.CheckTextLength(decodedVal.Length, out var textDiag);
+                if (textDiag is not null)
+                {
+                    diagnostics.Add(new CadExtractedDiagnostic(textDiag.Code, textDiag.Severity.ToString(), textDiag.Message, handleStr));
+                }
+                decodedVal = decodedVal.Substring(0, budgetGuard.Budget.MaxTextLength);
+            }
+
+            var payload = new CadTextPayload(
+                decodedVal,
+                new CadPoint3D(tx, ty, attdef.InsertPoint.Z),
+                attdef.Height > 0 ? attdef.Height : 10.0,
+                attdef.Rotation,
+                fontName,
+                (int)attdef.HorizontalAlignment,
+                (int)attdef.VerticalAlignment,
+                WidthFactor: attdef.WidthFactor > 0 ? attdef.WidthFactor : 1.0,
+                ObliqueAngle: attdef.ObliqueAngle,
+                MirrorFlags: (int)attdef.Mirror,
+                FontName: fontName);
+
+            return new CadExtractedEntity(
+                handleStr, layer, CadExtractedEntityType.AttDef, color,
+                sourceOrder: sourceOrder, lineweight: lineweight, transparency: transparency,
+                linetype: linetype, linetypeScale: linetypeScale, blockOwner: blockOwner,
+                payload: payload,
+                points: new[] { new CadExtractedPoint(tx, ty) },
+                text: decodedVal,
+                textHeight: attdef.Height > 0 ? attdef.Height : 10.0,
+                rotation: attdef.Rotation);
+        }
         else if (entity is TextEntity text)
         {
             var ocs = OcsTransform.FromNormal(text.Normal.X, text.Normal.Y, text.Normal.Z);
             var (tx, ty) = ocs.Transform2D(text.InsertPoint.X, text.InsertPoint.Y);
             string decodedVal = DecodeCadText(text.Value);
+            string fontName = text.Style?.Filename ?? text.Style?.Name ?? "STANDARD";
 
             if (decodedVal.Length > budgetGuard.Budget.MaxTextLength)
             {
@@ -603,7 +696,13 @@ public static class AcadSharpEntityExtractor
                 new CadPoint3D(tx, ty, text.InsertPoint.Z),
                 text.Height > 0 ? text.Height : 10.0,
                 text.Rotation,
-                text.Style?.Name);
+                fontName,
+                (int)text.HorizontalAlignment,
+                (int)text.VerticalAlignment,
+                WidthFactor: text.WidthFactor > 0 ? text.WidthFactor : 1.0,
+                ObliqueAngle: text.ObliqueAngle,
+                MirrorFlags: (int)text.Mirror,
+                FontName: fontName);
 
             return new CadExtractedEntity(
                 handleStr, layer, CadExtractedEntityType.Text, color,
@@ -620,6 +719,7 @@ public static class AcadSharpEntityExtractor
             var ocs = OcsTransform.FromNormal(mtext.Normal.X, mtext.Normal.Y, mtext.Normal.Z);
             var (tx, ty) = ocs.Transform2D(mtext.InsertPoint.X, mtext.InsertPoint.Y);
             string cleanVal = CleanMText(mtext.Value);
+            string fontName = mtext.Style?.Filename ?? mtext.Style?.Name ?? "STANDARD";
 
             if (cleanVal.Length > budgetGuard.Budget.MaxTextLength)
             {
@@ -631,12 +731,16 @@ public static class AcadSharpEntityExtractor
                 cleanVal = cleanVal.Substring(0, budgetGuard.Budget.MaxTextLength);
             }
 
+            var lines = cleanVal.Split('\n');
             var payload = new CadTextPayload(
                 cleanVal,
                 new CadPoint3D(tx, ty, mtext.InsertPoint.Z),
                 mtext.Height > 0 ? mtext.Height : 10.0,
                 mtext.Rotation,
-                mtext.Style?.Name);
+                fontName,
+                AttachmentPoint: (int)mtext.AttachmentPoint,
+                FontName: fontName,
+                Lines: lines);
 
             return new CadExtractedEntity(
                 handleStr, layer, CadExtractedEntityType.MText, color,
@@ -654,12 +758,94 @@ public static class AcadSharpEntityExtractor
             var defPt = new CadPoint3D(dim.DefinitionPoint.X, dim.DefinitionPoint.Y, dim.DefinitionPoint.Z);
             var midPt = new CadPoint3D(dim.InsertionPoint.X, dim.InsertionPoint.Y, dim.InsertionPoint.Z);
 
+            List<CadExtractedEntity>? explodedDimEntities = null;
+            if (dim.Block != null && dim.Block.Entities.Count > 0)
+            {
+                explodedDimEntities = new List<CadExtractedEntity>();
+                int subOrder = 0;
+                foreach (var bEnt in dim.Block.Entities)
+                {
+                    var childHandle = $"{handleStr}/DIM_BLK:{bEnt.Handle:X}";
+                    var extractedChild = TransformAndExtractEntity(
+                        bEnt,
+                        childHandle,
+                        layer,
+                        color,
+                        sourceOrder + (++subOrder),
+                        dim.Block.Name,
+                        (x, y) => (x, y),
+                        scaleX: 1.0,
+                        scaleY: 1.0,
+                        rotation: 0.0,
+                        diagnostics,
+                        budgetGuard);
+                    if (extractedChild != null)
+                    {
+                        explodedDimEntities.Add(extractedChild);
+                    }
+                }
+            }
+
+            CadPoint3D p1 = default, p2 = default, dimLinePt = default, centerPt = default;
+            double dimRot = 0.0;
+            string dimTypeStr = dim.GetType().Name;
+
+            if (dim is DimensionLinear lin)
+            {
+                p1 = new CadPoint3D(lin.FirstPoint.X, lin.FirstPoint.Y, lin.FirstPoint.Z);
+                p2 = new CadPoint3D(lin.SecondPoint.X, lin.SecondPoint.Y, lin.SecondPoint.Z);
+                dimLinePt = new CadPoint3D(lin.InsertionPoint.X, lin.InsertionPoint.Y, lin.InsertionPoint.Z);
+                dimRot = lin.ExtLineRotation;
+                dimTypeStr = "Linear";
+            }
+            else if (dim is DimensionAligned al)
+            {
+                p1 = new CadPoint3D(al.FirstPoint.X, al.FirstPoint.Y, al.FirstPoint.Z);
+                p2 = new CadPoint3D(al.SecondPoint.X, al.SecondPoint.Y, al.SecondPoint.Z);
+                dimLinePt = new CadPoint3D(al.InsertionPoint.X, al.InsertionPoint.Y, al.InsertionPoint.Z);
+                dimTypeStr = "Aligned";
+            }
+            else if (dim is DimensionRadius rad)
+            {
+                centerPt = new CadPoint3D(rad.DefinitionPoint.X, rad.DefinitionPoint.Y, rad.DefinitionPoint.Z);
+                p1 = new CadPoint3D(rad.AngleVertex.X, rad.AngleVertex.Y, rad.AngleVertex.Z);
+                dimLinePt = new CadPoint3D(rad.InsertionPoint.X, rad.InsertionPoint.Y, rad.InsertionPoint.Z);
+                dimTypeStr = "Radial";
+            }
+            else if (dim is DimensionDiameter dia)
+            {
+                centerPt = new CadPoint3D(dia.Center.X, dia.Center.Y, dia.Center.Z);
+                p1 = new CadPoint3D(dia.DefinitionPoint.X, dia.DefinitionPoint.Y, dia.DefinitionPoint.Z);
+                p2 = new CadPoint3D(dia.AngleVertex.X, dia.AngleVertex.Y, dia.AngleVertex.Z);
+                dimLinePt = new CadPoint3D(dia.InsertionPoint.X, dia.InsertionPoint.Y, dia.InsertionPoint.Z);
+                dimTypeStr = "Diametric";
+            }
+            else
+            {
+                p1 = new CadPoint3D(dim.DefinitionPoint.X, dim.DefinitionPoint.Y, dim.DefinitionPoint.Z);
+                dimLinePt = new CadPoint3D(dim.InsertionPoint.X, dim.InsertionPoint.Y, dim.InsertionPoint.Z);
+            }
+
+            var textPt = new CadPoint3D(dim.TextMiddlePoint.X, dim.TextMiddlePoint.Y, dim.TextMiddlePoint.Z);
+            double arrowSize = dim.Style?.ArrowSize > 0 ? dim.Style.ArrowSize : 2.5;
+            double tHeight = dim.Style?.TextHeight > 0 ? dim.Style.TextHeight : 3.0;
+
             var payload = new CadDimensionPayload(
                 dimText,
                 defPt,
                 midPt,
-                dim.GetType().Name,
-                dim.Style?.Name);
+                dimTypeStr,
+                dim.Style?.Name,
+                ExplodedEntities: explodedDimEntities,
+                BlockName: dim.Block?.Name,
+                Point1: p1,
+                Point2: p2,
+                DimLinePoint: dimLinePt,
+                TextPosition: textPt,
+                CenterPoint: centerPt,
+                Rotation: dimRot,
+                ArrowheadSize: arrowSize,
+                TextHeight: tHeight);
 
             return new CadExtractedEntity(
                 handleStr, layer, CadExtractedEntityType.Dimension, color,
@@ -669,6 +855,38 @@ public static class AcadSharpEntityExtractor
                 points: new[] { new CadExtractedPoint(defPt.X, defPt.Y), new CadExtractedPoint(midPt.X, midPt.Y) },
                 text: dimText);
         }
+        else if (entity is Leader leader && leader.Vertices.Count >= 2)
+        {
+            var pts = leader.Vertices.Select(v => new CadPoint3D(v.X, v.Y, v.Z)).ToList();
+            string? annotText = null;
+            if (leader.AssociatedAnnotation is TextEntity annotT)
+            {
+                annotText = DecodeCadText(annotT.Value);
+            }
+            else if (leader.AssociatedAnnotation is MText annotM)
+            {
+                annotText = CleanMText(annotM.Value);
+            }
+
+            var payload = new CadDimensionPayload(
+                annotText,
+                pts[0],
+                pts[^1],
+                "Leader",
+                leader.Style?.Name,
+                Point1: pts[0],
+                Point2: pts[1],
+                TextHeight: leader.TextHeight > 0 ? leader.TextHeight : 3.0,
+                ArrowheadSize: leader.ArrowHeadEnabled ? 2.5 : 0.0);
+
+            return new CadExtractedEntity(
+                handleStr, layer, CadExtractedEntityType.Dimension, color,
+                sourceOrder: sourceOrder, lineweight: lineweight, transparency: transparency,
+                linetype: linetype, linetypeScale: linetypeScale, blockOwner: blockOwner,
+                payload: payload,
+                points: pts.Select(p => new CadExtractedPoint(p.X, p.Y)).ToArray(),
+                text: annotText);
+        }
         else if (entity is Hatch hatch)
         {
             var ocs = OcsTransform.FromNormal(hatch.Normal.X, hatch.Normal.Y, hatch.Normal.Z);
@@ -677,37 +895,10 @@ public static class AcadSharpEntityExtractor
 
             foreach (var path in hatch.Paths)
             {
-                var loopVertices = new List<CadExtractedVertex>();
-                if (path.Edges.Count > 0)
-                {
-                    totalSegs += path.Edges.Count;
-                    foreach (var edge in path.Edges)
-                    {
-                        if (edge is Hatch.BoundaryPath.Line lineEdge)
-                        {
-                            var (sx, sy) = ocs.Transform2D(lineEdge.Start.X, lineEdge.Start.Y, hatch.Elevation);
-                            var (ex, ey) = ocs.Transform2D(lineEdge.End.X, lineEdge.End.Y, hatch.Elevation);
-                            loopVertices.Add(new CadExtractedVertex(sx, sy));
-                            loopVertices.Add(new CadExtractedVertex(ex, ey));
-                        }
-                        else if (edge is Hatch.BoundaryPath.Arc arcEdge)
-                        {
-                            var (cx, cy) = ocs.Transform2D(arcEdge.Center.X, arcEdge.Center.Y, hatch.Elevation);
-                            loopVertices.Add(new CadExtractedVertex(cx, cy));
-                        }
-                        else if (edge is Hatch.BoundaryPath.Polyline polyEdge)
-                        {
-                            foreach (var v in polyEdge.Vertices)
-                            {
-                                var (px, py) = ocs.Transform2D(v.X, v.Y, hatch.Elevation);
-                                loopVertices.Add(new CadExtractedVertex(px, py));
-                            }
-                        }
-                    }
-                }
-
+                var loopVertices = ExtractHatchPathVertices(path, ocs, hatch.Elevation);
                 if (loopVertices.Count > 0)
                 {
+                    totalSegs += loopVertices.Count;
                     loops.Add(loopVertices.AsReadOnly());
                 }
             }
@@ -724,7 +915,8 @@ public static class AcadSharpEntityExtractor
                 hatch.IsSolid,
                 hatch.PatternAngle,
                 hatch.PatternScale,
-                loops.AsReadOnly());
+                loops.AsReadOnly(),
+                Origin: default);
 
             var flatVertices = loops.SelectMany(l => l).ToArray();
             return new CadExtractedEntity(
@@ -1083,14 +1275,89 @@ public static class AcadSharpEntityExtractor
                 payload: payload,
                 vertices: vertices);
         }
+        else if (child is AttributeEntity attrib)
+        {
+            var (tx, ty) = transform(attrib.InsertPoint.X, attrib.InsertPoint.Y);
+            double h = (attrib.Height > 0 ? attrib.Height : 10.0) * Math.Abs(scaleY);
+            double rot = attrib.Rotation + rotation;
+            string decodedVal = DecodeCadText(attrib.Value);
+            string fontName = attrib.Style?.Filename ?? attrib.Style?.Name ?? "STANDARD";
+
+            var payload = new CadTextPayload(
+                decodedVal,
+                new CadPoint3D(tx, ty),
+                h,
+                rot,
+                fontName,
+                (int)attrib.HorizontalAlignment,
+                (int)attrib.VerticalAlignment,
+                WidthFactor: attrib.WidthFactor > 0 ? attrib.WidthFactor : 1.0,
+                ObliqueAngle: attrib.ObliqueAngle,
+                MirrorFlags: (int)attrib.Mirror,
+                FontName: fontName);
+
+            return new CadExtractedEntity(
+                handleStr, layer, CadExtractedEntityType.Attrib, color,
+                sourceOrder: sourceOrder, lineweight: lineweight, transparency: transparency,
+                linetype: linetype, linetypeScale: linetypeScale, blockOwner: blockName,
+                payload: payload,
+                points: new[] { new CadExtractedPoint(tx, ty) },
+                text: decodedVal,
+                textHeight: h,
+                rotation: rot);
+        }
+        else if (child is AttributeDefinition attdef)
+        {
+            var (tx, ty) = transform(attdef.InsertPoint.X, attdef.InsertPoint.Y);
+            double h = (attdef.Height > 0 ? attdef.Height : 10.0) * Math.Abs(scaleY);
+            double rot = attdef.Rotation + rotation;
+            string decodedVal = DecodeCadText(attdef.Value);
+            string fontName = attdef.Style?.Filename ?? attdef.Style?.Name ?? "STANDARD";
+
+            var payload = new CadTextPayload(
+                decodedVal,
+                new CadPoint3D(tx, ty),
+                h,
+                rot,
+                fontName,
+                (int)attdef.HorizontalAlignment,
+                (int)attdef.VerticalAlignment,
+                WidthFactor: attdef.WidthFactor > 0 ? attdef.WidthFactor : 1.0,
+                ObliqueAngle: attdef.ObliqueAngle,
+                MirrorFlags: (int)attdef.Mirror,
+                FontName: fontName);
+
+            return new CadExtractedEntity(
+                handleStr, layer, CadExtractedEntityType.AttDef, color,
+                sourceOrder: sourceOrder, lineweight: lineweight, transparency: transparency,
+                linetype: linetype, linetypeScale: linetypeScale, blockOwner: blockName,
+                payload: payload,
+                points: new[] { new CadExtractedPoint(tx, ty) },
+                text: decodedVal,
+                textHeight: h,
+                rotation: rot);
+        }
         else if (child is TextEntity text)
         {
             var (tx, ty) = transform(text.InsertPoint.X, text.InsertPoint.Y);
             double h = (text.Height > 0 ? text.Height : 10.0) * Math.Abs(scaleY);
             double rot = text.Rotation + rotation;
             string decodedVal = DecodeCadText(text.Value);
+            string fontName = text.Style?.Filename ?? text.Style?.Name ?? "STANDARD";
 
-            var payload = new CadTextPayload(decodedVal, new CadPoint3D(tx, ty), h, rot, text.Style?.Name);
+            var payload = new CadTextPayload(
+                decodedVal,
+                new CadPoint3D(tx, ty),
+                h,
+                rot,
+                fontName,
+                (int)text.HorizontalAlignment,
+                (int)text.VerticalAlignment,
+                WidthFactor: text.WidthFactor > 0 ? text.WidthFactor : 1.0,
+                ObliqueAngle: text.ObliqueAngle,
+                MirrorFlags: (int)text.Mirror,
+                FontName: fontName);
+
             return new CadExtractedEntity(
                 handleStr, layer, CadExtractedEntityType.Text, color,
                 sourceOrder: sourceOrder, lineweight: lineweight, transparency: transparency,
@@ -1107,8 +1374,19 @@ public static class AcadSharpEntityExtractor
             double h = (mtext.Height > 0 ? mtext.Height : 10.0) * Math.Abs(scaleY);
             double rot = mtext.Rotation + rotation;
             string cleanVal = CleanMText(mtext.Value);
+            string fontName = mtext.Style?.Filename ?? mtext.Style?.Name ?? "STANDARD";
+            var lines = cleanVal.Split('\n');
 
-            var payload = new CadTextPayload(cleanVal, new CadPoint3D(tx, ty), h, rot, mtext.Style?.Name);
+            var payload = new CadTextPayload(
+                cleanVal,
+                new CadPoint3D(tx, ty),
+                h,
+                rot,
+                fontName,
+                AttachmentPoint: (int)mtext.AttachmentPoint,
+                FontName: fontName,
+                Lines: lines);
+
             return new CadExtractedEntity(
                 handleStr, layer, CadExtractedEntityType.MText, color,
                 sourceOrder: sourceOrder, lineweight: lineweight, transparency: transparency,
@@ -1436,5 +1714,143 @@ public static class AcadSharpEntityExtractor
         }
 
         return sb.ToString();
+    }
+
+    private static List<CadExtractedVertex> ExtractHatchPathVertices(
+        Hatch.BoundaryPath path,
+        OcsTransform ocs,
+        double elevation)
+    {
+        var result = new List<CadExtractedVertex>();
+        if (path.Edges.Count == 0) return result;
+
+        foreach (var edge in path.Edges)
+        {
+            if (edge is Hatch.BoundaryPath.Line lineEdge)
+            {
+                var (sx, sy) = ocs.Transform2D(lineEdge.Start.X, lineEdge.Start.Y, elevation);
+                var (ex, ey) = ocs.Transform2D(lineEdge.End.X, lineEdge.End.Y, elevation);
+
+                if (result.Count == 0 || Math.Abs(result[^1].X - sx) > 1e-6 || Math.Abs(result[^1].Y - sy) > 1e-6)
+                {
+                    result.Add(new CadExtractedVertex(sx, sy));
+                }
+                result.Add(new CadExtractedVertex(ex, ey));
+            }
+            else if (edge is Hatch.BoundaryPath.Arc arcEdge)
+            {
+                var cx = arcEdge.Center.X;
+                var cy = arcEdge.Center.Y;
+                var r = arcEdge.Radius;
+                var startA = arcEdge.StartAngle;
+                var endA = arcEdge.EndAngle;
+                var ccw = arcEdge.CounterClockWise;
+
+                var sweep = ccw ? (endA - startA) : (startA - endA);
+                while (sweep < 0) sweep += 2 * Math.PI;
+                if (sweep > 2 * Math.PI) sweep %= (2 * Math.PI);
+                if (!ccw) sweep = -sweep;
+
+                int steps = Math.Max(6, (int)Math.Ceiling(Math.Abs(sweep) / (Math.PI / 12.0)));
+                for (int s = 0; s <= steps; s++)
+                {
+                    double a = startA + (sweep * ((double)s / steps));
+                    double ax = cx + (r * Math.Cos(a));
+                    double ay = cy + (r * Math.Sin(a));
+                    var (tx, ty) = ocs.Transform2D(ax, ay, elevation);
+                    if (result.Count == 0 || Math.Abs(result[^1].X - tx) > 1e-6 || Math.Abs(result[^1].Y - ty) > 1e-6)
+                    {
+                        result.Add(new CadExtractedVertex(tx, ty));
+                    }
+                }
+            }
+            else if (edge is Hatch.BoundaryPath.Ellipse ellEdge)
+            {
+                var cx = ellEdge.Center.X;
+                var cy = ellEdge.Center.Y;
+                var majorX = ellEdge.MajorAxisEndPoint.X;
+                var majorY = ellEdge.MajorAxisEndPoint.Y;
+                var majorR = Math.Sqrt((majorX * majorX) + (majorY * majorY));
+                var minorR = majorR * ellEdge.RadiusRatio;
+                var rot = Math.Atan2(majorY, majorX);
+
+                var startA = ellEdge.StartAngle;
+                var endA = ellEdge.EndAngle;
+                var sweep = ellEdge.CounterClockWise ? (endA - startA) : (startA - endA);
+                while (sweep < 0) sweep += 2 * Math.PI;
+                if (sweep > 2 * Math.PI) sweep %= (2 * Math.PI);
+                if (!ellEdge.CounterClockWise) sweep = -sweep;
+
+                int steps = Math.Max(8, (int)Math.Ceiling(Math.Abs(sweep) / (Math.PI / 12.0)));
+                for (int s = 0; s <= steps; s++)
+                {
+                    double t = startA + (sweep * ((double)s / steps));
+                    double lx = majorR * Math.Cos(t);
+                    double ly = minorR * Math.Sin(t);
+                    double wx = cx + (lx * Math.Cos(rot)) - (ly * Math.Sin(rot));
+                    double wy = cy + (lx * Math.Sin(rot)) + (ly * Math.Cos(rot));
+                    var (tx, ty) = ocs.Transform2D(wx, wy, elevation);
+                    if (result.Count == 0 || Math.Abs(result[^1].X - tx) > 1e-6 || Math.Abs(result[^1].Y - ty) > 1e-6)
+                    {
+                        result.Add(new CadExtractedVertex(tx, ty));
+                    }
+                }
+            }
+            else if (edge is Hatch.BoundaryPath.Polyline polyEdge)
+            {
+                var verts = polyEdge.Vertices;
+                var bulges = polyEdge.Bulges?.ToList();
+                for (int v = 0; v < verts.Count; v++)
+                {
+                    var (px, py) = ocs.Transform2D(verts[v].X, verts[v].Y, elevation);
+                    double bulge = (bulges != null && v < bulges.Count) ? bulges[v] : 0.0;
+
+                    if (bulge != 0 && v + 1 < verts.Count)
+                    {
+                        var (nextPx, nextPy) = ocs.Transform2D(verts[v + 1].X, verts[v + 1].Y, elevation);
+                        int bSteps = 6;
+                        double dx = nextPx - px;
+                        double dy = nextPy - py;
+                        double chord = Math.Sqrt((dx * dx) + (dy * dy));
+                        if (chord > 1e-6)
+                        {
+                            double theta = 4.0 * Math.Atan(bulge);
+                            double radius = chord / (2.0 * Math.Abs(Math.Sin(theta / 2.0)));
+                            double sagitta = bulge * chord / 2.0;
+                            double mx = (px + nextPx) / 2.0;
+                            double my = (py + nextPy) / 2.0;
+                            double nx = -dy / chord;
+                            double ny = dx / chord;
+                            double dCenter = radius - Math.Abs(sagitta);
+                            if (Math.Abs(theta) > Math.PI) dCenter = -(radius - Math.Abs(sagitta));
+                            double sign = Math.Sign(bulge);
+                            double cx = mx + (nx * dCenter * sign);
+                            double cy = my + (ny * dCenter * sign);
+
+                            double aStart = Math.Atan2(py - cy, px - cx);
+                            for (int bs = 0; bs < bSteps; bs++)
+                            {
+                                double frac = (double)bs / bSteps;
+                                double curA = aStart + (theta * frac);
+                                double bx = cx + (radius * Math.Cos(curA));
+                                double by = cy + (radius * Math.Sin(curA));
+                                if (result.Count == 0 || Math.Abs(result[^1].X - bx) > 1e-6 || Math.Abs(result[^1].Y - by) > 1e-6)
+                                {
+                                    result.Add(new CadExtractedVertex(bx, by));
+                                }
+                            }
+                            continue;
+                        }
+                    }
+
+                    if (result.Count == 0 || Math.Abs(result[^1].X - px) > 1e-6 || Math.Abs(result[^1].Y - py) > 1e-6)
+                    {
+                        result.Add(new CadExtractedVertex(px, py, bulge));
+                    }
+                }
+            }
+        }
+
+        return result;
     }
 }

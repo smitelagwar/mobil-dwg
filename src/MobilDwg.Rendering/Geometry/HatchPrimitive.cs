@@ -41,7 +41,8 @@ public sealed record HatchPrimitive : RenderGeometryPrimitive
         double patternScale = 1d,
         HatchIslandStyle islandStyle = HatchIslandStyle.Normal,
         bool isSolid = true,
-        IEnumerable<LinePrimitive>? patternLines = null)
+        IEnumerable<LinePrimitive>? patternLines = null,
+        WorldPoint2 patternOrigin = default)
     {
         ArgumentNullException.ThrowIfNull(loops);
         var loopCopy = loops.ToArray();
@@ -53,6 +54,7 @@ public sealed record HatchPrimitive : RenderGeometryPrimitive
         PatternScale = patternScale > 0 ? patternScale : 1d;
         IslandStyle = islandStyle;
         IsSolid = isSolid;
+        PatternOrigin = patternOrigin;
         _patternLines = Array.AsReadOnly(patternLines?.ToArray() ?? Array.Empty<LinePrimitive>());
 
         var bounds = loopCopy[0].Bounds;
@@ -69,6 +71,7 @@ public sealed record HatchPrimitive : RenderGeometryPrimitive
     public double PatternScale { get; }
     public HatchIslandStyle IslandStyle { get; }
     public bool IsSolid { get; }
+    public WorldPoint2 PatternOrigin { get; }
     public IReadOnlyList<LinePrimitive> PatternLines => _patternLines;
     public override WorldBounds2 Bounds { get; }
 }

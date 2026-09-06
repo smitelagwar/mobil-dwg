@@ -397,5 +397,42 @@ Bir sonraki aşama: Aşama 10 — Metin, ölçülendirme ve hatch
 
 ---
 
+### Aşama 10 Raporu
+
+Aşama: 10 — Metin, ölçülendirme ve hatch  
+Durum: TAMAMLANDI  
+Son HEAD: `24ff4bc` (commit: `fix(cad): connect text dimensions and hatch fidelity`)  
+Değişen dosyalar:
+- `scripts/viewer-stability-gate.ps1`
+- `src/MobilDwg.Core/Reading/CadExtractedDocument.cs`
+- `src/MobilDwg.Cad/AcadSharp/AcadSharpEntityExtractor.cs`
+- `src/MobilDwg.Rendering/Text/TextLayout.cs`
+- `src/MobilDwg.Rendering/Text/FontSubstitutionResolver.cs`
+- `src/MobilDwg.Rendering/Geometry/TextPrimitive.cs`
+- `src/MobilDwg.Rendering/Geometry/HatchPrimitive.cs`
+- `src/MobilDwg.Rendering/Dimensions/DimensionBuilder.cs`
+- `src/MobilDwg.Rendering/Hatch/HatchProcessor.cs`
+- `src/MobilDwg.Rendering/Scene/CadExtractedSceneBuilder.cs`
+- `src/MobilDwg.Rendering/Skia/SkiaScenePainter.cs`
+- `tests/MobilDwg.Integration.Tests/Program.cs`
+(Kullanıcı başlangıç değişiklikleri `src/MobilDwg.Rendering/Scene/RenderScene.cs` public constructor görünürlüğü, `release/SHA256SUMS.txt`, `tools/CadControlBenchmark/` bozulmadan çalışma ağacında korundu.)  
+Kullanıcıya yansıyan davranış:
+- Metin (TEXT/MTEXT/ATTRIB/ATTDEF): Türkçe karakterler (Windows-1254 ve Unicode `\U+0130` vb.) eksiksiz çözüldü; MTEXT biçimlendirme kodları temizlendi; satır sonları (`\P` ve `\n`) ile çok satırlı düzen (`TextLayout`) sağlandı; 9 hizalama noktası (AttachmentPoint), width factor, oblique angle, aynalama (backward/upside-down) ve döndürme desteklendi; SHX fontları sistem eşdeğerlerine ikame edilerek tanı bildirimleri eklendi; Skia üzerinden çok satırlı gerçek çizim sağlandı.
+- Ölçülendirme (DIMENSION): Anonim ölçü bloğu (*D...) öncelik kuralı tam uygulandı; blok mevcutsa patlatılan alt varlıklar doğrudan sahneye aktarılarak çift çizim ve ok ucu kaybı önlendi; blok bulunmadığında doğrusal, hizalı, yarıçap, çap ve açısal ölçülendirme ile LEADER için prosedürel geometri üretildi; ölçü metni geçersiz kılmaları (TextOverride / `<>`) korundu; geçersiz/çakışan koordinatlar için `INVALID_DIMENSION_GEOMETRY` ve `DEGENERATE_DIMENSION_POINTS` tanıları kaydedildi.
+- Hatch (HATCH): Dış sınır ve ada/delik (island) döngüleri Even-Odd kuralıyla korundu; küçük döngü boşlukları tolerans (1 mm) dahilinde kapatıldı, toleransı aşan boşluklar `HATCH_BROKEN_BOUNDARY` olarak raporlandı; dairesel, eliptik ve polyline yay sınırları doğru örneklendi; katı dolgular (SOLID) `SKPathFillType.EvenOdd` ile boyandı; desen çizgileri (ANSI31 vb.) sabit dünya desen başlangıç noktası (`PatternOrigin`) ve tamsayı çizgi indekslemesiyle üretilerek kaydırma/yakınlaştırmada desen yüzmesi (phase swimming) tamamen engellendi; çizgi sayısı 2048 güvenlik bütçesiyle sınırlandırıldı.
+Çalıştırılan gerçek komutlar ve exit code:
+- `dotnet run --project tests/MobilDwg.Rendering.Tests/MobilDwg.Rendering.Tests.csproj -c Release` (exit code: 0, STAGE10..26_PASS, STAGE14_TEXT_FONT_TESTS_PASS, STAGE15_DIMENSION_HATCH_TESTS_PASS)
+- `dotnet run --project tests/MobilDwg.Integration.Tests/MobilDwg.Integration.Tests.csproj -c Release` (exit code: 0, STAGE10_TEXT_DIMENSION_HATCH_PASS)
+- `dotnet run --project tests/MobilDwg.Architecture.Tests/MobilDwg.Architecture.Tests.csproj -c Release` (exit code: 0, STAGE04/STAGE05_DEPENDENCY_BOUNDARY_PASS)
+- `powershell -ExecutionPolicy Bypass -File scripts/viewer-stability-gate.ps1 -Stage 10` (exit code: 0, VIEWER_STABILITY_STAGE10_PASS)  
+Ölçülen metrikler ve kanıt dosyaları:
+- `scripts/viewer-stability-gate.ps1` Stage 10 kontrolleri (VIEWER_STABILITY_STAGE10_PASS)
+- `tests/MobilDwg.Rendering.Tests` (STAGE14_TEXT_FONT_TESTS_PASS, STAGE15_DIMENSION_HATCH_TESTS_PASS)
+- `tests/MobilDwg.Integration.Tests` (STAGE10_TEXT_DIMENSION_HATCH_PASS)  
+Geçmeyen veya çalıştırılamayan koşullar: Yok.  
+Bir sonraki aşama: Aşama 11 — Layout, viewport ve ölçüm/seçim araçları  
+
+---
+
 
 

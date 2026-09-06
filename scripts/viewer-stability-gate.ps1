@@ -281,6 +281,38 @@ if ($stageNum -ge 9) {
     Pass "VIEWER_STABILITY_STAGE09_PASS"
 }
 
+# Stage 10 checks
+if ($stageNum -ge 10) {
+    Write-Host "Verifying Stage 10 Text, Dimensions, Hatch Fidelity & Diagnostics..."
+
+    $textLayoutFile = Join-Path $repoRoot "src/MobilDwg.Rendering/Text/TextLayout.cs"
+    if (-not (Test-Path $textLayoutFile)) { Fail "TextLayout.cs missing" }
+    Pass "STAGE10_TEXT_LAYOUT_SOURCE_PASS"
+
+    $fontResolverFile = Join-Path $repoRoot "src/MobilDwg.Rendering/Text/FontSubstitutionResolver.cs"
+    if (-not (Test-Path $fontResolverFile)) { Fail "FontSubstitutionResolver.cs missing" }
+    Pass "STAGE10_FONT_SUBSTITUTION_RESOLVER_SOURCE_PASS"
+
+    $dimBuilderFile = Join-Path $repoRoot "src/MobilDwg.Rendering/Dimensions/DimensionBuilder.cs"
+    if (-not (Test-Path $dimBuilderFile)) { Fail "DimensionBuilder.cs missing" }
+    Pass "STAGE10_DIMENSION_BUILDER_SOURCE_PASS"
+
+    $hatchProcessorFile = Join-Path $repoRoot "src/MobilDwg.Rendering/Hatch/HatchProcessor.cs"
+    if (-not (Test-Path $hatchProcessorFile)) { Fail "HatchProcessor.cs missing" }
+    Pass "STAGE10_HATCH_PROCESSOR_SOURCE_PASS"
+
+    if (-not ($rendText -match "STAGE14_TEXT_FONT_TESTS_PASS")) { Fail "STAGE14_TEXT_FONT_TESTS_PASS marker missing in rendering tests" }
+    Pass "STAGE10_TEXT_FONT_TESTS_PASS"
+
+    if (-not ($rendText -match "STAGE15_DIMENSION_HATCH_TESTS_PASS")) { Fail "STAGE15_DIMENSION_HATCH_TESTS_PASS marker missing in rendering tests" }
+    Pass "STAGE10_DIMENSION_HATCH_TESTS_PASS"
+
+    if (-not ($integText -match "STAGE10_TEXT_DIMENSION_HATCH_PASS")) { Fail "STAGE10_TEXT_DIMENSION_HATCH_PASS marker missing in integration tests" }
+    Pass "STAGE10_INTEGRATION_TESTS_PASS"
+
+    Pass "VIEWER_STABILITY_STAGE10_PASS"
+}
+
 Write-Host "=== Viewer Stability Gate Passed for Stage $Stage ==="
 exit 0
 

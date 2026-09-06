@@ -35,7 +35,17 @@ public sealed record TextPrimitive : RenderGeometryPrimitive
         MirrorFlags = mirrorFlags;
         RequestedFont = requestedFont;
         ResolvedFont = resolvedFont ?? FontSubstitutionResolver.Resolve(requestedFont);
-        Bounds = CalculateBounds();
+        Layout = new TextLayout(
+            Text,
+            Position,
+            Height,
+            RotationRadians,
+            WidthFactor,
+            ObliqueAngleRadians,
+            HorizontalAlignment,
+            VerticalAlignment,
+            MirrorFlags,
+            ResolvedFont);
     }
 
     public string Text { get; }
@@ -49,19 +59,6 @@ public sealed record TextPrimitive : RenderGeometryPrimitive
     public CadTextMirrorFlags MirrorFlags { get; }
     public string RequestedFont { get; }
     public string ResolvedFont { get; }
-    public override WorldBounds2 Bounds { get; }
-
-    private WorldBounds2 CalculateBounds()
-    {
-        return TextLayoutMetrics.CalculateTextBounds(
-            Text,
-            Position,
-            Height,
-            RotationRadians,
-            WidthFactor,
-            ObliqueAngleRadians,
-            HorizontalAlignment,
-            VerticalAlignment,
-            MirrorFlags);
-    }
+    public TextLayout Layout { get; }
+    public override WorldBounds2 Bounds => Layout.Bounds;
 }

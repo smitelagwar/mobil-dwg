@@ -344,22 +344,11 @@ public static class SkiaScenePainter
         font.ScaleX = ToFloat(textPrimitive.WidthFactor * (textPrimitive.MirrorFlags.HasFlag(CadTextMirrorFlags.Backward) ? -1d : 1d));
         font.SkewX = ToFloat(-Math.Tan(textPrimitive.ObliqueAngleRadians));
 
-        font.MeasureText(textPrimitive.Text, out var textBounds, fillPaint);
-        var height = textBounds.Height;
-
         var textAlign = textPrimitive.HorizontalAlignment switch
         {
             CadTextHorizontalAlignment.Center or CadTextHorizontalAlignment.Middle => SKTextAlign.Center,
             CadTextHorizontalAlignment.Right => SKTextAlign.Right,
             _ => SKTextAlign.Left,
-        };
-
-        float offsetY = textPrimitive.VerticalAlignment switch
-        {
-            CadTextVerticalAlignment.Top => height,
-            CadTextVerticalAlignment.Middle => height / 2f,
-            CadTextVerticalAlignment.Bottom => 0f,
-            _ => 0f,
         };
 
         var saveCount = canvas.Save();
@@ -375,7 +364,13 @@ public static class SkiaScenePainter
                 canvas.Scale(1f, -1f);
             }
 
-            canvas.DrawText(textPrimitive.Text, 0f, offsetY, textAlign, font, fillPaint);
+            var lines = textPrimitive.Layout.Lines;
+            for (var i = 0; i < lines.Count; i++)
+            {
+                var line = lines[i];
+                float lineScreenY = ToFloat(-line.OffsetY / camera.WorldUnitsPerPixel);
+                canvas.DrawText(line.Text, 0f, lineScreenY, textAlign, font, fillPaint);
+            }
         }
         finally
         {

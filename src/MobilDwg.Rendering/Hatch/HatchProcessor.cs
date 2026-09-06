@@ -10,7 +10,10 @@ public static class HatchProcessor
     public const int MaxHatchLines = 2048;
 
     /// <summary>
-    /// Validates boundary loop closure, closes minor gaps within tolerance, and emits a diagnostic on broken boundaries.
+    /// Validates boundary loop closure based on CAD closed loop semantics.
+    /// In CAD, a loop of N vertices is closed by connecting vertex N-1 to vertex 0.
+    /// If the last vertex duplicates the first, the redundant vertex is safely trimmed.
+    /// Real boundary gaps are reported via diagnostics without corrupting valid closed polygons.
     /// </summary>
     public static HatchLoop ValidateAndCloseLoop(
         IReadOnlyList<WorldPoint2> points,
@@ -55,12 +58,14 @@ public static class HatchProcessor
 
     /// <summary>
     /// Generates clipped pattern lines for standard CAD hatch patterns (e.g. ANSI31 diagonal lines).
+    /// Uses a fixed world pattern origin and integer line indexing so pattern phase remains invariant during pan and zoom.
     /// </summary>
     public static List<LinePrimitive> GeneratePatternLines(
         IReadOnlyList<HatchLoop> loops,
         double angleRadians,
         double spacing,
-        WorldBounds2 bounds)
+        WorldBounds2 bounds,
+        WorldPoint2 patternOrigin = default)
     {
         var result = new List<LinePrimitive>();
         if (loops.Count == 0 || spacing <= 0 || bounds.Width <= 0 || bounds.Height <= 0)
@@ -68,33 +73,71 @@ public static class HatchProcessor
             return result;
         }
 
-        // Expand bounds slightly to cover diagonal sweeps
-        var cx = bounds.Center.X;
-        var cy = bounds.Center.Y;
-        var diag = Math.Sqrt((bounds.Width * bounds.Width) + (bounds.Height * bounds.Height)) * 0.75;
-
         var cos = Math.Cos(angleRadians);
         var sin = Math.Sin(angleRadians);
 
-        // Normal direction perpendicular to hatch lines
-        var nx = -sin;
-        var ny = cos;
-
-        // Direction along hatch lines
+        // Direction along lines: D = (cos, sin)
         var dx = cos;
         var dy = sin;
 
-        var lineCount = (int)Math.Min(MaxHatchLines, Math.Ceiling((2d * diag) / spacing));
-        for (var step = -lineCount / 2; step <= lineCount / 2; step++)
+        // Normal direction perpendicular to hatch lines: N = (-sin, cos)
+        var nx = -sin;
+        var ny = cos;
+
+        // Project the 4 corners of bounds onto the normal axis relative to patternOrigin:
+        // u = (X - Origin.X) * nx + (Y - Origin.Y) * ny
+        // v = (X - Origin.X) * dx + (Y - Origin.Y) * dy
+        var corners = new[]
+        {
+            new WorldPoint2(bounds.MinX, bounds.MinY),
+            new WorldPoint2(bounds.MaxX, bounds.MinY),
+            new WorldPoint2(bounds.MaxX, bounds.MaxY),
+            new WorldPoint2(bounds.MinX, bounds.MaxY),
+        };
+
+        double minU = double.MaxValue;
+        double maxU = double.MinValue;
+        double minV = double.MaxValue;
+        double maxV = double.MinValue;
+
+        for (var i = 0; i < 4; i++)
+        {
+            var relX = corners[i].X - patternOrigin.X;
+            var relY = corners[i].Y - patternOrigin.Y;
+            var u = (relX * nx) + (relY * ny);
+            var v = (relX * dx) + (relY * dy);
+            if (u < minU) minU = u;
+            if (u > maxU) maxU = u;
+            if (v < minV) minV = v;
+            if (v > maxV) maxV = v;
+        }
+
+        // k is the integer line index: line passes at distance (k * spacing) from patternOrigin
+        var kStart = (int)Math.Floor(minU / spacing);
+        var kEnd = (int)Math.Ceiling(maxU / spacing);
+
+        var totalLines = kEnd - kStart + 1;
+        var stride = 1;
+        if (totalLines > MaxHatchLines)
+        {
+            stride = (int)Math.Ceiling((double)totalLines / MaxHatchLines);
+        }
+
+        // Segment length along D to safely span the coverage bounds
+        var diagMargin = spacing * 1.5;
+        var v0 = minV - diagMargin;
+        var v1 = maxV + diagMargin;
+
+        for (var k = kStart; k <= kEnd; k += stride)
         {
             if (result.Count >= MaxHatchLines) break;
 
-            var offset = step * spacing;
-            var originX = cx + (offset * nx);
-            var originY = cy + (offset * ny);
+            var uOffset = k * spacing;
+            var pBaseX = patternOrigin.X + (uOffset * nx);
+            var pBaseY = patternOrigin.Y + (uOffset * ny);
 
-            var lineStart = new WorldPoint2(originX - (diag * dx), originY - (diag * dy));
-            var lineEnd = new WorldPoint2(originX + (diag * dx), originY + (diag * dy));
+            var lineStart = new WorldPoint2(pBaseX + (v0 * dx), pBaseY + (v0 * dy));
+            var lineEnd = new WorldPoint2(pBaseX + (v1 * dx), pBaseY + (v1 * dy));
 
             // Clip line against all loops using 1D parameter intervals
             var intervals = ClipLineToLoops(lineStart, lineEnd, loops);

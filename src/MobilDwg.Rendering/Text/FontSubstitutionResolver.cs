@@ -107,4 +107,44 @@ public static class FontSubstitutionResolver
     {
         return SKTypeface.FromFamilyName(resolvedFamily) ?? SKTypeface.Default;
     }
+
+    public static IReadOnlyList<int> FindMissingGlyphs(string text, SKTypeface typeface)
+    {
+        if (string.IsNullOrEmpty(text) || typeface == null) return Array.Empty<int>();
+        using var font = new SKFont(typeface);
+        List<int>? missing = null;
+        for (var i = 0; i < text.Length; i++)
+        {
+            var codepoint = char.ConvertToUtf32(text, i);
+            if (char.IsSurrogate(text[i])) i++;
+            if (char.IsWhiteSpace((char)codepoint) || char.IsControl((char)codepoint)) continue;
+            if (!font.ContainsGlyph(codepoint))
+            {
+                missing ??= new List<int>();
+                if (!missing.Contains(codepoint))
+                {
+                    missing.Add(codepoint);
+                }
+            }
+        }
+        return missing ?? (IReadOnlyList<int>)Array.Empty<int>();
+    }
+
+    public static void CheckGlyphs(
+        string text,
+        SKTypeface typeface,
+        ICollection<SceneDiagnostic>? diagnostics,
+        RenderEntityId? entityId = null)
+    {
+        if (diagnostics == null || string.IsNullOrEmpty(text) || typeface == null) return;
+        var missing = FindMissingGlyphs(text, typeface);
+        foreach (var codepoint in missing)
+        {
+            diagnostics.Add(new SceneDiagnostic(
+                SceneDiagnosticKind.Substituted,
+                "MISSING_GLYPH",
+                $"Glyph U+{codepoint:X4} is missing in typeface '{typeface.FamilyName}'; system fallback will be used.",
+                entityId));
+        }
+    }
 }

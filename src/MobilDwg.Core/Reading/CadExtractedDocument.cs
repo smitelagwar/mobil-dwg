@@ -19,7 +19,9 @@ public enum CadExtractedEntityType
     Point,
     Raster,
     Other,
-    Unsupported
+    Unsupported,
+    Attrib,
+    AttDef
 }
 
 public enum CadColorMethod
@@ -159,7 +161,14 @@ public sealed record CadTextPayload(
     string? StyleName = null,
     int HorizontalAlignment = 0,
     int VerticalAlignment = 0,
-    CadVector3D Normal = default);
+    CadVector3D Normal = default,
+    double WidthFactor = 1.0,
+    double ObliqueAngle = 0.0,
+    int AttachmentPoint = 0,
+    int MirrorFlags = 0,
+    string? FontName = null,
+    CadPoint3D AlignmentPoint = default,
+    IReadOnlyList<string>? Lines = null);
 
 public sealed record CadDimensionPayload(
     string? Text,
@@ -167,7 +176,16 @@ public sealed record CadDimensionPayload(
     CadPoint3D MiddlePoint,
     string? DimensionType = null,
     string? StyleName = null,
-    IReadOnlyList<CadExtractedEntity>? ExplodedEntities = null);
+    IReadOnlyList<CadExtractedEntity>? ExplodedEntities = null,
+    string? BlockName = null,
+    CadPoint3D Point1 = default,
+    CadPoint3D Point2 = default,
+    CadPoint3D DimLinePoint = default,
+    CadPoint3D TextPosition = default,
+    CadPoint3D CenterPoint = default,
+    double Rotation = 0.0,
+    double ArrowheadSize = 2.5,
+    double TextHeight = 3.0);
 
 public sealed record CadHatchPayload(
     string PatternName,
@@ -175,7 +193,8 @@ public sealed record CadHatchPayload(
     double Angle,
     double Scale,
     IReadOnlyList<IReadOnlyList<CadExtractedVertex>> Loops,
-    CadVector3D Normal = default);
+    CadVector3D Normal = default,
+    CadPoint3D Origin = default);
 
 public sealed record CadInsertPayload(
     string BlockName,

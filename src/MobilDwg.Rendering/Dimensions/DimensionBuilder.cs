@@ -135,6 +135,10 @@ public static class DimensionBuilder
                 BuildDiametricDimension(def, primitives, id);
                 break;
 
+            case CadDimensionType.Angular:
+                BuildAngularDimension(def, primitives, id);
+                break;
+
             case CadDimensionType.Linear:
             case CadDimensionType.Aligned:
             default:
@@ -296,6 +300,67 @@ public static class DimensionBuilder
             textPos,
             height: def.TextHeight,
             rotationRadians: Math.Atan2(uy, ux),
+            horizontalAlignment: CadTextHorizontalAlignment.Center,
+            verticalAlignment: CadTextVerticalAlignment.Bottom));
+    }
+
+    private static void BuildAngularDimension(
+        CadDimensionDefinition def,
+        List<RenderGeometryPrimitive> primitives,
+        RenderEntityId id)
+    {
+        var center = def.CenterPoint ?? def.DefPoint1;
+        var p1 = def.DefPoint1;
+        var p2 = def.DefPoint2;
+        var dimPt = def.DimensionLinePoint;
+
+        var v1x = p1.X - center.X;
+        var v1y = p1.Y - center.Y;
+        var v2x = p2.X - center.X;
+        var v2y = p2.Y - center.Y;
+
+        var a1 = Math.Atan2(v1y, v1x);
+        var a2 = Math.Atan2(v2y, v2x);
+
+        var sweep = a2 - a1;
+        while (sweep <= 0) sweep += 2 * Math.PI;
+        if (sweep > 2 * Math.PI) sweep %= (2 * Math.PI);
+
+        var dimDx = dimPt.X - center.X;
+        var dimDy = dimPt.Y - center.Y;
+        var radius = Math.Sqrt((dimDx * dimDx) + (dimDy * dimDy));
+        if (radius < 1e-6) radius = Math.Max(10.0, def.ArrowheadSize * 4.0);
+
+        // Dimension arc
+        primitives.Add(new ArcPrimitive(center, radius, a1, sweep));
+
+        // Arrowheads at both ends of the arc
+        var end1 = new WorldPoint2(center.X + (radius * Math.Cos(a1)), center.Y + (radius * Math.Sin(a1)));
+        var end2 = new WorldPoint2(center.X + (radius * Math.Cos(a1 + sweep)), center.Y + (radius * Math.Sin(a1 + sweep)));
+
+        var tan1 = new WorldPoint2(-Math.Sin(a1), Math.Cos(a1));
+        var tan2 = new WorldPoint2(Math.Sin(a1 + sweep), -Math.Cos(a1 + sweep));
+
+        AddArrowhead(primitives, end1, new WorldPoint2(end1.X + (tan1.X * def.ArrowheadSize), end1.Y + (tan1.Y * def.ArrowheadSize)), def.ArrowheadSize, def.ArrowStyle);
+        AddArrowhead(primitives, end2, new WorldPoint2(end2.X + (tan2.X * def.ArrowheadSize), end2.Y + (tan2.Y * def.ArrowheadSize)), def.ArrowheadSize, def.ArrowStyle);
+
+        // Dimension text
+        var deg = sweep * (180.0 / Math.PI);
+        var displayText = string.IsNullOrEmpty(def.TextOverride)
+            ? $"{deg.ToString("F1", CultureInfo.InvariantCulture)}\u00B0"
+            : (def.TextOverride.Contains("<>", StringComparison.Ordinal)
+                ? def.TextOverride.Replace("<>", $"{deg.ToString("F1", CultureInfo.InvariantCulture)}\u00B0", StringComparison.Ordinal)
+                : def.TextOverride);
+
+        var midAngle = a1 + (sweep / 2.0);
+        var textRadius = radius + (def.TextHeight * 0.6);
+        var textPos = def.TextPosition ?? new WorldPoint2(center.X + (textRadius * Math.Cos(midAngle)), center.Y + (textRadius * Math.Sin(midAngle)));
+
+        primitives.Add(new TextPrimitive(
+            displayText,
+            textPos,
+            height: def.TextHeight,
+            rotationRadians: midAngle + (Math.PI / 2.0),
             horizontalAlignment: CadTextHorizontalAlignment.Center,
             verticalAlignment: CadTextVerticalAlignment.Bottom));
     }
