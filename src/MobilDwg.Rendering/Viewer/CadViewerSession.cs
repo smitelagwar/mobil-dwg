@@ -1,10 +1,16 @@
+using System;
+using System.Collections.Generic;
+using System.Threading;
+using System.Threading.Tasks;
 using MobilDwg.Core.Diagnostics;
 using MobilDwg.Core.Documents;
 using MobilDwg.Core.Rendering;
 using MobilDwg.Rendering.Camera;
 using MobilDwg.Rendering.Coordinates;
+using MobilDwg.Rendering.Interaction;
 using MobilDwg.Rendering.Layouts;
 using MobilDwg.Rendering.Scene;
+using MobilDwg.Rendering.Scheduling;
 using MobilDwg.Rendering.Skia;
 using MobilDwg.Rendering.Styles;
 
@@ -12,19 +18,46 @@ namespace MobilDwg.Rendering.Viewer;
 
 public sealed class CadViewerSession : IDisposable
 {
+    private readonly object _stateLock = new();
     private readonly SkiaCadRenderer _renderer = new();
+    private readonly ViewportController _controller;
+    private readonly ViewportInteractionEngine _interactionEngine;
+    private readonly FrameRequestGate _frameGate = new();
+
+    private RenderScene _activeScene;
+    private LayerTable _layerTable;
+    private long _documentGeneration = 1;
+    private long _sceneRevision = 1;
+    private long _layoutRevision = 1;
+    private long _styleRevision = 1;
+    private int _activeLeaseCount;
+    private bool _isRetiring;
     private bool _disposed;
 
     public CadDocumentMetadata Metadata { get; }
     public RenderScene ModelScene { get; }
     public CadLayoutManager LayoutManager { get; }
-    public LayerTable LayerTable { get; }
+    public LayerTable LayerTable => _layerTable;
     public IReadOnlyList<CadDiagnostic> Diagnostics { get; }
     public IReadOnlyList<CadCompatibilityIssue> CompatibilityIssues { get; }
-    public Camera2D Camera { get; private set; }
-    public int ViewportPixelWidth { get; private set; }
-    public int ViewportPixelHeight { get; private set; }
+
+    public ViewportController Controller => _controller;
+    public ViewportInteractionEngine InteractionEngine => _interactionEngine;
+    public FrameRequestGate FrameGate => _frameGate;
     public SkiaCadRenderer Renderer => _renderer;
+
+    public Camera2D Camera => _controller.CurrentCamera;
+    public int ViewportPixelWidth => _controller.CurrentCamera.PixelWidth;
+    public int ViewportPixelHeight => _controller.CurrentCamera.PixelHeight;
+
+    public long DocumentGeneration => _documentGeneration;
+    public long SceneRevision => _sceneRevision;
+    public long LayoutRevision => _layoutRevision;
+    public long StyleRevision => _styleRevision;
+    public long CameraRevision => _interactionEngine.CameraRevision;
+    public int ActiveLeaseCount => _activeLeaseCount;
+    public bool IsRetiring => _isRetiring;
+    public bool IsDisposed => _disposed;
 
     public CadViewerSession(
         CadDocumentMetadata metadata,
@@ -38,103 +71,193 @@ public sealed class CadViewerSession : IDisposable
         Metadata = metadata ?? throw new ArgumentNullException(nameof(metadata));
         ModelScene = modelScene ?? throw new ArgumentNullException(nameof(modelScene));
         LayoutManager = layoutManager ?? throw new ArgumentNullException(nameof(layoutManager));
-        LayerTable = new LayerTable(modelScene.LayerTable.Layers);
+        _layerTable = new LayerTable(modelScene.LayerTable.Layers);
         Diagnostics = diagnostics ?? Array.Empty<CadDiagnostic>();
         CompatibilityIssues = compatibilityIssues ?? Array.Empty<CadCompatibilityIssue>();
 
-        ViewportPixelWidth = Math.Max(100, initialPixelWidth);
-        ViewportPixelHeight = Math.Max(100, initialPixelHeight);
+        var pixelW = Math.Max(100, initialPixelWidth);
+        var pixelH = Math.Max(100, initialPixelHeight);
 
-        // Initial camera centered on active layout bounds
-        var activeScene = LayoutManager.ComposeActiveScene();
-        var bounds = activeScene.WorldBounds ?? new WorldBounds2(0, 0, 100, 100);
-        Camera = Camera2D.Fit(bounds, ViewportPixelWidth, ViewportPixelHeight, paddingFraction: 0.05);
+        // Initial active scene and camera from active layout bounds
+        _activeScene = LayoutManager.ComposeActiveScene();
+        var bounds = _activeScene.WorldBounds ?? new WorldBounds2(0, 0, 100, 100);
+        var initialCamera = ViewerZoomPolicy.CreateFitCamera(bounds, pixelW, pixelH, ViewerZoomPolicy.DefaultPaddingFraction);
+
+        _controller = new ViewportController(initialCamera, bounds);
+        _interactionEngine = new ViewportInteractionEngine(_controller);
     }
 
     public string ActiveLayoutName => LayoutManager.ActiveLayout.Name;
 
-    public void ResizeViewport(int width, int height)
+    public RenderSessionLease AcquireRenderLease(
+        long surfaceGeneration,
+        RenderQualityMode qualityMode = RenderQualityMode.Final)
     {
-        ObjectDisposedException.ThrowIf(_disposed, this);
-        if (width <= 0 || height <= 0) return;
+        lock (_stateLock)
+        {
+            ObjectDisposedException.ThrowIf(_disposed, this);
 
-        ViewportPixelWidth = width;
-        ViewportPixelHeight = height;
-        Camera = Camera.Resize(width, height);
+            _activeLeaseCount++;
+
+            // Create immutable snapshot under lock
+            var snapshot = new RenderSnapshot(
+                Scene: _activeScene,
+                LayerTable: new LayerTable(_layerTable.Layers),
+                Camera: _controller.CurrentCamera,
+                DocumentGeneration: _documentGeneration,
+                SceneRevision: _sceneRevision,
+                LayoutRevision: _layoutRevision,
+                StyleRevision: _styleRevision,
+                CameraRevision: _interactionEngine.CameraRevision,
+                SurfaceGeneration: surfaceGeneration,
+                QualityMode: qualityMode);
+
+            return new RenderSessionLease(this, snapshot);
+        }
     }
 
-    public void ZoomToFit(double paddingFraction = 0.05)
+    internal void ReleaseRenderLease()
     {
-        ObjectDisposedException.ThrowIf(_disposed, this);
-        var activeScene = LayoutManager.ComposeActiveScene();
-        var bounds = activeScene.WorldBounds ?? new WorldBounds2(0, 0, 100, 100);
-        Camera = Camera2D.Fit(bounds, ViewportPixelWidth, ViewportPixelHeight, paddingFraction);
+        lock (_stateLock)
+        {
+            _activeLeaseCount--;
+            if (_activeLeaseCount <= 0 && _isRetiring)
+            {
+                CompleteDisposal();
+            }
+        }
+    }
+
+    public void ResizeViewport(int width, int height)
+    {
+        lock (_stateLock)
+        {
+            ObjectDisposedException.ThrowIf(_disposed, this);
+            if (width <= 0 || height <= 0) return;
+
+            _controller.Resize(width, height);
+            _frameGate.RequestFrame();
+        }
+    }
+
+    public void ZoomToFit(double paddingFraction = ViewerZoomPolicy.DefaultPaddingFraction)
+    {
+        lock (_stateLock)
+        {
+            ObjectDisposedException.ThrowIf(_disposed, this);
+            var activeScene = LayoutManager.ComposeActiveScene();
+            var bounds = activeScene.WorldBounds ?? new WorldBounds2(0, 0, 100, 100);
+            _controller.SetSceneBounds(bounds);
+            _controller.FitExtents(paddingFraction);
+            _frameGate.RequestFrame();
+        }
     }
 
     public void Pan(double deltaScreenX, double deltaScreenY)
     {
-        ObjectDisposedException.ThrowIf(_disposed, this);
-        Camera = Camera.PanBy(deltaScreenX, deltaScreenY);
+        lock (_stateLock)
+        {
+            ObjectDisposedException.ThrowIf(_disposed, this);
+            _controller.Pan(deltaScreenX, deltaScreenY);
+            _frameGate.RequestFrame();
+        }
     }
 
     public void Zoom(double factor, double focalScreenX, double focalScreenY)
     {
-        ObjectDisposedException.ThrowIf(_disposed, this);
-        Camera = Camera.ZoomAt(new ScreenPoint2(focalScreenX, focalScreenY), factor);
+        lock (_stateLock)
+        {
+            ObjectDisposedException.ThrowIf(_disposed, this);
+            _controller.PinchZoom(new ScreenPoint2(focalScreenX, focalScreenY), factor);
+            _frameGate.RequestFrame();
+        }
     }
 
     public void ToggleLayerVisibility(string layerName)
     {
-        ObjectDisposedException.ThrowIf(_disposed, this);
-        if (string.IsNullOrWhiteSpace(layerName)) return;
-
-        if (LayerTable.TryGetLayer(layerName, out var layer))
+        lock (_stateLock)
         {
-            LayerTable.SetLayerVisibility(layerName, !layer.IsVisible);
+            ObjectDisposedException.ThrowIf(_disposed, this);
+            if (string.IsNullOrWhiteSpace(layerName)) return;
+
+            if (_layerTable.TryGetLayer(layerName, out var layer))
+            {
+                SetLayerVisibility(layerName, !layer.IsVisible);
+            }
         }
     }
 
     public void SetLayerVisibility(string layerName, bool isVisible)
     {
-        ObjectDisposedException.ThrowIf(_disposed, this);
-        if (string.IsNullOrWhiteSpace(layerName)) return;
+        lock (_stateLock)
+        {
+            ObjectDisposedException.ThrowIf(_disposed, this);
+            if (string.IsNullOrWhiteSpace(layerName)) return;
 
-        LayerTable.SetLayerVisibility(layerName, isVisible);
+            var newTable = new LayerTable(_layerTable.Layers);
+            newTable.SetLayerVisibility(layerName, isVisible);
+            _layerTable = newTable;
+            _styleRevision++;
+            _frameGate.RequestFrame();
+        }
     }
 
     public void SwitchLayout(string layoutName)
     {
-        ObjectDisposedException.ThrowIf(_disposed, this);
-        LayoutManager.SwitchLayout(layoutName);
-        ZoomToFit();
+        lock (_stateLock)
+        {
+            ObjectDisposedException.ThrowIf(_disposed, this);
+            LayoutManager.SwitchLayout(layoutName);
+            _activeScene = LayoutManager.ComposeActiveScene();
+            _layoutRevision++;
+            _sceneRevision++;
+
+            var bounds = _activeScene.WorldBounds ?? new WorldBounds2(0, 0, 100, 100);
+            _controller.SetSceneBounds(bounds);
+            _controller.FitExtents();
+            _frameGate.RequestFrame();
+        }
     }
 
     public ValueTask RenderAsync(SkiaBitmapRenderSurface surface, CancellationToken cancellationToken = default)
     {
-        ObjectDisposedException.ThrowIf(_disposed, this);
-        ArgumentNullException.ThrowIfNull(surface);
+        lock (_stateLock)
+        {
+            ObjectDisposedException.ThrowIf(_disposed, this);
+            ArgumentNullException.ThrowIfNull(surface);
 
-        var activeScene = LayoutManager.ComposeActiveScene();
+            var activeScene = LayoutManager.ComposeActiveScene();
+            var sceneWithCurrentLayers = new RenderScene(
+                activeScene.Entities,
+                activeScene.Diagnostics,
+                activeScene.ColorContext,
+                _layerTable);
 
-        // Create updated scene with current session layer table
-        var sceneWithCurrentLayers = new RenderScene(
-            activeScene.Entities,
-            activeScene.Diagnostics,
-            activeScene.ColorContext,
-            LayerTable);
-
-        return _renderer.RenderAsync(sceneWithCurrentLayers, surface, Camera.ToViewport(), cancellationToken);
+            return _renderer.RenderAsync(sceneWithCurrentLayers, surface, Camera.ToViewport(), cancellationToken);
+        }
     }
 
     public void OnTrimMemory()
     {
-        // Safe drop of any cached transient structures
         GC.Collect(1, GCCollectionMode.Optimized, blocking: false);
     }
 
     public void Dispose()
     {
-        if (_disposed) return;
+        lock (_stateLock)
+        {
+            if (_disposed) return;
+            _isRetiring = true;
+            if (_activeLeaseCount <= 0)
+            {
+                CompleteDisposal();
+            }
+        }
+    }
+
+    private void CompleteDisposal()
+    {
         _disposed = true;
+        _frameGate.Reset();
     }
 }

@@ -38,6 +38,18 @@ public sealed class ViewportController
         UpdateLimitsForCurrentCenter();
     }
 
+    public void SetCamera(Camera2D camera)
+    {
+        if (!camera.IsValid)
+        {
+            throw new ArgumentException("Camera must be valid.", nameof(camera));
+        }
+
+        _camera = camera;
+        UpdateLimitsForCurrentCenter();
+        _updateCount++;
+    }
+
     public void BeginInteraction()
     {
         _isInteracting = true;

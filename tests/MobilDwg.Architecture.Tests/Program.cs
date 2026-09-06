@@ -12,6 +12,7 @@ Assert(productionProjects.Length == 4,
 
 var expectedTestProjects = new[]
 {
+    "tests/MobilDwg.Android.Instrumentation/MobilDwg.Android.Instrumentation.csproj",
     "tests/MobilDwg.Architecture.Tests/MobilDwg.Architecture.Tests.csproj",
     "tests/MobilDwg.Core.Tests/MobilDwg.Core.Tests.csproj",
     "tests/MobilDwg.Integration.Tests/MobilDwg.Integration.Tests.csproj",
@@ -24,7 +25,7 @@ var actualTestProjects = testProjects
     .ToArray();
 
 Assert(actualTestProjects.SequenceEqual(expectedTestProjects.Order(StringComparer.Ordinal)),
-    $"test projects must match exact 4 projects, got: [{string.Join(", ", actualTestProjects)}]");
+    $"test projects must match exact 5 projects, got: [{string.Join(", ", actualTestProjects)}]");
 
 AssertProjectReferences("src/MobilDwg.Core/MobilDwg.Core.csproj", []);
 AssertProjectReferences("src/MobilDwg.Cad/MobilDwg.Cad.csproj",
@@ -51,6 +52,12 @@ AssertProjectReferences("tests/MobilDwg.Integration.Tests/MobilDwg.Integration.T
         "src/MobilDwg.Core/MobilDwg.Core.csproj",
         "src/MobilDwg.Cad/MobilDwg.Cad.csproj",
         "src/MobilDwg.Rendering/MobilDwg.Rendering.csproj"
+    ]);
+AssertProjectReferences("tests/MobilDwg.Android.Instrumentation/MobilDwg.Android.Instrumentation.csproj",
+    [
+        "src/MobilDwg.Core/MobilDwg.Core.csproj",
+        "src/MobilDwg.Rendering/MobilDwg.Rendering.csproj",
+        "src/MobilDwg.App/MobilDwg.App.csproj"
     ]);
 
 AssertPackageReferences("src/MobilDwg.Core/MobilDwg.Core.csproj", []);

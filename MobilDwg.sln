@@ -27,6 +27,8 @@ Project("{2150E333-8FDC-42A3-9474-1A3956D46DE8}") = "tests", "tests", "{0AB3BF05
 EndProject
 Project("{FAE04EC0-301F-11D3-BF4B-00C04F79EFBC}") = "MobilDwg.Integration.Tests", "tests\MobilDwg.Integration.Tests\MobilDwg.Integration.Tests.csproj", "{795EA74B-DAF3-45FC-8809-AD94438F1A4C}"
 EndProject
+Project("{FAE04EC0-301F-11D3-BF4B-00C04F79EFBC}") = "MobilDwg.Android.Instrumentation", "tests\MobilDwg.Android.Instrumentation\MobilDwg.Android.Instrumentation.csproj", "{F64109DB-0C9D-47E7-9EB7-D751B40D35EE}"
+EndProject
 Global
 	GlobalSection(SolutionConfigurationPlatforms) = preSolution
 		Debug|Any CPU = Debug|Any CPU
@@ -145,6 +147,18 @@ Global
 		{795EA74B-DAF3-45FC-8809-AD94438F1A4C}.Release|x64.Build.0 = Release|Any CPU
 		{795EA74B-DAF3-45FC-8809-AD94438F1A4C}.Release|x86.ActiveCfg = Release|Any CPU
 		{795EA74B-DAF3-45FC-8809-AD94438F1A4C}.Release|x86.Build.0 = Release|Any CPU
+		{F64109DB-0C9D-47E7-9EB7-D751B40D35EE}.Debug|Any CPU.ActiveCfg = Debug|Any CPU
+		{F64109DB-0C9D-47E7-9EB7-D751B40D35EE}.Debug|Any CPU.Build.0 = Debug|Any CPU
+		{F64109DB-0C9D-47E7-9EB7-D751B40D35EE}.Debug|x64.ActiveCfg = Debug|Any CPU
+		{F64109DB-0C9D-47E7-9EB7-D751B40D35EE}.Debug|x64.Build.0 = Debug|Any CPU
+		{F64109DB-0C9D-47E7-9EB7-D751B40D35EE}.Debug|x86.ActiveCfg = Debug|Any CPU
+		{F64109DB-0C9D-47E7-9EB7-D751B40D35EE}.Debug|x86.Build.0 = Debug|Any CPU
+		{F64109DB-0C9D-47E7-9EB7-D751B40D35EE}.Release|Any CPU.ActiveCfg = Release|Any CPU
+		{F64109DB-0C9D-47E7-9EB7-D751B40D35EE}.Release|Any CPU.Build.0 = Release|Any CPU
+		{F64109DB-0C9D-47E7-9EB7-D751B40D35EE}.Release|x64.ActiveCfg = Release|Any CPU
+		{F64109DB-0C9D-47E7-9EB7-D751B40D35EE}.Release|x64.Build.0 = Release|Any CPU
+		{F64109DB-0C9D-47E7-9EB7-D751B40D35EE}.Release|x86.ActiveCfg = Release|Any CPU
+		{F64109DB-0C9D-47E7-9EB7-D751B40D35EE}.Release|x86.Build.0 = Release|Any CPU
 	EndGlobalSection
 	GlobalSection(SolutionProperties) = preSolution
 		HideSolutionNode = FALSE
@@ -152,5 +166,6 @@ Global
 	GlobalSection(NestedProjects) = preSolution
 		{910E99DB-0F49-415F-B16A-EDAB1B7362EC} = {07C2787E-EAC7-C090-1BA3-A61EC2A24D84}
 		{795EA74B-DAF3-45FC-8809-AD94438F1A4C} = {0AB3BF05-4346-4AA6-1389-037BE0695223}
+		{F64109DB-0C9D-47E7-9EB7-D751B40D35EE} = {0AB3BF05-4346-4AA6-1389-037BE0695223}
 	EndGlobalSection
 EndGlobal

@@ -81,12 +81,12 @@ Yeni bir viewer surface, GPU backend, render scheduler, spatial index veya cache
 
 ## Test yapısı
 
-Repo, exact test projeleri mimarisine sahiptir:
+Repo, tam beş exact test projesi mimarisine sahiptir:
 - `tests/MobilDwg.Core.Tests`: Temel tipler ve kontrat testleri.
 - `tests/MobilDwg.Rendering.Tests`: Render sahnesi, geometri, kamera ve render kontrolleri.
 - `tests/MobilDwg.Architecture.Tests`: Proje/paket bağımlılık yönü ve kaynak kuralları denetimi.
 - `tests/MobilDwg.Integration.Tests`: Gerçek dosya okuma, extraction ve scene build entegrasyon testleri.
-(Aşama 05'te native Android instrumentation eklendiğinde liste tam 5 exact projeye çıkarılacaktır.)
+- `tests/MobilDwg.Android.Instrumentation`: Ayrı test APK'sı ve UiAutomation ile native dokunma ve duman testleri.
 
 Eski stage testleri regresyon referansıdır; yeni davranış eski marker ile otomatik doğrulanmış sayılmaz.
 

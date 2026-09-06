@@ -148,6 +148,37 @@ if ($stageNum -ge 4) {
     Pass "VIEWER_STABILITY_STAGE04_PASS"
 }
 
+# Stage 05 checks
+if ($stageNum -ge 5) {
+    Write-Host "Verifying Stage 05 Session, Scheduling and Swap-Chain Coordination..."
+    
+    $frameGateFile = Join-Path $repoRoot "src/MobilDwg.Rendering/Scheduling/FrameRequestGate.cs"
+    if (-not (Test-Path $frameGateFile)) { Fail "FrameRequestGate.cs missing" }
+    Pass "STAGE05_FRAME_REQUEST_GATE_SOURCE_PASS"
+
+    $renderLeaseFile = Join-Path $repoRoot "src/MobilDwg.Rendering/Viewer/RenderSessionLease.cs"
+    if (-not (Test-Path $renderLeaseFile)) { Fail "RenderSessionLease.cs missing" }
+    Pass "STAGE05_RENDER_SESSION_LEASE_SOURCE_PASS"
+
+    $cadViewportFile = Join-Path $repoRoot "src/MobilDwg.App/Viewer/CadViewportView.cs"
+    if (-not (Test-Path $cadViewportFile)) { Fail "CadViewportView.cs missing" }
+    Pass "STAGE05_CAD_VIEWPORT_VIEW_SOURCE_PASS"
+
+    $androidClockFile = Join-Path $repoRoot "src/MobilDwg.App/Viewer/Platforms/Android/AndroidFrameClock.cs"
+    if (-not (Test-Path $androidClockFile)) { Fail "AndroidFrameClock.cs missing" }
+    Pass "STAGE05_ANDROID_FRAME_CLOCK_SOURCE_PASS"
+
+    $instrumentationProj = Join-Path $repoRoot "tests/MobilDwg.Android.Instrumentation/MobilDwg.Android.Instrumentation.csproj"
+    if (-not (Test-Path $instrumentationProj)) { Fail "MobilDwg.Android.Instrumentation.csproj missing" }
+    Pass "STAGE05_ANDROID_INSTRUMENTATION_PROJECT_PASS"
+
+    if (-not ($archText -match "STAGE05_DEPENDENCY_BOUNDARY_PASS")) { Fail "STAGE05_DEPENDENCY_BOUNDARY_PASS missing" }
+    Pass "STAGE05_DEPENDENCY_BOUNDARY_PASS"
+
+    Pass "VIEWER_STABILITY_STAGE05_PASS"
+}
+
 Write-Host "=== Viewer Stability Gate Passed for Stage $Stage ==="
 exit 0
+
 

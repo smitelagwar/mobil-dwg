@@ -158,7 +158,7 @@ Bir sonraki aşama: Aşama 04 — Native input ve gesture state machine
 
 Aşama: 04 — Native input ve gesture state machine  
 Durum: TAMAMLANDI  
-Son HEAD: bekliyor (commit: `fix(input): unify native pointer packet handling`)  
+Son HEAD: `f57c810a97aaef7ee9d5e305e913a6977926bda3` (commit: `fix(input): unify native pointer packet handling`)  
 Değişen dosyalar:
 - `scripts/viewer-stability-gate.ps1`
 - `src/MobilDwg.App/Viewer/Platforms/Android/AndroidViewportInputAdapter.cs`
@@ -190,5 +190,50 @@ Bir sonraki aşama: Aşama 05 — Session, scheduler ve üretim viewer bağlant�
 
 ---
 
+### Aşama 05 Raporu
 
+Aşama: 05 — Session, scheduler ve üretim viewer bağlantısı  
+Durum: TAMAMLANDI  
+Son HEAD: `e0d86807c49f4de7e86546ffd635118c730a42b8` (commit: `fix(viewer): render live snapshots with bounded scheduling`)  
+Değişen dosyalar:
+- `MobilDwg.sln`
+- `docs/ARCHITECTURE.md`
+- `scripts/viewer-stability-gate.ps1`
+- `src/MobilDwg.App/MainPage.cs`
+- `src/MobilDwg.App/Viewer/CadViewportView.cs`
+- `src/MobilDwg.App/Viewer/Platforms/Android/AndroidFrameClock.cs`
+- `src/MobilDwg.Rendering/Camera/ViewportController.cs`
+- `src/MobilDwg.Rendering/Scheduling/FrameRequestGate.cs`
+- `src/MobilDwg.Rendering/Viewer/CadViewerSession.cs`
+- `src/MobilDwg.Rendering/Viewer/RenderSessionLease.cs`
+- `tests/MobilDwg.Android.Instrumentation/MobilDwg.Android.Instrumentation.csproj`
+- `tests/MobilDwg.Android.Instrumentation/NativeSmokeRunner.cs`
+- `tests/MobilDwg.Architecture.Tests/Program.cs`
+(Kullanıcı başlangıç değişiklikleri `src/MobilDwg.Rendering/Scene/RenderScene.cs`, `release/SHA256SUMS.txt`, `tools/CadControlBenchmark/` bozulmadan çalışma ağacında korundu.)  
+Kullanıcıya yansıyan davranış:
+- MAUI `Image` ve JPEG tabanlı `ReRenderAsync` render döngüsü kaldırıldı; yerine donanım hızlandırmalı doğrudan Skia GL/CPU yüzeyi (`CadViewportView`) bağlandı.
+- Canlı oturumda tek kaynak `CadViewerSession` ve `ViewportController` bağlandı; MainPage'in `_viewportController` alanı `CadViewerSession.Controller` delegasyonuna bağlandı.
+- `FrameRequestGate` ile en fazla 1 pending + 1 in-flight frame tutularak unbounded task/kuyruk oluşması engellendi.
+- Snapshot kiralama (`RenderSessionLease`) ile frame render esnasında kilit (lock) tutulmadan GC tahsissiz ve mutasyonsuz çizim sağlandı.
+- Android platformunda `Choreographer` vsync saati (`AndroidFrameClock`) ile ekran yenileme hızında dirty invalidation bağlandı.
+- Belge/layout geçişlerinde eski native frame'in yeni belge adı altında parlamasını önlemek için `_transitionOverlay` (donanımsal geçiş örtüsü) uygulandı; ilk generation frame sunulana kadar örtü aktif kalıyor.
+- GPU context hatası ve 1000 ms unresponsiveness durumunda otomatik CPU yüzeyine (`SKCanvasView`) geçiş watchdog'u eklendi.
+- Ayrı test APK'sı (`tests/MobilDwg.Android.Instrumentation/`) solution'a bağlandı; `Architecture.Tests` sözleşmesi tam beş test projesiyle güncellenip kilitlendi.
+Çalıştırılan gerçek komutlar ve exit code:
+- `dotnet run --project tests/MobilDwg.Architecture.Tests/MobilDwg.Architecture.Tests.csproj -c Release` (exit code: 0, STAGE05_DEPENDENCY_BOUNDARY_PASS)
+- `dotnet run --project tests/MobilDwg.Rendering.Tests/MobilDwg.Rendering.Tests.csproj -c Release` (exit code: 0)
+- `dotnet build src/MobilDwg.App/MobilDwg.App.csproj -f net10.0-android36.0 -c Release` (exit code: 0, 0 warning, 0 error)
+- `dotnet build tests/MobilDwg.Android.Instrumentation/MobilDwg.Android.Instrumentation.csproj` (exit code: 0, 0 warning, 0 error)
+- `powershell -ExecutionPolicy Bypass -File scripts/viewer-stability-gate.ps1 -Stage 05` (exit code: 0, VIEWER_STABILITY_STAGE05_PASS)  
+Ölçülen metrikler ve kanıt dosyaları:
+- `artifacts/viewer-stability/stage05/gate-summary.txt`
+- `artifacts/viewer-stability/stage05/architecture-tests.log`
+- `artifacts/viewer-stability/stage05/core-tests.log`
+- `artifacts/viewer-stability/stage05/rendering-tests.log`
+- `artifacts/viewer-stability/stage05/integration-tests.log`
+- `artifacts/viewer-stability/stage05/stage02-package-audit.log`
+- `artifacts/viewer-stability/stage05/app-build-android.log`  
+Geçmeyen veya çalıştırılamayan koşullar: Yok.  
+Bir sonraki aşama: Aşama 06 — Muhafazakâr bounds ve mekânsal indeks  
 
+---
