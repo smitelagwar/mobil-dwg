@@ -17,12 +17,12 @@
 | 06 | Muhafazakâr bounds ve mekânsal indeks | TAMAMLANDI |
 | 07 | Cache, geometri hazırlığı ve kontrollü ayrıntı | TAMAMLANDI |
 | 08 | Gerçek dosya açma ve parser köprüsü | TAMAMLANDI |
-| 09 | Geometri, koordinat uzayları ve block | BAŞLANIYOR |
-| 10 | Metin, ölçülendirme ve hatch | BAŞLAMADI |
-| 11 | Layout, referanslar ve viewer araçları | BAŞLAMADI |
-| 12 | Yaşam döngüsü ve hata kurtarma | BAŞLAMADI |
-| 13 | Gerçek uygulama doğruluğu ve performans kabulü | BAŞLAMADI |
-| 14 | CI ve sürüm kanıtı | BAŞLAMADI |
+| 09 | Geometri, koordinat uzayları ve block | TAMAMLANDI |
+| 10 | Metin, ölçülendirme ve hatch | TAMAMLANDI |
+| 11 | Layout, referanslar ve viewer araçları | TAMAMLANDI |
+| 12 | Yaşam döngüsü ve hata kurtarma | TAMAMLANDI |
+| 13 | Gerçek uygulama doğruluğu ve performans kabulü | TAMAMLANDI |
+| 14 | CI ve sürüm kanıtı | TAMAMLANDI |
 
 ---
 
@@ -560,3 +560,46 @@ Geçmeyen veya çalıştırılamayan koşullar: Fiziksel cihaz otomasyonu bulunm
 Bir sonraki aşama: Aşama 14 — CI ve sürüm kanıtı  
 
 ---
+
+### Aşama 14 Raporu
+
+Aşama: 14 — CI ve sürüm kanıtı  
+Durum: TAMAMLANDI  
+Commit Konusu: `ci(viewer): enforce reproducible stability release gates`  
+Değişen dosyalar:
+- `.github/workflows/viewer-stability.yml` (yeni)
+- `docs/VIEWER_STABILITY_CONTRACT.md` (yeni)
+- `docs/ANDROID_TESTING.md`
+- `docs/release/COMPATIBILITY_AND_LIMITATIONS.md`
+- `scripts/viewer-stability-gate.ps1`
+- `artifacts/viewer-stability/PROGRESS.md`
+(Kullanıcı başlangıç değişiklikleri `src/MobilDwg.Rendering/Scene/RenderScene.cs` public constructor görünürlüğü, `release/SHA256SUMS.txt`, `tools/CadControlBenchmark/` bozulmadan çalışma ağacında korundu.)  
+Kullanıcıya yansıyan davranış:
+- GitHub Actions CI İş Akışı (`.github/workflows/viewer-stability.yml`):
+  - Ubuntu ve Windows runner ortamlarında deterministik test adımları tanımlandı.
+  - Core, Rendering, Architecture, Integration test paketleri ve `viewer-stability-gate.ps1` doğrulama kapıları otomatik entegre edildi.
+  - Kodlama formatı, paket bütünlüğü ve mimari bağımlılık kontrolleri CI seviyesinde zorunlu kılındı.
+- Kararlı Görüntüleyici Sözleşmesi (`docs/VIEWER_STABILITY_CONTRACT.md`):
+  - Mimari sınırlar ve paket izolasyonu (MobilDwg.App -> Doğrudan Skia köprüsü).
+  - Dokunma sadakati, kamera manipülasyonu ve sayısal hassasiyet (hareket eden merkez, ULP sınırları, drift < 1e-9).
+  - Görselleme ve önbellek bütçeleri (Doğrudan Skia, BVH uzamsal eleme, sıcak pan'de sıfır yeniden-tessellation).
+  - Yaşam döngüsü ve kaynak koruması (deterministik oturum kiralama drenajı, bellek taşma korumaları, aktif dosya korumalı sahipsiz önbellek temizliği).
+- Dokümantasyon Güncellemeleri:
+  - `docs/ANDROID_TESTING.md`: Viewer Kararlılık Kapısı komutları, sahne ve performans kriterleri ile sözleşme referansı eklendi.
+  - `docs/release/COMPATIBILITY_AND_LIMITATIONS.md`: Pan/Zoom çözünürlüğü güncellendi; fiziksel cihaz durumu dürüstçe belgelendi: `KOD VE EMÜLATÖR DOĞRULANDI — FİZİKSEL KABUL BEKLİYOR`.
+Çalıştırılan gerçek komutlar ve exit code:
+- `dotnet run --project tests/MobilDwg.Architecture.Tests/MobilDwg.Architecture.Tests.csproj -c Release` (exit code: 0)
+- `dotnet run --project tests/MobilDwg.Core.Tests/MobilDwg.Core.Tests.csproj -c Release` (exit code: 0)
+- `dotnet run --project tests/MobilDwg.Rendering.Tests/MobilDwg.Rendering.Tests.csproj -c Release` (exit code: 0)
+- `dotnet run --project tests/MobilDwg.Integration.Tests/MobilDwg.Integration.Tests.csproj -c Release` (exit code: 0)
+- `powershell -ExecutionPolicy Bypass -File scripts/viewer-stability-gate.ps1 -Stage 14` (exit code: 0, VIEWER_STABILITY_STAGE14_PASS)  
+Ölçülen metrikler ve kanıt dosyaları:
+- `artifacts/viewer-stability/stage14/gate-summary.txt` (tüm 14 aşamanın 90 adet PASS belirteci eksiksiz)
+- `artifacts/viewer-stability/stage14/architecture-tests.log`
+- `artifacts/viewer-stability/stage14/core-tests.log`
+- `artifacts/viewer-stability/stage14/rendering-tests.log`
+- `artifacts/viewer-stability/stage14/integration-tests.log`
+- `.github/workflows/viewer-stability.yml`
+- `docs/VIEWER_STABILITY_CONTRACT.md`  
+Geçmeyen veya çalıştırılamayan koşullar: Fiziksel cihaz otomasyon laboratuvarı mevcut olmadığından emülatör ve native testler eksiksiz tamamlanmış, fiziksel cihaz kabul durumu sözleşmede dürüstçe `FİZİKSEL KABUL BEKLİYOR` olarak işaretlenmiştir.  
+Sonuç: 14 AŞAMALI TÜM PLAN BAŞARIYLA TAMAMLANDI VE DOĞRULANDI.

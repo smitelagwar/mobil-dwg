@@ -407,6 +407,29 @@ if ($stageNum -ge 13) {
     Pass "VIEWER_STABILITY_STAGE13_PASS"
 }
 
+# Stage 14 checks
+if ($stageNum -ge 14) {
+    Write-Host "Verifying Stage 14 CI Workflow, Viewer Stability Contract and Final Release Gates..."
+
+    $ciWorkflowFile = Join-Path $repoRoot ".github/workflows/viewer-stability.yml"
+    if (-not (Test-Path $ciWorkflowFile)) { Fail "viewer-stability.yml missing" }
+    Pass "STAGE14_CI_WORKFLOW_SOURCE_PASS"
+
+    $contractFile = Join-Path $repoRoot "docs/VIEWER_STABILITY_CONTRACT.md"
+    if (-not (Test-Path $contractFile)) { Fail "VIEWER_STABILITY_CONTRACT.md missing" }
+    Pass "STAGE14_STABILITY_CONTRACT_SOURCE_PASS"
+
+    $testingDoc = Join-Path $repoRoot "docs/ANDROID_TESTING.md"
+    if (-not (Test-Path $testingDoc)) { Fail "ANDROID_TESTING.md missing" }
+    Pass "STAGE14_ANDROID_TESTING_DOC_PASS"
+
+    $compatDoc = Join-Path $repoRoot "docs/release/COMPATIBILITY_AND_LIMITATIONS.md"
+    if (-not (Test-Path $compatDoc)) { Fail "COMPATIBILITY_AND_LIMITATIONS.md missing" }
+    Pass "STAGE14_COMPATIBILITY_DOC_PASS"
+
+    Pass "VIEWER_STABILITY_STAGE14_PASS"
+}
+
 Write-Host "=== Viewer Stability Gate Passed for Stage $Stage ==="
 exit 0
 

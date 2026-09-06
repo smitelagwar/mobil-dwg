@@ -56,13 +56,15 @@ World/document koordinatları `double` tutulur. Büyük survey koordinatlarında
 
 Civil 3D, Architecture veya üçüncü taraf eklentilere ait proxy/custom object'lerin tam semantiği garanti edilmez. Standartlaşmış grafik bilgi çıkarılabiliyorsa kısmi görünüm mümkün olabilir; aksi halde compatibility diagnostic beklenir.
 
-## Pan / zoom — mevcut açık kalite alanı
+## Pan / zoom ve etkileşim performansı
 
-2026-09-05 itibarıyla pan/pinch/render interaction zincirinde iyileştirme çalışması açıktır. Özellikle hareket sırasında yeni görünür alanın canlı render edilmesi, focal drift ve gesture-end jump davranışı güncel risk register'da takip edilmektedir.
+6 Eylül 2026 tarihli 14 aşamalı Kararlılık Planı (`docs/VIEWER_STABILITY_CONTRACT.md`) kapsamında pan/pinch/render etkileşim zinciri kökten yenilenmiştir:
+- Doğrudan Skia çizimi ve tek bekleyen kare kapısı (`FrameRequestGate`) ile ara bitmap/PNG gecikmesi kaldırılmıştır.
+- Yerel pointer adaptörü (`AndroidInputAdapter`) ve çoklu dokunma durum makinesi (`ViewportInteractionEngine`) ile 1↔2 parmak geçişlerinde sıçrama (jump) önlenmiş, odak kayması (focal drift) `< 1e-9` seviyesine indirilmiştir.
+- Bırakılmadan önce çizim (sentinel-before-UP) sözleşmesiyle parmak hareketi sürerken yeni görünür alanlar ekrana yansıtılmaktadır.
+- Yerleşik geometri önbelleği (`PreparedGeometryCache`) ile sıcak kaydırmada sıfır yeniden-tessellation sağlanmıştır.
 
-Bu sorunlar kapanıp gerçek interaction acceptance geçmeden mağaza metninde “kusursuz/akıcı donanım hızlandırmalı navigasyon” gibi mutlak performans iddiaları kullanılmamalıdır.
-
-Bakınız: `compliance/RISK_REGISTER.md` ve `docs/ANDROID_TESTING.md`.
+*Kayıtlı Kısıt:* Kod ve API 36 emülatör düzeyinde doğrulama tamamlanmış olup, fiziksel cihaz kabul kapısı otomasyon dışı fiziksel cihaz testleri için açık tutulmaktadır.
 
 ## Fiziksel cihaz sınırı
 

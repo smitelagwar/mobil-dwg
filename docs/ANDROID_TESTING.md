@@ -47,6 +47,17 @@ Solution Release build:
 dotnet build .\MobilDwg.sln -c Release
 ```
 
+### Viewer Kararlılık Kapısı (Viewer Stability Gate)
+
+14 aşamalı nihai görüntüleyici kararlılık kapısı tüm katmanları (Core, Rendering, Architecture, Integration, Android Instrumentation) tek merkezden test eder:
+
+```powershell
+# Aşama 01 - 14 arası istenen aşamayı veya tümünü çalıştırma:
+powershell -ExecutionPolicy Bypass -File scripts\viewer-stability-gate.ps1 -Stage 14
+```
+
+Temel sözleşme ve değişmezler için bkz. [docs/VIEWER_STABILITY_CONTRACT.md](file:///c:/Users/hsyn/Desktop/MOBIL_UYGULAMA_DWG/docs/VIEWER_STABILITY_CONTRACT.md).
+
 Repo içinde geçmiş geliştirme aşamalarına ait hedefli Android gate scriptleri `scripts/aXX-android-*-gate.ps1` biçiminde korunur. Bunlar regresyon aracı olarak kullanılabilir; yeni bir özellik veya yeni bir bug fix eski scriptin kapsamı dışındaysa ilgili script genişletilir veya yeni odaklı test eklenir.
 
 Özellikle viewer hareketleri için tarihsel başlangıç noktası:

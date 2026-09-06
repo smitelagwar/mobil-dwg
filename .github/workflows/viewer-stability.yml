@@ -1,0 +1,47 @@
+name: Viewer Stability Release Gate
+
+on:
+  push:
+    branches:
+      - main
+      - 'codex/**'
+      - 'feature/**'
+  pull_request:
+    branches: [main]
+
+permissions:
+  contents: read
+
+jobs:
+  verify-viewer-stability:
+    name: Verify Viewer Stability Harnesses
+    runs-on: windows-latest
+    timeout-minutes: 25
+    steps:
+      - name: Checkout
+        uses: actions/checkout@v5
+
+      - name: Setup .NET SDK
+        uses: actions/setup-dotnet@v5
+        with:
+          dotnet-version: '10.0.x'
+
+      - name: Run Core Tests
+        shell: pwsh
+        run: dotnet run --project tests/MobilDwg.Core.Tests/MobilDwg.Core.Tests.csproj -c Release
+
+      - name: Run Rendering Tests
+        shell: pwsh
+        run: dotnet run --project tests/MobilDwg.Rendering.Tests/MobilDwg.Rendering.Tests.csproj -c Release
+
+      - name: Run Architecture Tests
+        shell: pwsh
+        run: dotnet run --project tests/MobilDwg.Architecture.Tests/MobilDwg.Architecture.Tests.csproj -c Release
+
+      - name: Run Integration Tests
+        shell: pwsh
+        run: dotnet run --project tests/MobilDwg.Integration.Tests/MobilDwg.Integration.Tests.csproj -c Release
+
+      - name: Run Stability Gate
+        shell: pwsh
+        run: powershell -ExecutionPolicy Bypass -File scripts/viewer-stability-gate.ps1 -Stage 14
