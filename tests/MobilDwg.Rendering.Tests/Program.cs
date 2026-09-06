@@ -127,6 +127,7 @@ duplicateBuilder.AddEntity(CreateEntity("DUP", 0, 0, 1, 1));
 AssertThrows<InvalidOperationException>(() => duplicateBuilder.AddEntity(CreateEntity("DUP", 1, 1, 2, 2)), "duplicate stable ID must fail");
 
 ViewportCameraTests.Run();
+ViewportInteractionTests.Run();
 
 Console.WriteLine("STAGE04_RENDER_CONTRACT_TESTS_PASS");
 Console.WriteLine("STAGE09_RENDER_SCENE_TESTS_PASS");

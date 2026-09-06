@@ -131,6 +131,23 @@ if ($stageNum -ge 3) {
     Pass "VIEWER_STABILITY_STAGE03_PASS"
 }
 
+# Stage 04 checks
+if ($stageNum -ge 4) {
+    Write-Host "Verifying Stage 04 Native Input & Gesture State Machine..."
+    if (-not ($rendText -match "STAGE04_VIEWPORT_INTERACTION_TESTS_PASS")) { Fail "STAGE04_VIEWPORT_INTERACTION_TESTS_PASS marker missing" }
+    Pass "STAGE04_VIEWPORT_INTERACTION_TESTS_PASS"
+
+    $interactionEngineFile = Join-Path $repoRoot "src/MobilDwg.Rendering/Interaction/ViewportInteractionEngine.cs"
+    if (-not (Test-Path $interactionEngineFile)) { Fail "ViewportInteractionEngine.cs missing" }
+    Pass "STAGE04_VIEWPORT_INTERACTION_ENGINE_SOURCE_PASS"
+
+    $androidAdapterFile = Join-Path $repoRoot "src/MobilDwg.App/Viewer/Platforms/Android/AndroidViewportInputAdapter.cs"
+    if (-not (Test-Path $androidAdapterFile)) { Fail "AndroidViewportInputAdapter.cs missing" }
+    Pass "STAGE04_ANDROID_INPUT_ADAPTER_SOURCE_PASS"
+
+    Pass "VIEWER_STABILITY_STAGE04_PASS"
+}
+
 Write-Host "=== Viewer Stability Gate Passed for Stage $Stage ==="
 exit 0
 

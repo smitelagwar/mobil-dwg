@@ -12,8 +12,8 @@
 | 01 | Güncel kaynak tabanı ve ölçüm | TAMAMLANDI |
 | 02 | Paket sınırları ve ortak doğrudan Skia painter | TAMAMLANDI |
 | 03 | Kamera ve sayısal sözleşme | TAMAMLANDI |
-| 04 | Native input ve gesture state machine | BAŞLANIYOR |
-| 05 | Session, scheduler ve üretim viewer bağlantısı | BAŞLAMADI |
+| 04 | Native input ve gesture state machine | TAMAMLANDI |
+| 05 | Session, scheduler ve üretim viewer bağlantısı | BAŞLANIYOR |
 | 06 | Muhafazakâr bounds ve mekânsal indeks | BAŞLAMADI |
 | 07 | Cache, geometri hazırlığı ve kontrollü ayrıntı | BAŞLAMADI |
 | 08 | Gerçek dosya açma ve parser köprüsü | BAŞLAMADI |
@@ -119,7 +119,7 @@ Bir sonraki aşama: Aşama 03 — Kamera ve sayısal sözleşme
 
 Aşama: 03 — Kamera ve sayısal sözleşme  
 Durum: TAMAMLANDI  
-Son HEAD: bekliyor (commit: `fix(camera): define focal manipulation and precision limits`)  
+Son HEAD: `cb158f1181292fa07b7b13be6025219e917d23d9` (commit: `fix(camera): define focal manipulation and precision limits`)  
 Değişen dosyalar:
 - `scripts/viewer-stability-gate.ps1`
 - `src/MobilDwg.Rendering/Camera/Camera2D.cs`
@@ -153,5 +153,42 @@ Geçmeyen veya çalıştırılamayan koşullar: Yok.
 Bir sonraki aşama: Aşama 04 — Native input ve gesture state machine  
 
 ---
+
+### Aşama 04 Raporu
+
+Aşama: 04 — Native input ve gesture state machine  
+Durum: TAMAMLANDI  
+Son HEAD: bekliyor (commit: `fix(input): unify native pointer packet handling`)  
+Değişen dosyalar:
+- `scripts/viewer-stability-gate.ps1`
+- `src/MobilDwg.App/Viewer/Platforms/Android/AndroidViewportInputAdapter.cs`
+- `src/MobilDwg.Rendering/Interaction/ViewportInteractionEngine.cs`
+- `tests/MobilDwg.Rendering.Tests/Program.cs`
+- `tests/MobilDwg.Rendering.Tests/ViewportInteractionTests.cs`
+(Kullanıcı başlangıç değişiklikleri `src/MobilDwg.App/MainPage.cs`, `src/MobilDwg.Rendering/Scene/RenderScene.cs`, `release/SHA256SUMS.txt` bozulmadan çalışma ağacında korundu.)  
+Kullanıcıya yansıyan davranış:
+- MAUI Pan/Pinch yarışlarını ve 250 ms debounce gecikmelerini ortadan kaldıran tek gesture durum makinesi (`ViewportInteractionEngine`) ve Android MotionEvent adaptörü (`AndroidViewportInputAdapter`) kuruldu.
+- Parmaklar eklenirken veya ayrılırken (1→2→1, 2→3→2, ID yer değiştirmesi) baseline sıçramasız yenileniyor; sonraki gerçek hareket örneği kaybolmuyor.
+- Touch slop (hareket eşiği) aşıldığında o ana kadarki yer değiştirme tam bir kez uygulanıyor; slop altındaki küçük kıpırdamalarda kamera titremesi önleniyor.
+- Son bırakma (UP/POINTER_UP) paketindeki koordinat farkı sıfır ise sıfır delta; yeni koordinat varsa son delta tam bir kez işleniyor; çifte commit veya birikmiş toplam yer değiştirme hatası önlendi.
+- Çift dokunma Android zaman ve slop koşullarıyla tanınıp 2× yakınlaştırma yapıyor; ölçüm modu seçildiğinde çift dokunma zoom'u devre dışı kalarak tek dokunma ölçüm noktası olarak aktarılıyor.
+- View sınırlarının dışına çıkan ve geri gelen hareketler kırpılmadan veya sıfırlanmadan izleniyor.
+Çalıştırılan gerçek komutlar ve exit code:
+- `dotnet run --project tests/MobilDwg.Rendering.Tests/MobilDwg.Rendering.Tests.csproj -c Release` (exit code: 0, STAGE04_VIEWPORT_INTERACTION_TESTS_PASS)
+- `dotnet run --project tests/MobilDwg.Architecture.Tests/MobilDwg.Architecture.Tests.csproj -c Release` (exit code: 0)
+- `dotnet build src/MobilDwg.App/MobilDwg.App.csproj -f net10.0-android36.0 -c Release` (exit code: 0, 0 warning, 0 error)
+- `powershell -ExecutionPolicy Bypass -File scripts/viewer-stability-gate.ps1 -Stage 04` (exit code: 0, VIEWER_STABILITY_STAGE04_PASS)  
+Ölçülen metrikler ve kanıt dosyaları:
+- `artifacts/viewer-stability/stage04/gate-summary.txt`
+- `artifacts/viewer-stability/stage04/rendering-tests.log`
+- `artifacts/viewer-stability/stage04/architecture-tests.log`
+- `artifacts/viewer-stability/stage04/core-tests.log`
+- `artifacts/viewer-stability/stage04/integration-tests.log`
+- `artifacts/viewer-stability/stage04/app-build-android.log`  
+Geçmeyen veya çalıştırılamayan koşullar: Yok.  
+Bir sonraki aşama: Aşama 05 — Session, scheduler ve üretim viewer bağlantısı  
+
+---
+
 
 
