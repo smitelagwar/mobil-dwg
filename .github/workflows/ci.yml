@@ -9,6 +9,10 @@ on:
       - 'src/MobilDwg.Rendering/**'
       - 'src/MobilDwg.App/**'
       - 'tests/**'
+      - 'fixtures/**'
+      - 'scripts/generate-synthetic-dwg.ps1'
+      - 'scripts/validate-fixtures.py'
+      - 'scripts/verify-fixture-integrity.py'
       - 'Directory.Build.props'
       - 'Directory.Packages.props'
       - 'global.json'
@@ -21,6 +25,10 @@ on:
       - 'src/MobilDwg.Rendering/**'
       - 'src/MobilDwg.App/**'
       - 'tests/**'
+      - 'fixtures/**'
+      - 'scripts/generate-synthetic-dwg.ps1'
+      - 'scripts/validate-fixtures.py'
+      - 'scripts/verify-fixture-integrity.py'
       - 'Directory.Build.props'
       - 'Directory.Packages.props'
       - 'global.json'
@@ -36,7 +44,7 @@ concurrency:
 jobs:
   host-tests:
     runs-on: ubuntu-latest
-    timeout-minutes: 35
+    timeout-minutes: 40
     steps:
       - name: Checkout
         uses: actions/checkout@v5
@@ -61,6 +69,18 @@ jobs:
       - name: Install pinned Android workload manifests
         shell: bash
         run: dotnet workload install maui-android
+
+      - name: Validate fixture corpus
+        shell: bash
+        run: python3 scripts/validate-fixtures.py --manifest fixtures/manifest/corpus.json --evidence artifacts/fixture-audit.json
+
+      - name: Verify fixture dual hashes
+        shell: bash
+        run: python3 scripts/verify-fixture-integrity.py --audit artifacts/fixture-audit.json --integrity fixtures/manifest/source-integrity.json
+
+      - name: Generate synthetic DWG fixture
+        shell: pwsh
+        run: ./scripts/generate-synthetic-dwg.ps1
 
       - name: Build Android app
         shell: bash
