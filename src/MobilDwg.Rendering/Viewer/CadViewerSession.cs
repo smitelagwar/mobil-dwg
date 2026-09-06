@@ -34,6 +34,7 @@ public sealed class CadViewerSession : IDisposable
     private long _sceneRevision = 1;
     private long _layoutRevision = 1;
     private long _styleRevision = 1;
+    private long _cameraRevision = 1;
     private int _activeLeaseCount;
     private bool _isRetiring;
     private bool _disposed;
@@ -61,13 +62,14 @@ public sealed class CadViewerSession : IDisposable
     public long SceneRevision => _sceneRevision;
     public long LayoutRevision => _layoutRevision;
     public long StyleRevision => _styleRevision;
-    public long CameraRevision => _interactionEngine.CameraRevision;
+    public long CameraRevision => _cameraRevision;
     public int ActiveLeaseCount => _activeLeaseCount;
     public bool IsRetiring => _isRetiring;
     public bool IsDisposed => _disposed;
 
     public event Action? CloseRequested;
     public event Action? DrainCompleted;
+    public event Action<string>? FrameInvalidated;
 
     public CadViewerSession(
         CadDocumentMetadata metadata,
@@ -96,6 +98,15 @@ public sealed class CadViewerSession : IDisposable
 
         _controller = new ViewportController(initialCamera, bounds);
         _interactionEngine = new ViewportInteractionEngine(_controller);
+        _interactionEngine.CameraChanged += _ =>
+        {
+            lock (_stateLock)
+            {
+                _cameraRevision++;
+            }
+            NotifyFrameInvalidated("Interaction");
+        };
+
         _currentLayoutName = LayoutManager.ActiveLayout.Name;
         _layoutCameras[_currentLayoutName] = initialCamera;
     }
@@ -124,7 +135,7 @@ public sealed class CadViewerSession : IDisposable
                 SceneRevision: _sceneRevision,
                 LayoutRevision: _layoutRevision,
                 StyleRevision: _styleRevision,
-                CameraRevision: _interactionEngine.CameraRevision,
+                CameraRevision: _cameraRevision,
                 SurfaceGeneration: surfaceGeneration,
                 QualityMode: qualityMode,
                 GeometryCache: _geometryCache,
@@ -157,12 +168,14 @@ public sealed class CadViewerSession : IDisposable
             if (width <= 0 || height <= 0) return;
 
             _controller.Resize(width, height);
-            _frameGate.RequestFrame();
+            _cameraRevision++;
         }
+        NotifyFrameInvalidated("ResizeViewport");
     }
 
     public void ZoomToFit(double paddingFraction = ViewerZoomPolicy.DefaultPaddingFraction)
     {
+        bool changed = false;
         lock (_stateLock)
         {
             ObjectDisposedException.ThrowIf(_disposed, this);
@@ -183,9 +196,11 @@ public sealed class CadViewerSession : IDisposable
                 _controller.SetSceneBounds(visibleBounds.Value);
                 _controller.FitExtents(paddingFraction);
                 _layoutCameras[_currentLayoutName] = _controller.CurrentCamera;
-                _frameGate.RequestFrame();
+                _cameraRevision++;
+                changed = true;
             }
         }
+        if (changed) NotifyFrameInvalidated("ZoomToFit");
     }
 
     public void Pan(double deltaScreenX, double deltaScreenY)
@@ -195,8 +210,9 @@ public sealed class CadViewerSession : IDisposable
             ObjectDisposedException.ThrowIf(_disposed, this);
             _controller.Pan(deltaScreenX, deltaScreenY);
             _layoutCameras[_currentLayoutName] = _controller.CurrentCamera;
-            _frameGate.RequestFrame();
+            _cameraRevision++;
         }
+        NotifyFrameInvalidated("Pan");
     }
 
     public void Zoom(double factor, double focalScreenX, double focalScreenY)
@@ -206,8 +222,9 @@ public sealed class CadViewerSession : IDisposable
             ObjectDisposedException.ThrowIf(_disposed, this);
             _controller.PinchZoom(new ScreenPoint2(focalScreenX, focalScreenY), factor);
             _layoutCameras[_currentLayoutName] = _controller.CurrentCamera;
-            _frameGate.RequestFrame();
+            _cameraRevision++;
         }
+        NotifyFrameInvalidated("Zoom");
     }
 
     public void ToggleLayerVisibility(string layerName)
@@ -235,8 +252,8 @@ public sealed class CadViewerSession : IDisposable
             newTable.SetLayerVisibility(layerName, isVisible);
             _layerTable = newTable;
             _styleRevision++;
-            _frameGate.RequestFrame();
         }
+        NotifyFrameInvalidated("LayerVisibility");
     }
 
     public void SwitchLayout(string layoutName)
@@ -269,8 +286,19 @@ public sealed class CadViewerSession : IDisposable
                 _layoutCameras[layoutName] = _controller.CurrentCamera;
             }
 
-            _frameGate.RequestFrame();
+            _cameraRevision++;
         }
+        NotifyFrameInvalidated("SwitchLayout");
+    }
+
+    private void NotifyFrameInvalidated(string reason)
+    {
+        Action<string>? handler;
+        lock (_stateLock)
+        {
+            handler = FrameInvalidated;
+        }
+        handler?.Invoke(reason);
     }
 
     public ValueTask RenderAsync(SkiaBitmapRenderSurface surface, CancellationToken cancellationToken = default)

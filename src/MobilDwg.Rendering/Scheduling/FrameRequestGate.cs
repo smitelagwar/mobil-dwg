@@ -71,15 +71,25 @@ public sealed class FrameRequestGate
     {
         lock (_sync)
         {
-            if (surfaceGeneration != _currentSurfaceGeneration)
+            if (_activeTicketId != 0 || _state == FrameGateState.Painting)
+            {
+                return null;
+            }
+
+            if (surfaceGeneration < _currentSurfaceGeneration)
             {
                 // Obsolete surface callback; drop
                 return null;
             }
 
+            if (surfaceGeneration > _currentSurfaceGeneration)
+            {
+                _currentSurfaceGeneration = surfaceGeneration;
+            }
+
             _state = FrameGateState.Painting;
             _activeTicketId = ++_nextTicketId;
-            return new FrameTicket(_activeTicketId, surfaceGeneration, nowMs);
+            return new FrameTicket(_activeTicketId, _currentSurfaceGeneration, nowMs);
         }
     }
 

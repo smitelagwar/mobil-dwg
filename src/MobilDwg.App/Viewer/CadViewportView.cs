@@ -62,6 +62,7 @@ public sealed class CadViewportView : ContentView
     {
         if (_session != null)
         {
+            _session.FrameInvalidated -= OnFrameInvalidated;
             _session.InteractionEngine.CameraChanged -= OnCameraChanged;
 #if ANDROID
             _inputAdapter?.Dispose();
@@ -73,10 +74,17 @@ public sealed class CadViewportView : ContentView
 
         if (_session != null)
         {
+            _session.FrameGate.InvalidateSurface(_surfaceGeneration);
+            _session.FrameInvalidated += OnFrameInvalidated;
             _session.InteractionEngine.CameraChanged += OnCameraChanged;
             AttachNativeInput();
             RequestFrame();
         }
+    }
+
+    private void OnFrameInvalidated(string reason)
+    {
+        RequestFrame();
     }
 
     private void OnCameraChanged(Camera2D camera)
@@ -248,7 +256,7 @@ public sealed class CadViewportView : ContentView
         }
         catch (Exception)
         {
-            SwitchToSoftware();
+            Dispatcher.Dispatch(() => SwitchToSoftware());
         }
     }
 
@@ -272,18 +280,22 @@ public sealed class CadViewportView : ContentView
 
         PaintFrameRequested?.Invoke(canvas, width, height, density);
 
-        if (_session == null || width <= 0 || height <= 0)
+        var session = _session;
+        var surfaceGen = _surfaceGeneration;
+
+        if (session == null || width <= 0 || height <= 0)
         {
             canvas.Clear(new SKColor(0x08, 0x0B, 0x11));
             return;
         }
 
-        if (_session.ViewportPixelWidth != width || _session.ViewportPixelHeight != height)
+        if (session.ViewportPixelWidth != width || session.ViewportPixelHeight != height)
         {
-            _session.ResizeViewport(width, height);
+            session.ResizeViewport(width, height);
         }
 
-        var ticket = _session.FrameGate.TryBeginPaint(_surfaceGeneration);
+        var gate = session.FrameGate;
+        var ticket = gate.TryBeginPaint(surfaceGen);
         if (ticket == null)
         {
             return;
@@ -291,18 +303,18 @@ public sealed class CadViewportView : ContentView
 
         try
         {
-            var quality = _session.InteractionEngine.State != ViewportGestureState.Idle
+            var quality = session.InteractionEngine.State != ViewportGestureState.Idle
                 ? RenderQualityMode.Interaction
                 : RenderQualityMode.Final;
 
-            using var lease = _session.AcquireRenderLease(_surfaceGeneration, quality);
+            using var lease = session.AcquireRenderLease(surfaceGen, quality);
             var context = new RenderFrameContext(width, height, density, quality);
             SkiaScenePainter.DrawFrame(canvas, lease.Snapshot, context);
         }
         finally
         {
-            bool needNextFrame = _session.FrameGate.EndPaint(ticket);
-            FramePresented?.Invoke(_surfaceGeneration);
+            bool needNextFrame = gate.EndPaint(ticket);
+            FramePresented?.Invoke(surfaceGen);
             if (needNextFrame)
             {
 #if ANDROID

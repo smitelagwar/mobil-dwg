@@ -1,4 +1,4 @@
-﻿# Mobil DWG Görüntüleyici Düzeltme ve Kapanış Durumu
+# Mobil DWG Görüntüleyici Düzeltme ve Kapanış Durumu
 
 **Tarih:** 6 Eylül 2026  
 **Plan:** `docs/GEMINI_SON_DENETIM_DUZELTME_PLANI.md`  
@@ -13,8 +13,8 @@
 | Aşama | Başlık | Durum | Hedef / Kapsam |
 |:---:|:---|:---:|:---|
 | **D01** | Güvenilir regresyon zemini ve çalıştırılabilir Android testi | **TAMAMLANDI** | P01–P13 kırmızı regresyonları, Android Instrumentation APK ve yeni gate |
-| **D02** | İlk kare, tek paint ve kaybolmayan çizim isteği | BAŞLANIYOR | P01, P02, P03; Surface generation, tek aktif paint, clock arming |
-| **D03** | Atomik kamera, gerçek native input ve final kalite | BEKLEMEDE | P04, P05; CameraRevision monoton artış, UP sonrası final kare |
+| **D02** | İlk kare, tek paint ve kaybolmayan çizim isteği | **TAMAMLANDI** | P01, P02, P03, P04; Surface generation, tek aktif paint, clock arming |
+| **D03** | Atomik kamera, gerçek native input ve final kalite | BAŞLANIYOR | P05; Monoton CameraRevision, UP sonrası final kare |
 | **D04** | Açma/iptal/kapatma ve geçici dosya sahipliği | BEKLEMEDE | P10, P11; SafeCadFileCache aktif kopya koruması, coordinator semaphore guard |
 | **D05** | Güvenli cache, doğru kalite anahtarı ve sınırlı hazırlık | BEKLEMEDE | P06, P07, P08; LOD toleransı, hatch eviction, raster bitmap yaşam döngüsü |
 | **D06** | Gerçek parser hattında koordinatlar, bloklar ve eğriler | BEKLEMEDE | P12, P13; İç içe blok dönüşüm zinciri, dikey elips sınırları |
@@ -29,13 +29,13 @@
 
 ## 2. Kusur Takip Çizelgesi (P01 – P13)
 
-| ID | Öncelik | Açıklama | Test Yeri | D01 Durumu | Hedef Aşama |
+| ID | Öncelik | Açıklama | Test Yeri | D01 Durumu | Güncel Durum |
 |:---:|:---:|:---|:---|:---:|:---:|
-| **P01** | P0 | View surface generation (2) ile gate (1) uyumsuzluğu, ilk kare reddi | `Rendering.Tests` & `NativeSmokeRunner` | **KIRMIZI** (Yeniden üretildi) | D02 |
-| **P02** | P0 | İki ardışık `TryBeginPaint` eşzamanlı aktif ticket kabul ediyor | `Rendering.Tests` & `NativeSmokeRunner` | **KIRMIZI** (Yeniden üretildi) | D02 |
-| **P03** | P0 | `session.Zoom` gate'i scheduled yapıyor; host clock kurulamıyor | `Rendering.Tests` & `NativeSmokeRunner` | **KIRMIZI** (Yeniden üretildi) | D02 |
-| **P04** | P1 | UI zoom kamerayı değiştiriyor ancak `CameraRevision` artmıyor | `Rendering.Tests` & `NativeSmokeRunner` | **KIRMIZI** (Yeniden üretildi) | D03 |
-| **P05** | P1 | Aynı konumlu UP yalnız `InteractionEnded` üretiyor; final kare istenmiyor | `Rendering.Tests` & `NativeSmokeRunner` | **KIRMIZI** (Yeniden üretildi) | D03 |
+| **P01** | P0 | View surface generation (2) ile gate (1) uyumsuzluğu, ilk kare reddi | `Rendering.Tests` & `NativeSmokeRunner` | **KIRMIZI** | **YEŞİL** (D02) |
+| **P02** | P0 | İki ardışık `TryBeginPaint` eşzamanlı aktif ticket kabul ediyor | `Rendering.Tests` & `NativeSmokeRunner` | **KIRMIZI** | **YEŞİL** (D02) |
+| **P03** | P0 | `session.Zoom` gate'i scheduled yapıyor; host clock kurulamıyor | `Rendering.Tests` & `NativeSmokeRunner` | **KIRMIZI** | **YEŞİL** (D02) |
+| **P04** | P1 | UI zoom kamerayı değiştiriyor ancak `CameraRevision` artmıyor | `Rendering.Tests` & `NativeSmokeRunner` | **KIRMIZI** | **YEŞİL** (D02) |
+| **P05** | P1 | Aynı konumlu UP yalnız `InteractionEnded` üretiyor; final kare istenmiyor | `Rendering.Tests` & `NativeSmokeRunner` | **KIRMIZI** | **KIRMIZI** (D03 hedefi) |
 | **P06** | P1 | Aynı LOD bandındaki kaba geometri (hata=1.0) hassas istekte (<=0.25) dönüyor | `Rendering.Tests` (`TestP06`) | **KIRMIZI** (Yeniden üretildi) | D05 |
 | **P07** | P1 | Hatch girdisi önbellek bütçesini aşıyor; hatch eviction mekanizması eksik | `Rendering.Tests` (`TestP07`) | **KIRMIZI** (Yeniden üretildi) | D05 |
 | **P08** | P0 | Bütçeyi aşan raster bitmap `PutRaster` içinde erken dispose ediliyor | `Rendering.Tests` (`TestP08`) | **KIRMIZI** (Yeniden üretildi) | D05 |
@@ -99,3 +99,44 @@
 
 ### Kapanış Kararı:
 D01 aşaması başarıyla tamamlanmıştır. Bilinen tüm 13 kusur güvenilir kırmızı testlere bağlanmış ve Android çalışma ortamında test edilebilirlik kanıtlanmıştır. Bir sonraki aşama: **D02 — İlk kare, tek paint ve kaybolmayan çizim isteği**.
+
+---
+
+## 4. Aşama D02 Raporu
+
+- **Aşama Adı:** D02 — İlk kare, tek paint ve kaybolmayan çizim isteği
+- **Durum:** TAMAMLANDI (P01, P02, P03 ve P04 tam olarak yeşile çevrildi)
+- **Eklenen / Değişen Dosyalar:**
+  - `src/MobilDwg.Rendering/Scheduling/FrameRequestGate.cs` (Tek aktif bilet ve yüzey nesli adaptasyonu)
+  - `src/MobilDwg.Rendering/Viewer/CadViewerSession.cs` (Kamera revizyon artışı, FrameInvalidated yayımı, gate isteği temizliği)
+  - `src/MobilDwg.App/Viewer/CadViewportView.cs` (Yüzey nesli senkronizasyonu, FrameInvalidated aboneliği, thread-safe çizim yerelleri)
+  - `docs/VIEWER_DUZELTME_DURUMU.md` (Durum belgesi güncellemesi)
+
+### Çözülen Kusurlar ve Uygulanan Değişiklikler:
+1. **P01 (İlk Yüzey Nesli ve İlk Kare Kabulü):**
+   - `CadViewportView` oluşturulduğunda artan yüzey nesli (2), `BindSession` sırasında `_session.FrameGate.InvalidateSurface(_surfaceGeneration)` çağrılarak kapıya senkronize edildi.
+   - `FrameRequestGate.TryBeginPaint`, `surfaceGeneration > _currentSurfaceGeneration` durumunda nesli güncelleyerek geçerli ilk kare talebini kabul eder hale getirildi.
+2. **P02 (Eşzamanlı Çizim Bileti Koruması):**
+   - `FrameRequestGate.TryBeginPaint` içine aktif bir çizim sürerken (`_activeTicketId != 0` veya `State == FrameGateState.Painting`) ikinci bilet talebini kesin olarak `null` döndüren koruma eklendi.
+3. **P03 (Host Çerçeve Saati Kurulumu):**
+   - `CadViewerSession.Zoom`, `Pan`, `ZoomToFit`, `ResizeViewport`, `SetLayerVisibility` ve `SwitchLayout` metotlarındaki doğrudan `_frameGate.RequestFrame()` çağrıları kaldırıldı.
+   - Bu mutasyonlar `FrameInvalidated(reason)` olayı tetikler; `CadViewportView` bu olayı yakalayarak `RequestFrame()` üzerinden kapıyı tek merkezden yönetir ve saat (clock) başarıyla kurulur.
+4. **P04 (Zoom ve Mutasyonlarda CameraRevision Artışı):**
+   - `CadViewerSession` içinde bağımsız `_cameraRevision` alanı tutularak `Zoom`, `Pan`, `ZoomToFit`, `ResizeViewport`, `SwitchLayout` ve `InteractionEngine.CameraChanged` tetiklendiğinde revizyon monoton olarak artırıldı.
+
+### Test ve Doğrulama Kanıtları:
+- **Masaüstü Regresyon Testleri:**
+  - `P01`: `[PASS] FrameRequestGate First Surface Generation Admission`
+  - `P02`: `[PASS] FrameRequestGate Concurrent Paint Ticket Guard`
+  - `P03`: `[PASS] CadViewerSession Zoom Host Frame Clock Arming`
+  - `P04`: `[PASS] CadViewerSession CameraRevision Increment on Zoom`
+- **Android Instrumentation (Gerçek Cihaz / Emülatör Çalışması):**
+  - `test_NATIVE_P01_FIRST_SURFACE_GENERATION`: `PASS`
+  - `test_NATIVE_P02_CONCURRENT_PAINT_GUARD`: `PASS`
+  - `test_NATIVE_P03_HOST_CLOCK_ARMING`: `PASS`
+  - `test_NATIVE_P04_CAMERA_REVISION`: `PASS`
+  - `test_NATIVE_SAMPLE_DRAWING_FIRST_FRAME`: `PASS` (522 çizim pikseli başarıyla boyandı)
+  - `test_NATIVE_DXF_OPEN_RENDER`: `PASS` (56757 çizim pikseli başarıyla boyandı)
+
+### Kapanış Kararı:
+D02 aşaması başarıyla tamamlanmış ve P01, P02, P03, P04 doğrulanmıştır. Bir sonraki aşama: **D03 — Atomik kamera, gerçek native input ve final kalite**.
