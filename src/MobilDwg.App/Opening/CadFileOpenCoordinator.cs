@@ -1,5 +1,6 @@
 using MobilDwg.Core.Documents;
 using MobilDwg.Core.Reading;
+using MobilDwg.Rendering.Scene;
 
 namespace MobilDwg.App.Opening;
 
@@ -8,6 +9,7 @@ public sealed class CadFileOpenCoordinator : IAsyncDisposable
     private readonly object _sync = new();
     private readonly ICadDocumentReader _reader;
     private readonly SafeCadFileCache _cache;
+    private readonly SemaphoreSlim _parseGate = new(1, 1);
 
     private CancellationTokenSource? _activeRequestCancellation;
     private CadOpenLease? _current;
@@ -29,6 +31,28 @@ public sealed class CadFileOpenCoordinator : IAsyncDisposable
             lock (_sync)
             {
                 return _current?.Session;
+            }
+        }
+    }
+
+    public CadExtractedDocument? CurrentExtractedDocument
+    {
+        get
+        {
+            lock (_sync)
+            {
+                return _current?.ExtractedDocument;
+            }
+        }
+    }
+
+    public RenderScene? CurrentPreparedScene
+    {
+        get
+        {
+            lock (_sync)
+            {
+                return _current?.PreparedScene;
             }
         }
     }
@@ -57,9 +81,21 @@ public sealed class CadFileOpenCoordinator : IAsyncDisposable
 
         CachedCadFile? cachedFile = null;
         CadDocumentSession? parsedSession = null;
+        CadExtractedDocument? extractedDocument = null;
+        RenderScene? preparedScene = null;
+        bool gateAcquired = false;
 
         try
         {
+            // At most one active parse worker at a time; wait for gate
+            await _parseGate.WaitAsync(requestCancellation.Token).ConfigureAwait(false);
+            gateAcquired = true;
+
+            if (!IsAccepted(generation, requestCancellation.Token))
+            {
+                return CreateDiscardedResult(generation, requestCancellation.Token);
+            }
+
             ReportIfAccepted(
                 generation,
                 requestCancellation.Token,
@@ -96,7 +132,7 @@ public sealed class CadFileOpenCoordinator : IAsyncDisposable
                 new CadFileOpenProgress(
                     generation,
                     CadFileOpenPhase.Parsing,
-                    Message: "Parsing on a worker thread; the configured parser may not support cooperative cancellation after parsing begins."));
+                    Message: "Parsing CAD document on worker thread."));
 
             var readerProgress = progress is null
                 ? null
@@ -112,7 +148,7 @@ public sealed class CadFileOpenCoordinator : IAsyncDisposable
                             Message: readerUpdate.Message)));
 
             var parseSource = cachedFile;
-            parsedSession = await Task.Run(
+            var (sessionResult, extractedResult, sceneResult) = await Task.Run<(CadDocumentSession? session, CadExtractedDocument? extracted, RenderScene? scene)>(
                     async () =>
                     {
                         using var stream = parseSource.OpenRead();
@@ -121,23 +157,51 @@ public sealed class CadFileOpenCoordinator : IAsyncDisposable
                             parseSource.DisplayName,
                             parseSource.Length,
                             LeaveOpen: false);
-                        return await _reader.OpenAsync(request, readerProgress, requestCancellation.Token)
+
+                        var session = await _reader.OpenAsync(request, readerProgress, requestCancellation.Token)
                             .ConfigureAwait(false);
+
+                        if (requestCancellation.IsCancellationRequested)
+                        {
+                            await session.DisposeAsync().ConfigureAwait(false);
+                            return (null, null, null);
+                        }
+
+                        // Extract entity model off UI thread
+                        CadExtractedDocument? extracted = null;
+                        RenderScene? scene = null;
+                        if (session.Handle is MobilDwg.Cad.AcadSharp.AcadSharpDocumentHandle)
+                        {
+                            extracted = MobilDwg.Cad.AcadSharp.AcadSharpEntityExtractor.Extract(session.Handle);
+                            scene = MobilDwg.Rendering.Scene.CadExtractedSceneBuilder.Build(extracted);
+                        }
+
+                        return (session, extracted, scene);
                     },
                     CancellationToken.None)
                 .ConfigureAwait(false);
 
-            if (!IsAccepted(generation, requestCancellation.Token))
+            parsedSession = sessionResult;
+            extractedDocument = extractedResult;
+            preparedScene = sceneResult;
+
+            if (!IsAccepted(generation, requestCancellation.Token) || parsedSession is null)
             {
-                await parsedSession.DisposeAsync().ConfigureAwait(false);
-                parsedSession = null;
-                await cachedFile.DisposeAsync().ConfigureAwait(false);
-                cachedFile = null;
+                if (parsedSession is not null)
+                {
+                    await parsedSession.DisposeAsync().ConfigureAwait(false);
+                    parsedSession = null;
+                }
+                if (cachedFile is not null)
+                {
+                    await cachedFile.DisposeAsync().ConfigureAwait(false);
+                    cachedFile = null;
+                }
                 ReportSupersededIfApplicable(generation, requestCancellation.Token, progress);
                 return CreateDiscardedResult(generation, requestCancellation.Token);
             }
 
-            var lease = new CadOpenLease(parsedSession, cachedFile);
+            var lease = new CadOpenLease(parsedSession, cachedFile, extractedDocument, preparedScene);
             CadOpenLease? previousLease;
             var committed = TryCommit(generation, requestCancellation.Token, lease, out previousLease);
             if (!committed)
@@ -162,14 +226,16 @@ public sealed class CadFileOpenCoordinator : IAsyncDisposable
                 generation,
                 requestCancellation.Token,
                 progress,
-                new CadFileOpenProgress(generation, CadFileOpenPhase.Ready, Message: "CAD metadata and diagnostics are ready."));
+                new CadFileOpenProgress(generation, CadFileOpenPhase.Ready, Message: "CAD document, extracted geometry, and scene are ready."));
 
             return new CadFileOpenResult(
                 generation,
                 CadFileOpenDisposition.Ready,
                 current.Metadata,
                 current.Diagnostics.ToArray(),
-                current.CompatibilityIssues.ToArray());
+                current.CompatibilityIssues.ToArray(),
+                lease.ExtractedDocument,
+                lease.PreparedScene);
         }
         catch (OperationCanceledException) when (requestCancellation.IsCancellationRequested)
         {
@@ -213,6 +279,11 @@ public sealed class CadFileOpenCoordinator : IAsyncDisposable
         }
         finally
         {
+            if (gateAcquired)
+            {
+                _parseGate.Release();
+            }
+
             lock (_sync)
             {
                 if (ReferenceEquals(_activeRequestCancellation, requestCancellation))
@@ -247,11 +318,6 @@ public sealed class CadFileOpenCoordinator : IAsyncDisposable
         return true;
     }
 
-    /// <summary>
-    /// Clears any committed session lease after a failed open so that a subsequent
-    /// OpenLatestAsync call starts from a clean state without recreating the coordinator.
-    /// Safe to call from the UI thread after catching an open error.
-    /// </summary>
     public async ValueTask ResetCurrentSessionAsync()
     {
         CadOpenLease? current;
@@ -293,6 +359,7 @@ public sealed class CadFileOpenCoordinator : IAsyncDisposable
         }
 
         cancellation?.Cancel();
+        _parseGate.Dispose();
 
         if (current is not null)
         {
@@ -378,15 +445,26 @@ public sealed class CadFileOpenCoordinator : IAsyncDisposable
     {
         private CadDocumentSession? _session;
         private CachedCadFile? _cachedFile;
+        private CadExtractedDocument? _extractedDocument;
+        private RenderScene? _preparedScene;
 
-        public CadOpenLease(CadDocumentSession session, CachedCadFile cachedFile)
+        public CadOpenLease(
+            CadDocumentSession session,
+            CachedCadFile cachedFile,
+            CadExtractedDocument? extractedDocument = null,
+            RenderScene? preparedScene = null)
         {
             _session = session;
             _cachedFile = cachedFile;
+            _extractedDocument = extractedDocument;
+            _preparedScene = preparedScene;
         }
 
         public CadDocumentSession Session =>
             Volatile.Read(ref _session) ?? throw new ObjectDisposedException(nameof(CadOpenLease));
+
+        public CadExtractedDocument? ExtractedDocument => Volatile.Read(ref _extractedDocument);
+        public RenderScene? PreparedScene => Volatile.Read(ref _preparedScene);
 
         public async ValueTask DisposeAsync()
         {
@@ -401,6 +479,9 @@ public sealed class CadFileOpenCoordinator : IAsyncDisposable
             {
                 await cachedFile.DisposeAsync().ConfigureAwait(false);
             }
+
+            Interlocked.Exchange(ref _extractedDocument, null);
+            Interlocked.Exchange(ref _preparedScene, null);
         }
     }
 

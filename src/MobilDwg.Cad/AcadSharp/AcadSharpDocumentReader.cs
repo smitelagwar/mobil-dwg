@@ -69,7 +69,7 @@ public sealed class AcadSharpDocumentReader : ICadDocumentReader
                 document.Header?.Version.ToString() ?? preflight.AcadVersion,
                 request.DisplayName);
 
-            var handle = new AcadSharpDocumentHandle(document, stopwatch.Elapsed);
+            var handle = new AcadSharpDocumentHandle(document, stopwatch.Elapsed, preflight.Format, metadata.AcadVersion);
             progress?.Report(new CadReadProgress(CadReadStage.Completed, message: "CAD document parsed."));
             return new CadDocumentSession(handle, metadata, diagnostics, DistinctCompatibility(compatibility));
         }
@@ -315,16 +315,24 @@ public sealed class AcadSharpDocumentHandle : ICadDocumentHandle
 {
     private CadDocument? _document;
 
-    internal AcadSharpDocumentHandle(CadDocument document, TimeSpan parseDuration)
+    internal AcadSharpDocumentHandle(
+        CadDocument document,
+        TimeSpan parseDuration,
+        CadFormat format = CadFormat.Unknown,
+        string? acadVersion = null)
     {
         _document = document ?? throw new ArgumentNullException(nameof(document));
         ParseDuration = parseDuration;
+        Format = format;
+        AcadVersion = acadVersion ?? document.Header?.Version.ToString();
     }
 
     internal CadDocument Document =>
         Volatile.Read(ref _document) ?? throw new ObjectDisposedException(nameof(AcadSharpDocumentHandle));
 
     public TimeSpan ParseDuration { get; }
+    public CadFormat Format { get; }
+    public string? AcadVersion { get; }
 
     public ValueTask DisposeAsync()
     {

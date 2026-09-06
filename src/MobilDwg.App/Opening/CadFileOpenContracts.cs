@@ -65,10 +65,12 @@ public enum CadFileOpenPhase
 {
     Copying = 0,
     Parsing = 1,
-    Ready = 2,
-    CancelRequested = 3,
-    Superseded = 4,
-    Failed = 5,
+    Extracting = 2,
+    BuildingScene = 3,
+    Ready = 4,
+    CancelRequested = 5,
+    Superseded = 6,
+    Failed = 7,
 }
 
 public sealed record CadFileOpenProgress(
@@ -92,13 +94,17 @@ public sealed class CadFileOpenResult
         CadFileOpenDisposition disposition,
         CadDocumentMetadata? metadata = null,
         IReadOnlyList<CadDiagnostic>? diagnostics = null,
-        IReadOnlyList<CadCompatibilityIssue>? compatibilityIssues = null)
+        IReadOnlyList<CadCompatibilityIssue>? compatibilityIssues = null,
+        CadExtractedDocument? extractedDocument = null,
+        MobilDwg.Rendering.Scene.RenderScene? preparedScene = null)
     {
         Generation = generation;
         Disposition = disposition;
         Metadata = metadata;
         Diagnostics = diagnostics ?? Array.Empty<CadDiagnostic>();
         CompatibilityIssues = compatibilityIssues ?? Array.Empty<CadCompatibilityIssue>();
+        ExtractedDocument = extractedDocument;
+        PreparedScene = preparedScene;
     }
 
     public long Generation { get; }
@@ -110,6 +116,10 @@ public sealed class CadFileOpenResult
     public IReadOnlyList<CadDiagnostic> Diagnostics { get; }
 
     public IReadOnlyList<CadCompatibilityIssue> CompatibilityIssues { get; }
+
+    public CadExtractedDocument? ExtractedDocument { get; }
+
+    public MobilDwg.Rendering.Scene.RenderScene? PreparedScene { get; }
 }
 
 public sealed class CadFileQuotaExceededException : IOException

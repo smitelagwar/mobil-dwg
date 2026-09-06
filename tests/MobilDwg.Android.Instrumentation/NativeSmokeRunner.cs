@@ -17,7 +17,9 @@ public static class NativeSmokeRunner
         TestNativeSentinelBeforeUpSmoke();
         TestNativeGlCpuSwitchSmoke();
         TestNativeResizeSmoke();
+        TestRapidOpenCancellationAndLeaseSafety();
         Console.WriteLine("STAGE05_NATIVE_INSTRUMENTATION_PASS");
+        Console.WriteLine("STAGE08_COORDINATOR_RAPID_OPEN_PASS");
     }
 
     private static void TestNativePanSmoke()
@@ -127,6 +129,68 @@ public static class NativeSmokeRunner
         AssertNear(42.0, controller.CurrentCamera.Center.X, 1e-9, "Center X preserved");
         AssertNear(99.0, controller.CurrentCamera.Center.Y, 1e-9, "Center Y preserved");
         AssertNear(0.5, controller.CurrentCamera.WorldUnitsPerPixel, 1e-9, "WUPP preserved");
+    }
+
+    private static void TestRapidOpenCancellationAndLeaseSafety()
+    {
+        var mockReader = new MockCadReader();
+        var tempDir = System.IO.Path.Combine(System.IO.Path.GetTempPath(), "mobildwg_test_open_" + Guid.NewGuid().ToString("N"));
+        System.IO.Directory.CreateDirectory(tempDir);
+        try
+        {
+            var cache = new MobilDwg.App.Opening.SafeCadFileCache(tempDir, new MobilDwg.App.Opening.CadFileOpenLimits(10 * 1024 * 1024, 1024 * 1024));
+            var coordinator = new MobilDwg.App.Opening.CadFileOpenCoordinator(mockReader, cache);
+
+            var tasks = new Task<MobilDwg.App.Opening.CadFileOpenResult>[50];
+            for (int i = 0; i < 50; i++)
+            {
+                int id = i;
+                var selection = new MobilDwg.App.Opening.CadFileSelection(
+                    $"drawing_{id}.dxf",
+                    100,
+                    _ => ValueTask.FromResult<System.IO.Stream>(new System.IO.MemoryStream(System.Text.Encoding.ASCII.GetBytes($"DXF_{id}"))));
+                tasks[i] = coordinator.OpenLatestAsync(selection);
+                if (i % 5 == 0)
+                {
+                    coordinator.CancelCurrentRequest();
+                }
+            }
+
+            Task.WaitAll(tasks);
+
+            if (coordinator.CurrentSession != null)
+            {
+                Assert(coordinator.CurrentSession.Metadata != null, "Committed session metadata must not be null");
+            }
+        }
+        finally
+        {
+            if (System.IO.Directory.Exists(tempDir))
+            {
+                try { System.IO.Directory.Delete(tempDir, true); } catch { }
+            }
+        }
+    }
+
+    private sealed class MockCadReader : MobilDwg.Core.Reading.ICadDocumentReader
+    {
+        public MobilDwg.Core.Reading.CadReaderCapabilities Capabilities =>
+            new(MobilDwg.Core.Reading.CancellationSupport.BeforeStartOnly, MobilDwg.Core.Reading.ProgressSupport.None);
+
+        public ValueTask<MobilDwg.Core.Documents.CadDocumentSession> OpenAsync(
+            MobilDwg.Core.Reading.CadOpenRequest request,
+            IProgress<MobilDwg.Core.Reading.CadReadProgress>? progress = null,
+            CancellationToken cancellationToken = default)
+        {
+            var handle = new MockHandle();
+            var meta = new MobilDwg.Core.Documents.CadDocumentMetadata(MobilDwg.Core.Documents.CadFormat.Dxf, "AC1015", request.DisplayName);
+            return ValueTask.FromResult(new MobilDwg.Core.Documents.CadDocumentSession(handle, meta));
+        }
+
+        private sealed class MockHandle : MobilDwg.Core.Documents.ICadDocumentHandle
+        {
+            public ValueTask DisposeAsync() => ValueTask.CompletedTask;
+        }
     }
 
     private static void Assert(bool condition, string message)

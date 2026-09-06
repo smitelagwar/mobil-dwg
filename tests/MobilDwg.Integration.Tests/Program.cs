@@ -1,9 +1,10 @@
-﻿using System;
+using System;
 using System.IO;
 using System.Linq;
 using System.Threading.Tasks;
 using MobilDwg.Cad.AcadSharp;
 using MobilDwg.Core.Documents;
+using MobilDwg.Core.Guards;
 using MobilDwg.Core.Reading;
 using MobilDwg.Rendering.Scene;
 
@@ -18,7 +19,7 @@ public static class Program
             var repoRoot = FindRepoRoot();
             var reader = new AcadSharpDocumentReader();
 
-            // 1. Test real DXF fixture
+            // 1. Test real DXF fixture with comprehensive extraction assertions
             var dxfPath = Path.Combine(repoRoot, "fixtures", "public", "synthetic", "synthetic_turkish_basic_ac1015.dxf");
             Assert(File.Exists(dxfPath), $"DXF fixture missing: {dxfPath}");
 
@@ -34,11 +35,41 @@ public static class Program
                 var extracted = AcadSharpEntityExtractor.Extract(session.Handle!);
                 Assert(extracted.Entities.Count > 0, $"Expected extracted entities > 0, got {extracted.Entities.Count}");
                 Assert(extracted.Layers.Count > 0, $"Expected extracted layers > 0, got {extracted.Layers.Count}");
+                Assert(extracted.Format == "DXF", $"Expected extracted document format DXF, got {extracted.Format}");
+                Assert(extracted.Version == "AC1015", $"Expected extracted document version AC1015, got {extracted.Version}");
+
+                // Verify Turkish Unicode decoding in text
+                bool foundTurkishText = extracted.Entities.Any(e =>
+                    e.Text is not null && (e.Text.Contains("İstanbul") || e.Text.Contains("ÇGÖŞÜ") || e.Text.Contains("ıİ")));
+                Assert(foundTurkishText, "Turkish CAD text unicode escape sequence (\\U+0130 etc) was not correctly decoded!");
+
+                // Verify nested block expansion and unique IDs (no collisions)
+                var handleSet = new HashSet<string>(StringComparer.Ordinal);
+                foreach (var ent in extracted.Entities)
+                {
+                    Assert(handleSet.Add(ent.Handle), $"Duplicate entity handle detected in extracted document: {ent.Handle}");
+                }
+
+                bool hasExpandedBlocks = extracted.Entities.Any(e => e.BlockOwner != null);
+                Assert(hasExpandedBlocks, "Expected expanded block instance entities from OUTER/INNER insert hierarchy.");
 
                 var scene = CadExtractedSceneBuilder.Build(extracted);
                 Assert(scene.Entities.Count > 0, $"Expected scene entities > 0, got {scene.Entities.Count}");
                 Assert(scene.WorldBounds.HasValue && scene.WorldBounds.Value.Width > 0 && scene.WorldBounds.Value.Height > 0,
                     $"Expected positive world bounds, got {scene.WorldBounds}");
+
+                // Verify every scene entity has a populated CadEntityStyle
+                bool allHaveCadStyle = scene.Entities.All(e => e.CadStyle != null);
+                Assert(allHaveCadStyle, "Not all scene entities had a populated CadEntityStyle!");
+
+                // Verify original draw order is maintained
+                int lastOrder = -1;
+                foreach (var ent in scene.Entities)
+                {
+                    int ord = ent.Source.SourceIndex ?? int.MaxValue;
+                    Assert(ord >= lastOrder, $"Draw order was not monotonically non-decreasing: {ord} < {lastOrder}");
+                    lastOrder = ord;
+                }
             }
 
             // 2. Test real DWG fixture if present
@@ -54,12 +85,29 @@ public static class Program
 
                 var extracted = AcadSharpEntityExtractor.Extract(session.Handle!);
                 Assert(extracted.Entities.Count > 0, "DWG extracted entity count was 0");
+                Assert(extracted.Format == "DWG", $"Expected extracted document format DWG, got {extracted.Format}");
 
                 var scene = CadExtractedSceneBuilder.Build(extracted);
                 Assert(scene.Entities.Count > 0, "DWG scene entity count was 0");
+                Assert(scene.Entities.All(e => e.CadStyle != null), "DWG scene entities must have populated CadEntityStyle");
             }
 
-            // 3. Test negative fixtures (missing font, missing xref)
+            // 3. Test resource budget guards and truncation
+            await using (var stream = File.OpenRead(dxfPath))
+            {
+                var request = new CadOpenRequest(stream, Path.GetFileName(dxfPath), stream.Length, LeaveOpen: true);
+                await using var session = await reader.OpenAsync(request);
+
+                var tightBudget = new CadBudgetGuard(new CadResourceBudget { MaxEntities = 2 });
+                var truncated = AcadSharpEntityExtractor.Extract(session.Handle!, tightBudget);
+
+                Assert(truncated.Entities.Count <= 2, $"Expected entity count truncated to <= 2, got {truncated.Entities.Count}");
+                Assert(truncated.Diagnostics.Any(d => d.Code == "RESOURCE_BUDGET_EXCEEDED_ENTITIES"),
+                    "Expected RESOURCE_BUDGET_EXCEEDED_ENTITIES diagnostic in truncated document.");
+                Assert(!truncated.IsFullyCompliant, "Truncated document should not report IsFullyCompliant == true");
+            }
+
+            // 4. Test negative fixtures (missing font, missing xref)
             var negFontPath = Path.Combine(repoRoot, "fixtures", "public", "synthetic", "negative_missing_font_ac1015.dxf");
             if (File.Exists(negFontPath))
             {
@@ -79,6 +127,7 @@ public static class Program
             }
 
             Console.WriteLine("STAGE01_INTEGRATION_TESTS_PASS");
+            Console.WriteLine("STAGE08_CAD_EXTRACTION_TESTS_PASS");
             return 0;
         }
         catch (Exception ex)

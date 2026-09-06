@@ -2021,31 +2021,33 @@ public sealed class MainPage : ContentPage
                 return;
             }
 
-            _status.Text =
-                $"Hazır: {result.Metadata?.Format} {result.Metadata?.AcadVersion ?? "?"}; diagnostics={result.Diagnostics.Count}; compatibility={result.CompatibilityIssues.Count}";
+            string summary = result.ExtractedDocument?.GetSummaryString() ?? $"{result.Metadata?.Format} {result.Metadata?.AcadVersion ?? "?"}";
+            _status.Text = $"Hazır: {summary}; diag={result.Diagnostics.Count}; uyum={result.CompatibilityIssues.Count}";
 #if V06_VALIDATION
             LogV06(
                 $"V06_REAL_APP_SAFE_OPEN_PASS format={result.Metadata?.Format} version={result.Metadata?.AcadVersion ?? "unknown"} generation={result.Generation} diagnostics={result.Diagnostics.Count} compatibility={result.CompatibilityIssues.Count}");
 #endif
 
-            if (coordinator.CurrentSession is not null)
+            if (result.PreparedScene is not null)
             {
                 try
                 {
-#if ANDROID
-                    var swExt = System.Diagnostics.Stopwatch.StartNew();
-#endif
+                    await DisplayCadSceneAsync(
+                        result.PreparedScene,
+                        selection.DisplayName ?? "cizim.dwg",
+                        result.ExtractedDocument?.Version ?? result.Metadata?.AcadVersion ?? "Unknown");
+                }
+                catch (Exception renderEx)
+                {
+                    _status.Text = $"Çizim yüklendi ({result.Metadata?.Format}), render hazırlığı: {renderEx.Message}";
+                }
+            }
+            else if (coordinator.CurrentSession is not null)
+            {
+                try
+                {
                     var extracted = AcadSharpEntityExtractor.Extract(coordinator.CurrentSession.Handle);
-#if ANDROID
-                    swExt.Stop();
-                    Android.Util.Log.Info("MobilDwgCAD", $"STAGE_EXTRACT_DONE count={extracted.Entities.Count} in {swExt.ElapsedMilliseconds}ms");
-                    var swScn = System.Diagnostics.Stopwatch.StartNew();
-#endif
                     var scene = CadExtractedSceneBuilder.Build(extracted);
-#if ANDROID
-                    swScn.Stop();
-                    Android.Util.Log.Info("MobilDwgCAD", $"STAGE_SCENE_DONE entities={scene.Entities.Count} in {swScn.ElapsedMilliseconds}ms");
-#endif
                     await DisplayCadSceneAsync(scene, selection.DisplayName ?? "cizim.dwg", extracted.Version);
                 }
                 catch (Exception renderEx)

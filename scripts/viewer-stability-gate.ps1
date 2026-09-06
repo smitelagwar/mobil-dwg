@@ -226,6 +226,36 @@ if ($stageNum -ge 7) {
     Pass "VIEWER_STABILITY_STAGE07_PASS"
 }
 
+# Stage 08 checks
+if ($stageNum -ge 8) {
+    Write-Host "Verifying Stage 08 Lossless Document Extraction and Coordinator Pipeline..."
+
+    $ocsTransformFile = Join-Path $repoRoot "src/MobilDwg.Core/Coordinates/OcsTransform.cs"
+    if (-not (Test-Path $ocsTransformFile)) { Fail "OcsTransform.cs missing" }
+    Pass "STAGE08_OCS_TRANSFORM_SOURCE_PASS"
+
+    $docModelFile = Join-Path $repoRoot "src/MobilDwg.Core/Reading/CadExtractedDocument.cs"
+    if (-not (Test-Path $docModelFile)) { Fail "CadExtractedDocument.cs missing" }
+    Pass "STAGE08_EXTRACTED_DOCUMENT_MODEL_SOURCE_PASS"
+
+    $extractorFile = Join-Path $repoRoot "src/MobilDwg.Cad/AcadSharp/AcadSharpEntityExtractor.cs"
+    if (-not (Test-Path $extractorFile)) { Fail "AcadSharpEntityExtractor.cs missing" }
+    Pass "STAGE08_ENTITY_EXTRACTOR_SOURCE_PASS"
+
+    $sceneBuilderFile = Join-Path $repoRoot "src/MobilDwg.Rendering/Scene/CadExtractedSceneBuilder.cs"
+    if (-not (Test-Path $sceneBuilderFile)) { Fail "CadExtractedSceneBuilder.cs missing" }
+    Pass "STAGE08_SCENE_BUILDER_SOURCE_PASS"
+
+    $openCoordFile = Join-Path $repoRoot "src/MobilDwg.App/Opening/CadFileOpenCoordinator.cs"
+    if (-not (Test-Path $openCoordFile)) { Fail "CadFileOpenCoordinator.cs missing" }
+    Pass "STAGE08_FILE_OPEN_COORDINATOR_SOURCE_PASS"
+
+    if (-not ($integText -match "STAGE08_CAD_EXTRACTION_TESTS_PASS")) { Fail "STAGE08_CAD_EXTRACTION_TESTS_PASS marker missing in integration tests" }
+    Pass "STAGE08_CAD_EXTRACTION_TESTS_PASS"
+
+    Pass "VIEWER_STABILITY_STAGE08_PASS"
+}
+
 Write-Host "=== Viewer Stability Gate Passed for Stage $Stage ==="
 exit 0
 

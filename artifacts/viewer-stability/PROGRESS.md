@@ -16,8 +16,8 @@
 | 05 | Session, scheduler ve üretim viewer bağlantısı | TAMAMLANDI |
 | 06 | Muhafazakâr bounds ve mekânsal indeks | TAMAMLANDI |
 | 07 | Cache, geometri hazırlığı ve kontrollü ayrıntı | TAMAMLANDI |
-| 08 | Gerçek dosya açma ve parser köprüsü | BAŞLANIYOR |
-| 09 | Geometri, koordinat uzayları ve block | BAŞLAMADI |
+| 08 | Gerçek dosya açma ve parser köprüsü | TAMAMLANDI |
+| 09 | Geometri, koordinat uzayları ve block | BAŞLANIYOR |
 | 10 | Metin, ölçülendirme ve hatch | BAŞLAMADI |
 | 11 | Layout, referanslar ve viewer araçları | BAŞLAMADI |
 | 12 | Yaşam döngüsü ve hata kurtarma | BAŞLAMADI |
@@ -311,5 +311,51 @@ Geçmeyen veya çalıştırılamayan koşullar: Yok.
 Bir sonraki aşama: Aşama 08 — Gerçek dosya açma ve parser köprüsü  
 
 ---
+
+### Aşama 08 Raporu
+
+Aşama: 08 — Gerçek dosya açma ve parser köprüsü  
+Durum: TAMAMLANDI  
+Son HEAD: `465a04b` (commit: `fix(cad): connect lossless document extraction to viewer sessions`)  
+Değişen dosyalar:
+- `scripts/viewer-stability-gate.ps1`
+- `src/MobilDwg.Core/Coordinates/OcsTransform.cs`
+- `src/MobilDwg.Core/Reading/CadExtractedDocument.cs`
+- `src/MobilDwg.Cad/AcadSharp/AcadSharpDocumentReader.cs`
+- `src/MobilDwg.Cad/AcadSharp/AcadSharpEntityExtractor.cs`
+- `src/MobilDwg.Rendering/Scene/CadExtractedSceneBuilder.cs`
+- `src/MobilDwg.App/Opening/CadFileOpenContracts.cs`
+- `src/MobilDwg.App/Opening/CadFileOpenCoordinator.cs`
+- `src/MobilDwg.App/MainPage.cs`
+- `tests/MobilDwg.Integration.Tests/Program.cs`
+- `tests/MobilDwg.Android.Instrumentation/NativeSmokeRunner.cs`
+(Kullanıcı başlangıç değişiklikleri `src/MobilDwg.Rendering/Scene/RenderScene.cs` public constructor görünürlüğü, `release/SHA256SUMS.txt`, `tools/CadControlBenchmark/` bozulmadan çalışma ağacında korundu.)  
+Kullanıcıya yansıyan davranış:
+- `CadExtractedDocument` zengin, tip-güvenli (type-safe payload) ve dondurulmuş (immutable) modele genişletildi; ACadSharp tipleri Core/Rendering/App sınırını aşmaz.
+- Extractor'ın Format alanına version yazma hatası düzeltildi; gerçek `Format` ("DWG" veya "DXF") ve `Version` ("AC1015") ayrıştırıldı.
+- Her entity'ye kaynak sıra numarası (`SourceOrder`), çizim sırası (`DrawOrder`), görünürlük, `CadEntityColor` (ByLayer, ByBlock, 256 ACI indeksi, TrueColor), lineweight, saydamlık ve linetype bağlandı.
+- `RenderStyleToken` ve `CadEntityStyle` birlikte üretilip sahne varlıklarına aktarıldı; renderer'ın okuduğu `CadStyle` artık tam doludur.
+- ACI 1–9 dışındaki renklerin griye düşürülmesi engellendi; 256 ACI renk paleti ve koyu/açık temada ACI7 kontrast davranışı eksiksiz uygulandı.
+- Autodesk OCS (Nesne Koordinat Sistemi) Arbitrary Axis Algoritması (`OcsTransform`) uygulandı; düzlemsel varlıklar WCS uzayına dönüştürülürken zaten WCS olan Line/Point varlıklarına gereksiz dönüşüm yapılmadı.
+- Blok (INSERT) referansları için özyinelemeli blok genişletme (`ExpandBlockInsert`) yapıldı; iç içe geçmiş bloklar (OUTER -> INNER) dünya koordinatlarında doğru yerlerine açıldı, handle çakışmaları `${instancePath}/${blockName}:${insertHandle}:${childHandle}` formatıyla giderildi.
+- Türkçe CAD metinlerindeki `\U+XXXX` Unicode kaçış karakterleri (`\U+0130` -> İ vb.) çözümlendi ve MText biçim temizliği yapıldı.
+- Desteklenmeyen varlıklar (`Leader`, `ProxyEntity` vb.) sessizce kaybolmaz; diagnostic ve uyumluluk kaydı olarak saklanır, varsa yaklaşık sınırları ile temsil kutusu oluşturulur.
+- 256 MB dosya boyutu, 250.000 entity, 32 blok derinliği, 64 KB metin ve 10.000 hatch parça sınırı `CadBudgetGuard` ile üretim akışına bağlandı; aşımda güvenli kesinti ve diagnostic üretilir.
+- Extraction, scene build, bounds hesaplama ve `StaticSceneBvh` indeks hazırlığı UI thread'inden worker thread'e (`CadFileOpenCoordinator`) taşındı; UI thread donması sıfırlandı.
+- Sınırsız eşzamanlı parse önlendi (`_parseGate = new SemaphoreSlim(1, 1)`); en fazla 1 çalışan parse ve 1 en güncel bekleyen istek kuralı işletildi, hızlı 50–100 iptal/açılış dizisinde yalnız son istek işlenip yayınlandı.
+Çalıştırılan gerçek komutlar ve exit code:
+- `dotnet run --project tests/MobilDwg.Integration.Tests/MobilDwg.Integration.Tests.csproj -c Release` (exit code: 0, STAGE08_CAD_EXTRACTION_TESTS_PASS)
+- `dotnet build src/MobilDwg.App/MobilDwg.App.csproj -f net10.0-android36.0 -c Release` (exit code: 0, 0 warning, 0 error)
+- `dotnet build tests/MobilDwg.Android.Instrumentation/MobilDwg.Android.Instrumentation.csproj` (exit code: 0, 0 warning, 0 error)
+- `powershell -ExecutionPolicy Bypass -File scripts/viewer-stability-gate.ps1 -Stage 08` (exit code: 0, VIEWER_STABILITY_STAGE08_PASS)  
+Ölçülen metrikler ve kanıt dosyaları:
+- `artifacts/viewer-stability/stage08/gate-summary.txt`
+- `artifacts/viewer-stability/stage08/integration-tests.log`
+- `artifacts/viewer-stability/stage08/app-build-android.log`  
+Geçmeyen veya çalıştırılamayan koşullar: Yok.  
+Bir sonraki aşama: Aşama 09 — Geometri, koordinat uzayları ve block  
+
+---
+
 
 
