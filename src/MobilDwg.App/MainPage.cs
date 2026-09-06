@@ -88,6 +88,9 @@ public sealed class MainPage : ContentPage
     private readonly VerticalStackLayout _layoutStackLayout;
     private readonly Grid _infoModalView;
     private readonly Label _infoContentLabel;
+    private readonly Grid _loadingOverlay;
+    private readonly Label _loadingFileNameLabel;
+    private readonly Label _loadingProgressLabel;
 
 #if V05_VALIDATION
     private bool _v05Started;
@@ -997,6 +1000,87 @@ public sealed class MainPage : ContentPage
         infoSheetCard.Content = infoCardStack;
         _infoModalView.Children.Add(infoSheetCard);
 
+        _loadingFileNameLabel = new Label
+        {
+            FontSize = 13,
+            FontAttributes = FontAttributes.Bold,
+            TextColor = ColorAccentCyan,
+            HorizontalTextAlignment = TextAlignment.Center,
+            LineBreakMode = LineBreakMode.TailTruncation
+        };
+
+        _loadingProgressLabel = new Label
+        {
+            FontSize = 12,
+            TextColor = ColorTextSecondary,
+            HorizontalTextAlignment = TextAlignment.Center
+        };
+
+        var loadingIndicator = new ActivityIndicator
+        {
+            IsRunning = true,
+            Color = ColorAccentBlue,
+            WidthRequest = 48,
+            HeightRequest = 48,
+            HorizontalOptions = LayoutOptions.Center
+        };
+
+        var loadingCardStack = new VerticalStackLayout
+        {
+            Spacing = 12,
+            HorizontalOptions = LayoutOptions.Center,
+            Children =
+            {
+                loadingIndicator,
+                new Label
+                {
+                    Text = "CAD Çizimi Yükleniyor",
+                    FontSize = 16,
+                    FontAttributes = FontAttributes.Bold,
+                    TextColor = ColorTextPrimary,
+                    HorizontalTextAlignment = TextAlignment.Center
+                },
+                _loadingFileNameLabel,
+                _loadingProgressLabel
+            }
+        };
+
+        var loadingCancelBtn = new Button
+        {
+            Text = "İptal Et",
+            FontSize = 12,
+            CornerRadius = 8,
+            HeightRequest = 36,
+            MinimumHeightRequest = 36,
+            BackgroundColor = Color.FromArgb("#1E293B"),
+            TextColor = ColorAccentRose
+        };
+        loadingCancelBtn.Clicked += CancelClicked;
+        loadingCardStack.Children.Add(loadingCancelBtn);
+
+        var loadingCard = new Border
+        {
+            Stroke = ColorAccentBlue,
+            StrokeThickness = 1.5,
+            StrokeShape = new RoundRectangle { CornerRadius = 18 },
+            BackgroundColor = Color.FromArgb("#161F30"),
+            Padding = new Thickness(24, 24),
+            WidthRequest = 300,
+            HorizontalOptions = LayoutOptions.Center,
+            VerticalOptions = LayoutOptions.Center,
+            Content = loadingCardStack,
+            Shadow = new Shadow { Brush = Colors.Black, Opacity = 0.6f, Radius = 16, Offset = new Point(0, 6) }
+        };
+
+        _loadingOverlay = new Grid
+        {
+            BackgroundColor = Color.FromRgba(11, 18, 32, 210),
+            IsVisible = false,
+            HorizontalOptions = LayoutOptions.Fill,
+            VerticalOptions = LayoutOptions.Fill
+        };
+        _loadingOverlay.Children.Add(loadingCard);
+
         var rootGrid = new Grid
         {
             RowDefinitions =
@@ -1014,6 +1098,8 @@ public sealed class MainPage : ContentPage
         bodyContainer.Children.Add(_layoutModalView);
         bodyContainer.Children.Add(_infoModalView);
         rootGrid.Add(bodyContainer, 0, 1);
+        rootGrid.Add(_loadingOverlay, 0, 0);
+        Grid.SetRowSpan(_loadingOverlay, 2);
 
 #if V05_VALIDATION
         var validationStatus = new Label
@@ -2135,6 +2221,10 @@ public sealed class MainPage : ContentPage
     private async Task OpenSelectionAsync(CadFileSelection selection)
     {
         var coordinator = _coordinator;
+        _loadingFileNameLabel.Text = selection.DisplayName ?? "cizim.dwg";
+        _loadingProgressLabel.Text = "Çizim güvenli önbelleğe alınıyor...";
+        _loadingOverlay.IsVisible = true;
+
         var progress = new Progress<CadFileOpenProgress>(update =>
         {
             if (!ReferenceEquals(coordinator, _coordinator))
@@ -2144,11 +2234,14 @@ public sealed class MainPage : ContentPage
 
             if (update.Copy is not null)
             {
-                _status.Text = $"Özel cache kopyası: {update.Copy.BytesCopied:N0} byte";
+                var copyText = $"Özel cache kopyası: {update.Copy.BytesCopied:N0} byte";
+                _status.Text = copyText;
+                _loadingProgressLabel.Text = copyText;
             }
             else if (!string.IsNullOrWhiteSpace(update.Message))
             {
                 _status.Text = update.Message;
+                _loadingProgressLabel.Text = update.Message;
             }
         });
 
@@ -2235,10 +2328,15 @@ public sealed class MainPage : ContentPage
             Log.Warn("MobilDwgA25", $"A25_RENDER_ERROR_SURFACE_PASS type={errorKind}");
 #endif
         }
+        finally
+        {
+            _loadingOverlay.IsVisible = false;
+        }
     }
 
     private void CancelClicked(object? sender, EventArgs e)
     {
+        _loadingOverlay.IsVisible = false;
         var accepted = _coordinator.CancelCurrentRequest();
         _status.Text = accepted
             ? "İptal istendi. Parser başladıysa geç sonuç UI'a uygulanmayacak."

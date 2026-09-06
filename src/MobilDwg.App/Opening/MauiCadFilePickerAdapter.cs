@@ -9,15 +9,42 @@ public static class MauiCadFilePickerAdapter
     {
         cancellationToken.ThrowIfCancellationRequested();
 
-        var picked = await FilePicker.Default.PickAsync(CreateCadPickOptions());
+        FileResult? picked = null;
+        try
+        {
+            var multiple = await FilePicker.Default.PickMultipleAsync(CreateCadPickOptions());
+            if (multiple is not null)
+            {
+                picked = multiple.FirstOrDefault();
+            }
+        }
+        catch
+        {
+            // Fallback to single pick if multi-pick fails on specific platform variant
+            picked = await FilePicker.Default.PickAsync(CreateCadPickOptions());
+        }
+
         if (picked is null)
         {
             return null;
         }
 
         cancellationToken.ThrowIfCancellationRequested();
+
+        var fileName = picked.FileName;
+        if (!string.IsNullOrWhiteSpace(fileName))
+        {
+            try
+            {
+                fileName = System.Net.WebUtility.UrlDecode(fileName);
+            }
+            catch
+            {
+            }
+        }
+
         return new CadFileSelection(
-            picked.FileName,
+            fileName,
             declaredLength: null,
             token => OpenPickedStreamAsync(picked, token));
     }

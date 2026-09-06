@@ -102,7 +102,7 @@ public sealed class CadFileOpenCoordinator : IAsyncDisposable
                 generation,
                 requestCancellation.Token,
                 progress,
-                new CadFileOpenProgress(generation, CadFileOpenPhase.Copying, Message: "Copying selected CAD stream into private cache."));
+                new CadFileOpenProgress(generation, CadFileOpenPhase.Copying, Message: "Çizim güvenli önbelleğe kopyalanıyor..."));
 
             var copyProgress = progress is null
                 ? null
@@ -134,7 +134,7 @@ public sealed class CadFileOpenCoordinator : IAsyncDisposable
                 new CadFileOpenProgress(
                     generation,
                     CadFileOpenPhase.Parsing,
-                    Message: "Parsing CAD document on worker thread."));
+                    Message: "CAD çizimi çözümleniyor..."));
 
             var readerProgress = progress is null
                 ? null
@@ -178,7 +178,10 @@ public sealed class CadFileOpenCoordinator : IAsyncDisposable
                             RenderScene? scene = null;
                             if (session.Handle is MobilDwg.Cad.AcadSharp.AcadSharpDocumentHandle)
                             {
+                                readerProgress?.Report(new CadReadProgress(CadReadStage.Normalizing, message: "Çizim varlıkları ve geometrisi ayrıştırılıyor..."));
                                 extracted = MobilDwg.Cad.AcadSharp.AcadSharpEntityExtractor.Extract(session.Handle);
+
+                                readerProgress?.Report(new CadReadProgress(CadReadStage.Normalizing, message: "Katmanlar ve çizim sahnesi hazırlanıyor..."));
                                 scene = MobilDwg.Rendering.Scene.CadExtractedSceneBuilder.Build(extracted);
                             }
 

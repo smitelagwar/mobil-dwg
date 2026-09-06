@@ -156,7 +156,8 @@ public sealed class CadViewportView : ContentView
         var cts = new System.Threading.CancellationTokenSource();
         _watchdogCts = cts;
 
-        System.Threading.Tasks.Task.Delay(1000, cts.Token).ContinueWith(t =>
+        // Allow generous budget (10s) for first-frame tessellation and GPU buffer allocation on complex drawings
+        System.Threading.Tasks.Task.Delay(10000, cts.Token).ContinueWith(t =>
         {
             if (t.IsCanceled) return;
             Dispatcher.Dispatch(() =>

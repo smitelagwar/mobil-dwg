@@ -28,7 +28,7 @@ public sealed class AcadSharpDocumentReader : ICadDocumentReader
         ArgumentNullException.ThrowIfNull(request.Source);
 
         cancellationToken.ThrowIfCancellationRequested();
-        progress?.Report(new CadReadProgress(CadReadStage.Preflight, message: "Inspecting CAD format and version."));
+        progress?.Report(new CadReadProgress(CadReadStage.Preflight, message: "CAD formatı ve versiyonu denetleniyor..."));
 
         var prepared = await PrepareStreamAsync(request.Source, request.LeaveOpen, cancellationToken).ConfigureAwait(false);
         try
@@ -36,14 +36,14 @@ public sealed class AcadSharpDocumentReader : ICadDocumentReader
             var preflight = Inspect(prepared.Stream, request.DisplayName);
             cancellationToken.ThrowIfCancellationRequested();
 
-            progress?.Report(new CadReadProgress(CadReadStage.Opening, message: $"Opening {preflight.Format}."));
+            progress?.Report(new CadReadProgress(CadReadStage.Opening, message: $"CAD dosyası açılıyor ({preflight.Format})..."));
 
             var diagnostics = new List<CadDiagnostic>();
             var compatibility = new List<CadCompatibilityIssue>();
             var stopwatch = Stopwatch.StartNew();
 
             CadDocument document;
-            progress?.Report(new CadReadProgress(CadReadStage.Parsing, message: "ACadSharp parser running; cancellation is not cooperative after this point."));
+            progress?.Report(new CadReadProgress(CadReadStage.Parsing, message: "CAD varlıkları ve veri tabloları çözümleniyor..."));
             using (ICadReader reader = CreateReader(preflight.Format, prepared.Stream, request.LeaveOpen || prepared.OwnsBuffer))
             {
                 reader.OnNotification += (_, args) => CaptureNotification(args, diagnostics, compatibility);
@@ -56,7 +56,7 @@ public sealed class AcadSharpDocumentReader : ICadDocumentReader
                 prepared.Stream.Dispose();
             }
 
-            progress?.Report(new CadReadProgress(CadReadStage.Normalizing, message: "Collecting parser diagnostics and document metadata."));
+            progress?.Report(new CadReadProgress(CadReadStage.Normalizing, message: "Varlıklar ve çizim metaverileri derleniyor..."));
 
             CollectCompatibility(document, compatibility);
             diagnostics.Add(new CadDiagnostic(
@@ -71,7 +71,7 @@ public sealed class AcadSharpDocumentReader : ICadDocumentReader
                 (int)(document.Header?.InsUnits ?? 0));
 
             var handle = new AcadSharpDocumentHandle(document, stopwatch.Elapsed, preflight.Format, metadata.AcadVersion);
-            progress?.Report(new CadReadProgress(CadReadStage.Completed, message: "CAD document parsed."));
+            progress?.Report(new CadReadProgress(CadReadStage.Completed, message: "CAD çizimi başarıyla çözümlendi."));
             return new CadDocumentSession(handle, metadata, diagnostics, DistinctCompatibility(compatibility));
         }
         catch
