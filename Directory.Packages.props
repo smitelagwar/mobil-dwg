@@ -11,7 +11,7 @@
     <PackageVersion Include="Microsoft.Maui.Controls" Version="[10.0.100]" />
 
     <!-- Test/CI-only packages; never production runtime dependencies. -->
-    <PackageVersion Include="SkiaSharp.NativeAssets.Linux.NoDependencies" Version="[4.151.1]" />
+    <PackageVersion Include="SkiaSharp.NativeAssets.Linux" Version="[4.151.1]" />
     <PackageVersion Include="IxMilia.Dxf" Version="[0.8.4]" />
   </ItemGroup>
 </Project>
